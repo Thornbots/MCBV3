@@ -23,7 +23,7 @@ static void initializeIo(src::Drivers *drivers)
     drivers->schedulerTerminalHandler.init();
     drivers->djiMotorTerminalSerialHandler.init();
     drivers->bmi088.initialize(500, 0.1f, 0.0f);
-    drivers->bmi088.requestRecalibration();
+    drivers->bmi088.requestCalibration();
 }
 
 // Anything that you would like to be called place here. It will be called

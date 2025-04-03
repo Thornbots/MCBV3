@@ -52,11 +52,11 @@ void IndexerSubsystem::setTargetMotorRPM(int targetMotorRPM) {
 
 // converts delta motor ticks to num balls shot using constants
 float IndexerSubsystem::getNumBallsShot() {
-    return (motorIndexer->getEncoderUnwrapped() - numTicksAtInit) / tap::motor::DjiMotor::ENC_RESOLUTION / REV_PER_BALL;
+    return (motorIndexer->getEncoder()->getPosition().getUnwrappedValue() - numTicksAtInit) / (REV_PER_BALL * M_2_PI);
 }
 
 void IndexerSubsystem::resetBallsCounter() {
-    numTicksAtInit = motorIndexer->getEncoderUnwrapped();
+    numTicksAtInit = motorIndexer->getEncoder()->getPosition().getUnwrappedValue();
 }
 
 float IndexerSubsystem::getBallsPerSecond() {

@@ -25,6 +25,8 @@
 #include "util/trigger.hpp"
 #include "subsystems/gimbal/GimbalStopCommand.hpp"
 
+#include "communication/I2CCommunication.hpp"
+
 #include "drivers.hpp"
 
 namespace robots {

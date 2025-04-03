@@ -28,8 +28,6 @@ void GimbalSubsystem::refresh()
     driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
     yawAngleRelativeWorld = fmod(PI / 180 * drivers->bmi088.getYaw() - imuOffset, 2 * PI);
 
-    motorPitch->setDesiredOutput(pitchMotorVoltage);
-    motorYaw->setDesiredOutput(yawMotorVoltage);
 }
 
 void GimbalSubsystem::updateMotors(float* changeInTargetYaw, float* targetPitch)
@@ -41,12 +39,18 @@ void GimbalSubsystem::updateMotors(float* changeInTargetYaw, float* targetPitch)
     targetYawAngleWorld = fmod(targetYawAngleWorld + *changeInTargetYaw, 2 * PI);
     pitchMotorVoltage = getPitchVoltage(*targetPitch, dt);
     yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, *changeInTargetYaw / dt, dt);
+
+    //moved     
+    motorPitch->setDesiredOutput(pitchMotorVoltage);
+    motorYaw->setDesiredOutput(yawMotorVoltage);
 }
 
 void GimbalSubsystem::stopMotors()
 {
     pitchMotorVoltage = 0;
     yawMotorVoltage = 0;
+    motorPitch->setDesiredOutput(pitchMotorVoltage);
+    motorYaw->setDesiredOutput(yawMotorVoltage);
     pitchController.clearBuildup();
     yawController.clearBuildup();
 }
@@ -82,8 +86,8 @@ int GimbalSubsystem::getPitchVoltage(float targetAngle, float dt)
 #endif
 }
 
-float GimbalSubsystem::getYawEncoderValue() { return (tap::motor::DjiMotor::encoderToDegrees(motorYaw->getEncoderUnwrapped()) * PI / 180 - YAW_OFFSET) / YAW_TOTAL_RATIO; }
-float GimbalSubsystem::getPitchEncoderValue() { return tap::motor::DjiMotor::encoderToDegrees(motorPitch->getEncoderUnwrapped()) * PI / 180; }
+float GimbalSubsystem::getYawEncoderValue() { return motorYaw->getEncoder()->getPosition().getWrappedValue() / YAW_TOTAL_RATIO; }
+float GimbalSubsystem::getPitchEncoderValue() { return motorPitch->getEncoder()->getPosition().getWrappedValue();}
 float GimbalSubsystem::getYawVel() { return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO; }
 float GimbalSubsystem::getPitchVel() { return motorPitch->getShaftRPM() * PI / 30; }
 
