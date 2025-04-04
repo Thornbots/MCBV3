@@ -31,7 +31,7 @@ void UISubsystem::initialize() {
     drivers->commandScheduler.registerSubsystem(this);
 
     // temp for testing
-    drivers->leds.init();
+    // drivers->leds.init();
 }
 
 // guaranteed to be called, whether we have a command (topLevelContainer) or not

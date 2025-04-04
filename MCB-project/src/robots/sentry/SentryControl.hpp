@@ -13,6 +13,8 @@
 #include "subsystems/indexer/IndexerStopCommand.hpp"
 #include "util/trigger.hpp"
 
+#include "subsystems/cv/ComputerVisionSubsystem.hpp"
+
 #include "drivers.hpp"
 
 namespace robots {
@@ -27,6 +29,7 @@ public:
         flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
+        cv.initialize();
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
@@ -59,18 +62,9 @@ public:
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::DoubleIndexerSubsystem indexer{drivers, &hardware.indexMotor1, &hardware.indexMotor2};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
+    subsystems::ComputerVisionSubsystem cv{drivers};
 
-    // commands old
-    //  commands::JoystickMoveCommand look{drivers, &gimbal};
-    //  commands::MouseMoveCommand look2{drivers, &gimbal};
-
-    // commands::ShooterStartCommand shooterStart{drivers, &flywheel};
-    // commands::ShooterStopCommand shooterStop{drivers, &flywheel};
-
-    // commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 10};
-    // commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
-
-    // commands from infantrycontrol
+    // commands
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
 
@@ -94,35 +88,7 @@ public:
 
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
 
-    // mappings old
-    //  HoldCommandMapping startShootMapping {
-    //      drivers,
-    //      {&indexer10Hz},
-    //      RemoteMapState(Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP)};
-
-    // HoldCommandMapping idleShootMapping {
-    //     drivers,
-    //     {&shooterStart},
-    //     RemoteMapState(Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP)};
-
-    // HoldCommandMapping stopShootMapping {
-    //     drivers,
-    //     {&indexerUnjam, &shooterStop},
-    //     RemoteMapState(Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN)};
-
-    // HoldCommandMapping startShootMappingMouse {
-    //     drivers,
-    //     {&shooterStart, &indexer10Hz},
-    //     RemoteMapState(RemoteMapState::MouseButton::LEFT)
-    // };
-
-    // HoldCommandMapping stopShootMappingMouse {
-    //     drivers,
-    //     {&shooterStop, &indexerUnjam},
-    //     RemoteMapState(RemoteMapState::MouseButton::LEFT)
-    // };
-
-    // mappings from infantrycontrol
+    // mappings 
 
     // shooting
     Trigger shootButton{drivers, Remote::Channel::WHEEL, -0.5};
