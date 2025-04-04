@@ -17,6 +17,8 @@ UIDrawCommand::UIDrawCommand(UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelS
     addGraphicsObject(&laneAssistLines);
     addGraphicsObject(&supercapChargeIndicator);
     addGraphicsObject(&chassisOrientationIndicator);
+
+    chassisOrientationIndicator.setGimbalSubsystem(gimbal);
 }
 
 void UIDrawCommand::initialize() { ui->setTopLevelContainer(this); }

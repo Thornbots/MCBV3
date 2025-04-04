@@ -7,6 +7,13 @@
 using namespace tap::communication::serial;
 using namespace subsystems;
 
+// looks like
+//    __
+//   /
+//
+//      __/
+// at the center of the screen, the arcs represent the left and right inner 
+// panels if there are 2 arcs, if there are 4 then they are all four panels
 class ChassisOrientationIndicator : public GraphicsContainer {
 public:
     ChassisOrientationIndicator() {
@@ -21,18 +28,18 @@ public:
 
             left.startAngle = 270 + heading - INNER_ARC_LEN / 2;
             fixAngle(&left.startAngle);
-            left.endAngle = left.startAngle+INNER_ARC_LEN;
+            left.endAngle = left.startAngle + INNER_ARC_LEN;
 
             right.startAngle = 90 + heading - INNER_ARC_LEN / 2;
             fixAngle(&right.startAngle);
-            right.endAngle = right.startAngle+INNER_ARC_LEN;
+            right.endAngle = right.startAngle + INNER_ARC_LEN;
         }
     }
 
     void setGimbalSubsystem(GimbalSubsystem* g) { gimbal = g; }
 
-    void fixAngle(uint16_t* a){
-        *a%=360; //set a to the remainder after dividing by 360, so if it was 361 it would now be 1
+    void fixAngle(uint16_t* a) {
+        *a %= 360;  // set a to the remainder after dividing by 360, so if it was 361 it would now be 1
     }
 
 private:
@@ -47,6 +54,6 @@ private:
     static constexpr float YAW_MULT = 180 / PI;  // turns radians from gimbal's getYawEncoderValue into degrees, might need to be negative
     static constexpr float YAW_OFFSET = 360;     // degrees, 0 from the yaw might not be top on the screen, also needs to make sure it is positive because we are using uints
 
-    Arc left{RefSerialData::Tx::GraphicColor::CYAN, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, INNER_SIZE, INNER_SIZE, 0, INNER_ARC_LEN, THICKNESS};
-    Arc right{RefSerialData::Tx::GraphicColor::CYAN, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, INNER_SIZE, INNER_SIZE, 0, INNER_ARC_LEN, THICKNESS};
+    Arc left{RefSerialData::Tx::GraphicColor::RED_AND_BLUE, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, INNER_SIZE, INNER_SIZE, 0, INNER_ARC_LEN, THICKNESS};
+    Arc right{RefSerialData::Tx::GraphicColor::RED_AND_BLUE, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, INNER_SIZE, INNER_SIZE, 0, INNER_ARC_LEN, THICKNESS};
 };
