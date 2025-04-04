@@ -43,7 +43,7 @@ public:
     }
 
 private:
-    GimbalSubsystem* gimbal;
+    GimbalSubsystem* gimbal = nullptr;
 
     static constexpr uint16_t THICKNESS = 2;       // pixels
     static constexpr uint16_t INNER_SIZE = 120;    // Used if the arcs are supposed to be inside the barrel heat circle, pixels
