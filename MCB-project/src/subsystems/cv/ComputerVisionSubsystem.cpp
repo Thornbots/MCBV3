@@ -8,13 +8,11 @@ ComputerVisionSubsystem::ComputerVisionSubsystem(tap::Drivers* drivers) :
 
 void ComputerVisionSubsystem::initialize() {
     drivers->commandScheduler.registerSubsystem(this);
-    drivers->leds.init();
     comm.initialize();
 }
 
 void ComputerVisionSubsystem::refresh() { 
     comm.updateSerial(); 
-    drivers->leds.set(tap::gpio::Leds::Blue, comm.getLastCVData()!=nullptr);
 }
 
 void ComputerVisionSubsystem::update(float current_yaw, float current_pitch, float* yawOut, float* pitchOut, int* action) {

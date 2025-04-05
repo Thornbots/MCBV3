@@ -24,6 +24,7 @@ static void initializeIo(src::Drivers *drivers)
     drivers->djiMotorTerminalSerialHandler.init();
     drivers->bmi088.initialize(500, 0.1f, 0.0f);
     drivers->bmi088.requestRecalibration();
+    // modm::delay_ms(8000); //wait for imu, need to do this somehow
 }
 
 // Anything that you would like to be called place here. It will be called
