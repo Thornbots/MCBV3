@@ -28,6 +28,10 @@
     <option name="taproot:board:analog_in_pins"></option>
     <option name="taproot:board:pwm_pins">C1,C2,C3,C4,C5,C6,C7,Buzzer,ImuHeater</option>
 
+    <option name="taproot:modm-project.xml:modm_hal_modules">
+      modm:platform:i2c:2
+    </option>
+
   </options>
   <modules>
     <module>taproot:core</module>

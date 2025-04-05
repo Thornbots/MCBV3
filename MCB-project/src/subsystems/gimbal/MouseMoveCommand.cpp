@@ -11,7 +11,7 @@ void MouseMoveCommand::execute() {
     yaw = MOUSE_YAW_PROPORTIONAL * (drivers->remote.getMouseX() - mouseXOffset);
     pitch += MOUSE_PITCH_PROPORTIONAL * (drivers->remote.getMouseY() - mouseYOffset);
 
-    gimbal->updateMotors(&yaw, &pitch);
+    gimbal->updateMotors(yaw, &pitch);
 }
 
 void MouseMoveCommand::end(bool) { pitch = 0; }

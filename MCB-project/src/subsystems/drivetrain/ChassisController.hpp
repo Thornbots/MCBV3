@@ -27,17 +27,18 @@ private:
         // states to store, current position, curent velocity, and also the lastForce
     Pose2d estPosWorld{}, estVelWorld{}, lastForceLocal{};
 
-    Vector2d lastVelWorld{}, accumForceLocal{};
+    Pose2d lastVelWorld{}, accumForceLocal{};
 
 public:
     float *targetVelocityHistory;  // For storing target velocity magnitudes
     Pose2d *forceHistory;          // history of past chassis forces
+    float *targetVelocityMagnitudeHistory; //used for beyblade gain calculations
     ChassisController();
 
     ~ChassisController();
     //~YawController();
     void calculate(Pose2d targetVelLocal, float powerLimit, float angle, float motorVelocity[4], float motorCurrent[4]);
-    float calculateBeybladeVelocity(float bb_freq, float bb_amp);
+    float calculateBeybladeVelocity(float bb_freq, float bb_amp, Pose2d TargetVelocity);
 
     // intermediate functions
     void estimateState(Pose2d inputForces, Pose2d *eLocalVel, Pose2d *eInertialVel, Pose2d *eInertialPos);
@@ -46,9 +47,9 @@ public:
 
     void velocityControl(Pose2d inputLocalVel, Vector2d estInertialVel, Pose2d estLocalVel, Vector2d lastInertialForce, Pose2d *reqLocalForce);
 
-    void calculateTractionLimiting(Pose2d localForce, Pose2d *limitedForce);
+    void calculateTractionLimiting(Pose2d localForce, Pose2d *limitedForce, float thetaDotDes);
 
-    void calculatePowerLimiting(float powerLimit, float V_m_FF[4], float I_m_FF[4], float T_req_m[4], float T_req_m2[4]);
+    void calculatePowerLimiting(float powerLimit, float V_m_FF[4], float I_m_FF[4], float T_req_m[4], float T_req_m2[4], float thetaDotEst, float thetaDotDes);
 
     float *multiplyMatrices(int rows1, int cols1, const float **mat1, float *mat2, float *result) {
         // Iterate over rows of mat1 and columns of mat2

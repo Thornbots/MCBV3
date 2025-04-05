@@ -15,7 +15,7 @@ class DrivetrainSubsystem : public tap::control::Subsystem
 {
 
 private:                                            // Private Variables
-    tap::Drivers* drivers;
+    src::Drivers* drivers;
 
     tap::motor::DjiMotor* motorArray[4];
 
@@ -31,10 +31,12 @@ private:                                            // Private Variables
     ChassisController controller;
 
     tap::algorithms::SmoothPid rotationPIDController;
+    float boost;
+    float throttle;
    
 
 public:  // Public Methods
-    DrivetrainSubsystem(tap::Drivers* driver, tap::motor::DjiMotor* motorOne, tap::motor::DjiMotor* motorTwo, tap::motor::DjiMotor* motorThree, tap::motor::DjiMotor* motorFour);
+    DrivetrainSubsystem(src::Drivers* driver, tap::motor::DjiMotor* motorOne, tap::motor::DjiMotor* motorTwo, tap::motor::DjiMotor* motorThree, tap::motor::DjiMotor* motorFour);
     
     // ~DrivetrainSubsystem() override {}  // Intentionally blank
 
@@ -55,7 +57,7 @@ public:  // Public Methods
      * the described behavior. This will allow the drivetrain to translate with left stick, and turn
      * with the right stick or beyblade depending how this is called.
      */
-    void setTargetTranslation(Pose2d drive);
+    void setTargetTranslation(Pose2d drive, bool boost);
 
     /*
      * Call this function to set all DriveTrain motors to 0 desired RPM. CALL setMotorSpeeds() FOR

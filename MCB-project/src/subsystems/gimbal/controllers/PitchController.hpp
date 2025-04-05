@@ -14,6 +14,7 @@ public:
 
 private:
     // START getters and setters
+    float pastTarget = 0;
     float buildup = 0;
     float pastTargetVelo = 0;
     float pastOutput = 0;

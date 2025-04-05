@@ -21,7 +21,7 @@ float PitchController::calculate(float currentPos, float currentVelo, float targ
 {
     float positionError = targetPos - currentPos;
     
-    float targetVelo = KP * positionError;
+    float targetVelo = KP * positionError + (targetPos - pastTarget) / deltaT;
 
     // model based motion profile
     float maxVelocity = std::min(VELO_MAX, pastTargetVelo + ACCEL_MAX * deltaT);
@@ -48,6 +48,7 @@ float PitchController::calculate(float currentPos, float currentVelo, float targ
     float targetCurrent = KSTATIC * signum(targetVelo) + KF + KPV * velocityError + KIV * buildup;
 
     pastOutput = RA * targetCurrent + KV * targetVelo;
+    pastTarget = targetPos;
     return std::clamp(pastOutput, -VOLT_MAX, VOLT_MAX);
 }
 }  // namespace subsystems

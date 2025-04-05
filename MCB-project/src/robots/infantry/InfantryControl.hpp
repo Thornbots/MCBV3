@@ -18,15 +18,16 @@
 #include "subsystems/flywheel/ShooterStopCommand.hpp"
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
+#include "subsystems/gimbal/GimbalStopCommand.hpp"
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/trigger.hpp"
-#include "subsystems/gimbal/GimbalStopCommand.hpp"
+
 
 #include "drivers.hpp"
-
+int rawEncoder = 0;
 namespace robots {
 class InfantryControl : public ControlInterface {
 public:
@@ -68,8 +69,8 @@ public:
         peekRightButton.onTrue(&peekRight)->onFalse(&beybladeSlowKeyboard);
 
         beybladeType0Key.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
-        beybladeType1Key.onTrue(&beybladeSlowKeyboard)->onTrue(&lookMouse);
-        beybladeType2Key.onTrue(&beybladeFastKeyboard)->onTrue(&lookMouse);
+        beybladeType1Key.onTrue(&beybladeSlowKeyboard);//->onTrue(&lookMouse);
+        beybladeType2Key.onTrue(&beybladeFastKeyboard);//->onTrue(&lookMouse);
  
         joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);
@@ -89,6 +90,7 @@ public:
 
     src::Drivers *drivers;
     InfantryHardware hardware;
+
 
     // Subsystems
     subsystems::UISubsystem ui{drivers};

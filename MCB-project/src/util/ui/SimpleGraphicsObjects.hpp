@@ -146,7 +146,8 @@ public:
 
     bool needsRedrawn() final { return !(prevThickness == thickness && prevCx == cx && prevCy == cy && prevWidth == width && prevHeight == height && prevColor == color && prevStartAngle == startAngle&&prevEndAngle == endAngle&&hasDrawn); }
 
-    uint16_t cx, cy, width, height, startAngle, endAngle, thickness;  // can set this directly, will appear next time drawn
+    uint16_t startAngle, endAngle;  // can set this directly, will appear next time drawn, 0 is up, positive is clockwise, in degrees
+    uint16_t cx, cy, width, height, thickness;  // can set this directly, will appear next time drawn
 
 private:
     void setPrev() {

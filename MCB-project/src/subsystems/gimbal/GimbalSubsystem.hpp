@@ -24,7 +24,7 @@ class GimbalSubsystem : public tap::control::Subsystem
 {
 
 private:  // Private Variables
-    tap::Drivers* drivers;
+    src::Drivers* drivers;
     // TODO: Check all motor ID's, and verify indexers and flywheels are in the correct direction
     tap::motor::DjiMotor* motorYaw;
     tap::motor::DjiMotor* motorPitch;
@@ -37,8 +37,8 @@ private:  // Private Variables
     float driveTrainAngularVelocity, yawAngularVelocity, yawAngleRelativeWorld = 0.0, imuOffset;
     float yawEncoderCache = 0;
     float desiredYawAngleWorld, desiredYawAngleWorld2, driveTrainEncoder = 0.0;
-    float stickAccumulator = 0, targetYawAngleWorld = PI,
-          targetDTVelocityWorld = 0;  // changed targetYawAngleWorld from 0 to PI
+    float stickAccumulator = 0, targetYawAngleWorld = 0,
+          targetDTVelocityWorld = 0;  
 
     // for sysid
     std::random_device rd;
@@ -47,7 +47,7 @@ private:  // Private Variables
     std::uniform_int_distribution<int> distPitch;
 
 public:  // Public Methods
-    GimbalSubsystem(tap::Drivers* drivers, tap::motor::DjiMotor* yaw, tap::motor::DjiMotor* pitch);
+    GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* yaw, tap::motor::DjiMotor* pitch);
 
     //~GimbalSubsystem() {}  // Intentionally left blank
 
@@ -68,7 +68,7 @@ public:  // Public Methods
     /*
      * tells the motors to move the gimbal to its specified angle calculated in update();
      */
-    void updateMotors(float* changeInTargetYaw, float* targetPitch);
+    void updateMotors(float changeInTargetYaw, float* targetPitch);
 
     /*
      * Call this function to set all Turret motors to stop, calculate the voltage level in

@@ -49,5 +49,6 @@ private:
     DriveMode driveMode;
     ControlMode controlMode;
     float x, y, r;
+    float boost;
 };
 }  // namespace commands
