@@ -13,15 +13,15 @@ class CloseServoCommand : public tap::control::Command {
 public:
     CloseServoCommand(src::Drivers* drivers, ServoSubsystem* servo) : drivers(drivers), servo(servo) { addSubsystemRequirement(servo); }
 
-    void initialize() override { servo->setTargetPosition(ServoSubsystem::CLOSED_POSITION); };
+    void initialize() override {};
 
-    void execute() override {};
+    void execute() override {servo->setTargetPosition(ServoSubsystem::CLOSED_POSITION);};
 
     void end(bool interrupted) override {};
 
     bool isFinished() const override { return false; };
 
-    const char* getName() const override { return "open servo command"; }
+    const char* getName() const override { return "close servo command"; }
 
 private:
     src::Drivers* drivers;

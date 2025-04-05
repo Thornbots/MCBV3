@@ -23,6 +23,9 @@
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
+#include "subsystems/servo/ServoSubsystem.hpp"
+#include "subsystems/servo/OpenServoCommand.hpp"
+#include "subsystems/servo/CloseServoCommand.hpp"
 #include "util/trigger.hpp"
 
 
@@ -36,11 +39,13 @@ public:
     // functions we are using
     void initialize() override {
         // Initialize subsystems (registration is internal)
-        gimbal.initialize();
-        flywheel.initialize();
+        // gimbal.initialize();
+        // flywheel.initialize();
         indexer.initialize();
-        drivetrain.initialize();
-        ui.initialize();
+        // drivetrain.initialize();
+        // ui.initialize();
+        servo.initialize();
+        
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
@@ -51,8 +56,8 @@ public:
 
         // unjamButton = Trigger(drivers, [this](){ return this->drivers->remote.getSwitch(Remote::Switch::RIGHT_SWITCH) == Remote::SwitchState::UP;});
 
-        shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz);
-        unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
+        shootButton.onTrue(&closeServo);
+        unjamButton.onTrue(&openServo);
 
 
         //Mouse and Keyboard mappings
@@ -62,6 +67,7 @@ public:
 
         toggleUIKey.toggleOnFalse(&draw);
         drivers->commandScheduler.addCommand(&draw);
+        drivers->commandScheduler.addCommand(&closeServo);
    
         //drive commands and also enable mouse looking
 
@@ -98,6 +104,8 @@ public:
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
+    subsystems::ServoSubsystem servo{drivers, &hardware.servo};
+
 
     // //commands
     commands::UIDrawCommand draw{&ui, &gimbal, &flywheel, &indexer, &drivetrain};
@@ -125,6 +133,10 @@ public:
     commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
 
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
+
+    // Servo
+    commands::OpenServoCommand openServo{drivers, &servo};
+    commands::CloseServoCommand closeServo{drivers, &servo};
 
     //mappings
 
