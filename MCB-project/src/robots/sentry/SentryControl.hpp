@@ -15,6 +15,7 @@
 #include "util/trigger.hpp"
 
 #include "subsystems/cv/ComputerVisionSubsystem.hpp"
+#include "subsystems/odometry/OdometrySubsystem.hpp"
 
 #include "drivers.hpp"
 
@@ -31,6 +32,7 @@ public:
         indexer.initialize();
         drivetrain.initialize();
         cv.initialize();
+        // encoder.initialize();
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
@@ -38,7 +40,7 @@ public:
         drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerStopCommand);
 
-        shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz);
+        shootButton.onTrue(&shooterStart)->whileTrue(&indexer20Hz);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
 
         autoTrigger.whileTrue(&autoCommand)->onFalse(&lookJoystick)->whileTrue(&shooterStart);
@@ -64,6 +66,7 @@ public:
     subsystems::DoubleIndexerSubsystem indexer{drivers, &hardware.indexMotor1, &hardware.indexMotor2};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::ComputerVisionSubsystem cv{drivers};
+    // subsystems::OdometrySubsystem encoder{drivers, &hardware.encoderMotor};
 
     // commands
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
@@ -73,7 +76,7 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 10};
+    commands::IndexerNBallsCommand indexer20Hz{drivers, &indexer, -1, 20};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
 
     commands::IndexerStopCommand indexerStopCommand{drivers, &indexer};
