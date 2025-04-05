@@ -17,7 +17,6 @@ namespace communication
 
     void JetsonCommunication::messageReceiveCallback(const ReceivedSerialMessage &completeMessage)
     {
-        drivers->leds.set(tap::gpio::Leds::Blue, true);
 
         size_t bytesToCopy = completeMessage.header.dataLength;
         if (bytesToCopy > sizeof(CVData))
@@ -46,7 +45,7 @@ namespace communication
     // Will we constantly receive data in a stream?
     void JetsonCommunication::update()
     {
-        updateSerial();
+        // updateSerial();
         
         if ((getCurrentTime() - lastReceivedTime) > CONNECTION_TIMEOUT)
         {

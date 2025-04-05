@@ -41,9 +41,9 @@ static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 12*2;
 
 static constexpr float YAW_OFFSET = 0;
 
-static constexpr float PITCH_OFFSET = 0.1f * PI_CONST;  // to make gimbal horizontal when told to go to 0
+static constexpr float PITCH_OFFSET = -0.25f * PI_CONST;  // to make gimbal horizontal when told to go to 0
 
-static constexpr float YAW_TOTAL_RATIO = 54.0f/24.0f * 3591.0f / 187.0f;  // unitless, ratio of encoder counts to degrees of rotation
+static constexpr float YAW_TOTAL_RATIO = 54.0f/27.0f * 3591.0f / 187.0f;  // unitless, ratio of encoder counts to degrees of rotation
 
 static constexpr int YAW_DIST_RANGE = 18000;
 

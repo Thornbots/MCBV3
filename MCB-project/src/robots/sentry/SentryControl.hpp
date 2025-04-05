@@ -8,6 +8,7 @@
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
 #include "subsystems/gimbal/GimbalStopCommand.hpp"
+#include "subsystems/cv/AutoAimCommand.hpp"
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
@@ -40,7 +41,7 @@ public:
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
 
-
+        autoTrigger.whileTrue(&autoCommand)->onFalse(&lookJoystick)->whileTrue(&shooterStart);
         // drive commands 
 
         joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
@@ -67,6 +68,7 @@ public:
     // commands
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
+    commands::AutoAimCommand autoCommand{drivers, &gimbal, &indexer, &cv};
 
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
@@ -77,13 +79,8 @@ public:
     commands::IndexerStopCommand indexerStopCommand{drivers, &indexer};
 
     // CHANGE NUMBERS LATER
-    commands::DrivetrainDriveCommand peekRight{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_RIGHT, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand peekLeft{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_LEFT, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand drivetrainFollowKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::KEYBOARD};
     commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::CONTROLLER};
     commands::DrivetrainDriveCommand beybladeJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE2, commands::ControlMode::CONTROLLER};
-    commands::DrivetrainDriveCommand beybladeSlowKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand beybladeFastKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE2, commands::ControlMode::KEYBOARD};
     commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
 
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
@@ -102,6 +99,8 @@ public:
     Trigger joystickDrive1{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::MID};
     Trigger joystickDrive2{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
 
-    Trigger* triggers[5] = {&joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton};  //, &indexSpinButton};
+    Trigger autoTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
+
+    Trigger* triggers[6] = {&joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &autoTrigger};  //, &indexSpinButton};
 };
 }  // namespace robots

@@ -68,7 +68,7 @@ public:  // Public Methods
     /*
      * tells the motors to move the gimbal to its specified angle calculated in update();
      */
-    void updateMotors(float* changeInTargetYaw, float* targetPitch);
+    void updateMotors(float changeInTargetYaw, float* targetPitch);
 
     /*
      * Call this function to set all Turret motors to stop, calculate the voltage level in

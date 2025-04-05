@@ -11,7 +11,7 @@ void JoystickMoveCommand::execute()
         pitch = CONTROLLER_PITCH_PROPORTIONAL * drivers->remote.getChannel(tap::communication::serial::Remote::Channel::RIGHT_VERTICAL); //in the future, use the ranges from GimbalSubsystemConstants
   
         //TODO this lmao
-        gimbal->updateMotors(&yaw, &pitch);
+        gimbal->updateMotors(yaw, &pitch);
 
 
 

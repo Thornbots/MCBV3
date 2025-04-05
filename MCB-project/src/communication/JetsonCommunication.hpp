@@ -56,6 +56,8 @@ public:
 
     bool isConnected() const;
 
+    inline bool hasNewMessage() { return hasNewData;}
+
     uint64_t getCurrentTime() const;
 
     tap::communication::serial::Uart::UartPort getPort() const;

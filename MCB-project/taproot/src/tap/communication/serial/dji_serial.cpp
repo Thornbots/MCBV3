@@ -107,13 +107,10 @@ void DJISerial::updateSerial()
                             newMessage.header.CRC8))
                     {
                         djiSerialRxState = SERIAL_HEADER_SEARCH;
-                        drivers->leds.set(tap::gpio::Leds::Red, true);
-                        RAISE_ERROR(drivers, "CRC8 failure");  ///this fails
+                        RAISE_ERROR(drivers, "CRC8 failure");
                         return;
                     }
                 }
-                drivers->leds.set(tap::gpio::Leds::Red, false);
-
 
                 if (newMessage.header.dataLength >= SERIAL_RX_BUFF_SIZE)
                 {

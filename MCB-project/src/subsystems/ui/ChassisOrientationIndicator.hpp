@@ -1,8 +1,9 @@
 #pragma once
 
 #include "subsystems/ui/UISubsystem.hpp"
+#include "subsystems/gimbal/GimbalSubsystem.hpp"
 #include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/SimpleGraphicsObjects.hpp"
+#include "util/ui/SimpleGraphicsObjects.hpp" 
 
 using namespace tap::communication::serial;
 using namespace subsystems;
