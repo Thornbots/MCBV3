@@ -25,13 +25,13 @@ void GimbalSubsystem::initialize() {
 }
 
 void GimbalSubsystem::refresh() {
-#ifdef INFANTRY
+// #ifdef INFANTRY
     if (!motorYaw->isMotorOnline()) {
         encoderOffset = drivers->i2c.encoder.getAngle();
         motorYaw->resetEncoderValue();
     }
 
-#endif
+// #endif
     yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
     driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
     yawAngleRelativeWorld = fmod(PI / 180 * drivers->bmi088.getYaw() - imuOffset, 2 * PI);
