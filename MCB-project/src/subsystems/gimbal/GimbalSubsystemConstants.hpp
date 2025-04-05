@@ -8,7 +8,7 @@ static constexpr float dt = 0.002f;
 // for sysid
 static constexpr int PITCH_DIST_RANGE = 0;
 
-static constexpr float MOUSE_YAW_PROPORTIONAL = -0.00008;
+static constexpr float MOUSE_YAW_PROPORTIONAL = -0.00003;
 static constexpr float MOUSE_PITCH_PROPORTIONAL = 0.00005;
 
 static constexpr float CONTROLLER_YAW_PROPORTIONAL = -0.02;

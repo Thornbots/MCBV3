@@ -6,6 +6,9 @@
 #include "robots/infantry/MechInfantryHardware.hpp"
 #endif
 
+#include "subsystems/servo/OpenServoCommand.hpp"
+#include "subsystems/servo/CloseServoCommand.hpp"
+
 #include "subsystems/ui/UISubsystem.hpp"
 #include "subsystems/ui/UIDrawCommand.hpp"
 
@@ -41,6 +44,7 @@ public:
         indexer.initialize();
         drivetrain.initialize();
         ui.initialize();
+        servo.initialize();
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
@@ -48,15 +52,16 @@ public:
         drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerStopCommand);
         //ui.setDefaultCommand(&draw);
+        servo.setDefaultCommand(&hopperClose);
 
         // unjamButton = Trigger(drivers, [this](){ return this->drivers->remote.getSwitch(Remote::Switch::RIGHT_SWITCH) == Remote::SwitchState::UP;});
 
-        shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz);
+        shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz)->onTrue(&hopperClose);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
 
 
         //Mouse and Keyboard mappings
-        unjamKey.whileTrue(&indexerUnjam)->onTrue(&shooterStop);
+        unjamKey.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onTrue(&hopperOpen);
         shootKey.whileTrue(&indexer10Hz)->onTrue(&shooterStart);
         //implement speed mode
 
@@ -98,6 +103,7 @@ public:
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
+    subsystems::ServoSubsystem servo{drivers, &hardware.hopperServo};
 
     // //commands
     commands::UIDrawCommand draw{&ui, &gimbal, &flywheel, &indexer, &drivetrain};
@@ -113,6 +119,9 @@ public:
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
 
     commands::IndexerStopCommand indexerStopCommand{drivers, &indexer};
+
+    commands::CloseServoCommand hopperClose{drivers, &servo};
+    commands::OpenServoCommand hopperOpen{drivers, &servo};
 
     //CHANGE NUMBERS LATER
     commands::DrivetrainDriveCommand peekRight{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_RIGHT, commands::ControlMode::KEYBOARD};
