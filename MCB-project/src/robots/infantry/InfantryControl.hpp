@@ -69,8 +69,8 @@ public:
         peekRightButton.onTrue(&peekRight)->onFalse(&beybladeSlowKeyboard);
 
         beybladeType0Key.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
-        beybladeType1Key.onTrue(&beybladeSlowKeyboard)->onTrue(&lookMouse);
-        beybladeType2Key.onTrue(&beybladeFastKeyboard)->onTrue(&lookMouse);
+        beybladeType1Key.onTrue(&beybladeSlowKeyboard);//->onTrue(&lookMouse);
+        beybladeType2Key.onTrue(&beybladeFastKeyboard);//->onTrue(&lookMouse);
  
         joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);

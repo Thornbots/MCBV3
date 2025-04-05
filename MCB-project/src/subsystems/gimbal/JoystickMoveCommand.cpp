@@ -4,7 +4,9 @@
 namespace commands
 {
 
-void JoystickMoveCommand::initialize() {  }
+void JoystickMoveCommand::initialize() {  
+
+}
 void JoystickMoveCommand::execute()
 {
         yaw = CONTROLLER_YAW_PROPORTIONAL * drivers->remote.getChannel(tap::communication::serial::Remote::Channel::RIGHT_HORIZONTAL);
@@ -12,8 +14,6 @@ void JoystickMoveCommand::execute()
   
         //TODO this lmao
         gimbal->updateMotors(&yaw, &pitch);
-
-
 
 }
 

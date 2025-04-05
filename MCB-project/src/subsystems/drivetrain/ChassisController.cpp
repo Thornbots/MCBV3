@@ -59,9 +59,9 @@ float ChassisController::calculateBeybladeVelocity(float bb_freq, float bb_amp, 
     // Get the target velocity commands (or position commands) from the controller
     // This part would integrate the user input or other controller logic to set target velocity
         float velmagMax = 0;
-    for (int i = 0; i < BBQ_SIZE; i++) {
-        targetVelocityMagnitudeHistory[i] = (i > 0) ? targetVelocityMagnitudeHistory[i - 1] :TargetVelocity.magnitude();
-        velmagMax = std::max(velmagMax, targetVelocityHistory[i]);  // Find max velocity magnitude in the last bb_delay seconds
+    for (int i = 0; i < BBQ_SIZE-1; i++) {
+        targetVelocityMagnitudeHistory[i] = (i < (BBQ_SIZE - 2)) ? targetVelocityMagnitudeHistory[i + 1] : TargetVelocity.magnitude();
+        velmagMax = std::max(velmagMax, targetVelocityMagnitudeHistory[i]);  // Find max velocity magnitude in the last bb_delay seconds
     }
     if (TargetVelocity.getRotation() < BBterm1 - 2) return TargetVelocity.getRotation(); //prevent any actual changes if the thing is slow (aka a PID controller or something is controlling positoin)
     // If fixed-speed beyblade or variable-speed beyblade with velocity != 0
