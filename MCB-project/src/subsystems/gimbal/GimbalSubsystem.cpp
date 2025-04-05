@@ -2,9 +2,12 @@
 
 #include "GimbalSubsystemConstants.hpp"
 
+#include "tap/communication/serial/ref_serial_data.hpp"
+
 int voltage;
 float velocity;
 namespace subsystems {
+using namespace tap::communication::serial;
 float encoderOffset = 0;
 GimbalSubsystem::GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* yaw, tap::motor::DjiMotor* pitch) : tap::control::Subsystem(drivers), drivers(drivers), motorYaw(yaw), motorPitch(pitch) {
     gen = std::mt19937(rd());
@@ -25,16 +28,18 @@ void GimbalSubsystem::initialize() {
 }
 
 void GimbalSubsystem::refresh() {
-#ifdef INFANTRY
-    if (!motorYaw->isMotorOnline()) {
-        encoderOffset = drivers->i2c.encoder.getAngle();
-        motorYaw->resetEncoderValue();
-    }
+    if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower & RefSerialData::Rx::RobotPower::GIMBAL_HAS_POWER) {
+    #ifdef INFANTRY
+        if (!motorYaw->isMotorOnline()) {
+            encoderOffset = drivers->i2c.encoder.getAngle();
+            motorYaw->resetEncoderValue();
+        }
 
-#endif
-    yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
-    driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
-    yawAngleRelativeWorld = fmod(PI / 180 * drivers->bmi088.getYaw() - imuOffset, 2 * PI);
+    #endif
+        yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
+        driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
+        yawAngleRelativeWorld = fmod(PI / 180 * drivers->bmi088.getYaw() - imuOffset, 2 * PI);
+    }
 }
 
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float* targetPitch) {
