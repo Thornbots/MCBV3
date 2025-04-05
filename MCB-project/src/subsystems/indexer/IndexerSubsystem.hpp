@@ -16,7 +16,7 @@ class IndexerSubsystem : public tap::control::Subsystem
 {
 
 protected:  // Private Variables
-tap::Drivers* drivers;
+src::Drivers* drivers;
 // #if defined(sentry)
 tap::motor::DjiMotor* motorIndexer;//{drivers, tap::motor::MotorId::MOTOR4, tap::can::CanBus::CAN_BUS2, false, "Indexer", 0, 0};
 // #else
@@ -33,7 +33,7 @@ int64_t numTicksAtInit = 0;
 
 public:  // Public Methods
 
-IndexerSubsystem(tap::Drivers* drivers, tap::motor::DjiMotor* index);
+IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index);
 
 ~IndexerSubsystem() {}
 

@@ -8,6 +8,7 @@
 
 #include "drivers.hpp"
 #include "util/ui/GraphicsContainer.hpp"
+#include "modm/processing/protothread/protothread.hpp"
 
 namespace subsystems
 {

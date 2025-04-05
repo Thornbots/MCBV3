@@ -25,8 +25,9 @@
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/trigger.hpp"
 
-#include "drivers.hpp"
 
+#include "drivers.hpp"
+int rawEncoder = 0;
 namespace robots {
 class InfantryControl : public ControlInterface {
 public:
@@ -82,11 +83,11 @@ public:
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
-
     }
 
     src::Drivers *drivers;
     InfantryHardware hardware;
+
 
     // Subsystems
     subsystems::UISubsystem ui{drivers};
