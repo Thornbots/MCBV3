@@ -38,11 +38,12 @@ void ComputerVisionSubsystem::update(float current_yaw, float current_pitch, flo
     // state.position = modm::Vector3f(0,0,0);
     // state.velocity = modm::Vector3f(0,0,0);
     // state.acceleration = modm::Vector3f(0,0,0);
+    modm::Vector3f position(msg->x+0.001*msg->v_x,msg->z,-msg->y + 0.2); // taproot flips z y basis vec
+    modm::Vector3f velocity(msg->v_x,msg->v_z,-msg->v_y);
+    modm::Vector3f acceleration(msg->a_x,msg->a_z,-msg->a_y);
 
-    MeasuredKinematicState state;//(pos,vel,acc); 
-    state.position = modm::Vector3f(msg->x+0.001*msg->v_x,msg->z,-msg->y + 0.2); // taproot flips z y basis vec
-    state.velocity = modm::Vector3f(msg->v_x,msg->v_z,-msg->v_y);
-    state.acceleration = modm::Vector3f(msg->a_x,msg->a_z,-msg->a_y);
+
+    SecondOrderKinematicState state(position, velocity, acceleration);//(pos,vel,acc); 
 
     float targetYaw, targetPitch, travelTime;
     bool valid = tap::algorithms::ballistics::findTargetProjectileIntersection(state, J, 3, &targetPitch, &targetYaw, &travelTime, 0);

@@ -36,8 +36,12 @@ constexpr float KI_V = 0;  // integral gain for velocity
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
 constexpr float KP = 0;              // proportional gain for position control
-constexpr float BEYBLADE_DELAY = 0;  // delay for beyblade mode
-constexpr float MAX_BEYBLADE_SPEED = 10.5;
+constexpr float BEYBLADE_DELAY = .25;  // delay for beyblade mode/
+constexpr float BBterm1 = 10.7717; //constant term
+constexpr float BBterm2 = -2.0342; //linear term
+constexpr float BBterm3 = -.5660; //quadratic term
+constexpr float BBmax = 10.5; //constant term
+constexpr float maxTorqueZ = 30;
 
 #elif defined(SENTRY)
 // START getters and setters
@@ -46,8 +50,8 @@ constexpr float M = 14.0;                  // robot mass kg
 constexpr float J = 0.44;                  // measured from sys id kg-m^2
 constexpr float R_WHEEL = 0.05;  // wheel radius m
 constexpr float J_WHEEL = 0.0009;          // wheel moment of inertia kg-m^2
-constexpr float C_MOTOR = 2.5e-4;          // motor damping kg-s/m^2`
-constexpr float UK_MOTOR = 0.14;           // motor dry friction N-m
+constexpr float C_MOTOR = 2.5e-4 * .02299;          // motor damping kg-s/m^2`
+constexpr float UK_MOTOR = 0.14 * .02299;           // motor dry friction N-m
 constexpr float COF_WHEEL = 0.9;           // unitless COF
 
 constexpr float GEAR_RATIO = 3591/187.0f;  // gear ratio
@@ -63,8 +67,12 @@ constexpr float KI_V = 0;  // integral gain for velocity
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
 constexpr float KP = 0;              // proportional gain for position control
-constexpr float BEYBLADE_DELAY = 0;  // delay for beyblade mode
-constexpr float MAX_BEYBLADE_SPEED = 9.5;
+constexpr float BEYBLADE_DELAY = .25 * 5/6;  // delay for beyblade mode/
+constexpr float BBterm1 = 10.7717 * 5/6; //constant term
+constexpr float BBterm2 = -2.0342 * 5/6; //linear term
+constexpr float BBterm3 = -.5660 * 5/6; //quadratic term
+constexpr float BBmax = 10.5 * 5/6; //constant term
+constexpr float maxTorqueZ = 30 * 5/6;
 
 #elif defined(INFANTRY)
 // START getters and setters
@@ -119,8 +127,12 @@ constexpr float KI_V = 0;  // integral gain for velocity
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
 constexpr float KP = 0;              // proportional gain for position control
-constexpr float BEYBLADE_DELAY = 0;  // delay for beyblade mode
-constexpr float MAX_BEYBLADE_SPEED = 8;
+constexpr float BEYBLADE_DELAY = .25;  // delay for beyblade mode/
+constexpr float BBterm1 = 10.7717; //constant term
+constexpr float BBterm2 = -2.0342; //linear term
+constexpr float BBterm3 = -.5660; //quadratic term
+constexpr float BBmax = 10.5; //constant term
+constexpr float maxTorqueZ = 30;
 #endif
 
 

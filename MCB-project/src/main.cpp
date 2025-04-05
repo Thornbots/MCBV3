@@ -56,8 +56,8 @@ RobotControl control{&drivers};
 int main() {
     Board::initialize();
     initializeIo(&drivers);
-    testvar = drivers.i2c.encoder.getRawAngle();
-    testvar2 = drivers.i2c.encoder.getAngle();
+    // testvar = drivers.i2c.encoder.getRawAngle();
+    // testvar2 = drivers.i2c.encoder.getAngle();
     control.initialize();
     tap::buzzer::silenceBuzzer(&(drivers.pwm));
 
