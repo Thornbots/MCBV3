@@ -41,7 +41,6 @@ private:
     bool isCalibrated = false;
 
     float yaw = 0.0f, pitch = 0.0f;
-    int16_t mouseXOffset, mouseYOffset;
 
 };
 }  // namespace commands

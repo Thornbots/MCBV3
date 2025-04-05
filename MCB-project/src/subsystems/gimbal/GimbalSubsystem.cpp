@@ -29,6 +29,7 @@ void GimbalSubsystem::refresh() {
     if (!motorYaw->isMotorOnline()) {
         encoderOffset = drivers->i2c.encoder.getAngle();
         motorYaw->resetEncoderValue();
+    }
 
 #endif
     yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();

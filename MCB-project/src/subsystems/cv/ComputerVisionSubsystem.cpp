@@ -17,7 +17,10 @@ void ComputerVisionSubsystem::refresh() {
 
 void ComputerVisionSubsystem::update(float current_yaw, float current_pitch, float* yawOut, float* pitchOut, int* action) {
     const CVData* msg = comm.getLastCVData();
-    if(msg == nullptr) return;
+    if(msg == nullptr){
+        *action = -1;
+        return;
+    }
     
     comm.clearNewDataFlag();
      // Add rotated offset vector of panel relative to RGB

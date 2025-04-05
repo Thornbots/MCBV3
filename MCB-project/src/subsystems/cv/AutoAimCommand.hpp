@@ -48,8 +48,10 @@ private:
     ComputerVisionSubsystem* cv;
 
     bool isCalibrated = false;
+    bool isShooting = false;
 
     float yaw = 0.0f, pitch = 0.0f;
 
+    uint32_t lastSeenTime = 0;
 };
 }  // namespace commands
