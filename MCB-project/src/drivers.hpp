@@ -21,6 +21,7 @@
 #define DRIVERS_HPP_
 
 #include "tap/drivers.hpp"
+#include "communication/I2CCommunication.hpp"
 
 namespace src {
     class Drivers : public tap::Drivers {
@@ -28,7 +29,8 @@ namespace src {
 
     public:
         Drivers() : tap::Drivers() {}
-        
+        communication::I2CCommunication i2c;
+
     public:
     };  // class Drivers
 

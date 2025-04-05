@@ -20,7 +20,7 @@ public:  // Public Variables
 // constexpr static float PI = 3.14159;
 
 private:  // Private Variables
-tap::Drivers* drivers;
+src::Drivers* drivers;
 
 tap::motor::DjiMotor* motorFlywheel1;
 tap::motor::DjiMotor* motorFlywheel2;
@@ -36,7 +36,7 @@ int targetMotorRPM;
 bool robotDisabled = false;
 
 public:  // Public Methods 
-    FlywheelSubsystem(tap::Drivers* drivers, tap::motor::DjiMotor* flywheel1, tap::motor::DjiMotor* flywheel2);
+    FlywheelSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* flywheel1, tap::motor::DjiMotor* flywheel2);
 
     ~FlywheelSubsystem() {}  // Intentionally left blank
 

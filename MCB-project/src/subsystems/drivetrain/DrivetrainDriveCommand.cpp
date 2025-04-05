@@ -16,19 +16,22 @@ void DrivetrainDriveCommand::execute() {
     if (controlMode == ControlMode::KEYBOARD) {
         x = drivers->remote.keyPressed(Remote::Key::D) - drivers->remote.keyPressed(Remote::Key::A);
         y = drivers->remote.keyPressed(Remote::Key::W) - drivers->remote.keyPressed(Remote::Key::S);
+        boost = drivers->remote.keyPressed(Remote::Key::SHIFT);
 
     } else if (controlMode == ControlMode::CONTROLLER) {
-        x = 1.75 * drivers->remote.getChannel(Remote::Channel::LEFT_HORIZONTAL);
-        y = 1.75 * drivers->remote.getChannel(Remote::Channel::LEFT_VERTICAL);
+        x = drivers->remote.getChannel(Remote::Channel::LEFT_HORIZONTAL);
+        y = drivers->remote.getChannel(Remote::Channel::LEFT_VERTICAL);
     } else {
         drivetrain->stopMotors();
         return;
     }
 
     if (driveMode == DriveMode::BEYBLADE) {
-        r = 0.4;
+        r = 10.5f;
+        x *= 1.75f;
+        y *= 1.75f;
     } else if (driveMode == DriveMode::BEYBLADE2) {
-        r = 0.8;
+        r = 10.5f;
     } else if (driveMode == DriveMode::NO_SPIN) {
         r = 0;
 
@@ -36,15 +39,20 @@ void DrivetrainDriveCommand::execute() {
         float targetAngle = 0.0f;
         if (driveMode == DriveMode::PEEK_LEFT) {
             targetAngle = PEEK_LEFT_AMT;
+
         } else if (driveMode == DriveMode::PEEK_RIGHT) {
             targetAngle = PEEK_RIGHT_AMT;
+
+        } else {
+            x *= 2.5f;
+            y *= 2.5f;
         }
         r = drivetrain->calculateRotationPID(targetAngle + referenceAngle);  // + M_PI));
     }
 
     Pose2d drive(x, y, r);
 
-    drivetrain->setTargetTranslation(drive.rotate(referenceAngle));
+    drivetrain->setTargetTranslation(drive.rotate(referenceAngle), (bool)boost);
 }
 
 bool DrivetrainDriveCommand::isFinished() const { return !drivers->remote.isConnected(); }

@@ -25,8 +25,9 @@
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/trigger.hpp"
 
-#include "drivers.hpp"
 
+#include "drivers.hpp"
+int rawEncoder = 0;
 namespace robots {
 class InfantryControl : public ControlInterface {
 public:
@@ -68,8 +69,8 @@ public:
         peekRightButton.onTrue(&peekRight)->onFalse(&beybladeSlowKeyboard);
 
         beybladeType0Key.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
-        beybladeType1Key.onTrue(&beybladeSlowKeyboard)->onTrue(&lookMouse);
-        beybladeType2Key.onTrue(&beybladeFastKeyboard)->onTrue(&lookMouse);
+        beybladeType1Key.onTrue(&beybladeSlowKeyboard);//->onTrue(&lookMouse);
+        beybladeType2Key.onTrue(&beybladeFastKeyboard);//->onTrue(&lookMouse);
  
         joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);
@@ -82,11 +83,11 @@ public:
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
-
     }
 
     src::Drivers *drivers;
     InfantryHardware hardware;
+
 
     // Subsystems
     subsystems::UISubsystem ui{drivers};

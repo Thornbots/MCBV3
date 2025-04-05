@@ -1,36 +1,40 @@
 #include "GimbalSubsystem.hpp"
+
 #include "GimbalSubsystemConstants.hpp"
 
 int voltage;
 float velocity;
-namespace subsystems
-{
-
-GimbalSubsystem::GimbalSubsystem(tap::Drivers* drivers, tap::motor::DjiMotor* yaw, tap::motor::DjiMotor* pitch) : tap::control::Subsystem(drivers), drivers(drivers), motorYaw(yaw), motorPitch(pitch)
-{
+namespace subsystems {
+float encoderOffset = 0;
+GimbalSubsystem::GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* yaw, tap::motor::DjiMotor* pitch) : tap::control::Subsystem(drivers), drivers(drivers), motorYaw(yaw), motorPitch(pitch) {
     gen = std::mt19937(rd());
     distYaw = std::uniform_int_distribution<>(-YAW_DIST_RANGE, YAW_DIST_RANGE);
     distPitch = std::uniform_int_distribution<>(-PITCH_DIST_RANGE, PITCH_DIST_RANGE);
 }
 
-void GimbalSubsystem::initialize()
-{
+void GimbalSubsystem::initialize() {
     motorPitch->initialize();
     motorYaw->initialize();
+#ifndef OLDINFANTRY
+    encoderOffset = drivers->i2c.encoder.getAngle();
+#endif
     imuOffset = getYawEncoderValue() + YAW_OFFSET;
+
     targetYawAngleWorld += yawAngleRelativeWorld;
     drivers->commandScheduler.registerSubsystem(this);
 }
 
-void GimbalSubsystem::refresh()
-{
+void GimbalSubsystem::refresh() {
+    if(!motorYaw->isMotorOnline()){
+        encoderOffset = drivers->i2c.encoder.getAngle();
+        motorYaw->resetEncoderValue();
+    }
+
     yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
     driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
     yawAngleRelativeWorld = fmod(PI / 180 * drivers->bmi088.getYaw() - imuOffset, 2 * PI);
-
-    motorPitch->setDesiredOutput(pitchMotorVoltage);
-    motorYaw->setDesiredOutput(yawMotorVoltage);
 }
+
 
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float* targetPitch)
 {
@@ -40,25 +44,28 @@ void GimbalSubsystem::updateMotors(float changeInTargetYaw, float* targetPitch)
     yawEncoderCache = driveTrainEncoder;
     targetYawAngleWorld = fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
     pitchMotorVoltage = getPitchVoltage(*targetPitch, dt);
-    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, changeInTargetYaw / dt, dt);
+    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, *changeInTargetYaw / dt, dt);
+    // moved
+    motorPitch->setDesiredOutput(pitchMotorVoltage);
+    motorYaw->setDesiredOutput(yawMotorVoltage);
+
 }
 
-void GimbalSubsystem::stopMotors()
-{
+void GimbalSubsystem::stopMotors() {
     pitchMotorVoltage = 0;
     yawMotorVoltage = 0;
+    motorPitch->setDesiredOutput(pitchMotorVoltage);
+    motorYaw->setDesiredOutput(yawMotorVoltage);
     pitchController.clearBuildup();
     yawController.clearBuildup();
 }
 
-void GimbalSubsystem::reZeroYaw()
-{
+void GimbalSubsystem::reZeroYaw() {
     // TODO
 }
 
 // assume yawAngleRelativeWorld is in radians, not sure
-int GimbalSubsystem::getYawVoltage(float driveTrainAngularVelocity, float yawAngleRelativeWorld, float yawAngularVelocity, float desiredAngleWorld, float inputVel, float dt)
-{
+int GimbalSubsystem::getYawVoltage(float driveTrainAngularVelocity, float yawAngleRelativeWorld, float yawAngularVelocity, float desiredAngleWorld, float inputVel, float dt) {
 #if defined(yaw_sysid)
     voltage = distYaw(gen);
     velocity = yawAngularVelocity;
@@ -71,8 +78,7 @@ int GimbalSubsystem::getYawVoltage(float driveTrainAngularVelocity, float yawAng
 }
 
 // assume targetangle is in radians, not sure
-int GimbalSubsystem::getPitchVoltage(float targetAngle, float dt)
-{
+int GimbalSubsystem::getPitchVoltage(float targetAngle, float dt) {
 #if defined(pitch_sysid)
     return distPitch(gen);
 #elif defined(drivetrain_sysid)
@@ -82,8 +88,9 @@ int GimbalSubsystem::getPitchVoltage(float targetAngle, float dt)
 #endif
 }
 
-float GimbalSubsystem::getYawEncoderValue() { return (tap::motor::DjiMotor::encoderToDegrees(motorYaw->getEncoderUnwrapped()) * PI / 180 - YAW_OFFSET) / YAW_TOTAL_RATIO; }
-float GimbalSubsystem::getPitchEncoderValue() { return tap::motor::DjiMotor::encoderToDegrees(motorPitch->getEncoderUnwrapped()) * PI / 180; }
+float GimbalSubsystem::getYawEncoderValue() { return motorYaw->getPositionUnwrapped() / YAW_TOTAL_RATIO + encoderOffset; }
+
+float GimbalSubsystem::getPitchEncoderValue() { return motorPitch->getPositionWrapped(); }
 float GimbalSubsystem::getYawVel() { return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO; }
 float GimbalSubsystem::getPitchVel() { return motorPitch->getShaftRPM() * PI / 30; }
 

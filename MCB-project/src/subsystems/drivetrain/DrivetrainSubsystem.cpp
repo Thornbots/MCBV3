@@ -4,7 +4,7 @@
 
 namespace subsystems {
 
-DrivetrainSubsystem::DrivetrainSubsystem(tap::Drivers* drivers, tap::motor::DjiMotor* motorOne, tap::motor::DjiMotor* motorTwo, tap::motor::DjiMotor* motorThree, tap::motor::DjiMotor* motorFour)
+DrivetrainSubsystem::DrivetrainSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* motorOne, tap::motor::DjiMotor* motorTwo, tap::motor::DjiMotor* motorThree, tap::motor::DjiMotor* motorFour)
     : tap::control::Subsystem(drivers),
       drivers(drivers),
       motorArray{motorOne, motorTwo, motorThree, motorFour},
@@ -26,9 +26,6 @@ void DrivetrainSubsystem::refresh() {
         powerLimit = std::min((uint16_t)120, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
 
     for (int i = 0; i < 4; i++) {
-        float adjustedCurrent = std::clamp(motorCurrent[i], -20.0f, 20.0f) * 819.2f;
-        motorArray[i]->setDesiredOutput(static_cast<int32_t>(adjustedCurrent));
-
         motorVel[i] = motorArray[i]->getShaftRPM() * PI / 30.0f;  // in rad/s
     }
 }
@@ -58,7 +55,7 @@ float calculateCurrent(float time) {
     }
 }
 #endif
-void DrivetrainSubsystem::setTargetTranslation(Pose2d drive) {
+void DrivetrainSubsystem::setTargetTranslation(Pose2d drive, bool shouldBoost) {
     lastDrive = drive;
 
 #if defined(drivetrain_sysid)
@@ -74,9 +71,16 @@ void DrivetrainSubsystem::setTargetTranslation(Pose2d drive) {
     for (int i = 0; i < 4; i++) motorCurrent[i] = 0;
 
 #else
-    controller.calculate(lastDrive, powerLimit, imuAngle, motorVel, motorCurrent);
+    boost = shouldBoost && (drivers->refSerial.getRobotData().chassis.powerBuffer > 20) ? 30.0f: 0.0f;
+    throttle = (drivers->refSerial.getRobotData().chassis.powerBuffer <= 10) ? 10.0f : 0.0f;
+    controller.calculate(lastDrive, powerLimit + boost - throttle, imuAngle, motorVel, motorCurrent);
 
 #endif
+    for (int i = 0; i < 4; i++) {
+        float adjustedCurrent = std::clamp(motorCurrent[i], -20.0f, 20.0f) * 819.2f;
+
+        motorArray[i]->setDesiredOutput(static_cast<int32_t>(adjustedCurrent));
+    }
 }
 
 // fix function
@@ -86,6 +90,12 @@ void DrivetrainSubsystem::stopMotors() {
 #endif
 
     for (int i = 0; i < 4; i++) motorCurrent[i] = 0;
+    
+    for (int i = 0; i < 4; i++) {
+        float adjustedCurrent = std::clamp(motorCurrent[i], -20.0f, 20.0f) * 819.2f;
+
+        motorArray[i]->setDesiredOutput(static_cast<int32_t>(adjustedCurrent));
+    }
     rotationPIDController.reset();
 }
 
