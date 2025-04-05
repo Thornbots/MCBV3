@@ -15,7 +15,7 @@ GimbalSubsystem::GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* ya
 void GimbalSubsystem::initialize() {
     motorPitch->initialize();
     motorYaw->initialize();
-#ifdef INFANTRY
+#ifndef OLDINFANTRY
     encoderOffset = drivers->i2c.encoder.getAngle();
 #endif
     imuOffset = getYawEncoderValue() + YAW_OFFSET;
@@ -25,16 +25,18 @@ void GimbalSubsystem::initialize() {
 }
 
 void GimbalSubsystem::refresh() {
-// #ifdef INFANTRY
+#ifndef OLDINFANTRY
     if (!motorYaw->isMotorOnline()) {
         encoderOffset = drivers->i2c.encoder.getAngle();
         motorYaw->resetEncoderValue();
     }
 
-// #endif
+#endif
     yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
     driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
     yawAngleRelativeWorld = fmod(PI / 180 * drivers->bmi088.getYaw() - imuOffset, 2 * PI);
+    motorPitch->setDesiredOutput(pitchMotorVoltage);
+    motorYaw->setDesiredOutput(yawMotorVoltage);
 }
 
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float* targetPitch) {
@@ -45,15 +47,13 @@ void GimbalSubsystem::updateMotors(float changeInTargetYaw, float* targetPitch) 
     pitchMotorVoltage = getPitchVoltage(*targetPitch, dt);
     yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, changeInTargetYaw / dt, dt);
     // moved
-    motorPitch->setDesiredOutput(pitchMotorVoltage);
-    motorYaw->setDesiredOutput(yawMotorVoltage);
+
 }
 
 void GimbalSubsystem::stopMotors() {
     pitchMotorVoltage = 0;
     yawMotorVoltage = 0;
-    motorPitch->setDesiredOutput(pitchMotorVoltage);
-    motorYaw->setDesiredOutput(yawMotorVoltage);
+
     pitchController.clearBuildup();
     yawController.clearBuildup();
 }
