@@ -25,6 +25,7 @@ tap::motor::DjiMotor* motorIndexer;//{drivers, tap::motor::MotorId::MOTOR4, tap:
 tap::algorithms::SmoothPid indexPIDController;
 
 float ballsPerSecond = 0.0f;
+static constexpr int MAX_INDEX_RPM = 17000;
 static constexpr float HEAT_PER_BALL = 10.0f;
 static constexpr float LATENCY = 0.6f; //expected ref system latency for barrel heat limiting
 int32_t indexerVoltage = 0;
@@ -36,17 +37,18 @@ IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index);
 
 ~IndexerSubsystem() {}
 
-void initialize();
+virtual void initialize();
 
 void refresh() override;
 
 virtual void indexAtRate(float ballsPerSecond);
+virtual void indexAtMaxRate();
 
-virtual void setTargetMotorRPM(int targetMotorRPM);
+void setTargetMotorRPM(int targetMotorRPM);
 
 virtual void stopIndex();
 
-virtual void unjam();
+void unjam();
 
 float getNumBallsShot();
 

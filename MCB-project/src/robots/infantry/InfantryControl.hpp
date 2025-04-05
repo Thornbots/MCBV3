@@ -18,12 +18,12 @@
 #include "subsystems/flywheel/ShooterStopCommand.hpp"
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
+#include "subsystems/gimbal/GimbalStopCommand.hpp"
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/trigger.hpp"
-#include "subsystems/gimbal/GimbalStopCommand.hpp"
 
 
 #include "drivers.hpp"

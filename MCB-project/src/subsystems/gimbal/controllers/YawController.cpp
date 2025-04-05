@@ -15,6 +15,9 @@ namespace subsystems {
 YawController::YawController() {}
 
 float YawController::calculate(float currentPosition, float currentVelocity, float currentDrivetrainVelocity, float targetPosition, float inputVelocity, float deltaT) {
+
+    estimateState(&currentPosition, &currentVelocity, pastTorque, currentDrivetrainVelocity);
+
     float positionError = targetPosition - currentPosition;
     while (positionError > static_cast<float>(M_PI)) {
         positionError -= static_cast<float>(M_TWOPI);
@@ -23,10 +26,11 @@ float YawController::calculate(float currentPosition, float currentVelocity, flo
         positionError += static_cast<float>(M_TWOPI);
     }
 
-    float choiceKDT = currentDrivetrainVelocity * positionError > 0 ? KDT : KDT_REV;  // check if turret is fighting drivetrain;
+    //float choiceKDT = currentDrivetrainVelocity * positionError > 0 ? KDT : KDT_REV;  // check if turret is fighting drivetrain;
     inputVelocity = std::clamp(inputVelocity, -VELO_MAX / 2, VELO_MAX / 2);
     // float targetVelocity = (KP + signum(currentDrivetrainVelocity) * choiceKDT) * positionError + inputVelocity;
-    float targetVelocity = decelProfile(positionError, currentVelocity, inputVelocity);
+    float targetVelocity = decelProfile(positionError, currentVelocity, inputVelocity, currentDrivetrainVelocity);
+
     // experimental
     //  targetVelocity = signum(positionError)*sqrt(currentVelocity*currentVelocity + 2 * A_DECEL * abs(positionError));
 
@@ -45,15 +49,17 @@ float YawController::calculate(float currentPosition, float currentVelocity, flo
     // integral velocity controller
     if (abs(pastOutput) < INT_THRESH || velocityError * buildup < 0)  // signs are opposite
     {                                                                 // saturation detection
-        // if (velocityError * buildup < 0) {                              // overshooting
+         if (velocityError * buildup < 0) {                              // overshooting
         buildup *= (1 - TAKEBACK);  // take back not quite half
-        // }
+         }
         buildup += velocityError * deltaT;  // integrate normally
     }
     // calculation for setting target current aka velocity controller
-    float targetCurrent = KVISC * targetRelativeVelocity + UK * signum(targetRelativeVelocity) + KA * targetAcceleration + KPV * velocityError + KIV * buildup;
+    float targetCurrent = std::clamp(KVISC * targetRelativeVelocity + UK * signum(targetRelativeVelocity) + KA * targetAcceleration + KPV * velocityError + KIV * buildup, -20.0f, 20.0f);
 
     pastOutput = RA * targetCurrent + KV * targetRelativeVelocity;
+    pastTorque = targetCurrent*KT;
+
 #if defined(OLDINFANTRY)
     return std::clamp(pastOutput, -VOLT_MAX, VOLT_MAX);
 #else
@@ -61,7 +67,23 @@ float YawController::calculate(float currentPosition, float currentVelocity, flo
 #endif
 }
 
-float YawController::decelProfile(float poserror, float thetadot, float thetadotinput) {
+void YawController::estimateState(float* theta, float* thetadot, float tLast, float drivetrainVelocity) {
+    // For each historical value of Fx, Fy, Tz, calculate the estimates
+    for (int i = Q_SIZE - 1; i >= 0; i--) {
+        // // Store the current values in the history
+        // load in new value if i is not > 0
+        // forcehistory[Q_SIZE-1] gets kicked out every method call
+        torqueHistory[i] = (i > 0) ? torqueHistory[i - 1] : tLast;
+
+        // Estimated angular velocity (theta_dot)
+        *thetadot += (torqueHistory[i] - C*(*thetadot - drivetrainVelocity) - signum(*thetadot - drivetrainVelocity)) * (DT/ J);
+
+        // Update velocity
+        *theta += *thetadot * DT;
+    }
+}
+
+float YawController::decelProfile(float poserror, float thetadot, float thetadotinput, float drivetrainVelocity) {
     float o = 0, o2 = 0;  // offsets
     float t2 = thetadotinput * thetadotinput;
     float v1 = 0, v2 = 0, v3 = 0, v4 = 0;
@@ -78,7 +100,8 @@ float YawController::decelProfile(float poserror, float thetadot, float thetadot
         v4 = -std::sqrt(t2 - 2 * A_DECEL * (poserror + o2));  // Negative right
     }
     if (std::fabs(poserror) < THETA_DOT_BREAK / KP)  // std::fabs(thetadot - thetadotinput) < THETA_DOT_BREAK)
-        return KP * poserror + thetadotinput;
+        return (KP + (drivetrainVelocity * poserror > 0 ? KDT : KDT_REV)*drivetrainVelocity) * poserror + thetadotinput;
+
     if (v3 != 0 && poserror > 0 && thetadot <= 0)
         return v3;
     else if (v2 != 0 && poserror < 0 && thetadot >= 0)

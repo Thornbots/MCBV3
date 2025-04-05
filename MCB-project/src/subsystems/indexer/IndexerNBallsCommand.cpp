@@ -9,7 +9,7 @@ void IndexerNBallsCommand::initialize() {
 void IndexerNBallsCommand::execute()
 {
     if (indexer->getNumBallsShot() < 0.9) { //make first shot fast, but don't make second fast
-        indexer->setTargetMotorRPM(17000); //maximum speed of indexer motor
+        indexer->indexAtMaxRate();
     } else {
         indexer->indexAtRate(ballsPerSecond);
     }

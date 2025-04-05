@@ -17,10 +17,9 @@ public:
 
     void initialize() override;
     void refresh() override;
-    void stopIndex() override;
-    void unjam() override;
     void indexAtRate(float ballsPerSecond) override;
-    void setTargetMotorRPM(int targetMotorRPM) override;
+    void indexAtMaxRate() override;
+    void setTargetMotor2RPM(int targetMotorRPM);
 
 private:
 tap::algorithms::SmoothPid indexPIDController2;

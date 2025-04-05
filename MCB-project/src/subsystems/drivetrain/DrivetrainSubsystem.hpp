@@ -31,6 +31,8 @@ private:                                            // Private Variables
     ChassisController controller;
 
     tap::algorithms::SmoothPid rotationPIDController;
+    float boost;
+    float throttle;
    
 
 public:  // Public Methods
@@ -55,7 +57,7 @@ public:  // Public Methods
      * the described behavior. This will allow the drivetrain to translate with left stick, and turn
      * with the right stick or beyblade depending how this is called.
      */
-    void setTargetTranslation(Pose2d drive);
+    void setTargetTranslation(Pose2d drive, bool boost);
 
     /*
      * Call this function to set all DriveTrain motors to 0 desired RPM. CALL setMotorSpeeds() FOR
