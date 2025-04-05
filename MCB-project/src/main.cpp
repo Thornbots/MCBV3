@@ -68,7 +68,7 @@ int main()
             control.update();
             drivers.commandScheduler.run();
             drivers.djiMotorTxHandler.encodeAndSendCanData();
-            drivers.terminalSerial.update();
+            // drivers.terminalSerial.update();
         }
 
         // prevent looping too fast

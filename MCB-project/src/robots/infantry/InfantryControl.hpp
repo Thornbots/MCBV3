@@ -74,6 +74,7 @@ public:
         joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick);
+    drivers->terminalSerial.initialize();
 
     }
 
@@ -82,6 +83,7 @@ public:
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
+        drivers->terminalSerial.update();
 
     }
 
