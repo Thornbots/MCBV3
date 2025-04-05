@@ -18,6 +18,7 @@ public:
 
     //drivers
     src::Drivers* drivers;
+    Servo servo{drivers, tap::gpio::Pwm::C1, 0.8f, 0.2f, 0.01f};
 
     //motors 
     DjiMotor flywheelMotor1{drivers, MotorId::MOTOR5, CanBus::CAN_BUS2, true, "Flywheel"};
