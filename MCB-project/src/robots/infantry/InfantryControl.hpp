@@ -25,10 +25,9 @@
 #include "util/trigger.hpp"
 #include "subsystems/gimbal/GimbalStopCommand.hpp"
 
-#include "communication/I2CCommunication.hpp"
 
 #include "drivers.hpp"
-
+int rawEncoder = 0;
 namespace robots {
 class InfantryControl : public ControlInterface {
 public:
@@ -84,11 +83,11 @@ public:
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
-
     }
 
     src::Drivers *drivers;
     InfantryHardware hardware;
+
 
     // Subsystems
     subsystems::UISubsystem ui{drivers};

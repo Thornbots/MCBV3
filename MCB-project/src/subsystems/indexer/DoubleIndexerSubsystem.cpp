@@ -4,7 +4,7 @@
 namespace subsystems
 {
 
-DoubleIndexerSubsystem::DoubleIndexerSubsystem(tap::Drivers* drivers, tap::motor::DjiMotor* index1, tap::motor::DjiMotor* index2)
+DoubleIndexerSubsystem::DoubleIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index1, tap::motor::DjiMotor* index2)
     : IndexerSubsystem(drivers, index1), // Call base class constructor
     motorIndexer2(index2),
     indexPIDController2(PID_CONF_INDEX)

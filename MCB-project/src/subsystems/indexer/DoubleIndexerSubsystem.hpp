@@ -11,7 +11,7 @@ public:
     // Additional Motor Constants (if necessary)
     tap::motor::DjiMotor* motorIndexer2;
 
-    DoubleIndexerSubsystem(tap::Drivers* drivers, tap::motor::DjiMotor* index1, tap::motor::DjiMotor* index2);
+    DoubleIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index1, tap::motor::DjiMotor* index2);
 
     ~DoubleIndexerSubsystem() {}
 

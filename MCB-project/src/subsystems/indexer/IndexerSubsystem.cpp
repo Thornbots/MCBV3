@@ -3,7 +3,7 @@
 
 namespace subsystems {
     
-IndexerSubsystem::IndexerSubsystem(tap::Drivers* drivers, tap::motor::DjiMotor* index)
+IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index)
     : tap::control::Subsystem(drivers),
     drivers(drivers),
     motorIndexer(index),
@@ -52,11 +52,11 @@ void IndexerSubsystem::setTargetMotorRPM(int targetMotorRPM) {
 
 // converts delta motor ticks to num balls shot using constants
 float IndexerSubsystem::getNumBallsShot() {
-    return (motorIndexer->getEncoder()->getPosition().getUnwrappedValue() - numTicksAtInit) / (REV_PER_BALL * M_2_PI);
+    return (motorIndexer->getPositionUnwrapped() - numTicksAtInit) / (REV_PER_BALL * M_2_PI);
 }
 
 void IndexerSubsystem::resetBallsCounter() {
-    numTicksAtInit = motorIndexer->getEncoder()->getPosition().getUnwrappedValue();
+    numTicksAtInit = motorIndexer->getPositionUnwrapped();
 }
 
 float IndexerSubsystem::getBallsPerSecond() {

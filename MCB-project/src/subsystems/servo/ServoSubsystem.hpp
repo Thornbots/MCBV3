@@ -15,7 +15,7 @@ class ServoSubsystem : public tap::control::Subsystem
 {
 
 protected:  // Private Variables
-tap::Drivers* drivers;
+src::Drivers* drivers;
 tap::motor::Servo* servo;
 
 public:  // Public Methods
@@ -23,7 +23,7 @@ public:  // Public Methods
 constexpr static float OPEN_POSITION = 1.0f;
 constexpr static float CLOSED_POSITION = 0.0f;
 
-ServoSubsystem(tap::Drivers* drivers, tap::motor::Servo* servo);
+ServoSubsystem(src::Drivers* drivers, tap::motor::Servo* servo);
 
 ~ServoSubsystem() {}
 

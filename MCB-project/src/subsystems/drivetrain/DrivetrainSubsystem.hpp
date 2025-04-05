@@ -15,7 +15,7 @@ class DrivetrainSubsystem : public tap::control::Subsystem
 {
 
 private:                                            // Private Variables
-    tap::Drivers* drivers;
+    src::Drivers* drivers;
 
     tap::motor::DjiMotor* motorArray[4];
 
@@ -34,7 +34,7 @@ private:                                            // Private Variables
    
 
 public:  // Public Methods
-    DrivetrainSubsystem(tap::Drivers* driver, tap::motor::DjiMotor* motorOne, tap::motor::DjiMotor* motorTwo, tap::motor::DjiMotor* motorThree, tap::motor::DjiMotor* motorFour);
+    DrivetrainSubsystem(src::Drivers* driver, tap::motor::DjiMotor* motorOne, tap::motor::DjiMotor* motorTwo, tap::motor::DjiMotor* motorThree, tap::motor::DjiMotor* motorFour);
     
     // ~DrivetrainSubsystem() override {}  // Intentionally blank
 
