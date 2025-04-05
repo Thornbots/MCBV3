@@ -8,10 +8,13 @@
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
 #include "subsystems/gimbal/GimbalStopCommand.hpp"
+#include "subsystems/cv/AutoAimCommand.hpp"
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
 #include "util/trigger.hpp"
+
+#include "subsystems/cv/ComputerVisionSubsystem.hpp"
 
 #include "drivers.hpp"
 
@@ -27,6 +30,7 @@ public:
         flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
+        cv.initialize();
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
@@ -37,7 +41,7 @@ public:
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
 
-
+        autoTrigger.whileTrue(&autoCommand)->onFalse(&lookJoystick)->whileTrue(&shooterStart);
         // drive commands 
 
         joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
@@ -59,20 +63,12 @@ public:
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::DoubleIndexerSubsystem indexer{drivers, &hardware.indexMotor1, &hardware.indexMotor2};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
+    subsystems::ComputerVisionSubsystem cv{drivers};
 
-    // commands old
-    //  commands::JoystickMoveCommand look{drivers, &gimbal};
-    //  commands::MouseMoveCommand look2{drivers, &gimbal};
-
-    // commands::ShooterStartCommand shooterStart{drivers, &flywheel};
-    // commands::ShooterStopCommand shooterStop{drivers, &flywheel};
-
-    // commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 10};
-    // commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
-
-    // commands from infantrycontrol
+    // commands
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
+    commands::AutoAimCommand autoCommand{drivers, &gimbal, &indexer, &cv};
 
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
@@ -83,46 +79,13 @@ public:
     commands::IndexerStopCommand indexerStopCommand{drivers, &indexer};
 
     // CHANGE NUMBERS LATER
-    commands::DrivetrainDriveCommand peekRight{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_RIGHT, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand peekLeft{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_LEFT, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand drivetrainFollowKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::KEYBOARD};
     commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::CONTROLLER};
     commands::DrivetrainDriveCommand beybladeJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE2, commands::ControlMode::CONTROLLER};
-    commands::DrivetrainDriveCommand beybladeSlowKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand beybladeFastKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE2, commands::ControlMode::KEYBOARD};
     commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
 
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
 
-    // mappings old
-    //  HoldCommandMapping startShootMapping {
-    //      drivers,
-    //      {&indexer10Hz},
-    //      RemoteMapState(Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP)};
-
-    // HoldCommandMapping idleShootMapping {
-    //     drivers,
-    //     {&shooterStart},
-    //     RemoteMapState(Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP)};
-
-    // HoldCommandMapping stopShootMapping {
-    //     drivers,
-    //     {&indexerUnjam, &shooterStop},
-    //     RemoteMapState(Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN)};
-
-    // HoldCommandMapping startShootMappingMouse {
-    //     drivers,
-    //     {&shooterStart, &indexer10Hz},
-    //     RemoteMapState(RemoteMapState::MouseButton::LEFT)
-    // };
-
-    // HoldCommandMapping stopShootMappingMouse {
-    //     drivers,
-    //     {&shooterStop, &indexerUnjam},
-    //     RemoteMapState(RemoteMapState::MouseButton::LEFT)
-    // };
-
-    // mappings from infantrycontrol
+    // mappings 
 
     // shooting
     Trigger shootButton{drivers, Remote::Channel::WHEEL, -0.5};
@@ -136,6 +99,8 @@ public:
     Trigger joystickDrive1{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::MID};
     Trigger joystickDrive2{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
 
-    Trigger* triggers[5] = {&joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton};  //, &indexSpinButton};
+    Trigger autoTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
+
+    Trigger* triggers[6] = {&joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &autoTrigger};  //, &indexSpinButton};
 };
 }  // namespace robots

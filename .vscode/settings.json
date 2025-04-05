@@ -85,7 +85,8 @@
         "span": "cpp",
         "stop_token": "cpp",
         "format": "cpp",
-        "semaphore": "cpp"
+        "semaphore": "cpp",
+        "*.source": "cpp"
     },
     "files.exclude": {
         ".gitignore": true,

@@ -22,7 +22,7 @@ struct CVData
     float a_y = 0;        // m/s^2
     float a_z = 0;        // m/s^2
     float confidence = 0; // 0.0 to 1.0
-    uint64_t timestamp = 0;
+    // uint64_t timestamp = 0;
 };
 
 // Output
@@ -33,7 +33,7 @@ struct AutoAimOutput
     float pitch;                     
     uint8_t newline = 0x0A;          
     uint64_t timestamp = 0;         
-};
+} modm_packed;
 
 class JetsonCommunication : public tap::communication::serial::DJISerial
 {
@@ -55,6 +55,8 @@ public:
     bool sendAutoAimOutput(AutoAimOutput &output);
 
     bool isConnected() const;
+
+    inline bool hasNewMessage() { return hasNewData;}
 
     uint64_t getCurrentTime() const;
 

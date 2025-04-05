@@ -35,16 +35,20 @@ void GimbalSubsystem::refresh() {
     yawAngleRelativeWorld = fmod(PI / 180 * drivers->bmi088.getYaw() - imuOffset, 2 * PI);
 }
 
-void GimbalSubsystem::updateMotors(float* changeInTargetYaw, float* targetPitch) {
+
+void GimbalSubsystem::updateMotors(float changeInTargetYaw, float* targetPitch)
+{
+
     *targetPitch = std::clamp(*targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
     driveTrainEncoder = getYawEncoderValue();
     yawEncoderCache = driveTrainEncoder;
-    targetYawAngleWorld = fmod(targetYawAngleWorld + *changeInTargetYaw, 2 * PI);
+    targetYawAngleWorld = fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
     pitchMotorVoltage = getPitchVoltage(*targetPitch, dt);
     yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, *changeInTargetYaw / dt, dt);
     // moved
     motorPitch->setDesiredOutput(pitchMotorVoltage);
     motorYaw->setDesiredOutput(yawMotorVoltage);
+
 }
 
 void GimbalSubsystem::stopMotors() {

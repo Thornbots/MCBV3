@@ -32,6 +32,7 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->djiMotorTerminalSerialHandler.init();
     drivers->bmi088.initialize(500, 0.1f, 0.0f);
     drivers->bmi088.requestCalibration();
+
 }
 
 // Anything that you would like to be called place here. It will be called
@@ -75,10 +76,9 @@ int main() {
             control.update();
             drivers.commandScheduler.run();
             drivers.djiMotorTxHandler.encodeAndSendCanData();
-            drivers.terminalSerial.update();
-            testvar = drivers.i2c.encoder.getRawAngle();
-            testvar2 = drivers.i2c.encoder.getAngle();
-        }
+
+            // drivers.terminalSerial.update();
+        } 
 
         // prevent looping too fast
         modm::delay_us(10);
