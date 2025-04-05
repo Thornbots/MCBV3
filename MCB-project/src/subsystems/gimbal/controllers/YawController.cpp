@@ -15,7 +15,7 @@ namespace subsystems {
 YawController::YawController() {}
 
 float YawController::calculate(float currentPosition, float currentVelocity, float currentDrivetrainVelocity, float targetPosition, float inputVelocity, float deltaT) {
-
+    currentVelocity /= PI; // TODO: this is a hack
     estimateState(&currentPosition, &currentVelocity, pastTorque, currentDrivetrainVelocity);
 
     float positionError = targetPosition - currentPosition;
