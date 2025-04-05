@@ -39,7 +39,7 @@ constexpr static int YAW_MOTOR_MAX_SPEED = 1000;  // TODO: Make this value relev
 static constexpr float MAX_PITCH_UP = PI_CONST / 180 * 12*2; //*2 for ratio
 static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 12*2;
 
-static constexpr float YAW_OFFSET = 0;
+static constexpr float YAW_OFFSET = PI_CONST;
 
 static constexpr float PITCH_OFFSET = 1.75f * PI_CONST;  // to make gimbal horizontal when told to go to 0
 

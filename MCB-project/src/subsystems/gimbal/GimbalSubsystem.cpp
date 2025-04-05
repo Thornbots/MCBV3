@@ -15,7 +15,7 @@ GimbalSubsystem::GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* ya
 void GimbalSubsystem::initialize() {
     motorPitch->initialize();
     motorYaw->initialize();
-#ifndef OLDINFANTRY
+#ifdef INFANTRY
     encoderOffset = drivers->i2c.encoder.getAngle();
 #endif
     imuOffset = getYawEncoderValue() + YAW_OFFSET;
@@ -25,11 +25,10 @@ void GimbalSubsystem::initialize() {
 }
 
 void GimbalSubsystem::refresh() {
-#ifndef OLDINFANTRY
+#ifdef INFANTRY
     if (!motorYaw->isMotorOnline()) {
         encoderOffset = drivers->i2c.encoder.getAngle();
         motorYaw->resetEncoderValue();
-    }
 
 #endif
     yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();

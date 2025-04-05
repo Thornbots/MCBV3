@@ -37,7 +37,7 @@ private:  // Private Variables
     float driveTrainAngularVelocity, yawAngularVelocity, yawAngleRelativeWorld = 0.0, imuOffset;
     float yawEncoderCache = 0;
     float desiredYawAngleWorld, desiredYawAngleWorld2, driveTrainEncoder = 0.0;
-    float stickAccumulator = 0, targetYawAngleWorld = 0,
+    float stickAccumulator = 0, targetYawAngleWorld = PI,
           targetDTVelocityWorld = 0;  
 
     // for sysid

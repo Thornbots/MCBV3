@@ -5,7 +5,7 @@ namespace commands
 {
 
 void JoystickMoveCommand::initialize() {  
-
+        
 }
 void JoystickMoveCommand::execute()
 {
