@@ -7,7 +7,7 @@ public:
     //~PitchController();
     float calculate(float currentPosition, float currentVelocity, float targetPosition, float deltaT);
 
-    void clearBuildup() { buildup = 0; };
+    void clearBuildup() { buildup = 0; buildup = 0; pastTargetVelo = 0; pastOutput = 0;};
     
     int signum(float num) { return (num > 0) ? 1 : ((num < 0) ? -1 : 0); }
 
