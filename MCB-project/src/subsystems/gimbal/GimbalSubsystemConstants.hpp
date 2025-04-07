@@ -62,7 +62,7 @@ static constexpr float YAW_OFFSET = PI_CONST;
 
 static constexpr float PITCH_OFFSET = 0.96 * PI_CONST;  // to make gimbal horizontal when told to go to 0
 
-static constexpr float YAW_TOTAL_RATIO = 32319.0f / 748.0f;  // unitless, ratio of encoder counts to degrees of rotation
+static constexpr float YAW_TOTAL_RATIO = 54.0f/24.0f * 3591.0f / 187.0f;  // unitless, ratio of encoder to turret spin 
 
 static constexpr int YAW_DIST_RANGE = 16384 / 4;  // 20/4 = 5 amps
 

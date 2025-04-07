@@ -2,7 +2,10 @@
 
 #include "DrivetrainSubsystemConstants.hpp"
 
+#include "tap/communication/serial/ref_serial_data.hpp"
+
 namespace subsystems {
+using namespace tap::communication::serial;
 
 DrivetrainSubsystem::DrivetrainSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* motorOne, tap::motor::DjiMotor* motorTwo, tap::motor::DjiMotor* motorThree, tap::motor::DjiMotor* motorFour)
     : tap::control::Subsystem(drivers),
@@ -19,14 +22,16 @@ void DrivetrainSubsystem::initialize() {
 
 // guaranteed to be called
 void DrivetrainSubsystem::refresh() {
-    // need to actually fix this yay
-    imuAngle = (drivers->bmi088.getYaw() - 180) * PI / 180;
+    if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower & RefSerialData::Rx::RobotPower::CHASSIS_HAS_POWER) {
+        // need to actually fix this yay
+        imuAngle = (drivers->bmi088.getYaw() - 180) * PI / 180;
 
-    if (drivers->refSerial.getRefSerialReceivingData())  // check for uart disconnected
-        powerLimit = std::min((uint16_t)120, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
+        if (drivers->refSerial.getRefSerialReceivingData())  // check for uart disconnected
+            powerLimit = std::min((uint16_t)120, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
 
-    for (int i = 0; i < 4; i++) {
-        motorVel[i] = motorArray[i]->getShaftRPM() * PI / 30.0f;  // in rad/s
+        for (int i = 0; i < 4; i++) {
+            motorVel[i] = motorArray[i]->getShaftRPM() * PI / 30.0f;  // in rad/s
+        }
     }
 }
 #if defined(drivetrain_sysid)
@@ -71,7 +76,7 @@ void DrivetrainSubsystem::setTargetTranslation(Pose2d drive, bool shouldBoost) {
     for (int i = 0; i < 4; i++) motorCurrent[i] = 0;
 
 #else
-    boost = shouldBoost && (drivers->refSerial.getRobotData().chassis.powerBuffer > 20) ? 30.0f: 0.0f;
+    boost = shouldBoost && (drivers->refSerial.getRobotData().chassis.powerBuffer > 20) ? 30.0f : 0.0f;
     throttle = (drivers->refSerial.getRobotData().chassis.powerBuffer <= 10) ? 10.0f : 0.0f;
     controller.calculate(lastDrive, powerLimit + boost - throttle, imuAngle, motorVel, motorCurrent);
 
@@ -90,7 +95,7 @@ void DrivetrainSubsystem::stopMotors() {
 #endif
 
     for (int i = 0; i < 4; i++) motorCurrent[i] = 0;
-    
+
     for (int i = 0; i < 4; i++) {
         float adjustedCurrent = std::clamp(motorCurrent[i], -20.0f, 20.0f) * 819.2f;
 

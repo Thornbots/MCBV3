@@ -45,6 +45,7 @@ public:
     [[deprecated]] virtual float getPositionUnwrapped() const
     {
         return this->getEncoder()->getPosition().getUnwrappedValue();
+        
     };
     [[deprecated]] virtual float getPositionWrapped() const
     {

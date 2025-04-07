@@ -2,9 +2,12 @@
 
 #include "GimbalSubsystemConstants.hpp"
 
+#include "tap/communication/serial/ref_serial_data.hpp"
+
 int voltage;
 float velocity;
 namespace subsystems {
+using namespace tap::communication::serial;
 float encoderOffset = 0;
 GimbalSubsystem::GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* yaw, tap::motor::DjiMotor* pitch) : tap::control::Subsystem(drivers), drivers(drivers), motorYaw(yaw), motorPitch(pitch) {
     gen = std::mt19937(rd());

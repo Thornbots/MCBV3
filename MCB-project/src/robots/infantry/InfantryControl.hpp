@@ -39,11 +39,11 @@ public:
     // functions we are using
     void initialize() override {
         // Initialize subsystems (registration is internal)
-        // gimbal.initialize();
-        // flywheel.initialize();
+        gimbal.initialize();
+        flywheel.initialize();
         indexer.initialize();
-        // drivetrain.initialize();
-        // ui.initialize();
+        drivetrain.initialize();
+        ui.initialize();
         servo.initialize();
         
 
@@ -54,20 +54,19 @@ public:
         indexer.setDefaultCommand(&indexerStopCommand);
         //ui.setDefaultCommand(&draw);
 
-        // unjamButton = Trigger(drivers, [this](){ return this->drivers->remote.getSwitch(Remote::Switch::RIGHT_SWITCH) == Remote::SwitchState::UP;});
+        // unjamButton = Trig,ger(drivers, [this](){ return this->drivers->remote.getSwitch(Remote::Switch::RIGHT_SWITCH) == Remote::SwitchState::UP;});
 
-        shootButton.onTrue(&closeServo);
-        unjamButton.onTrue(&openServo);
+        shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz)->onTrue(&closeServo);
+        unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam)->onTrue(&openServo);
 
 
         //Mouse and Keyboard mappings
-        unjamKey.whileTrue(&indexerUnjam)->onTrue(&shooterStop);
-        shootKey.whileTrue(&indexer10Hz)->onTrue(&shooterStart);
+        unjamKey.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onTrue(&openServo);
+        shootKey.whileTrue(&indexer10Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
         //implement speed mode
 
         toggleUIKey.toggleOnFalse(&draw);
         drivers->commandScheduler.addCommand(&draw);
-        drivers->commandScheduler.addCommand(&closeServo);
    
         //drive commands and also enable mouse looking
 
@@ -81,6 +80,7 @@ public:
         joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick);
+
     drivers->terminalSerial.initialize();
 
     }

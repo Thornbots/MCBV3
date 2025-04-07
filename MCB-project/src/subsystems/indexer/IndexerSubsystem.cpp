@@ -1,7 +1,9 @@
 #include "IndexerSubsystem.hpp"
 #include "IndexerSubsystemConstants.hpp"
+#include "tap/communication/serial/ref_serial_data.hpp"
 
 namespace subsystems {
+using namespace tap::communication::serial;
     
 IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index)
     : tap::control::Subsystem(drivers),
@@ -17,15 +19,18 @@ void IndexerSubsystem::initialize() {
 }
 
 void IndexerSubsystem::refresh() {
-    motorIndexer->setDesiredOutput(indexerVoltage);
+    if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower&RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER)
+    {
+        motorIndexer->setDesiredOutput(indexerVoltage);
+    }
 }
 
 void IndexerSubsystem::indexAtRate(float ballsPerSecond) {
     // Check if the firing rate should be limited to prevent overheating
     tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refSerial.getRobotData().turret;
-    if (drivers->refSerial.getRefSerialReceivingData() && (HEAT_PER_BALL * ballsPerSecond - turretData.coolingRate) * LATENCY > (turretData.heatLimit - turretData.heat17ID1)) {
-        ballsPerSecond = turretData.coolingRate / HEAT_PER_BALL;
-    }
+    // if (drivers->refSerial.getRefSerialReceivingData() && (HEAT_PER_BALL * ballsPerSecond - turretData.coolingRate) * LATENCY > (turretData.heatLimit - turretData.heat17ID1)) {
+    //     ballsPerSecond = turretData.coolingRate / HEAT_PER_BALL;
+    // }
 
     this->ballsPerSecond = ballsPerSecond;
     setTargetMotorRPM(ballsPerSecond * 60.0f * REV_PER_BALL);

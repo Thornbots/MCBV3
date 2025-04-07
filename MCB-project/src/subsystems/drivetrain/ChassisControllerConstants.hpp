@@ -110,8 +110,8 @@ constexpr float M = 14.0;                  // robot mass kg
 constexpr float J = 0.44;                  // measured from sys id kg-m^2
 constexpr float R_WHEEL = 0.048 / ROOT_2;  // wheel radius m
 constexpr float J_WHEEL = 0.0009;          // wheel moment of inertia kg-m^2
-constexpr float C_MOTOR = 2.5e-4;          // motor damping kg-s/m^2`
-constexpr float UK_MOTOR = 0.14;           // motor dry friction N-m
+constexpr float C_MOTOR = 2.5e-4 * 0.02299f;          // motor damping kg-s/m^2`
+constexpr float UK_MOTOR = 0.14 * 0.02299f;           // motor dry friction N-m
 constexpr float COF_WHEEL = 0.9;           // unitless COF
 
 constexpr float GEAR_RATIO = 13.7;  // gear ratio

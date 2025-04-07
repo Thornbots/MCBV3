@@ -6,14 +6,14 @@ void AutoAimCommand::initialize() { shoot = -1; }
 void AutoAimCommand::execute() {
     float dyaw = 0;
     cv->update(yaw, pitch, &dyaw, &pitch, &shoot);
-    
+    // pitch *= 2;
     // moving gimbal
     if (shoot != -1) {
         //moving to panel
         gimbal->updateMotors(-dyaw / 4, &pitch);
         lastSeenTime = tap::arch::clock::getTimeMilliseconds();
         if(shoot==1) isShooting = true;
-    } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime<1000) {
+    } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime<2000) {
         //waiting for a bit, don't change isShooting
         gimbal->updateMotors(0, &pitch);
     } else {
@@ -25,7 +25,7 @@ void AutoAimCommand::execute() {
 
     if (isShooting) {
         //if we see a panel or recently have seen a panel
-        indexer->indexAtRate(20);
+        indexer->indexAtRate(10);
     } else {
         //if we haven't seen a panel for a bit
         indexer->stopIndex();

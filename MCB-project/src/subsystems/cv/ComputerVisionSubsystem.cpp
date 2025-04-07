@@ -24,7 +24,7 @@ void ComputerVisionSubsystem::update(float current_yaw, float current_pitch, flo
     
     comm.clearNewDataFlag();
      // Add rotated offset vector of panel relative to RGB
-    if (msg->confidence <= 0.2f || -msg->y > 0.35f) return;
+    if (msg->confidence <= 0.2f) return;
 
     // float X_prime = -x + 0.0175;                                                     // left
     // float Y_prime = -y + 0.1295 * cos(current_pitch) - 0.0867 * sin(current_pitch);  // up
@@ -41,7 +41,7 @@ void ComputerVisionSubsystem::update(float current_yaw, float current_pitch, flo
     // state.position = modm::Vector3f(0,0,0);
     // state.velocity = modm::Vector3f(0,0,0);
     // state.acceleration = modm::Vector3f(0,0,0);
-    modm::Vector3f position(msg->x+0.001*msg->v_x,msg->z,-msg->y + 0.2); // taproot flips z y basis vec
+    modm::Vector3f position(msg->x,msg->z + 0.2,-msg->y - 0.7); // taproot flips z y basis vec
     modm::Vector3f velocity(msg->v_x,msg->v_z,-msg->v_y);
     modm::Vector3f acceleration(msg->a_x,msg->a_z,-msg->a_y);
 
@@ -49,7 +49,7 @@ void ComputerVisionSubsystem::update(float current_yaw, float current_pitch, flo
     SecondOrderKinematicState state(position, velocity, acceleration);//(pos,vel,acc); 
 
     float targetYaw, targetPitch, travelTime;
-    bool valid = tap::algorithms::ballistics::findTargetProjectileIntersection(state, J, 3, &targetPitch, &targetYaw, &travelTime, 0);
+    bool valid = tap::algorithms::ballistics::findTargetProjectileIntersection(state, J, 2, &targetPitch, &targetYaw, &travelTime, 0);
 
     if(!valid){
         *action = -1;// make enums for action
