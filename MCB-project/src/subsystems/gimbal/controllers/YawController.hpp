@@ -1,17 +1,17 @@
-
+#include "YawControllerConstants.hpp"
 
 namespace subsystems
 {
 class YawController
 {
 public:
-    float *torqueHistory; 
+    float torqueHistory[Q_SIZE]; 
     YawController();
     //~YawController();
     void estimateState(float *theta, float *thetadot, float tLast, float drivetrainVelocity);
     float calculate(float currentPosition, float currentVelocity, float currentDrivetrainVelocity, float targetPosition, float inputVelocity, float deltaT);
 
-    void clearBuildup() { buildup = 0; };
+    void clearBuildup() { buildup = 0; pastTargetVelocity = 0; pastOutput = 0; pastTorque = 0;};
 
 private:
     

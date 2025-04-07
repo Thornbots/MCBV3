@@ -9,8 +9,6 @@
 #include "tap/board/board.hpp"
 #include "tap/motor/dji_motor.hpp"
 
-#include "YawControllerConstants.hpp"
-
 namespace subsystems {
 YawController::YawController() {}
 

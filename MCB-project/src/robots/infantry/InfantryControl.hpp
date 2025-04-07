@@ -54,7 +54,7 @@ public:
         indexer.setDefaultCommand(&indexerStopCommand);
         //ui.setDefaultCommand(&draw);
 
-        // unjamButton = Trig,ger(drivers, [this](){ return this->drivers->remote.getSwitch(Remote::Switch::RIGHT_SWITCH) == Remote::SwitchState::UP;});
+        // unjamButton = Trigger(drivers, [this](){ return this->drivers->remote.getSwitch(Remote::Switch::RIGHT_SWITCH) == Remote::SwitchState::UP;});
 
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz)->onTrue(&closeServo);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam)->onTrue(&openServo);
