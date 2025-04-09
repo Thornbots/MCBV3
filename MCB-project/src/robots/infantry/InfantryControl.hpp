@@ -54,21 +54,20 @@ public:
         indexer.setDefaultCommand(&indexerStopCommand);
         //ui.setDefaultCommand(&draw);
 
-        // unjamButton = Trigger(drivers, [this](){ return this->drivers->remote.getSwitch(Remote::Switch::RIGHT_SWITCH) == Remote::SwitchState::UP;});
 
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz)->onTrue(&closeServo);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam)->onTrue(&openServo);
 
 
-        //Mouse and Keyboard mappings
+        // Mouse and Keyboard mappings
         unjamKey.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onTrue(&openServo);
         shootKey.whileTrue(&indexer10Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
-        //implement speed mode
+        // implement speed mode
 
         toggleUIKey.toggleOnFalse(&draw);
         drivers->commandScheduler.addCommand(&draw);
    
-        //drive commands and also enable mouse looking
+        // drive commands and also enable mouse looking
 
         peekLeftButton.onTrue(&peekLeft)->onFalse(&beybladeSlowKeyboard);
         peekRightButton.onTrue(&peekRight)->onFalse(&beybladeSlowKeyboard);

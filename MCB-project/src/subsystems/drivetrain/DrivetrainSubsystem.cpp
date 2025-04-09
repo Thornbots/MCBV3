@@ -1,8 +1,8 @@
 #include "DrivetrainSubsystem.hpp"
 
-#include "DrivetrainSubsystemConstants.hpp"
-
 #include "tap/communication/serial/ref_serial_data.hpp"
+
+#include "DrivetrainSubsystemConstants.hpp"
 
 namespace subsystems {
 using namespace tap::communication::serial;
@@ -22,17 +22,17 @@ void DrivetrainSubsystem::initialize() {
 
 // guaranteed to be called
 void DrivetrainSubsystem::refresh() {
-    if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower & RefSerialData::Rx::RobotPower::CHASSIS_HAS_POWER) {
-        // need to actually fix this yay
-        imuAngle = (drivers->bmi088.getYaw() - 180) * PI / 180;
+    // if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower & RefSerialData::Rx::RobotPower::CHASSIS_HAS_POWER) {
+    // need to actually fix this yay
+    imuAngle = (drivers->bmi088.getYaw() - 180) * PI / 180;
 
-        if (drivers->refSerial.getRefSerialReceivingData())  // check for uart disconnected
-            powerLimit = std::min((uint16_t)120, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
+    if (drivers->refSerial.getRefSerialReceivingData())  // check for uart disconnected
+        powerLimit = std::min((uint16_t)120, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
 
-        for (int i = 0; i < 4; i++) {
-            motorVel[i] = motorArray[i]->getShaftRPM() * PI / 30.0f;  // in rad/s
-        }
+    for (int i = 0; i < 4; i++) {
+        motorVel[i] = motorArray[i]->getShaftRPM() * PI / 30.0f;  // in rad/s
     }
+    // }
 }
 #if defined(drivetrain_sysid)
 const float SAT_SECONDS = 20.0f, MAX_CURRENT = 1.5f, RAMP_TIME = 90.0f;
@@ -105,11 +105,11 @@ void DrivetrainSubsystem::stopMotors() {
 }
 
 float DrivetrainSubsystem::calculateRotationPID(float error) {
-    while (error > M_PI) {
-        error -= 2 * M_PI;
+    while (error > PI) {
+        error -= 2 * PI;
     }
-    while (error < -M_PI) {
-        error += 2 * M_PI;
+    while (error < -PI) {
+        error += 2 * PI;
     }
     rotationPIDController.runControllerDerivateError(error, 0.002f);
     return rotationPIDController.getOutput();

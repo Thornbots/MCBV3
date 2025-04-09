@@ -60,7 +60,7 @@ void IndexerSubsystem::setTargetMotorRPM(int targetMotorRPM) {
 
 // converts delta motor ticks to num balls shot using constants
 float IndexerSubsystem::getNumBallsShot() {
-    return (motorIndexer->getPositionUnwrapped() - numTicksAtInit) / (REV_PER_BALL * M_2_PI);
+    return (motorIndexer->getPositionUnwrapped() - numTicksAtInit) / (REV_PER_BALL * 2 * PI);
 }
 
 void IndexerSubsystem::resetBallsCounter() {
