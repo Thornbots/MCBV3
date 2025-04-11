@@ -10,16 +10,16 @@ void AutoAimAndFireCommand::execute() {
 
     if (shoot != -1) {
         //moving to panel
-        gimbal->updateMotors(-dyaw / 4, &pitch);
+        gimbal->updateMotors(-dyaw / 4, pitch);
         lastSeenTime = tap::arch::clock::getTimeMilliseconds();
         if(shoot==1) isShooting = true;
     } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime<2000) {
         //waiting for a bit, don't change isShooting
-        gimbal->updateMotors(0, &pitch);
+        gimbal->updateMotors(0, pitch);
     } else {
         //patrol, don't shoot
         isShooting = false;
-        gimbal->updateMotors(0.002, &pitch);
+        gimbal->updateMotors(0.002, pitch);
     }
 
     if (isShooting) {

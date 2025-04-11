@@ -11,7 +11,7 @@ void AutoAimCommand::execute() {
     // moving gimbal
     if (shoot != -1) {
         // moving to panel
-        gimbal->updateMotors(-dyaw / 4, &pitch);
+        gimbal->updateMotors(-dyaw / 4, pitch);
     } else {
         // sentry's equivalent of patrol, do original mouse moving
         MouseMoveCommand::execute();

@@ -35,6 +35,7 @@ private:  // Private Variables
     float pitchMotorVoltage, yawMotorVoltage;
 
     float driveTrainAngularVelocity, yawAngularVelocity, yawAngleRelativeWorld = 0.0, imuOffset;
+    float gimbalPitchAngleRelativeWorld, gimbalPitchAngularVelocity;
     float yawEncoderCache = 0;
     float desiredYawAngleWorld, desiredYawAngleWorld2, driveTrainEncoder = 0.0;
     float stickAccumulator = 0, targetYawAngleWorld = PI,
@@ -68,7 +69,7 @@ public:  // Public Methods
     /*
      * tells the motors to move the gimbal to its specified angle calculated in update();
      */
-    void updateMotors(float changeInTargetYaw, float* targetPitch);
+    void updateMotors(float changeInTargetYaw, float targetPitch);
 
     /*
      * Call this function to set all Turret motors to stop, calculate the voltage level in
@@ -93,7 +94,7 @@ public:  // Public Methods
     float getPitchVel();
 
 private:  // Private Methods
-    int getPitchVoltage(float targetAngle, float dt);
+    int getPitchVoltage(float targetAngle, float pitchAngleRelativeGimbal, float pitchAngularVelocity, float dt);
     int getYawVoltage(float driveTrainAngularVelocity, float yawAngleRelativeWorld, float yawAngularVelocity, float desiredAngleWorld, float inputVel, float dt);
 };
 }  // namespace subsystems

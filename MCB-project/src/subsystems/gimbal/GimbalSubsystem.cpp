@@ -34,20 +34,37 @@ void GimbalSubsystem::refresh() {
         }
 
     #endif
+
     yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
+
+    #if defined(INFANTRY)
+        gimbalPitchAngularVelocity = drivers->bmi088.getGx() * PI / 180;
+        gimbalPitchAngleRelativeWorld =  drivers->bmi088.getRoll() * PI / 180;
+    #endif
+
+
     driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
     yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw() - imuOffset;
     motorPitch->setDesiredOutput(pitchMotorVoltage);
     motorYaw->setDesiredOutput(yawMotorVoltage);
 }
 
-void GimbalSubsystem::updateMotors(float changeInTargetYaw, float* targetPitch) {
-    *targetPitch = std::clamp(*targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
+void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
+    
+    float pitchVel = getPitchVel();
+    float pitch = getPitchEncoderValue();
+    #if defined(INFANTRY)
+        targetPitch -= gimbalPitchAngleRelativeWorld;
+        pitchVel += gimbalPitchAngularVelocity;
+    #endif
+
+    targetPitch = std::clamp(targetPitch , -MAX_PITCH_DOWN, MAX_PITCH_UP);
+
     driveTrainEncoder = getYawEncoderValue();
     yawEncoderCache = driveTrainEncoder;
     //THIS LINE BELOW WAS CAUSING ERROR
     targetYawAngleWorld += changeInTargetYaw;// std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
-    pitchMotorVoltage = getPitchVoltage(*targetPitch, dt);
+    pitchMotorVoltage = getPitchVoltage(targetPitch, pitch, pitchVel, dt);
 
     yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, changeInTargetYaw / dt, dt);
     // moved
@@ -79,13 +96,13 @@ int GimbalSubsystem::getYawVoltage(float driveTrainAngularVelocity, float yawAng
 }
 
 // assume targetangle is in radians, not sure
-int GimbalSubsystem::getPitchVoltage(float targetAngle, float dt) {
+int GimbalSubsystem::getPitchVoltage(float targetAngle, float pitchAngleRelativeGimbal, float pitchAngularVelocity, float dt) {
 #if defined(pitch_sysid)
     return distPitch(gen);
 #elif defined(drivetrain_sysid)
     return 0;
 #else
-    return 1000 * pitchController.calculate(getPitchEncoderValue(), getPitchVel(), targetAngle + PITCH_OFFSET, dt);
+    return 1000 * pitchController.calculate(pitchAngleRelativeGimbal, pitchAngularVelocity, targetAngle + PITCH_OFFSET, dt);
 #endif
 }
 
