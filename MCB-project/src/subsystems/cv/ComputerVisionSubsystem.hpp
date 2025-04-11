@@ -43,7 +43,7 @@ private:  // Private Methods
     const float J = 25.0;           // Shot velocity
     const float l = 0.05;           // Combined camera + Jetson latency
     const float deltaTime = 0.033;  // Frame time
-    const float H = 0.35;           // Height rejection offset
+    const float H = 9.95;           // Height rejection offset
     std::vector<PanelData> panelData;
 };
 }  // namespace subsystems

@@ -78,7 +78,7 @@ int main() {
             drivers.commandScheduler.run();
             drivers.djiMotorTxHandler.encodeAndSendCanData();
 
-            drivers.terminalSerial.update();
+            // drivers.terminalSerial.update(); //needs to be commented for cv to work
         } 
 
         // prevent looping too fast

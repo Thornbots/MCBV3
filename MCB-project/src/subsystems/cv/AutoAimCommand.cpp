@@ -1,38 +1,24 @@
 #include "AutoAimCommand.hpp"
 
 namespace commands {
-int shoot = 0;
-void AutoAimCommand::initialize() { shoot = -1; }
+void AutoAimCommand::initialize() {
+    shoot = -1;
+    MouseMoveCommand::initialize();
+}
 void AutoAimCommand::execute() {
     float dyaw = 0;
     cv->update(yaw, pitch, &dyaw, &pitch, &shoot);
-    // pitch *= 2;
     // moving gimbal
     if (shoot != -1) {
-        //moving to panel
+        // moving to panel
         gimbal->updateMotors(-dyaw / 4, &pitch);
-        lastSeenTime = tap::arch::clock::getTimeMilliseconds();
-        if(shoot==1) isShooting = true;
-    } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime<2000) {
-        //waiting for a bit, don't change isShooting
-        gimbal->updateMotors(0, &pitch);
     } else {
-        //patrol, don't shoot
-        isShooting = false;
-        // drivers->leds.set()
-        gimbal->updateMotors(0.002, &pitch);
-    }
-
-    if (isShooting) {
-        //if we see a panel or recently have seen a panel
-        indexer->indexAtRate(10);
-    } else {
-        //if we haven't seen a panel for a bit
-        indexer->stopIndex();
+        // sentry's equivalent of patrol, do original mouse moving
+        MouseMoveCommand::execute();
     }
 }
 
-void AutoAimCommand::end(bool) { pitch = 0; }
+void AutoAimCommand::end(bool interrupted) { MouseMoveCommand::end(interrupted); }
 
 bool AutoAimCommand::isFinished() const { return !drivers->remote.isConnected(); }
 }  // namespace commands
