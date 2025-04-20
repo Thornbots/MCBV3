@@ -50,7 +50,7 @@ constexpr float KP = 12;  // sec^-1
 
 // Feedforward constants
 constexpr float KSTATIC = 0.1;  // A
-constexpr float KF = 0.05;      //-0.001;                     // A
+constexpr float KF = 0.0;      //-0.001;                     // A
 
 // Velocity feedback
 constexpr float KPV = 0.4;                      // 0.3                  // A-s/rad

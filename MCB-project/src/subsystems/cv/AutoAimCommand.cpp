@@ -7,11 +7,18 @@ void AutoAimCommand::initialize() {
 }
 void AutoAimCommand::execute() {
     float dyaw = 0;
-    cv->update(yaw, pitch, &dyaw, &pitch, &shoot);
+    float currentYaw = gimbal->getYawAngleRelativeWorld();
+    float currentPitch = gimbal->getPitchEncoderValue();
+    cv->update(currentYaw, currentPitch, yawvel, pitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
     // moving gimbal
     if (shoot != -1) {
         // moving to panel
-        gimbal->updateMotors(-dyaw / 4, pitch);
+
+        dyaw = fmod(dyaw, 2*PI);
+        //clamp between -Pi and PI to allow for dividing
+        dyaw = dyaw > PI ? dyaw - 2*PI : dyaw < -PI ? dyaw + 2*PI : dyaw; 
+        gimbal->updateMotorsAndVelocity(dyaw / 2.0f, pitch, yawvel, pitchvel); //division is to prevent overshoot from latency
+        //gimbal->updateMotors(dyaw/3.0f, pitch);
     } else {
         // sentry's equivalent of patrol, do original mouse moving
         MouseMoveCommand::execute();

@@ -39,9 +39,9 @@ constexpr static int YAW_MOTOR_MAX_SPEED = 1000;  // TODO: Make this value relev
 static constexpr float MAX_PITCH_UP = PI_CONST / 180 * 12*2; //*2 for ratio
 static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 12*2;
 
-static constexpr float YAW_OFFSET = PI_CONST;
+static constexpr float YAW_OFFSET = 0;
 
-static constexpr float PITCH_OFFSET = 1.75f * PI_CONST;  // to make gimbal horizontal when told to go to 0
+static constexpr float PITCH_OFFSET = 0.25f * PI_CONST;  // to make gimbal horizontal when told to go to 0
 
 static constexpr float YAW_TOTAL_RATIO = 54.0f/27.0f * 3591.0f / 187.0f;  // unitless, ratio of encoder counts to degrees of rotation
 
@@ -58,9 +58,9 @@ static constexpr float MAX_PITCH_UP = PI_CONST / 180 * 15;
 // looks up 20, 18 is safe
 static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 14;
 
-static constexpr float YAW_OFFSET = -0.8 * PI_CONST;
+static constexpr float YAW_OFFSET = 0; //-1.065 * PI_CONST;
 
-static constexpr float PITCH_OFFSET = 0.96 * PI_CONST;  // to make gimbal horizontal when told to go to 0
+static constexpr float PITCH_OFFSET = .99 * PI_CONST;  // to make gimbal horizontal when told to go to 0
 
 static constexpr float YAW_TOTAL_RATIO = 54.0f/24.0f * 3591.0f / 187.0f;  // unitless, ratio of encoder to turret spin 
 

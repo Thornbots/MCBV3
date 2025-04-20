@@ -19,7 +19,7 @@ void GimbalSubsystem::initialize() {
     motorPitch->initialize();
     motorYaw->initialize();
     #ifndef OLDINFANTRY
-        encoderOffset += drivers->i2c.encoder.getAngle();
+        //encoderOffset += drivers->i2c.encoder.getAngle();
     #endif
     imuOffset = getYawEncoderValue();
 
@@ -39,7 +39,12 @@ void GimbalSubsystem::refresh() {
 
     #if defined(INFANTRY)
         gimbalPitchAngularVelocity = drivers->bmi088.getGx() * PI / 180;
-        gimbalPitchAngleRelativeWorld =  drivers->bmi088.getRoll() * PI / 180;
+       
+       //this happens to work because the X axis is alined with the pitch axis
+        gimbalPitchAngleRelativeWorld =  drivers->bmi088.getRoll() * PI / 180; 
+
+
+
     #endif
 
 
@@ -68,6 +73,23 @@ void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
 
     yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, changeInTargetYaw / dt, dt);
     // moved
+}
+
+//alternate version of update motors to use with CV
+void GimbalSubsystem::updateMotorsAndVelocity(float changeInTargetYaw, float targetPitch, float targetYawVel, float targetPitchVel) {
+    
+    float pitch = getPitchEncoderValue();
+
+    targetPitch = std::clamp(targetPitch , -MAX_PITCH_DOWN, MAX_PITCH_UP);
+
+    driveTrainEncoder = getYawEncoderValue();
+    yawEncoderCache = driveTrainEncoder;
+    //THIS LINE BELOW WAS CAUSING ERROR
+    targetYawAngleWorld += changeInTargetYaw;// std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
+    pitchMotorVoltage = getPitchVoltage(targetPitch, pitch, targetPitchVel, dt);
+
+    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, targetYawVel, dt);
+   
 }
 
 void GimbalSubsystem::stopMotors() {
@@ -102,14 +124,15 @@ int GimbalSubsystem::getPitchVoltage(float targetAngle, float pitchAngleRelative
 #elif defined(drivetrain_sysid)
     return 0;
 #else
-    return 1000 * pitchController.calculate(pitchAngleRelativeGimbal, pitchAngularVelocity, targetAngle + PITCH_OFFSET, dt);
+    return 1000 * pitchController.calculate(pitchAngleRelativeGimbal, pitchAngularVelocity, targetAngle, dt);
 #endif
 }
 
 float GimbalSubsystem::getYawEncoderValue() { return std::fmod(motorYaw->getPositionUnwrapped() / YAW_TOTAL_RATIO + encoderOffset, 2 * PI); }
 
-float GimbalSubsystem::getPitchEncoderValue() { return motorPitch->getPositionWrapped(); }
+float GimbalSubsystem::getPitchEncoderValue() { float temp = std::fmod(motorPitch->getPositionWrapped() - PITCH_OFFSET, 2*PI);
+    return (temp > PI) ? temp - 2*PI : temp; }
 float GimbalSubsystem::getYawVel() { return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO; }
 float GimbalSubsystem::getPitchVel() { return motorPitch->getShaftRPM() * PI / 30; }
-
+float GimbalSubsystem::getYawAngleRelativeWorld() {return yawAngleRelativeWorld;}
 }  // namespace subsystems
