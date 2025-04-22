@@ -1,5 +1,5 @@
 [submodule "taproot"]
 	path = taproot
-	url = https://gitlab.com/aru	w/controls/taproot.git
+	url = https://gitlab.com/aruw/controls/taproot.git
 [submodule "taproot-scripts"]
 	path = taproot-scripts
