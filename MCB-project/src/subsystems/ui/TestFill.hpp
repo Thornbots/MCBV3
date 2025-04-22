@@ -20,7 +20,6 @@ public:
         }
     }
 
-    void update() final {}
 
 private:
     static constexpr int R = 60;

@@ -71,20 +71,6 @@ public:
     virtual void configCharacterData(__attribute__((unused)) RefSerialData::Tx::GraphicCharacterMessage* graphicData) {}
 
     /*
-     * For objects contained by the UIDrawCommand, like the reticle,
-     * the beyblade indicator, the supercap bar. They need to be able
-     * to update when the UISubsytem updates.
-     *
-     * For those objects, they need to override this and change the
-     * numbers associated with their objects, like changing the x2
-     * of the line for the supercap bar. UISubsytem will notice
-     * next time it looks at that line that it needs to be redrawn.
-     *
-     * Containers will call update() on all contained objects.
-     */
-    virtual void update() {}
-
-    /*
      * For when everything gets cleared. This should make it so next
      * time this object or all contained objects are told to draw,
      * they use GRAPHIC_ADD and not GRAPHIC_MODIFY

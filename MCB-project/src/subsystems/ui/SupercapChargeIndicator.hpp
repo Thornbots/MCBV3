@@ -23,7 +23,7 @@ public:
         addGraphicsObject(&inside);
     }
 
-    void update() final { inside.width = getInsideWidth(); }
+    void update() { inside.width = getInsideWidth(); }
 
 private:
     static constexpr int MIN_CHARGE = 20;    // joules

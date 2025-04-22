@@ -10,24 +10,71 @@ using namespace subsystems;
 // looks like / \ at the bottom of the screen
 class LaneAssistLines : public GraphicsContainer {
 public:
-    LaneAssistLines(GimbalSubsystem* gimbal) : gimbal (gimbal) {
+    LaneAssistLines() {
         addGraphicsObject(&left);
         addGraphicsObject(&right);
     }
 
-    void update() final {
-        //these lines could change with the gimbal looking up and down
-        //but that is currently unimplemented
+    void update() {
+        float pitch = gimbal ? gimbal->getPitchEncoderValue() : 0;
+        float bottomOffset = A_BOTTOM * std::sin(B_BOTTOM * pitch + C_BOTTOM) + D_BOTTOM;
+        float topOffset = A_TOP * std::sin(B_TOP * pitch + C_TOP) + D_TOP;
+
+        left.x1 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - bottomOffset);
+        left.x2 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - topOffset);
+        right.x1 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH + bottomOffset);
+        right.x2 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH + topOffset);
     }
 
+    void setGimbalSubsystem(GimbalSubsystem* g) { gimbal = g; }
+
 private:
-    static constexpr uint16_t BOTTOM_OFFSET = 480; //distance from the center of the screen to the bottom of each line
-    static constexpr uint16_t TOP_OFFSET = 320; //distance from the center of the screen to the top of each line, should be less than BOTTOM_OFFSET
-    static constexpr uint16_t HEIGHT = 360; //distance from bottom of the screen to the top of each line
-    static constexpr uint16_t THICKNESS = 2; //pixels
+#if defined(HERO)        // todo
+    static constexpr uint16_t HEIGHT = 360;  // distance from bottom of the screen to the top of each line, pixels
+    static constexpr float A_BOTTOM = 811.57925;
+    static constexpr float B_BOTTOM = 1;
+    static constexpr float C_BOTTOM = -2.2421;
+    static constexpr float D_BOTTOM = 1019.47769;
+    static constexpr float A_TOP = 985.39951;
+    static constexpr float B_TOP = 1;
+    static constexpr float C_TOP = -2.13925;
+    static constexpr float D_TOP = 966.4288;
+#elif defined(SENTRY)    // todo
+    static constexpr uint16_t HEIGHT = 360;  // distance from bottom of the screen to the top of each line, pixels
+    static constexpr float A_BOTTOM = 811.57925;
+    static constexpr float B_BOTTOM = 1;
+    static constexpr float C_BOTTOM = -2.2421;
+    static constexpr float D_BOTTOM = 1019.47769;
+    static constexpr float A_TOP = 985.39951;
+    static constexpr float B_TOP = 1;
+    static constexpr float C_TOP = -2.13925;
+    static constexpr float D_TOP = 966.4288;
+#elif defined(INFANTRY)  // https://www.desmos.com/calculator/xgwximvvmn
+    static constexpr uint16_t HEIGHT = 360;  // distance from bottom of the screen to the top of each line, pixels
+    static constexpr float A_BOTTOM = 811.57925;
+    static constexpr float B_BOTTOM = 1;
+    static constexpr float C_BOTTOM = -2.2421;
+    static constexpr float D_BOTTOM = 1019.47769;
+    static constexpr float A_TOP = 985.39951;
+    static constexpr float B_TOP = 1;
+    static constexpr float C_TOP = -2.13925;
+    static constexpr float D_TOP = 966.4288;
+#else                    // old infantry, todo
+    static constexpr uint16_t HEIGHT = 360;  // distance from bottom of the screen to the top of each line, pixels
+    static constexpr float A_BOTTOM = 811.57925;
+    static constexpr float B_BOTTOM = 1;
+    static constexpr float C_BOTTOM = -2.2421;
+    static constexpr float D_BOTTOM = 1019.47769;
+    static constexpr float A_TOP = 985.39951;
+    static constexpr float B_TOP = 1;
+    static constexpr float C_TOP = -2.13925;
+    static constexpr float D_TOP = 966.4288;
+#endif
 
-    GimbalSubsystem* gimbal;
+    static constexpr uint16_t THICKNESS = 2;  // pixels
 
-    Line left{RefSerialData::Tx::GraphicColor::CYAN, static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - BOTTOM_OFFSET), 0, static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - TOP_OFFSET), HEIGHT, THICKNESS};
-    Line right{RefSerialData::Tx::GraphicColor::CYAN, static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH + BOTTOM_OFFSET), 0, static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH + TOP_OFFSET), HEIGHT, THICKNESS};
+    GimbalSubsystem* gimbal = nullptr;
+
+    Line left{RefSerialData::Tx::GraphicColor::CYAN, 0, 0, 0, HEIGHT, THICKNESS};
+    Line right{RefSerialData::Tx::GraphicColor::CYAN, 0, 0, 0, HEIGHT, THICKNESS};
 };

@@ -38,7 +38,6 @@ void UISubsystem::initialize() {
 void UISubsystem::refresh() {
     if (topLevelContainer) {
         if (!startTime) startTime = tap::arch::clock::getTimeMicroseconds();
-        topLevelContainer->update();
     }
     run();
 }
