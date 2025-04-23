@@ -19,7 +19,7 @@ void GimbalSubsystem::initialize() {
     motorPitch->initialize();
     motorYaw->initialize();
     #ifndef OLDINFANTRY
-        //encoderOffset += drivers->i2c.encoder.getAngle();
+        encoderOffset += drivers->i2c.encoder.getAngle();
     #endif
     imuOffset = getYawEncoderValue();
 
@@ -130,7 +130,7 @@ int GimbalSubsystem::getPitchVoltage(float targetAngle, float pitchAngleRelative
 
 float GimbalSubsystem::getYawEncoderValue() { return std::fmod(motorYaw->getPositionUnwrapped() / YAW_TOTAL_RATIO + encoderOffset, 2 * PI); }
 
-float GimbalSubsystem::getPitchEncoderValue() { float temp = std::fmod(motorPitch->getPositionWrapped() - PITCH_OFFSET, 2*PI);
+float GimbalSubsystem::getPitchEncoderValue() { float temp = std::fmod(motorPitch->getPositionWrapped() / PITCH_RATIO  - PITCH_OFFSET, 2*PI);
     return (temp > PI) ? temp - 2*PI : temp; }
 float GimbalSubsystem::getYawVel() { return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO; }
 float GimbalSubsystem::getPitchVel() { return motorPitch->getShaftRPM() * PI / 30; }

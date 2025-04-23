@@ -24,7 +24,7 @@ const float H = 9.95;
 //-.0175
 float cameraXoffset = -.0325; //appears to be RGB offset, not depth offset
 float cameraYoffset = .16034;
-float cameraZoffset = .16089;
+float cameraZoffset = .1295;
 
 
 const float J = 22.0;           // Shot velocity
