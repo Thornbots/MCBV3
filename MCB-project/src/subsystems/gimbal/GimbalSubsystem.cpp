@@ -19,7 +19,7 @@ void GimbalSubsystem::initialize() {
     motorPitch->initialize();
     motorYaw->initialize();
     #ifndef OLDINFANTRY
-        encoderOffset += drivers->i2c.encoder.getAngle();
+        encoderOffset -= drivers->i2c.encoder.getAngle();
     #endif
     imuOffset = getYawEncoderValue();
 
@@ -29,7 +29,7 @@ void GimbalSubsystem::initialize() {
 void GimbalSubsystem::refresh() {
     #ifndef OLDINFANTRY
         if (!motorYaw->isMotorOnline()) {
-            encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
+            encoderOffset = -drivers->i2c.encoder.getAngle() + YAW_OFFSET;
             motorYaw->resetEncoderValue();
         }
 

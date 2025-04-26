@@ -32,7 +32,8 @@
 
 
 #include "drivers.hpp"
-int rawEncoder = 0;
+float rawEncoder = 0;
+int gimbalInit = 0;
 namespace robots {
 class InfantryControl : public ControlInterface {
 public:
@@ -41,13 +42,15 @@ public:
     // functions we are using
     void initialize() override {
         // Initialize subsystems (registration is internal)
-        gimbal.initialize();
-        flywheel.initialize();
-        indexer.initialize();
-        drivetrain.initialize();
+        // gimbal.initialize();
+        rawEncoder = drivers->i2c.encoder.getAngle();
+        gimbalInit = 1;
+        // flywheel.initialize();
+        // indexer.initialize();
+        // drivetrain.initialize();
         // ui.initialize();
-        servo.initialize();
-        cv.initialize();
+        // servo.initialize();
+        // cv.initialize();
         
 
         // Run startup commands
@@ -93,6 +96,7 @@ public:
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
+        rawEncoder = drivers->i2c.encoder.getAngle();
         // drivers->terminalSerial.update(); //wait we were triple updating? remove for cv
 
     }
