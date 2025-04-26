@@ -22,19 +22,24 @@
 #define DRIVERS_HPP_
 
 #include "tap/drivers.hpp"
+
 #include "communication/I2CCommunication.hpp"
 
 namespace src {
-    class Drivers : public tap::Drivers {
+class Drivers : public tap::Drivers {
+public:
+    Drivers() : tap::Drivers() {}
+    communication::I2CCommunication i2c;
 
-
-    public:
-        Drivers() : tap::Drivers() {}
-        communication::I2CCommunication i2c;
-
-    public:
-    };  // class Drivers
+public:
+};  // class Drivers
 
 }  // namespace src
 
 #endif  // DRIVERS_HPP_
+
+#if defined(HERO)
+namespace Board {
+using BeamBreak = Board::DigitalInPinB12;
+}
+#endif

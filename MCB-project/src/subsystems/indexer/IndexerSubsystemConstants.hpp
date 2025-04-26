@@ -3,7 +3,9 @@
 constexpr static int INDEXER_MOTOR_MAX_SPEED = 6177; // With the 2006, this should give
 
 #if defined(HERO)
-constexpr static float REV_PER_BALL = 36.0f / 7.0f; // revolutions per ball = ratio / chambers
+// motor ratio * ball rolling * diameter or spacing of balls / wheel circumference
+constexpr static float REV_PER_BALL = 42.0f / (50.0f * 3.1415926353f) * 2.0f * 36.0f; // GUESS, this value should be tuned since it isn't exactly known
+constexpr static float REV_PER_BALL_BOTTOM = 36.0f * 8.0f / 8.0f; // revolutions per ball = gearbox * external reduction / chambers
 constexpr static float UNJAM_BALL_PER_SECOND = -1.0f; // in unjam mode, spin backwards at 1 balls per second (this is a guess)
 constexpr static tap::algorithms::SmoothPidConfig PID_CONF_INDEX = {5, 0, 0, 0, 8000, 1, 0, 1, 0, 10, 0};
 #elif defined(SENTRY)
