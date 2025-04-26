@@ -8,7 +8,7 @@
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
 #include "subsystems/gimbal/GimbalStopCommand.hpp"
-#include "subsystems/cv/AutoAimCommand.hpp"
+#include "subsystems/cv/AutoAimAndFireCommand.hpp"
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
@@ -43,7 +43,7 @@ public:
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer20Hz);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
 
-        autoTrigger.whileTrue(&autoCommand)->onFalse(&lookJoystick)->whileTrue(&shooterStart);
+        autoTrigger.whileTrue(&autoFireCommand)->onFalse(&lookJoystick)->whileTrue(&shooterStart);
         // drive commands 
 
         joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
@@ -71,7 +71,7 @@ public:
     // commands
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
-    commands::AutoAimCommand autoCommand{drivers, &gimbal, &indexer, &cv};
+    commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
 
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};

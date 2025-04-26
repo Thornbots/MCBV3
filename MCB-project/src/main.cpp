@@ -27,10 +27,10 @@ static void initializeIo(src::Drivers *drivers) {
 
 
     // drivers->cvBoard.initialize();
-    // drivers->terminalSerial.initialize();
+    drivers->terminalSerial.initialize();
     drivers->schedulerTerminalHandler.init();
     drivers->djiMotorTerminalSerialHandler.init();
-    drivers->bmi088.initialize(4000, 0.1f, 0.0f);
+    drivers->bmi088.initialize(500, 0.1f, 0.0f);
     drivers->bmi088.requestCalibration();
 
 }
@@ -77,7 +77,7 @@ int main() {
             drivers.commandScheduler.run();
             drivers.djiMotorTxHandler.encodeAndSendCanData();
 
-            // drivers.terminalSerial.update();
+            // drivers.terminalSerial.update(); //needs to be commented for cv to work
         } 
 
         // prevent looping too fast

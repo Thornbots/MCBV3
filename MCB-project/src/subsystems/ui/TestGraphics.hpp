@@ -46,7 +46,7 @@ public:
         addGraphicsObject(&rect2);
     }
 
-    void update() final {
+    void update() {
         if (angle == 360) angle = 0;
         angle++;
         arc2.startAngle = angle;

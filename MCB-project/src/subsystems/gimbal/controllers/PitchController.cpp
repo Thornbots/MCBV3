@@ -19,7 +19,7 @@ PitchController::PitchController() {}
 
 float PitchController::calculate(float currentPos, float currentVelo, float targetPos, float deltaT)
 {
-    float positionError = targetPos - currentPos;
+    float positionError = std::fmod(targetPos - currentPos + PI, 2 * PI) - PI;  // wrap to [-PI, PI]
     
     float targetVelo = KP * positionError + (targetPos - pastTarget) / deltaT;
 
@@ -33,7 +33,7 @@ float PitchController::calculate(float currentPos, float currentVelo, float targ
     pastTargetVelo = targetVelo;
 
     // integral velocity controller
-    if (abs(pastOutput) < INT_THRESH || velocityError * buildup < 0)
+    if (std::abs(pastOutput) < INT_THRESH || velocityError * buildup < 0)
     {  // saturation detection
         if (velocityError * buildup < 0)
         {                               // overshooting

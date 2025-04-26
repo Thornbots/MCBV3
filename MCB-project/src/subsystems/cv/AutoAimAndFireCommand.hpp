@@ -4,14 +4,13 @@
 #include "tap/control/command.hpp"
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
-#include "subsystems/gimbal/MouseMoveCommand.hpp"
 #include "subsystems/indexer/IndexerSubsystem.hpp"
 #include "subsystems/cv/ComputerVisionSubsystem.hpp"
 
-
 #include "drivers.hpp"
 
-//this just does aiming, its up to the driver to shoot
+//maybe soon do inheritance, for final assessment this is what AutoAimCommand was previously
+
 namespace commands
 {
 using subsystems::GimbalSubsystem;
@@ -19,14 +18,17 @@ using subsystems::IndexerSubsystem;
 using subsystems::ComputerVisionSubsystem;
 using tap::communication::serial::Remote;
 
-class AutoAimCommand : public MouseMoveCommand
+class AutoAimAndFireCommand : public tap::control::Command
 {
 public:
-    AutoAimCommand(src::Drivers* drivers, GimbalSubsystem* gimbal,ComputerVisionSubsystem* cv)
-        : MouseMoveCommand(drivers, gimbal),
+    AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* indexer, ComputerVisionSubsystem* cv)
+        : drivers(drivers),
+          gimbal(gimbal),
+          indexer(indexer),
           cv(cv)
     {
-        //addSubsystemRequirement(gimbal); //MouseMoveCommand does this
+        addSubsystemRequirement(gimbal);
+        addSubsystemRequirement(indexer);
     }
 
     void initialize() override;
@@ -42,16 +44,17 @@ public:
 
 
 private:
+    src::Drivers* drivers;
+    GimbalSubsystem* gimbal;
+    IndexerSubsystem* indexer;
     ComputerVisionSubsystem* cv;
-    int shoot = 0;
+
     bool isCalibrated = false;
     bool isShooting = false;
+    int shoot = 0;
 
-<<<<<<< HEAD
     float yaw = 0.0f, pitch = 0.0f;
-
-=======
->>>>>>> ccfe370f24c6be7b6f2b61af37d748a78f2ab3d3
+    float yawvel = 0.0f, pitchvel = 0.0f;
     uint32_t lastSeenTime = 0;
 };
 }  // namespace commands

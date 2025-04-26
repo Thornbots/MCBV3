@@ -22,7 +22,7 @@ public:
         // addGraphicsObject(&right);
     }
 
-    void update() final {
+    void update() {
         if (gimbal) {
             uint16_t heading = static_cast<uint16_t>(gimbal->getYawEncoderValue() * YAW_MULT + YAW_OFFSET);
             // if the gimbal compared to the drivetrain is facing forward, heading would be 0, if facing right, heading would be 90
