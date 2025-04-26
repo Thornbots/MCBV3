@@ -42,16 +42,15 @@ public:
     // functions we are using
     void initialize() override {
         // Initialize subsystems (registration is internal)
-        // gimbal.initialize();
-        rawEncoder = drivers->i2c.encoder.getAngle();
-        gimbalInit = 1;
-        // flywheel.initialize();
-        // indexer.initialize();
-        // drivetrain.initialize();
+        gimbal.initialize();
+         flywheel.initialize();
+        indexer.initialize();
+        drivetrain.initialize();
         // ui.initialize();
         // servo.initialize();
         // cv.initialize();
         
+        &closeServo; //close servo so I stop getting carbon splinters
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);

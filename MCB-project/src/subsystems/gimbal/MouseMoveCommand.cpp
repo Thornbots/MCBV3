@@ -4,11 +4,14 @@
 namespace commands {
 
 void MouseMoveCommand::initialize() {
-    pitch = 0;
+    pitch = gimbal->getPitchEncoderValue();
 }
 void MouseMoveCommand::execute() {
     yaw = MOUSE_YAW_PROPORTIONAL * (drivers->remote.getMouseX());
     pitch += MOUSE_PITCH_PROPORTIONAL * (drivers->remote.getMouseY());
+
+    yawvel = gimbal->getYawVel();
+    pitchvel = gimbal->getPitchVel(); 
 
     pitch = std::clamp(pitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
     gimbal->updateMotors(yaw, pitch);

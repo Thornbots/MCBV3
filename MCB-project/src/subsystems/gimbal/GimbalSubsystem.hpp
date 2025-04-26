@@ -38,7 +38,7 @@ private:  // Private Variables
     float gimbalPitchAngleRelativeWorld, gimbalPitchAngularVelocity;
     float yawEncoderCache = 0;
     float desiredYawAngleWorld, desiredYawAngleWorld2, driveTrainEncoder = 0.0;
-    float stickAccumulator = 0, targetYawAngleWorld = PI,
+    float stickAccumulator = 0, targetYawAngleWorld = 0,
           targetDTVelocityWorld = 0;  
 
     // for sysid
@@ -72,6 +72,11 @@ public:  // Public Methods
     void updateMotors(float changeInTargetYaw, float targetPitch);
 
     /*
+     *   Straight up gives a full state for the controllers to target
+     */
+
+    void updateMotorsAndVelocity(float changeInTargetYaw, float targetPitch, float targetYawVel, float targetPitchVel);
+    /*
      * Call this function to set all Turret motors to stop, calculate the voltage level in
      * which to achieve this quickly and packages this information for the motors TO BE SENT over
      * CanBus
@@ -92,6 +97,8 @@ public:  // Public Methods
 
     float getYawVel();
     float getPitchVel();
+
+    float getYawAngleRelativeWorld();
 
 private:  // Private Methods
     int getPitchVoltage(float targetAngle, float pitchAngleRelativeGimbal, float pitchAngularVelocity, float dt);
