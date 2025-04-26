@@ -38,8 +38,3 @@ public:
 
 #endif  // DRIVERS_HPP_
 
-#if defined(HERO)
-namespace Board {
-using BeamBreak = Board::DigitalInPinB12;
-}
-#endif

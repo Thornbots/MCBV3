@@ -1,3 +1,4 @@
+#ifdef HERO
 #pragma once
 #include "IndexerSubsystem.hpp"
 
@@ -29,3 +30,4 @@ int32_t indexerVoltage2 = 0;
 };
 
 } // namespace subsystems
+#endif

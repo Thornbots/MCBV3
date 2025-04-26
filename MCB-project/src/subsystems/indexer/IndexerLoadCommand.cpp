@@ -1,3 +1,4 @@
+#ifdef HERO
 #include "IndexerLoadCommand.hpp"
 
 namespace commands
@@ -9,11 +10,7 @@ void IndexerLoadCommand::initialize() {
 
 void IndexerLoadCommand::execute()
 {
-    if (indexer->getNumBallsShot() < 0.9) { //make first shot fast, but don't make second fast
-        indexer->indexAtMaxRate();
-    } else {
-        indexer->indexAtRate(ballsPerSecond);
-    }
+    indexer->indexAtRate(0.5f); // Set the indexer to a low speed
 }
 
 void IndexerLoadCommand::end(bool) {
@@ -21,10 +18,8 @@ void IndexerLoadCommand::end(bool) {
 }
 
 bool IndexerLoadCommand::isFinished(void) const {
-    if (numBalls < 0) {
-        return false;
-    }
-
-    return indexer->getNumBallsShot() >= numBalls;
+    // Check if the indexer has loaded the balls
+    return !indexer->readBreakBeam(); // Assuming 5 is the number of balls to load
 }
 }  // namespace commands
+#endif
