@@ -13,7 +13,6 @@ namespace subsystems {
 YawController::YawController() {}
 
 float YawController::calculate(float currentPosition, float currentVelocity, float currentDrivetrainVelocity, float targetPosition, float inputVelocity, float deltaT) {
-
     estimateState(&currentPosition, &currentVelocity, pastTorque, currentDrivetrainVelocity);
 
     // float positionError = std::fmod(targetPosition - currentPosition + PI, 2 * PI) - PI;  // wrap to [-PI, PI]
