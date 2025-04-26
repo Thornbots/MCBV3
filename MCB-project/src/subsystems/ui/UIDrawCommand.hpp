@@ -44,9 +44,8 @@ private:
     // add top level graphics objects here and in the constructor
     // TestGraphics testGraphics{};
     // TestFill testFill{};
-
-    LaneAssistLines laneAssistLines;
-    SupercapChargeIndicator supercapChargeIndicator;
-    ChassisOrientationIndicator chassisOrientationIndicator;
+    LaneAssistLines laneAssistLines{};
+    SupercapChargeIndicator supercapChargeIndicator{};
+    ChassisOrientationIndicator chassisOrientationIndicator{};
 };
 }  // namespace commands

@@ -22,10 +22,15 @@
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
 #include "subsystems/gimbal/GimbalStopCommand.hpp"
+#include "subsystems/cv/AutoAimCommand.hpp"
+#include "subsystems/cv/AutoAimAndFireCommand.hpp"
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
+#include "subsystems/servo/ServoSubsystem.hpp"
+#include "subsystems/servo/OpenServoCommand.hpp"
+#include "subsystems/servo/CloseServoCommand.hpp"
 #include "util/trigger.hpp"
 
 
@@ -43,8 +48,16 @@ public:
         flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
+<<<<<<< HEAD
         ui.initialize();
         servo.initialize();
+=======
+        // ui.initialize();
+        servo.initialize();
+        cv.initialize();
+        
+        drivers->commandScheduler.addCommand(&closeServo); //close servo so I stop getting carbon splinters
+>>>>>>> ccfe370f24c6be7b6f2b61af37d748a78f2ab3d3
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
@@ -54,8 +67,8 @@ public:
         //ui.setDefaultCommand(&draw);
         servo.setDefaultCommand(&hopperClose);
 
-        // unjamButton = Trigger(drivers, [this](){ return this->drivers->remote.getSwitch(Remote::Switch::RIGHT_SWITCH) == Remote::SwitchState::UP;});
 
+<<<<<<< HEAD
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz)->onTrue(&hopperClose);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
 
@@ -64,23 +77,35 @@ public:
         unjamKey.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onTrue(&hopperOpen);
         shootKey.whileTrue(&indexer10Hz)->onTrue(&shooterStart);
         //implement speed mode
+=======
+        shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz)->onTrue(&closeServo);
+        unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam)->onTrue(&openServo);
 
-        toggleUIKey.toggleOnFalse(&draw);
-        drivers->commandScheduler.addCommand(&draw);
+
+        // Mouse and Keyboard mappings
+        unjamKey.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onTrue(&openServo);
+        shootKey.whileTrue(&indexer10Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
+        autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->whileTrue(&shooterStart)->onTrue(&closeServo);
+        // implement speed mode
+>>>>>>> ccfe370f24c6be7b6f2b61af37d748a78f2ab3d3
+
+        // toggleUIKey.toggleOnFalse(&draw);
+        // drivers->commandScheduler.addCommand(&draw);
    
-        //drive commands and also enable mouse looking
+        // drive commands and also enable mouse looking
 
         peekLeftButton.onTrue(&peekLeft)->onFalse(&beybladeSlowKeyboard);
         peekRightButton.onTrue(&peekRight)->onFalse(&beybladeSlowKeyboard);
 
         beybladeType0Key.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
-        beybladeType1Key.onTrue(&beybladeSlowKeyboard);//->onTrue(&lookMouse);
-        beybladeType2Key.onTrue(&beybladeFastKeyboard);//->onTrue(&lookMouse);
+        beybladeType1Key.onTrue(&beybladeSlowKeyboard)->onTrue(&lookMouse);
+        beybladeType2Key.onTrue(&beybladeFastKeyboard)->onTrue(&lookMouse);
  
         joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick);
-    drivers->terminalSerial.initialize();
+
+    // drivers->terminalSerial.initialize();
 
     }
 
@@ -89,7 +114,7 @@ public:
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
-        drivers->terminalSerial.update();
+        // drivers->terminalSerial.update(); //wait we were triple updating? remove for cv
 
     }
 
@@ -98,15 +123,23 @@ public:
 
 
     // Subsystems
-    subsystems::UISubsystem ui{drivers};
+    // subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
+<<<<<<< HEAD
     subsystems::ServoSubsystem servo{drivers, &hardware.hopperServo};
+=======
+    subsystems::ServoSubsystem servo{drivers, &hardware.servo};
+    subsystems::ComputerVisionSubsystem cv{drivers};
+
+>>>>>>> ccfe370f24c6be7b6f2b61af37d748a78f2ab3d3
 
     // //commands
-    commands::UIDrawCommand draw{&ui, &gimbal, &flywheel, &indexer, &drivetrain};
+    // commands::UIDrawCommand draw{&ui, &gimbal, &flywheel, &indexer, &drivetrain};
+    commands::AutoAimCommand autoCommand{drivers, &gimbal, &cv};
+    // commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::MouseMoveCommand lookMouse{drivers, &gimbal};
@@ -134,6 +167,10 @@ public:
     commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
 
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
+
+    // Servo
+    commands::OpenServoCommand openServo{drivers, &servo};
+    commands::CloseServoCommand closeServo{drivers, &servo};
 
     //mappings
 

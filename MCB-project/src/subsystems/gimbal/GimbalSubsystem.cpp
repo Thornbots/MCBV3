@@ -1,11 +1,14 @@
 #include "GimbalSubsystem.hpp"
 
+#include "tap/communication/serial/ref_serial_data.hpp"
+
 #include "GimbalSubsystemConstants.hpp"
 
 int voltage;
 float velocity;
 namespace subsystems {
-float encoderOffset = 0;
+using namespace tap::communication::serial;
+float encoderOffset = YAW_OFFSET;
 GimbalSubsystem::GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* yaw, tap::motor::DjiMotor* pitch) : tap::control::Subsystem(drivers), drivers(drivers), motorYaw(yaw), motorPitch(pitch) {
     gen = std::mt19937(rd());
     distYaw = std::uniform_int_distribution<>(-YAW_DIST_RANGE, YAW_DIST_RANGE);
@@ -15,44 +18,84 @@ GimbalSubsystem::GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* ya
 void GimbalSubsystem::initialize() {
     motorPitch->initialize();
     motorYaw->initialize();
-#ifdef INFANTRY
-    encoderOffset = drivers->i2c.encoder.getAngle();
-#endif
-    imuOffset = getYawEncoderValue() + YAW_OFFSET;
+    #ifndef OLDINFANTRY
+        encoderOffset -= drivers->i2c.encoder.getAngle();
+    #endif
+    imuOffset = getYawEncoderValue();
 
     targetYawAngleWorld += yawAngleRelativeWorld;
     drivers->commandScheduler.registerSubsystem(this);
 }
-
 void GimbalSubsystem::refresh() {
-#ifdef INFANTRY
-    if (!motorYaw->isMotorOnline()) {
-        encoderOffset = drivers->i2c.encoder.getAngle();
-        motorYaw->resetEncoderValue();
+    #ifndef OLDINFANTRY
+        if (!motorYaw->isMotorOnline()) {
+            encoderOffset = -drivers->i2c.encoder.getAngle() + YAW_OFFSET;
+            motorYaw->resetEncoderValue();
+        }
 
-#endif
+    #endif
+
     yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
-    driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
-    yawAngleRelativeWorld = fmod(PI / 180 * drivers->bmi088.getYaw() - imuOffset, 2 * PI);
-}
 
-void GimbalSubsystem::updateMotors(float changeInTargetYaw, float* targetPitch) {
-    *targetPitch = std::clamp(*targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
-    driveTrainEncoder = getYawEncoderValue();
-    yawEncoderCache = driveTrainEncoder;
-    targetYawAngleWorld = fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
-    pitchMotorVoltage = getPitchVoltage(*targetPitch, dt);
-    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, changeInTargetYaw / dt, dt);
-    // moved
+    #if defined(INFANTRY)
+        gimbalPitchAngularVelocity = drivers->bmi088.getGx() * PI / 180;
+       
+       //this happens to work because the X axis is alined with the pitch axis
+        gimbalPitchAngleRelativeWorld =  drivers->bmi088.getRoll() * PI / 180; 
+
+
+
+    #endif
+
+
+    driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
+    yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw() - imuOffset;
     motorPitch->setDesiredOutput(pitchMotorVoltage);
     motorYaw->setDesiredOutput(yawMotorVoltage);
+}
+
+void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
+    
+    float pitchVel = getPitchVel();
+    float pitch = getPitchEncoderValue();
+    #if defined(INFANTRY)
+        targetPitch -= gimbalPitchAngleRelativeWorld;
+        pitchVel += gimbalPitchAngularVelocity;
+    #endif
+
+    targetPitch = std::clamp(targetPitch , -MAX_PITCH_DOWN, MAX_PITCH_UP);
+
+    driveTrainEncoder = getYawEncoderValue();
+    yawEncoderCache = driveTrainEncoder;
+    //THIS LINE BELOW WAS CAUSING ERROR
+    targetYawAngleWorld += changeInTargetYaw;// std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
+    pitchMotorVoltage = getPitchVoltage(targetPitch, pitch, pitchVel, dt);
+
+    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, changeInTargetYaw / dt, dt);
+    // moved
+}
+
+//alternate version of update motors to use with CV
+void GimbalSubsystem::updateMotorsAndVelocity(float changeInTargetYaw, float targetPitch, float targetYawVel, float targetPitchVel) {
+    
+    float pitch = getPitchEncoderValue();
+
+    targetPitch = std::clamp(targetPitch , -MAX_PITCH_DOWN, MAX_PITCH_UP);
+
+    driveTrainEncoder = getYawEncoderValue();
+    yawEncoderCache = driveTrainEncoder;
+    //THIS LINE BELOW WAS CAUSING ERROR
+    targetYawAngleWorld += changeInTargetYaw;// std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
+    pitchMotorVoltage = getPitchVoltage(targetPitch, pitch, targetPitchVel, dt);
+
+    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, targetYawVel, dt);
+   
 }
 
 void GimbalSubsystem::stopMotors() {
     pitchMotorVoltage = 0;
     yawMotorVoltage = 0;
-    motorPitch->setDesiredOutput(pitchMotorVoltage);
-    motorYaw->setDesiredOutput(yawMotorVoltage);
+
     pitchController.clearBuildup();
     yawController.clearBuildup();
 }
@@ -75,20 +118,21 @@ int GimbalSubsystem::getYawVoltage(float driveTrainAngularVelocity, float yawAng
 }
 
 // assume targetangle is in radians, not sure
-int GimbalSubsystem::getPitchVoltage(float targetAngle, float dt) {
+int GimbalSubsystem::getPitchVoltage(float targetAngle, float pitchAngleRelativeGimbal, float pitchAngularVelocity, float dt) {
 #if defined(pitch_sysid)
     return distPitch(gen);
 #elif defined(drivetrain_sysid)
     return 0;
 #else
-    return 1000 * pitchController.calculate(getPitchEncoderValue(), getPitchVel(), targetAngle + PITCH_OFFSET, dt);
+    return 1000 * pitchController.calculate(pitchAngleRelativeGimbal, pitchAngularVelocity, targetAngle, dt);
 #endif
 }
 
-float GimbalSubsystem::getYawEncoderValue() { return motorYaw->getPositionUnwrapped() / YAW_TOTAL_RATIO + encoderOffset; }
+float GimbalSubsystem::getYawEncoderValue() { return std::fmod(motorYaw->getPositionUnwrapped() / YAW_TOTAL_RATIO + encoderOffset, 2 * PI); }
 
-float GimbalSubsystem::getPitchEncoderValue() { return motorPitch->getPositionWrapped(); }
+float GimbalSubsystem::getPitchEncoderValue() { float temp = std::fmod(motorPitch->getPositionWrapped() / PITCH_RATIO  - PITCH_OFFSET, 2*PI);
+    return (temp > PI) ? temp - 2*PI : temp; }
 float GimbalSubsystem::getYawVel() { return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO; }
 float GimbalSubsystem::getPitchVel() { return motorPitch->getShaftRPM() * PI / 30; }
-
+float GimbalSubsystem::getYawAngleRelativeWorld() {return yawAngleRelativeWorld;}
 }  // namespace subsystems

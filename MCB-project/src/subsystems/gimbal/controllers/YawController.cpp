@@ -9,8 +9,6 @@
 #include "tap/board/board.hpp"
 #include "tap/motor/dji_motor.hpp"
 
-#include "YawControllerConstants.hpp"
-
 namespace subsystems {
 YawController::YawController() {}
 
@@ -18,13 +16,15 @@ float YawController::calculate(float currentPosition, float currentVelocity, flo
 
     estimateState(&currentPosition, &currentVelocity, pastTorque, currentDrivetrainVelocity);
 
-    float positionError = targetPosition - currentPosition;
-    while (positionError > static_cast<float>(M_PI)) {
-        positionError -= static_cast<float>(M_TWOPI);
+    // float positionError = std::fmod(targetPosition - currentPosition + PI, 2 * PI) - PI;  // wrap to [-PI, PI]
+    float positionError = targetPosition - currentPosition;  // wrap to [-PI, PI]
+
+    while(positionError > PI) {
+        positionError -= 2 * PI;
     }
-    while (positionError < static_cast<float>(-M_PI)) {
-        positionError += static_cast<float>(M_TWOPI);
-    }
+    while (positionError < -PI) {
+        positionError += 2 * PI;
+    } 
 
     //float choiceKDT = currentDrivetrainVelocity * positionError > 0 ? KDT : KDT_REV;  // check if turret is fighting drivetrain;
     inputVelocity = std::clamp(inputVelocity, -VELO_MAX / 2, VELO_MAX / 2);
@@ -47,13 +47,13 @@ float YawController::calculate(float currentPosition, float currentVelocity, flo
     pastTargetVelocity = targetVelocity;
 
     // integral velocity controller
-    if (abs(pastOutput) < INT_THRESH || velocityError * buildup < 0)  // signs are opposite
+    if (std::abs(pastOutput) < INT_THRESH || velocityError * buildup < 0)  // signs are opposite
     {                                                                 // saturation detection
          if (velocityError * buildup < 0) {                              // overshooting
         buildup *= (1 - TAKEBACK);  // take back not quite half
          }
         buildup += velocityError * deltaT;  // integrate normally
-    }
+    }   
     // calculation for setting target current aka velocity controller
     float targetCurrent = std::clamp(KVISC * targetRelativeVelocity + UK * signum(targetRelativeVelocity) + KA * targetAcceleration + KPV * velocityError + KIV * buildup, -20.0f, 20.0f);
 
@@ -63,7 +63,7 @@ float YawController::calculate(float currentPosition, float currentVelocity, flo
 #if defined(OLDINFANTRY)
     return std::clamp(pastOutput, -VOLT_MAX, VOLT_MAX);
 #else
-    return 0.8192f * std::clamp(targetCurrent, -20.0f, 20.0f);
+    return 0.8192f * targetCurrent;
 #endif
 }
 

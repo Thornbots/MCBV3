@@ -92,6 +92,11 @@ public:
     virtual float getPitch() const override { return mahonyAlgorithm.getPitch(); }
     virtual float getRoll() const override { return mahonyAlgorithm.getRoll(); }
 
+    virtual float getq0() const override { return mahonyAlgorithm.getq0(); }
+    virtual float getq1() const override { return mahonyAlgorithm.getq1(); }
+    virtual float getq2() const override { return mahonyAlgorithm.getq2(); }
+    virtual float getq3() const override { return mahonyAlgorithm.getq3(); }
+
     struct ImuData
     {
         tap::algorithms::transforms::Vector accRaw = {0, 0, 0};

@@ -13,9 +13,9 @@ class OpenServoCommand : public tap::control::Command {
 public:
     OpenServoCommand(src::Drivers* drivers, ServoSubsystem* servo) : drivers(drivers), servo(servo) { addSubsystemRequirement(servo); }
 
-    void initialize() override { servo->setTargetPosition(ServoSubsystem::OPEN_POSITION); };
+    void initialize() override {};
 
-    void execute() override {};
+    void execute() override {servo->setTargetPosition(ServoSubsystem::OPEN_POSITION);};
 
     void end(bool interrupted) override {};
 

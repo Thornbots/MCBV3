@@ -10,7 +10,8 @@
 
 namespace subsystems
 {
-
+static tap::arch::PeriodicMilliTimer servoTimer(20);
+static tap::arch::PeriodicMilliTimer servoSecondTimer(100);
 class ServoSubsystem : public tap::control::Subsystem
 {
 
