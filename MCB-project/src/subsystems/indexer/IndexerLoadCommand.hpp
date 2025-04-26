@@ -1,3 +1,4 @@
+#ifdef HERO
 #pragma once
 
 #include "tap/control/command.hpp"
@@ -36,3 +37,4 @@ private:
     HeroIndexerSubsystem* indexer;
 };
 }  // namespace commands
+#endif

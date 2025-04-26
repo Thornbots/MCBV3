@@ -72,7 +72,7 @@ public:
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
 
     // //commands
-    commands::UIDrawCommand draw{&ui};
+    // commands::UIDrawCommand draw{&ui};
 
     commands::JoystickMoveCommand look{drivers, &gimbal};
     commands::MouseMoveCommand look2{drivers, &gimbal};

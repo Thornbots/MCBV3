@@ -1,6 +1,8 @@
+//ignore this file if HERO is not defined
+#ifdef HERO
 #include "HeroIndexerSubsystem.hpp"
 #include "IndexerSubsystemConstants.hpp"
-// #include "tap/board/board.hpp"
+#include "tap/board/board.hpp"
 
 namespace subsystems
 {
@@ -18,7 +20,7 @@ void HeroIndexerSubsystem::initialize() {
     IndexerSubsystem::initialize();
     // Initialize both motors
     bottomIndexer->initialize();     // Initialize the second motor
-    Board::BeamBreak::configure(modm::platform::Gpio::InputType::Floating);
+    Board::DigitalInPinB12::configure(modm::platform::Gpio::InputType::Floating);
 }
 
 void HeroIndexerSubsystem::refresh() {
@@ -52,8 +54,9 @@ void HeroIndexerSubsystem::setTargetMotor2RPM(int targetMotorRPM){
 }
 
 bool HeroIndexerSubsystem::readBreakBeam() {
-    return Board::BeamBreak::read(); // Assuming PF0 is the break beam sensor
+    return Board::DigitalInPinB12::read(); // Assuming PF0 is the break beam sensor
 }
 
 
 } // namespace subsystems
+#endif
