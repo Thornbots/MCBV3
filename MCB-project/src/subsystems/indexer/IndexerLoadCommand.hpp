@@ -13,6 +13,7 @@ using subsystems::HeroIndexerSubsystem;
 class IndexerLoadCommand : public tap::control::Command
 {
 public:
+
 IndexerLoadCommand(src::Drivers* drivers, HeroIndexerSubsystem* indexer)
         : drivers(drivers),
           indexer(indexer)

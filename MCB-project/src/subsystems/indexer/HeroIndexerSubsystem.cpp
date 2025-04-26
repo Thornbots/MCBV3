@@ -1,11 +1,11 @@
 #include "HeroIndexerSubsystem.hpp"
 #include "IndexerSubsystemConstants.hpp"
+// #include "tap/board/board.hpp"
 
 namespace subsystems
 {
 
-template<class T>
-HeroIndexerSubsystem<T>::HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index1, tap::motor::DjiMotor* index2)
+HeroIndexerSubsystem::HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index1, tap::motor::DjiMotor* index2)
     : IndexerSubsystem(drivers, index1), // Call base class constructor
     bottomIndexer(index2),
     indexPIDController2(PID_CONF_INDEX)
@@ -14,23 +14,20 @@ HeroIndexerSubsystem<T>::HeroIndexerSubsystem(src::Drivers* drivers, tap::motor:
     // Any additional initialization for the second motor, if necessary
 }
 
-template<class T>
-void HeroIndexerSubsystem<T>::initialize() {
+void HeroIndexerSubsystem::initialize() {
     IndexerSubsystem::initialize();
     // Initialize both motors
     bottomIndexer->initialize();     // Initialize the second motor
-    T::configure(modm::platform::Gpio::InputType::Floating);
+    Board::BeamBreak::configure(modm::platform::Gpio::InputType::Floating);
 }
 
-template<class T>
-void HeroIndexerSubsystem<T>::refresh() {
+void HeroIndexerSubsystem::refresh() {
     IndexerSubsystem::refresh();
     // Set the desired output for both motors
     bottomIndexer->setDesiredOutput(indexerVoltage2);   // Second motor (same voltage)
 }
 
-template<class T>
-void HeroIndexerSubsystem<T>::indexAtRate(float ballsPerSecond){
+void HeroIndexerSubsystem::indexAtRate(float ballsPerSecond){
     IndexerSubsystem::indexAtRate(ballsPerSecond);
 
     // Check if the firing rate should be limited to prevent overheating
@@ -42,23 +39,20 @@ void HeroIndexerSubsystem<T>::indexAtRate(float ballsPerSecond){
     setTargetMotor2RPM(ballsPerSecond * 60.0f * REV_PER_BALL_BOTTOM); // compiler being stupid
 }
 
-template<class T>
-void HeroIndexerSubsystem<T>::indexAtMaxRate(){
+void HeroIndexerSubsystem::indexAtMaxRate(){
     IndexerSubsystem::indexAtMaxRate();
     setTargetMotor2RPM(MAX_INDEX_RPM);
 }
 
-template<class T>
-void HeroIndexerSubsystem<T>::setTargetMotor2RPM(int targetMotorRPM){
+void HeroIndexerSubsystem::setTargetMotor2RPM(int targetMotorRPM){
 
     indexPIDController2.runControllerDerivateError(targetMotorRPM - bottomIndexer->getShaftRPM(), 1);
 
     indexerVoltage2 = static_cast<int32_t>(indexPIDController2.getOutput());
 }
 
-template<class T>
-bool HeroIndexerSubsystem<T>::readBreakBeam() {
-    return T::read();
+bool HeroIndexerSubsystem::readBreakBeam() {
+    return Board::BeamBreak::read(); // Assuming PF0 is the break beam sensor
 }
 
 

@@ -4,7 +4,6 @@
 namespace subsystems
 {
 
-template<class T>
 class HeroIndexerSubsystem : public IndexerSubsystem
 {
 
