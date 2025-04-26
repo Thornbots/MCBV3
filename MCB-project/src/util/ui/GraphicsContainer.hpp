@@ -51,12 +51,6 @@ public:
     /* When adding, make sure you don't lose the object from leaving scope */
     void addGraphicsObject(GraphicsObject* obj) { objects.push_back(obj); }
 
-    virtual void update() override {
-        for (GraphicsObject* p : objects) {
-            p->update();
-        }
-    }
-
     void hasBeenCleared() final {
         for (GraphicsObject* p : objects) {
             p->hasBeenCleared();

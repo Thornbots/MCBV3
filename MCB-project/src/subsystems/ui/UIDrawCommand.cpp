@@ -8,8 +8,7 @@ UIDrawCommand::UIDrawCommand(UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelS
       gimbal(gimbal),
       flywheel(flywheel),
       indexer(indexer),
-      drivetrain(drivetrain),
-      laneAssistLines(gimbal) {
+      drivetrain(drivetrain) {
     addSubsystemRequirement(ui);
     
     // addGraphicsObject(&testGraphics);
@@ -18,12 +17,16 @@ UIDrawCommand::UIDrawCommand(UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelS
     addGraphicsObject(&supercapChargeIndicator);
     addGraphicsObject(&chassisOrientationIndicator);
 
+    laneAssistLines.setGimbalSubsystem(gimbal);
     chassisOrientationIndicator.setGimbalSubsystem(gimbal);
 }
 
 void UIDrawCommand::initialize() { ui->setTopLevelContainer(this); }
 
-void UIDrawCommand::execute() {}
+void UIDrawCommand::execute() {
+  laneAssistLines.update();
+  chassisOrientationIndicator.update();
+}
 
 void UIDrawCommand::end(bool) { ui->setTopLevelContainer(nullptr); }
 

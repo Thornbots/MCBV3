@@ -1,5 +1,4 @@
 constexpr float VOLT_MAX = 24;     // V
-constexpr float CURRENT_MAX = 10;  // A
 constexpr float lat = .008;
 constexpr float DT = .002;
 constexpr int Q_SIZE = lat / DT;  // make this fancy later
@@ -30,6 +29,7 @@ constexpr float KIV = 30;                       // A/rad
 constexpr float IV_MAX = 2 / KIV;               // units TBD
 constexpr float INT_THRESH = VOLT_MAX * 0.85l;  // V
 constexpr float TAKEBACK = 0.01;                // unitless
+constexpr float CURRENT_MAX = 10;  // A
 
 #elif defined(SENTRY)
 constexpr float C = 0.12;                                          // kg-s/m^2
@@ -38,7 +38,7 @@ constexpr float UK = 0;                                          // N-m
 constexpr float KB = 0.4534;                                       // V-rad/s
 constexpr float KT = 0.4415;                                       // N-m/A
 constexpr float RA = 0.5592;                                       // ohm
-constexpr float RATIO = 54/24.0f;                                         // unitless
+constexpr float RATIO = 54/27.0f;                                         // unitless
                                                                    // Position controller  constexprants
 constexpr float KP = 20;                                            // 10.5;  // sec^-1
 constexpr float THETA_DOT_BREAK = 10;                              // rad/s
@@ -57,6 +57,8 @@ constexpr float KIV = 0.02;                      // A/rad
 constexpr float IV_MAX = 0.1 / KIV;              // units TBD
 constexpr float INT_THRESH = VOLT_MAX * 0.85;  // V
 constexpr float TAKEBACK = 0.1;               // unitless
+constexpr float CURRENT_MAX = 5;  // A
+
 #elif defined(INFANTRY)
 
 constexpr float C = 0.12;  // kg-s/m^2
@@ -86,6 +88,8 @@ constexpr float IV_MAX = 3 / KIV;  //.2 / KIV;              // units TBD
 
 constexpr float INT_THRESH = VOLT_MAX * 0.85;  // V
 constexpr float TAKEBACK = 0.1;
+constexpr float CURRENT_MAX = 10;  // A
+
 #else
 constexpr float C = 0.005;                                         // kg-s/m^2
 constexpr float J = 0.028;                                         // kg-m^2
@@ -112,6 +116,8 @@ constexpr float KIV = 30;                      // A/rad
 constexpr float IV_MAX = 2 / KIV;              // units TBD
 constexpr float INT_THRESH = VOLT_MAX * 0.85;  // V
 constexpr float TAKEBACK = 0.01;               // unitless
+constexpr float CURRENT_MAX = 10;  // A
+
 #endif
 
 // calculated from existing  constexprants or robot independent (put after ifdef)

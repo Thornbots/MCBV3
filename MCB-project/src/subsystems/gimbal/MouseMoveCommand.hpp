@@ -35,12 +35,14 @@ public:
 
 
 private:
-    src::Drivers* drivers;
-    GimbalSubsystem* gimbal;
-
     bool isCalibrated = false;
 
+protected:
+    GimbalSubsystem* gimbal;
+    src::Drivers* drivers;
     float yaw = 0.0f, pitch = 0.0f;
+
+    float yawvel = 0.0f, pitchvel = 0.0f;
 
 };
 }  // namespace commands

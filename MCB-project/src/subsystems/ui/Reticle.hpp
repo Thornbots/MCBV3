@@ -14,10 +14,6 @@ public:
         // addGraphicsObject(&right);
     }
 
-    void update() final {
-        
-    }
-
 private:
     
 

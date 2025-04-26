@@ -14,11 +14,11 @@ void ServoSubsystem::initialize() {
 }
 
 void ServoSubsystem::refresh() {
-    servo->updateSendPwmRamp();
+    if(servoTimer.execute()) servo->updateSendPwmRamp();
 }
 
 void ServoSubsystem::setTargetPosition(float position) {
-    servo->setTargetPwm(position);
+    if(servoSecondTimer.execute()) servo->setTargetPwm(position); 
 }
 
 
