@@ -8,7 +8,6 @@
 
 uint16_t testvar = 0;
 float testvar2 = 0.0f;
-int calls = -1;
 // Place any sort of input/output initialization here. For example, place
 // serial init stuff here.
 static void initializeIo(src::Drivers *drivers) {
@@ -21,12 +20,11 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->remote.initialize();
     drivers->refSerial.initialize();
     drivers->i2c.initialize();
-    calls++;
     modm::delay_ms(2);
     drivers->i2c.refresh();
-    testvar = drivers->i2c.encoder.getRawAngle();
-    testvar2 = drivers->i2c.encoder.getAngle();
-    calls++;
+    modm::delay_ms(20);
+    drivers->i2c.refresh();
+
 
     // drivers->cvBoard.initialize();
     drivers->terminalSerial.initialize();
@@ -35,10 +33,7 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->bmi088.initialize(500, 0.0f, 0.0f);
     drivers->bmi088.setCalibrationSamples(2000);
     drivers->bmi088.requestCalibration();
-    drivers->i2c.refresh();
-    testvar = drivers->i2c.encoder.getRawAngle();
-    testvar2 = drivers->i2c.encoder.getAngle();
-    calls++;
+
 }
 
 // Anything that you would like to be called place here. It will be called
@@ -62,12 +57,9 @@ RobotControl control{&drivers};
 int main() {
     Board::initialize();
     initializeIo(&drivers);
-
+    // testvar = drivers.i2c.encoder.getRawAngle();
+    // testvar2 = drivers.i2c.encoder.getAngle();
     control.initialize();
-    testvar = drivers.i2c.encoder.getRawAngle();
-    testvar2 = drivers.i2c.encoder.getAngle();
-    calls++;
-
     tap::buzzer::silenceBuzzer(&(drivers.pwm));
 
     tap::arch::PeriodicMilliTimer refreshTimer(2);
@@ -85,12 +77,9 @@ int main() {
             control.update();
             drivers.commandScheduler.run();
             drivers.djiMotorTxHandler.encodeAndSendCanData();
-            testvar = drivers.i2c.encoder.getRawAngle();
-            testvar2 = drivers.i2c.encoder.getAngle();
-            calls++;
 
             // drivers.terminalSerial.update(); //needs to be commented for cv to work
-        }
+        } 
 
         // prevent looping too fast
         modm::delay_us(10);

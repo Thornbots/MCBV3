@@ -32,8 +32,7 @@
 
 
 #include "drivers.hpp"
-float rawEncoder = 0;
-int gimbalInit = 0;
+int rawEncoder = 0;
 namespace robots {
 class InfantryControl : public ControlInterface {
 public:
@@ -48,7 +47,9 @@ public:
         drivetrain.initialize();
         // ui.initialize();
         servo.initialize();
-        // cv.initialize();
+        cv.initialize();
+        
+        drivers->commandScheduler.addCommand(&closeServo); //close servo so I stop getting carbon splinters
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
@@ -57,7 +58,6 @@ public:
         indexer.setDefaultCommand(&indexerStopCommand);
         //ui.setDefaultCommand(&draw);
 
-        drivers->commandScheduler.addCommand(&closeServo); //close the servo on startup
 
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz)->onTrue(&closeServo);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam)->onTrue(&openServo);
@@ -94,7 +94,6 @@ public:
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
-        rawEncoder = drivers->i2c.encoder.getAngle();
         // drivers->terminalSerial.update(); //wait we were triple updating? remove for cv
 
     }
