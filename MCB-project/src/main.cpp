@@ -30,12 +30,7 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->terminalSerial.initialize();
     drivers->schedulerTerminalHandler.init();
     drivers->djiMotorTerminalSerialHandler.init();
-<<<<<<< HEAD
-    drivers->bmi088.initialize(4000, 0.1f, 0.0f);
-=======
-    drivers->bmi088.initialize(500, 0.0f, 0.0f);
-    drivers->bmi088.setCalibrationSamples(2000);
->>>>>>> ccfe370f24c6be7b6f2b61af37d748a78f2ab3d3
+    drivers->bmi088.initialize(500, 0.1f, 0.0f);
     drivers->bmi088.requestCalibration();
 
 }
