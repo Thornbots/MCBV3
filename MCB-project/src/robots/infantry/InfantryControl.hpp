@@ -43,14 +43,12 @@ public:
     void initialize() override {
         // Initialize subsystems (registration is internal)
         gimbal.initialize();
-         flywheel.initialize();
+        flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
         // ui.initialize();
-        // servo.initialize();
+        servo.initialize();
         // cv.initialize();
-        
-        &closeServo; //close servo so I stop getting carbon splinters
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
@@ -59,6 +57,7 @@ public:
         indexer.setDefaultCommand(&indexerStopCommand);
         //ui.setDefaultCommand(&draw);
 
+        drivers->commandScheduler.addCommand(&closeServo); //close the servo on startup
 
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz)->onTrue(&closeServo);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam)->onTrue(&openServo);
