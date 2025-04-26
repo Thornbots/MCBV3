@@ -35,7 +35,7 @@ void DrivetrainSubsystem::refresh() {
     // }
 }
 #if defined(drivetrain_sysid)
-const float SAT_SECONDS = 20.0f, MAX_CURRENT = 1.5f, RAMP_TIME = 90.0f;
+const float SAT_SECONDS = 5.0f, MAX_CURRENT = 1.5f, RAMP_TIME = 90.0f;
 float time, current;
 float motor1Vel, motor2Vel, motor3Vel, motor4Vel;
 float calculateCurrent(float time) {

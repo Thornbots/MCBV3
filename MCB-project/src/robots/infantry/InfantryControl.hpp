@@ -42,13 +42,14 @@ public:
     void initialize() override {
         // Initialize subsystems (registration is internal)
         gimbal.initialize();
-        flywheel.initialize();
+         flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
         // ui.initialize();
         servo.initialize();
         cv.initialize();
         
+        &closeServo; //close servo so I stop getting carbon splinters
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);

@@ -87,7 +87,7 @@ constexpr float COF_WHEEL = 0.9;           // unitless COF
 
 constexpr float GEAR_RATIO = 3591.0f/187.0f;  // gear ratio
 constexpr float P_IDLE = 2.6;         // W, idle power
-constexpr float P_FOS = 0.79;       // unitless, power factor of safety
+constexpr float P_FOS = 0.65;       // unitless, power factor of safety
 
 // Tunable Parameters
 constexpr float KP_V_XY = 1150;  // proportional gain for velocity
