@@ -27,6 +27,7 @@ void GimbalSubsystem::initialize() {
     drivers->commandScheduler.registerSubsystem(this);
 }
 void GimbalSubsystem::refresh() {
+<<<<<<< HEAD
     #ifndef OLDINFANTRY
         if (!motorYaw->isMotorOnline()) {
             encoderOffset = -drivers->i2c.encoder.getAngle() + YAW_OFFSET;
@@ -34,9 +35,16 @@ void GimbalSubsystem::refresh() {
         }
 
     #endif
+=======
+    if(!motorYaw->isMotorOnline()){
+        encoderOffset = drivers->i2c.encoder.getAngle();
+        motorYaw->resetEncoderValue();
+    }
+>>>>>>> parent of 53ac31d (the final merge)
 
     yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
 
+<<<<<<< HEAD
     #if defined(INFANTRY)
         gimbalPitchAngularVelocity = drivers->bmi088.getGx() * PI / 180;
        
@@ -50,8 +58,22 @@ void GimbalSubsystem::refresh() {
 
     driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
     yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw() - imuOffset;
+=======
+
+void GimbalSubsystem::updateMotors(float changeInTargetYaw, float* targetPitch)
+{
+
+    *targetPitch = std::clamp(*targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
+    driveTrainEncoder = getYawEncoderValue();
+    yawEncoderCache = driveTrainEncoder;
+    targetYawAngleWorld = fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
+    pitchMotorVoltage = getPitchVoltage(*targetPitch, dt);
+    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, *changeInTargetYaw / dt, dt);
+    // moved
+>>>>>>> parent of 53ac31d (the final merge)
     motorPitch->setDesiredOutput(pitchMotorVoltage);
     motorYaw->setDesiredOutput(yawMotorVoltage);
+
 }
 
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {

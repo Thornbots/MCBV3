@@ -53,6 +53,7 @@ void ComputerVisionSubsystem::update(float current_yaw, float current_pitch, flo
     // state.velocity = modm::Vector3f(0,0,0);
     // state.acceleration = modm::Vector3f(0,0,0);
 
+<<<<<<< HEAD
     // get the quaternion directly
     q0 = drivers->bmi088.getq0();
     q1 = -drivers->bmi088.getq1();  // axis is negated to swap IMU reference frame to the 3d dynamics reference frame
@@ -123,6 +124,12 @@ void ComputerVisionSubsystem::update(float current_yaw, float current_pitch, flo
     modm::Vector3f acceleration(msg->a_x, msg->a_z, -msg->a_y); //not imlemented yet afak
 
     SecondOrderKinematicState state(position, velocity, acceleration);  //(pos,vel,acc);
+=======
+    MeasuredKinematicState state;//(pos,vel,acc); 
+    state.position = modm::Vector3f(msg->x+0.001*msg->v_x,msg->z,-msg->y + 0.2); // taproot flips z y basis vec
+    state.velocity = modm::Vector3f(msg->v_x,msg->v_z,-msg->v_y);
+    state.acceleration = modm::Vector3f(msg->a_x,msg->a_z,-msg->a_y);
+>>>>>>> parent of 53ac31d (the final merge)
 
     float targetYaw, targetPitch, travelTime;
     bool valid = tap::algorithms::ballistics::findTargetProjectileIntersection(state, J, 3, &targetPitch, &targetYaw, &travelTime, 0);
