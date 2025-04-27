@@ -1,9 +1,10 @@
 #include "OdoControllerConstants.hpp"
 
 namespace subsystems {
+
 class OdoController {
 public:
-    float torqueHistory[Q_SIZE];
+    float odoTorqueHistory[odo::Q_SIZE];
     OdoController();
     //~OdoController();
     void estimateState(float *theta, float *thetadot, float tLast, float drivetrainVelocity);
@@ -14,8 +15,8 @@ public:
         pastTargetVelocity = 0;
         pastOutput = 0;
         pastTorque = 0;
-        for (int i = 0; i < Q_SIZE; i++) {
-            torqueHistory[i] = 0;
+        for (int i = 0; i < odo::Q_SIZE; i++) {
+            odoTorqueHistory[i] = 0;
         }
     };
 

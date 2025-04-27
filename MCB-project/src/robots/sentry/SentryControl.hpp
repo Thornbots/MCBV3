@@ -12,6 +12,8 @@
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
+#include "subsystems/odometry/OdometryStopCommand.hpp"
+#include "subsystems/odometry/OdometryPointForwardsCommand.hpp"
 #include "util/trigger.hpp"
 
 #include "subsystems/cv/ComputerVisionSubsystem.hpp"
@@ -31,12 +33,14 @@ public:
         indexer.initialize();
         drivetrain.initialize();
         cv.initialize();
+        odo.initialize();
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
         flywheel.setDefaultCommand(&shooterStop);
         drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerStopCommand);
+        odo.setDefaultCommand(&odoPointForwards);
 
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
@@ -64,6 +68,7 @@ public:
     subsystems::DoubleIndexerSubsystem indexer{drivers, &hardware.indexMotor1, &hardware.indexMotor2};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::ComputerVisionSubsystem cv{drivers};
+    subsystems::OdometrySubsystem odo{drivers, &hardware.odoMotor};
 
     // commands
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
@@ -77,6 +82,9 @@ public:
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
 
     commands::IndexerStopCommand indexerStopCommand{drivers, &indexer};
+
+    commands::OdometryPointForwardsCommand odoPointForwards{drivers, &odo, &gimbal};
+    commands::OdometryStopCommand odoStop{drivers, &odo};
 
     // CHANGE NUMBERS LATER
     commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::CONTROLLER};

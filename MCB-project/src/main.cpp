@@ -62,6 +62,10 @@ int main() {
     control.initialize();
     tap::buzzer::silenceBuzzer(&(drivers.pwm));
 
+    while(drivers.remote.isConnected()) {
+        modm::delay_ms(100);
+    }
+
     tap::arch::PeriodicMilliTimer refreshTimer(2);
 
     while (1) {

@@ -10,6 +10,8 @@
 #include "tap/motor/dji_motor.hpp"
 
 namespace subsystems {
+    using namespace odo;
+
 OdoController::OdoController() {}
 
 float OdoController::calculate(float currentPosition, float currentVelocity, float currentDrivetrainVelocity, float targetPosition, float inputVelocity, float deltaT) {
@@ -60,11 +62,7 @@ float OdoController::calculate(float currentPosition, float currentVelocity, flo
     pastOutput = RA * targetCurrent + KV * targetRelativeVelocity;
     pastTorque = targetCurrent*KT;
 
-#if defined(OLDINFANTRY)
     return std::clamp(pastOutput, -VOLT_MAX, VOLT_MAX);
-#else
-    return 0.8192f * targetCurrent;
-#endif
 }
 
 void OdoController::estimateState(float* theta, float* thetadot, float tLast, float drivetrainVelocity) {
@@ -73,10 +71,10 @@ void OdoController::estimateState(float* theta, float* thetadot, float tLast, fl
         // // Store the current values in the history
         // load in new value if i is not > 0
         // forcehistory[Q_SIZE-1] gets kicked out every method call
-        torqueHistory[i] = (i > 0) ? torqueHistory[i - 1] : tLast;
+        odoTorqueHistory[i] = (i > 0) ? odoTorqueHistory[i - 1] : tLast;
 
         // Estimated angular velocity (theta_dot)
-        *thetadot += (torqueHistory[i] - C*(*thetadot - drivetrainVelocity) - signum(*thetadot - drivetrainVelocity)) * (DT/ J);
+        *thetadot += (odoTorqueHistory[i] - C*(*thetadot - drivetrainVelocity) - signum(*thetadot - drivetrainVelocity)) * (DT/ J);
 
         // Update velocity
         *theta += *thetadot * DT;

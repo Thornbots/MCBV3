@@ -4,111 +4,61 @@
 
 #include "OdometrySubsystemConstants.hpp"
 
-int voltage;
-float velocity;
+int voltageOdoOdo;
+float velocityOdoOdo;
+
 namespace subsystems {
+    using namespace odo;
+
 using namespace tap::communication::serial;
-float encoderOffset = YAW_OFFSET;
-OdometrySubsystem::OdometrySubsystem(src::Drivers* drivers, tap::motor::DjiMotor* yaw, tap::motor::DjiMotor* pitch) : tap::control::Subsystem(drivers), drivers(drivers), motorYaw(yaw), motorPitch(pitch) {
+float encoderOffsetOdo = ODO_OFFSET;
+OdometrySubsystem::OdometrySubsystem(src::Drivers* drivers, tap::motor::DjiMotor* odo) : tap::control::Subsystem(drivers), drivers(drivers), motorOdo(odo) {
     gen = std::mt19937(rd());
-    distYaw = std::uniform_int_distribution<>(-YAW_DIST_RANGE, YAW_DIST_RANGE);
-    distPitch = std::uniform_int_distribution<>(-PITCH_DIST_RANGE, PITCH_DIST_RANGE);
+    distOdo = std::uniform_int_distribution<>(-ODO_DIST_RANGE, ODO_DIST_RANGE);
 }
 
 void OdometrySubsystem::initialize() {
-    motorPitch->initialize();
-    motorYaw->initialize();
-    #ifndef OLDINFANTRY
-        encoderOffset += drivers->i2c.encoder.getAngle();
-    #endif
-    imuOffset = getYawEncoderValue();
+    motorOdo->initialize();
 
-    targetYawAngleWorld += yawAngleRelativeWorld;
+    // targetOdoAngleWorld = odoAngleRelativeWorld;
     drivers->commandScheduler.registerSubsystem(this);
 }
+
 void OdometrySubsystem::refresh() {
-    #ifndef OLDINFANTRY
-        if (!motorYaw->isMotorOnline()) {
-            encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
-            motorYaw->resetEncoderValue();
-        }
-
-    #endif
-
-    yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
-
-    #if defined(INFANTRY)
-        gimbalPitchAngularVelocity = drivers->bmi088.getGx() * PI / 180;
-        gimbalPitchAngleRelativeWorld =  drivers->bmi088.getRoll() * PI / 180;
-    #endif
 
 
-    driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
-    yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw() - imuOffset;
-    motorPitch->setDesiredOutput(pitchMotorVoltage);
-    motorYaw->setDesiredOutput(yawMotorVoltage);
+    // odoAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw() - getOdoEncoderValue();
+    motorOdo->setDesiredOutput(odoMotorVoltage);
 }
 
-void OdometrySubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
+void OdometrySubsystem::updateMotor(float targetOdo, float odoAngleRelativeWorld, float odoVelRelativeWorld) {
+    driveTrainAngularVelocity = getOdoVel();
     
-    float pitchVel = getPitchVel();
-    float pitch = getPitchEncoderValue();
-    #if defined(INFANTRY)
-        targetPitch -= gimbalPitchAngleRelativeWorld;
-        pitchVel += gimbalPitchAngularVelocity;
-    #endif
-
-    targetPitch = std::clamp(targetPitch , -MAX_PITCH_DOWN, MAX_PITCH_UP);
-
-    driveTrainEncoder = getYawEncoderValue();
-    yawEncoderCache = driveTrainEncoder;
-    //THIS LINE BELOW WAS CAUSING ERROR
-    targetYawAngleWorld += changeInTargetYaw;// std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
-    pitchMotorVoltage = getPitchVoltage(targetPitch, pitch, pitchVel, dt);
-
-    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, changeInTargetYaw / dt, dt);
-    // moved
+    odoMotorVoltage = getOdoVoltage(driveTrainAngularVelocity, std::fmod(odoAngleRelativeWorld, 2 * PI), odoVelRelativeWorld, targetOdo, 0, dt);
 }
 
 void OdometrySubsystem::stopMotors() {
-    pitchMotorVoltage = 0;
-    yawMotorVoltage = 0;
+    odoMotorVoltage = 0;
 
     odoController.clearBuildup();
 }
 
-void OdometrySubsystem::reZeroYaw() {
-    // TODO
-}
 
-// assume yawAngleRelativeWorld is in radians, not sure
-int OdometrySubsystem::getYawVoltage(float driveTrainAngularVelocity, float yawAngleRelativeWorld, float yawAngularVelocity, float desiredAngleWorld, float inputVel, float dt) {
-#if defined(yaw_sysid)
-    voltage = distYaw(gen);
-    velocity = yawAngularVelocity;
-    return voltage;
+// assume odoAngleRelativeWorld is in radians, not sure
+int OdometrySubsystem::getOdoVoltage(float driveTrainAngularVelocity, float odoAngleRelativeWorld, float odoAngularVelocity, float desiredAngleWorld, float inputVel, float dt) {
+#if defined(odo_sysid)
+    voltageOdo = distOdo(gen);
+    velocityOdo = odoAngularVelocity;
+    return voltageOdo;
 #elif defined(drivetrain_sysid)
     return 0;
 #else
-    return 1000 * yawController.calculate(yawAngleRelativeWorld, yawAngularVelocity, driveTrainAngularVelocity, desiredAngleWorld, inputVel, dt);
+    return 1000 * odoController.calculate(odoAngleRelativeWorld, odoAngularVelocity, driveTrainAngularVelocity, desiredAngleWorld, inputVel, dt);
 #endif
 }
 
-// assume targetangle is in radians, not sure
-int OdometrySubsystem::getPitchVoltage(float targetAngle, float pitchAngleRelativeGimbal, float pitchAngularVelocity, float dt) {
-#if defined(pitch_sysid)
-    return distPitch(gen);
-#elif defined(drivetrain_sysid)
-    return 0;
-#else
-    return 1000 * pitchController.calculate(pitchAngleRelativeGimbal, pitchAngularVelocity, targetAngle + PITCH_OFFSET, dt);
-#endif
-}
+float OdometrySubsystem::getOdoEncoderValue() { return std::fmod(motorOdo->getPositionUnwrapped() + encoderOffsetOdo, 2 * PI); }
 
-float OdometrySubsystem::getYawEncoderValue() { return std::fmod(motorYaw->getPositionUnwrapped() / YAW_TOTAL_RATIO + encoderOffset, 2 * PI); }
-
-float OdometrySubsystem::getPitchEncoderValue() { return motorPitch->getPositionWrapped(); }
-float OdometrySubsystem::getYawVel() { return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO; }
-float OdometrySubsystem::getPitchVel() { return motorPitch->getShaftRPM() * PI / 30; }
+float OdometrySubsystem::getOdoVel() { return motorOdo->getShaftRPM() * PI / 30; }
 
 }  // namespace subsystems
