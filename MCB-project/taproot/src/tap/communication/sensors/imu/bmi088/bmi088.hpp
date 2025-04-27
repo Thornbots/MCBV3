@@ -70,7 +70,7 @@ public:
     static constexpr float GYRO_RANGE_MAX_DS = 2000.0f;
 
     static constexpr float BMI088_TEMP_FACTOR = 0.125f;
-    static constexpr float BMI088_TEMP_OFFSET = 23.0f;
+    static constexpr float BMI088_TEMP_OFFSET = 35.0f;
 
     /**
      * Used to convert raw gyro values to units of degrees / second. Ratio has units

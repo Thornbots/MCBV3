@@ -22,7 +22,8 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->i2c.initialize();
     modm::delay_ms(2);
     drivers->i2c.refresh();
-
+    modm::delay_ms(20);
+    drivers->i2c.refresh();
 
 
     // drivers->cvBoard.initialize();
@@ -32,8 +33,6 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->bmi088.initialize(500, 0.0f, 0.0f);
     drivers->bmi088.setCalibrationSamples(2000);
     drivers->bmi088.requestCalibration();
-    drivers->i2c.refresh();
-
 
 }
 

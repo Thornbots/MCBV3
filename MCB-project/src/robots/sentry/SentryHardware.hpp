@@ -31,7 +31,7 @@ public:
     DjiMotor odoMotor{drivers, MotorId::MOTOR5, CanBus::CAN_BUS1, true, "Odo"};
 
     DjiMotor yawMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS1, false, "Yaw"};
-    DjiMotor pitchMotor{drivers, MotorId::MOTOR5, CanBus::CAN_BUS2, true, "Pitch"};
+    DjiMotor pitchMotor{drivers, MotorId::MOTOR5, CanBus::CAN_BUS2, false, "Pitch"};
 
     DjiMotor indexMotor1{drivers, MotorId::MOTOR7, CanBus::CAN_BUS2, false, "LeftIndexer"};
     DjiMotor indexMotor2{drivers, MotorId::MOTOR6, CanBus::CAN_BUS2, true, "RightIndexer"};
