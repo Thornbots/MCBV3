@@ -1,11 +1,9 @@
 #pragma once
 
-#include "subsystems/ui/UISubsystem.hpp"
-#include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/SimpleGraphicsObjects.hpp"
+#include "util/ui/UIScheduler.hpp"
 
 using namespace tap::communication::serial;
-using namespace subsystems;
+using namespace ui;
 
 // looks like
 //  -----------------------------------------------------
@@ -49,11 +47,11 @@ private:
 
     UnfilledRectangle outside{
         RefSerialData::Tx::GraphicColor::CYAN,
-        static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - INSIDE_WIDTH / 2 - PADDING),
+        static_cast<uint16_t>(UIScheduler::HALF_SCREEN_WIDTH - INSIDE_WIDTH / 2 - PADDING),
         HEIGHT_OFF_BOTTOM,
         INSIDE_WIDTH + 2 * PADDING,
         INSIDE_HEIGHT + 2 * PADDING,
         THICKNESS};
     UnfilledRectangle
-        inside{RefSerialData::Tx::GraphicColor::CYAN, static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - INSIDE_WIDTH / 2), HEIGHT_OFF_BOTTOM + PADDING, INSIDE_WIDTH, INSIDE_HEIGHT, THICKNESS};
+        inside{RefSerialData::Tx::GraphicColor::CYAN, static_cast<uint16_t>(UIScheduler::HALF_SCREEN_WIDTH - INSIDE_WIDTH / 2), HEIGHT_OFF_BOTTOM + PADDING, INSIDE_WIDTH, INSIDE_HEIGHT, THICKNESS};
 };

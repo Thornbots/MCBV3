@@ -1,15 +1,16 @@
 #pragma once
 
-#include "subsystems/ui/UISubsystem.hpp"
-#include "util/ui/GraphicsObject.hpp"
+#include "UIScheduler.hpp"
+#include "GraphicsObject.hpp"
 
+
+namespace ui {
 using namespace tap::communication::serial;
-using namespace subsystems;
 
 /* Simple as in not containing anything else. Maybe AtomicGraphicsObject is a better name. */
 class SimpleGraphicsObject : public GraphicsObject {
 public:
-    SimpleGraphicsObject(RefSerialData::Tx::GraphicColor color) : color(color) { UISubsystem::formatGraphicName(graphicNameArray, UISubsystem::getUnusedGraphicName()); }
+    SimpleGraphicsObject(RefSerialData::Tx::GraphicColor color) : color(color) { UIScheduler::formatGraphicName(graphicNameArray, UIScheduler::getUnusedGraphicName()); }
 
     int countNeedRedrawn() final { return needsRedrawn(); }
 
@@ -55,3 +56,4 @@ protected:
 
     uint8_t graphicNameArray[3];
 };
+}

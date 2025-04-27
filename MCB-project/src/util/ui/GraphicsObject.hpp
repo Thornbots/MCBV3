@@ -2,9 +2,10 @@
 
 #include "tap/communication/serial/ref_serial_transmitter.hpp"
 
+namespace ui {
 using namespace tap::communication::serial;
 
-/* Both containers and non containers are a GraphicsObject. The UISubsystem deals with most things at a GraphicsObject level. */
+/* Both containers and non containers are a GraphicsObject. The UIScheduler deals with most things at a GraphicsObject level. */
 class GraphicsObject {
 public:
     /*
@@ -86,3 +87,4 @@ public:
 protected:
     u_int16_t countIndex = 0;
 };
+}

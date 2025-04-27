@@ -1,11 +1,9 @@
 #pragma once
 
-#include "subsystems/ui/UISubsystem.hpp"
-#include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/SimpleGraphicsObjects.hpp"
+#include "util/ui/UIScheduler.hpp"
 
 using namespace tap::communication::serial;
-using namespace subsystems;
+using namespace ui;
 
 class TestGraphics : public GraphicsContainer {
 public:

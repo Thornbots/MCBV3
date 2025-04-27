@@ -1,11 +1,9 @@
 #pragma once
 
-#include "subsystems/ui/UISubsystem.hpp"
-#include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/SimpleGraphicsObjects.hpp"
+#include "util/ui/UIScheduler.hpp"
 
 using namespace tap::communication::serial;
-using namespace subsystems;
+using namespace ui;
 
 // looks like / \ at the bottom of the screen
 class LaneAssistLines : public GraphicsContainer {
@@ -16,19 +14,20 @@ public:
     }
 
     void update() {
-        float pitch = gimbal ? gimbal->getPitchEncoderValue() : 0;
+        float pitch = 0;
         float bottomOffset = A_BOTTOM * std::sin(B_BOTTOM * pitch + C_BOTTOM) + D_BOTTOM;
         float topOffset = A_TOP * std::sin(B_TOP * pitch + C_TOP) + D_TOP;
 
-        left.x1 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - bottomOffset);
-        left.x2 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - topOffset);
-        right.x1 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH + bottomOffset);
-        right.x2 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH + topOffset);
+        left.x1 = static_cast<uint16_t>(UIScheduler::HALF_SCREEN_WIDTH - bottomOffset);
+        left.x2 = static_cast<uint16_t>(UIScheduler::HALF_SCREEN_WIDTH - topOffset);
+        right.x1 = static_cast<uint16_t>(UIScheduler::HALF_SCREEN_WIDTH + bottomOffset);
+        right.x2 = static_cast<uint16_t>(UIScheduler::HALF_SCREEN_WIDTH + topOffset);
     }
 
-    void setGimbalSubsystem(GimbalSubsystem* g) { gimbal = g; }
 
 private:
+
+//change this to use uw 3d irl space to 2d screen space
 #if defined(HERO)        // todo
     static constexpr uint16_t HEIGHT = 360;  // distance from bottom of the screen to the top of each line, pixels
     static constexpr float A_BOTTOM = 811.57925;
@@ -73,7 +72,6 @@ private:
 
     static constexpr uint16_t THICKNESS = 2;  // pixels
 
-    GimbalSubsystem* gimbal = nullptr;
 
     Line left{RefSerialData::Tx::GraphicColor::CYAN, 0, 0, 0, HEIGHT, THICKNESS};
     Line right{RefSerialData::Tx::GraphicColor::CYAN, 0, 0, 0, HEIGHT, THICKNESS};

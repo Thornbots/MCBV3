@@ -2,9 +2,6 @@
 
 #include "robots/hero/HeroHardware.hpp"
 
-#include "subsystems/ui/UISubsystem.hpp"
-#include "subsystems/ui/UIDrawCommand.hpp"
-
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
 
@@ -17,7 +14,6 @@
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
-#include "subsystems/ui/UISubsystem.hpp"
 #include "util/trigger.hpp"
 
 #include "drivers.hpp"
@@ -34,7 +30,6 @@ public:
         flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
-        ui.initialize();
 
         // Run startup commands
         gimbal.setDefaultCommand(&look);
@@ -65,15 +60,12 @@ public:
     HeroHardware hardware;
 
     // Subsystems
-    subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
 
     // //commands
-    commands::UIDrawCommand draw{&ui};
-
     commands::JoystickMoveCommand look{drivers, &gimbal};
     commands::MouseMoveCommand look2{drivers, &gimbal};
 

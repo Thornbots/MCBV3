@@ -6,9 +6,6 @@
 #include "robots/infantry/MechInfantryHardware.hpp"
 #endif
 
-#include "subsystems/ui/UISubsystem.hpp"
-#include "subsystems/ui/UIDrawCommand.hpp"
-
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
 
@@ -24,7 +21,6 @@
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
-#include "subsystems/ui/UISubsystem.hpp"
 #include "subsystems/servo/ServoSubsystem.hpp"
 #include "subsystems/servo/OpenServoCommand.hpp"
 #include "subsystems/servo/CloseServoCommand.hpp"
@@ -45,7 +41,6 @@ public:
         flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
-        // ui.initialize();
         servo.initialize();
         cv.initialize();
         
@@ -55,7 +50,6 @@ public:
         flywheel.setDefaultCommand(&shooterStop);
         drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerStopCommand);
-        //ui.setDefaultCommand(&draw);
 
 
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz)->onTrue(&closeServo);

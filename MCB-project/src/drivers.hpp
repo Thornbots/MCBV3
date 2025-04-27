@@ -22,6 +22,7 @@
 
 #include "tap/drivers.hpp"
 #include "communication/I2CCommunication.hpp"
+#include "util/ui/UIScheduler.hpp"
 
 namespace src {
     class Drivers : public tap::Drivers {
@@ -30,6 +31,8 @@ namespace src {
     public:
         Drivers() : tap::Drivers() {}
         communication::I2CCommunication i2c;
+        ui::UIScheduler ui{this};
+
 
     public:
     };  // class Drivers

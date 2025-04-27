@@ -4,6 +4,7 @@
 
 #include "util/ui/GraphicsObject.hpp"
 
+namespace ui {
 class GraphicsContainer : public GraphicsObject {
 public:
     int countNeedRedrawn() final {  // final here means no more overriding, if more overriding is wanted replace final with override
@@ -60,3 +61,4 @@ public:
 private:
     std::vector<GraphicsObject*> objects;
 };
+}

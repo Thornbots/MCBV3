@@ -1,6 +1,8 @@
 #pragma once
 
-#include "util/ui/SimpleGraphicsObject.hpp"
+#include "SimpleGraphicsObject.hpp"
+
+namespace ui {
 
 class Line : public SimpleGraphicsObject {
 public:
@@ -361,3 +363,4 @@ private:
     RefSerialData::Tx::GraphicColor prevColor;
 
 };
+}

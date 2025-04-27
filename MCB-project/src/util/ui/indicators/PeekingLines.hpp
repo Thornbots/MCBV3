@@ -1,11 +1,9 @@
 #pragma once
 
-#include "subsystems/ui/UISubsystem.hpp"
-#include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/SimpleGraphicsObjects.hpp"
+#include "util/ui/UIScheduler.hpp"
 
 using namespace tap::communication::serial;
-using namespace subsystems;
+using namespace ui;
 
 class PeekingLines : public GraphicsContainer {
 public:
@@ -23,17 +21,17 @@ private:
     Line line{RefSerialData::Tx::GraphicColor::CYAN, 0, 0, 0, 0, THICKNESS};
 
     void setLineLeft() {
-        line.x1 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - DISTANCE_FROM_CENTER);
+        line.x1 = static_cast<uint16_t>(UIScheduler::HALF_SCREEN_WIDTH - DISTANCE_FROM_CENTER);
         line.y1 = BOTTOM_OFFSET;
         line.x2 = line.x1;
-        line.y2 = static_cast<uint16_t>(UISubsystem::SCREEN_HEIGHT - TOP_OFFSET);
+        line.y2 = static_cast<uint16_t>(UIScheduler::SCREEN_HEIGHT - TOP_OFFSET);
     }
 
     void setLineRight() {
-        line.x1 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH + DISTANCE_FROM_CENTER);
+        line.x1 = static_cast<uint16_t>(UIScheduler::HALF_SCREEN_WIDTH + DISTANCE_FROM_CENTER);
         line.y1 = BOTTOM_OFFSET;
         line.x2 = line.x1;
-        line.y2 = static_cast<uint16_t>(UISubsystem::SCREEN_HEIGHT - TOP_OFFSET);
+        line.y2 = static_cast<uint16_t>(UIScheduler::SCREEN_HEIGHT - TOP_OFFSET);
     }
 
     void setLineNone() {
