@@ -37,7 +37,7 @@ public:
 
     void end(bool interrupted) override {};
 
-    bool isFinished() const {return false;};
+    bool isFinished() const {return !drivers->remote.isConnected();};
 
     const char* getName() const override { return "point forwards odometry command"; }
 

@@ -40,7 +40,7 @@ public:
         flywheel.setDefaultCommand(&shooterStop);
         drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerStopCommand);
-        odo.setDefaultCommand(&odoPointForwards);
+        odo.setDefaultCommand(&odoStop);
 
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
@@ -48,9 +48,9 @@ public:
         autoTrigger.whileTrue(&autoFireCommand)->onFalse(&lookJoystick)->whileTrue(&shooterStart);
         // drive commands 
 
-        joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
-        joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);
-        joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick);
+        joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
+        joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
+        joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
     }
 
     void update() override {
