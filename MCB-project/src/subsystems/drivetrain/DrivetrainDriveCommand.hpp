@@ -6,6 +6,8 @@
 #include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
 
+#include "communication/JetsonCommunication.hpp"
+
 #include "drivers.hpp"
 
 namespace commands {
@@ -19,8 +21,9 @@ enum ControlMode { KEYBOARD, CONTROLLER, DISABLED  };
 
 class DrivetrainDriveCommand : public tap::control::Command {
 public:
-    DrivetrainDriveCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, DriveMode driveMode, ControlMode controlMode)
+    DrivetrainDriveCommand(src::Drivers* drivers, communication::JetsonCommunication& comm, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, DriveMode driveMode, ControlMode controlMode)
         : drivers(drivers),
+          comm(comm),
           drivetrain(drive),
           gimbal(gimbal),
           driveMode(driveMode),
@@ -44,6 +47,7 @@ public:
 
 private:
     src::Drivers* drivers;
+    communication::JetsonCommunication& comm;
     DrivetrainSubsystem* drivetrain;
     GimbalSubsystem* gimbal;
     DriveMode driveMode;

@@ -3,20 +3,30 @@
 
 namespace subsystems {
 
-ComputerVisionSubsystem::ComputerVisionSubsystem(tap::Drivers* drivers) :
-     tap::control::Subsystem(drivers), comm(drivers, tap::communication::serial::Uart::Uart1, true) {}
+ComputerVisionSubsystem::ComputerVisionSubsystem(src::Drivers* drivers, JetsonCommunication& comm) :
+     tap::control::Subsystem(drivers), drivers(drivers), comm(comm) {}
 
 void ComputerVisionSubsystem::initialize() {
     drivers->commandScheduler.registerSubsystem(this);
-    comm.initialize();
+    // comm.initialize();
 }
 
 void ComputerVisionSubsystem::refresh() { 
+    drivers->leds.set(tap::gpio::Leds::Green, true);
     comm.updateSerial(); 
+    AutoAimOutput a{0xA5, sizeof(float)*4, 
+        drivers->i2c.odom.getX(),
+        drivers->i2c.odom.getY(),
+        drivers->i2c.odom.getXVel(),
+        drivers->i2c.odom.getYVel(),
+         0x0A};
+    comm.sendAutoAimOutput(a);
+    drivers->leds.set(tap::gpio::Leds::Green, false);
 }
 
 void ComputerVisionSubsystem::update(float current_yaw, float current_pitch, float* yawOut, float* pitchOut, int* action) {
-    const CVData* msg = comm.getLastCVData();
+    const ROSData* rez = comm.getLastROSData();
+    const CVData* msg = nullptr;//comm.getLastCVData();
     if(msg == nullptr){
         *action = -1;
         return;

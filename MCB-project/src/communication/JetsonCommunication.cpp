@@ -10,7 +10,8 @@ namespace communication
         hasNewData(false)
     {
         // Good practice
-        memset(&lastCVData, 0, sizeof(lastCVData));
+        // memset(&lastCVData, 0, sizeof(lastCVData));
+        memset(&lastROSData, 0, sizeof(lastROSData));
         // Initial time
         lastReceivedTime = getCurrentTime();
     }
@@ -26,11 +27,12 @@ namespace communication
 
         if (bytesToCopy > 0 && completeMessage.data != nullptr)
         {
-            memcpy(&lastCVData, completeMessage.data, bytesToCopy);
+            // memcpy(&lastCVData, completeMessage.data, bytesToCopy);
+            memcpy(&lastROSData, completeMessage.data, bytesToCopy);
             if (bytesToCopy < sizeof(CVData))
             {
                 // need to do this for pointer arithmetic
-                memset(reinterpret_cast<uint8_t*>(&lastCVData) + bytesToCopy, 0, sizeof(CVData) - bytesToCopy);
+                memset(reinterpret_cast<uint8_t*>(&lastROSData) + bytesToCopy, 0, sizeof(CVData) - bytesToCopy);
             }
             // lastCVData.timestamp = getCurrentTime();
             hasNewData = true;
@@ -56,6 +58,11 @@ namespace communication
     const CVData* JetsonCommunication::getLastCVData()
     {
         return hasNewData ? &lastCVData : nullptr;
+    }
+    
+    const ROSData* JetsonCommunication::getLastROSData()
+    {
+        return hasNewData ? &lastROSData : nullptr;
     }
 
     bool JetsonCommunication::sendAutoAimOutput(AutoAimOutput &output)

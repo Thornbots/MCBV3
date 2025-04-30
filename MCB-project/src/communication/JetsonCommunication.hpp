@@ -9,6 +9,14 @@
 namespace communication
 {
 
+struct ROSData
+{
+    float x = 0;
+    float y = 0;
+    float theta = 0;
+    float rho = 0;
+};
+
 // Incoming
 struct CVData 
 {
@@ -30,9 +38,12 @@ struct AutoAimOutput
 {
     uint8_t header = 0xA5;           
     uint16_t data_len = sizeof(float); // litle endian
-    float pitch;                     
+    float x;                     
+    float y;                     
+    float vel_x;                     
+    float vel_y;                     
     uint8_t newline = 0x0A;          
-    uint64_t timestamp = 0;         
+    // uint64_t timestamp = 0;         
 } modm_packed;
 
 class JetsonCommunication : public tap::communication::serial::DJISerial
@@ -49,6 +60,7 @@ public:
     void update();
 
     const CVData* getLastCVData();
+    const ROSData* getLastROSData();
 
     void clearNewDataFlag();
 
@@ -64,6 +76,7 @@ public:
 
 private:
     CVData lastCVData;
+    ROSData lastROSData;
     bool hasNewData;
     uint64_t lastReceivedTime;
 

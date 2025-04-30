@@ -22,10 +22,11 @@ struct PanelData {
 
 class ComputerVisionSubsystem : public tap::control::Subsystem {
 private:  // Private Variables
-    JetsonCommunication comm;
+    JetsonCommunication& comm;
+    src::Drivers* drivers;
 
 public:  // Public Methods
-    ComputerVisionSubsystem(tap::Drivers* drivers);
+    ComputerVisionSubsystem(src::Drivers* drivers, JetsonCommunication& comm);
 
     ~ComputerVisionSubsystem() {}
 

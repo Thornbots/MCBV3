@@ -21,6 +21,14 @@ void DrivetrainDriveCommand::execute() {
     } else if (controlMode == ControlMode::CONTROLLER) {
         x = drivers->remote.getChannel(Remote::Channel::LEFT_HORIZONTAL);
         y = drivers->remote.getChannel(Remote::Channel::LEFT_VERTICAL);
+        // auto rez = comm.getLastROSData();
+        // if (rez == nullptr){
+        //     x = 0;//drivers->remote.getChannel(Remote::Channel::LEFT_HORIZONTAL);
+        //     y = 0; //drivers->remote.getChannel(Remote::Channel::LEFT_VERTICAL);
+        // }else{
+        //     x = rez->x;
+        //     y = rez->y; //drivers->remote.getChannel(Remote::Channel::LEFT_VERTICAL);
+        // }
     } else {
         drivetrain->stopMotors();
         return;

@@ -25,6 +25,8 @@ public:
     SentryControl(src::Drivers* drivers) : drivers(drivers), hardware(SentryHardware{drivers}) {}
     // functions we are using
     void initialize() override {
+        comm.initialize();
+
         // Initialize subsystems
         gimbal.initialize();
         flywheel.initialize();
@@ -58,12 +60,13 @@ public:
     src::Drivers* drivers;
     SentryHardware hardware;
 
+    JetsonCommunication comm{drivers, tap::communication::serial::Uart::Uart1, true};
     // subsystems
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::DoubleIndexerSubsystem indexer{drivers, &hardware.indexMotor1, &hardware.indexMotor2};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
-    subsystems::ComputerVisionSubsystem cv{drivers};
+    subsystems::ComputerVisionSubsystem cv{drivers, comm};
 
     // commands
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
@@ -79,9 +82,9 @@ public:
     commands::IndexerStopCommand indexerStopCommand{drivers, &indexer};
 
     // CHANGE NUMBERS LATER
-    commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::CONTROLLER};
-    commands::DrivetrainDriveCommand beybladeJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE2, commands::ControlMode::CONTROLLER};
-    commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
+    commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, comm, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::CONTROLLER};
+    commands::DrivetrainDriveCommand beybladeJoystick{drivers, comm, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE2, commands::ControlMode::CONTROLLER};
+    commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, comm, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
 
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
 
