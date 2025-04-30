@@ -28,6 +28,8 @@ public:
     DjiMotor flywheelMotor2{drivers, MotorId::MOTOR2, CanBus::CAN_BUS2, false, "BottomFlywheel"};
 
 
+    DjiMotor odoMotor{drivers, MotorId::MOTOR5, CanBus::CAN_BUS1, true, "Odo"};
+
     DjiMotor yawMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS1, false, "Yaw"};
     DjiMotor pitchMotor{drivers, MotorId::MOTOR5, CanBus::CAN_BUS2, false, "Pitch"};
 
