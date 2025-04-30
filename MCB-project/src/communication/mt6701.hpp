@@ -38,7 +38,7 @@ public:
     }
     // i dont like this but it kinda works for old read. NEED TO CHANGE
     // float getAngle() { return 0.0000457891f * angle * angle - 0.0361289286f * angle + 3.4231706783f; }
-    float getAngle() { return -angle / 16384.0f * 2 * PI; }  // 0-2pi how it should be;
+    float getAngle() { return angle / 16384.0f * 2 * PI; }  // 0-2pi how it should be;
     uint16_t getRawAngle() { return angle; }
 
 private:

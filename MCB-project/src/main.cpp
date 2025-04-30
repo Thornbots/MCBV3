@@ -11,18 +11,35 @@ float testvar2 = 0.0f;
 // Place any sort of input/output initialization here. For example, place
 // serial init stuff here.
 static void initializeIo(src::Drivers *drivers) {
+
+    //things we need to check controller
+    drivers->remote.initialize();
     drivers->analog.init();
-    drivers->pwm.init();
     drivers->digital.init();
     drivers->leds.init();
+
+    //if controller is on when the robot turns on, wait for it to be off.
+    //This is to prevent the shredding of wires
+    modm::delay_ms(1000);
+    drivers->leds.set(tap::gpio::Leds::Red, true);
+    int i = 0;
+    while(i < 5000){
+        drivers->remote.read();
+        if(drivers->remote.isConnected())
+            i = 0;
+        else
+            i++;
+        modm::delay_us(10);
+    }
+
+    drivers->leds.set(tap::gpio::Leds::Red, false);
+    drivers->leds.set(tap::gpio::Leds::Blue, true);
+
+    drivers->pwm.init();
     drivers->can.initialize();
     drivers->errorController.init();
-    drivers->remote.initialize();
     drivers->refSerial.initialize();
     drivers->i2c.initialize();
-    modm::delay_ms(2);
-    // drivers->i2c.refresh();
-
 
 
     // drivers->cvBoard.initialize();
@@ -32,9 +49,10 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->bmi088.initialize(500, 0.0f, 0.0f);
     drivers->bmi088.setCalibrationSamples(2000);
     drivers->bmi088.requestCalibration();
-    // drivers->i2c.refresh();
 
 
+    drivers->leds.set(tap::gpio::Leds::Blue, false);
+    drivers->leds.set(tap::gpio::Leds::Green, true);
 }
 
 // Anything that you would like to be called place here. It will be called
@@ -60,8 +78,9 @@ int main() {
     initializeIo(&drivers);
     // testvar = drivers.i2c.encoder.getRawAngle();
     // testvar2 = drivers.i2c.encoder.getAngle();
-    control.initialize();
     tap::buzzer::silenceBuzzer(&(drivers.pwm));
+
+    control.initialize();
 
     tap::arch::PeriodicMilliTimer refreshTimer(2);
 

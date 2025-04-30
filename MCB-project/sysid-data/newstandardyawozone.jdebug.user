@@ -2,32 +2,31 @@
 
 GraphedExpression="velocity", Color=#e56a6f, Show=0
 GraphedExpression="voltage", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#35792b, Show=0
-OpenDocument="rcc.hpp", FilePath="C:/Users/hardenej/Documents/GitHub/TeachingFreshies/MCB-project/taproot/modm/src/modm/platform/clock/rcc.hpp", Line=248
+OpenDocument="board.hpp", FilePath="C:/Users/hardenej/Documents/GitHub/MCBV3/MCB-project/taproot/src/tap/board/board.hpp", Line=108
 OpenDocument="cmsis_gcc.h", FilePath="C:/Users/hardenej/Documents/GitHub/TeachingFreshies/MCB-project/taproot/modm/ext/cmsis/core/cmsis_gcc.h", Line=917
 OpenDocument="rcc_impl.hpp", FilePath="C:/Users/hardenej/Documents/GitHub/TeachingFreshies/MCB-project/taproot/modm/src/modm/platform/clock/rcc_impl.hpp", Line=95
 OpenDocument="new-standard-yaw-data-3-29-2025.csv", FilePath="C:/Users/hardenej/Documents/GitHub/MCBV3/MCB-project/sysid-data/new-standard-yaw-data-3-29-2025.csv", Line=0
 OpenDocument="can_1.cpp", FilePath="C:/Users/hardenej/Documents/GitHub/MCBV3/MCB-project/taproot/modm/src/modm/platform/can/can_1.cpp", Line=176
 OpenDocument="remote.cpp", FilePath="C:/Users/hardenej/Documents/GitHub/MCBV3/MCB-project/taproot/src/tap/communication/serial/remote.cpp", Line=58
 OpenDocument="GimbalSubsystem.cpp", FilePath="C:/Users/hardenej/Documents/GitHub/MCBV3/MCB-project/src/subsystems/gimbal/GimbalSubsystem.cpp", Line=0
-OpenDocument="board.hpp", FilePath="C:/Users/hardenej/Documents/GitHub/MCBV3/MCB-project/taproot/src/tap/board/board.hpp", Line=108
+OpenDocument="rcc.hpp", FilePath="C:/Users/hardenej/Documents/GitHub/TeachingFreshies/MCB-project/taproot/modm/src/modm/platform/clock/rcc.hpp", Line=248
 OpenToolbar="Debug", Floating=0, x=0, y=0
-OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=300, h=370, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
-OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=300, h=243, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=0, w=660, h=306, TabPos=0, TopOfStack=1, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Functions", DockArea=LEFT, x=0, y=1, w=660, h=288, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Call Graph", DockArea=LEFT, x=0, y=0, w=660, h=306, TabPos=1, TopOfStack=0, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=300, h=366, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=300, h=247, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=0, w=660, h=305, TabPos=0, TopOfStack=1, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Functions", DockArea=LEFT, x=0, y=1, w=660, h=289, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Call Graph", DockArea=LEFT, x=0, y=0, w=660, h=305, TabPos=1, TopOfStack=0, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 OpenWindow="Data Sampling", DockArea=BOTTOM, x=1, y=0, w=498, h=424, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=1, UniformSampleSpacing=0
 OpenWindow="Timeline", DockArea=BOTTOM, x=2, y=0, w=742, h=424, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=1, DataPaneShown=1, PowerPaneShown=0, CodePaneShown=0, PinCursor="Cursor Movable", TimePerDiv="2 s / Div", TimeStampFormat="Time", DataGraphDrawAsPoints=0, DataGraphLegendShown=1, DataGraphUniformSampleSpacing=0, DataGraphLegendPosition="0;0", DataGraphShowNamesAtCursor=0, PowerGraphDrawAsPoints=0, PowerGraphLegendShown=0, PowerGraphAvgFilterTime=Off, PowerGraphAvgFilterLen=Off, PowerGraphUniformSampleSpacing=0, PowerGraphLegendPosition="560;-61", CodeGraphLegendShown=0, CodeGraphLegendPosition="581;0"
 OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=678, h=424, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 SmartViewPlugin="", Page="", Toolbar="Hidden", Window="SmartView 1"
 TableHeader="Call Graph", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Stack Total";"Stack Local";"Code Total";"Code Local";"Depth";"Called From"], ColWidths=[931;100;100;100;100;102;100]
-TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh";"Access"], ColWidths=[151;190;159;100;100]
 TableHeader="Functions", SortCol="Class", SortOrder="ASCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Class";"Source"], ColWidths=[8883;100;100;100;3668;791]
-TableHeader="Data Sampling Setup", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[100;100;126;126;126;126;100;101;104]
+TableHeader="Data Sampling Setup", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[100;100;100;126;134;100;100;101;104]
 TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";" velocity";" voltage"], ColWidths=[100;100;100;198]
 TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
-TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[100;118;259]
+TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[100;118;105]
 TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
-TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[27;27;27;37]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh";"Access"], ColWidths=[151;190;159;160;100]
 WatchedExpression="voltage", Window=Watched Data 1
 WatchedExpression="velocity", Window=Watched Data 1

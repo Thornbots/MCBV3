@@ -55,7 +55,7 @@ void DrivetrainDriveCommand::execute() {
             x *= 2.5f;
             y *= 2.5f;
         }
-        r = drivetrain->calculateRotationPID(targetAngle + referenceAngle);  // + M_PI));
+        r = drivetrain->calculateRotationPID(targetAngle + referenceAngle); 
     }
 
     Pose2d drive(x, y, r);

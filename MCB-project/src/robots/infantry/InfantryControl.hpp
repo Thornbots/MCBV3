@@ -49,6 +49,7 @@ public:
         servo.initialize();
         cv.initialize();
         
+        drivers->commandScheduler.addCommand(&closeServo); //close servo so I stop getting carbon splinters
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);

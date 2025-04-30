@@ -107,6 +107,11 @@ public:
      * Returns roll angle in degrees.
      */
     virtual inline float getRoll() const = 0;
+
+    virtual inline float getq0() const = 0;
+    virtual inline float getq1() const = 0;
+    virtual inline float getq2() const = 0;
+    virtual inline float getq3() const = 0;
 };
 }  // namespace tap::communication::sensors::imu
 
