@@ -59,7 +59,7 @@ public:  // Public Methods
     /*
      * tells the motor to move the odometry to its specified angle calculated in update();
      */
-    void updateMotor(float targetOdo, float odoAngleRelativeWorld, float odoVelRelativeWorld);
+    void updateMotor(float targetOdo, float odoAngleRelativeWorld, float odoVelRelativeWorld, float driveTrainAngularVelocity);
 
     /*
      * Call this function to set all Turret motors to stop, calculate the voltage level in

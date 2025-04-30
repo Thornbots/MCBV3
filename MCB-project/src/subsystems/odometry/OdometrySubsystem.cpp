@@ -31,8 +31,7 @@ void OdometrySubsystem::refresh() {
     motorOdo->setDesiredOutput(odoMotorVoltage);
 }
 
-void OdometrySubsystem::updateMotor(float targetOdo, float odoAngleRelativeWorld, float odoVelRelativeWorld) {
-    driveTrainAngularVelocity = getOdoVel();
+void OdometrySubsystem::updateMotor(float targetOdo, float odoAngleRelativeWorld, float odoVelRelativeWorld, float driveTrainAngularVelocity) {
     
     odoMotorVoltage = getOdoVoltage(driveTrainAngularVelocity, std::fmod(odoAngleRelativeWorld, 2 * PI), odoVelRelativeWorld, targetOdo, 0, dt);
 }
