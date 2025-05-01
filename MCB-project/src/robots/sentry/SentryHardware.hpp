@@ -3,10 +3,6 @@
 #include "tap/motor/dji_motor.hpp"
 #include "tap/motor/servo.hpp"
 
-#include "subsystems/gimbal/GimbalSubsystem.hpp"
-#include "subsystems/flywheel/FlywheelSubsystem.hpp"
-#include "subsystems/indexer/DoubleIndexerSubsystem.hpp"
-#include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 
 #include "drivers.hpp"
 

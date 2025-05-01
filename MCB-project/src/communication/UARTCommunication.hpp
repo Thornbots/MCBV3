@@ -2,12 +2,11 @@
 
 #include "tap/communication/serial/dji_serial.hpp"
 #include "tap/communication/serial/uart.hpp"
-#include "drivers.hpp"
+#include "tap/drivers.hpp"
 #include <cstdint>
 #include <cstring>
 
-namespace communication
-{
+namespace communication {
 
 struct ROSData
 {
@@ -46,14 +45,14 @@ struct AutoAimOutput
     // uint64_t timestamp = 0;         
 } modm_packed;
 
-class JetsonCommunication : public tap::communication::serial::DJISerial
+class UARTCommunication : public tap::communication::serial::DJISerial
 {
 public:
-    JetsonCommunication(tap::Drivers *drivers,
+    UARTCommunication(tap::Drivers *drivers,
                         tap::communication::serial::Uart::UartPort port,
                         bool isRxCRCEnforcementEnabled);
 
-    virtual ~JetsonCommunication() = default;
+    virtual ~UARTCommunication() = default;
 
     virtual void messageReceiveCallback(const ReceivedSerialMessage &completeMessage) override;
 

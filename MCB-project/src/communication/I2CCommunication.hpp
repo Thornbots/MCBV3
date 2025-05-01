@@ -8,7 +8,8 @@
 #include "modm/processing/resumable.hpp"
 
 #include "mt6701.hpp"
-#include "OdomCommunication.hpp"
+#include "LocalizationPico.hpp"
+
 #include <modm/math/units.hpp>
 
 namespace communication {
@@ -26,7 +27,7 @@ public:
     }
 
     MT6701<I2cMaster2> encoder{};
-    OdomCommunication<I2cMaster2> odom{};
+    LocalizationPico<I2cMaster2> odom{};
 
 private:
 };

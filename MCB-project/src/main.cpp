@@ -39,7 +39,9 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->can.initialize();
     drivers->errorController.init();
     drivers->refSerial.initialize();
+
     drivers->i2c.initialize();
+    drivers->uart.initialize();
 
 
     // drivers->cvBoard.initialize();
@@ -65,7 +67,9 @@ static void updateIo(src::Drivers *drivers) {
 
     drivers->canRxHandler.pollCanData();
     drivers->refSerial.updateSerial();
-    // drivers->cvBoard.updateSerial();
+    drivers->i2c.refresh();
+    drivers->uart.updateSerial();
+
     drivers->remote.read();
 }
 
@@ -93,7 +97,6 @@ int main() {
 
             drivers.bmi088.periodicIMUUpdate();
             drivers.bmi088.read();
-            drivers.i2c.refresh();
             control.update();
             drivers.commandScheduler.run();
             drivers.djiMotorTxHandler.encodeAndSendCanData();

@@ -6,9 +6,9 @@
 
 namespace communication {
 template <class I2cMaster>
-class OdomCommunication : public modm::I2cDevice<I2cMaster, 1>, public modm::pt::Protothread {
+class LocalizationPico : public modm::I2cDevice<I2cMaster, 1>, public modm::pt::Protothread {
 public:
-    OdomCommunication() : modm::I2cDevice<I2cMaster, 1>(ADDRESS) {};
+    LocalizationPico() : modm::I2cDevice<I2cMaster, 1>(ADDRESS) {};
 
     bool run() {
         PT_BEGIN();
