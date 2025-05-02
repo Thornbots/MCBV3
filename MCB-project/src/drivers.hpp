@@ -31,10 +31,10 @@ namespace src {
 
 class Drivers : public tap::Drivers {
 public:
-    Drivers() : tap::Drivers() {}
+    Drivers() : tap::Drivers(), uart(this, tap::communication::serial::Uart::Uart1, true) {}
 
     communication::I2CCommunication i2c;
-    communication::UARTCommunication uart{this, tap::communication::serial::Uart::Uart1, true};
+    communication::UARTCommunication uart;
     
 public:
 };  // class Drivers

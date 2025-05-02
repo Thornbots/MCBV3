@@ -67,8 +67,6 @@ static void updateIo(src::Drivers *drivers) {
 
     drivers->canRxHandler.pollCanData();
     drivers->refSerial.updateSerial();
-    drivers->i2c.refresh();
-    drivers->uart.updateSerial();
 
     drivers->remote.read();
 }
@@ -91,6 +89,8 @@ int main() {
     while (1) {
         // do this as fast as you can
         updateIo(&drivers);
+        drivers.i2c.refresh();
+    drivers.uart.updateSerial();
 
         if (refreshTimer.execute()) {
             // tap::buzzer::playNote(&(drivers.pwm), 493);

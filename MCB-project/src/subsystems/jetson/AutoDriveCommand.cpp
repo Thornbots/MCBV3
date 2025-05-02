@@ -18,7 +18,7 @@ void AutoDriveCommand::execute() {
     //TODO this is just wrong
     Pose2d drive = targetPosition;
 
-    drivetrain->setTargetTranslation(drive, false);
+    // drivetrain->setTargetTranslation(drive, false);
 }
 
 bool AutoDriveCommand::isFinished() const { return !drivers->remote.isConnected(); }

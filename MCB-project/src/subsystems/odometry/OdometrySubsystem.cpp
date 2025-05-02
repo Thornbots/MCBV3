@@ -7,6 +7,9 @@
 int voltageOdoOdo;
 float velocityOdoOdo;
 
+float odomX, odomY, odomXVel, odomYVel, axonEncoder;
+int loop = 0;
+
 namespace subsystems {
     using namespace odo;
 
@@ -26,7 +29,14 @@ void OdometrySubsystem::initialize() {
 
 void OdometrySubsystem::refresh() {
 
+    odomX = drivers->i2c.odom.getX();
+    odomY = drivers->i2c.odom.getY();
+    odomXVel = drivers->i2c.odom.getXVel();
+    odomYVel = drivers->i2c.odom.getYVel();
 
+    axonEncoder = drivers->i2c.encoder.getAngle();
+
+    loop++;
     // odoAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw() - getOdoEncoderValue();
     motorOdo->setDesiredOutput(odoMotorVoltage);
 }
