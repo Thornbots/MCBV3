@@ -32,10 +32,10 @@ public:
         jetson.initialize();
 
         // Initialize subsystems
-        // gimbal.initialize();
+        gimbal.initialize();
         flywheel.initialize();
         indexer.initialize();
-        // drivetrain.initialize();
+        drivetrain.initialize();
         odo.initialize();
 
         // Run startup commands
@@ -49,7 +49,7 @@ public:
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
 
         autoTrigger.whileTrue(&autoFireCommand)->onFalse(&lookJoystick)->whileTrue(&shooterStart);
-        autoDriveTrigger.whileTrue(&autoDriveCommand)->onFalse(&noSpinDriveCommand)->whileTrue(&odoPointForwards);
+        autoDriveTrigger.whileTrue(&autoDriveCommand)->whileTrue(&odoPointForwards);
         // drive commands 
 
         joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);

@@ -7,17 +7,17 @@ namespace commands {
 
 void AutoDriveCommand::initialize() {
     targetPosition = Pose2d(0, 0, 0);
-    targetVelocity = Pose2d(0, 0, 0);
+    targetVelocity = Pose2d(0, 0, 8);
 }
 void AutoDriveCommand::execute() {
     float referenceAngle = gimbal->getYawEncoderValue();
   
     int action = 0;
     jetson->updateROS(&targetPosition, &targetVelocity, &action);
-       
-    //TODO this is just wrong
-    Pose2d drive = targetPosition;
 
+    Pose2d currentPosition = Pose2d(drivers->i2c.odom.getX(), drivers->i2c.odom.getY(), referenceAngle);
+
+    drivetrain->setTargetPosition(targetPosition.vec(), currentPosition, targetVelocity);
     // drivetrain->setTargetTranslation(drive, false);
 }
 

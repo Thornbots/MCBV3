@@ -45,7 +45,7 @@ public:  // Public Methods
 
     void refresh() override;
 
-    void updateROS(Pose2d* targetPosition, Pose2d* targetVelocity, int* action);
+    void updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, int* action);
     void update(float current_yaw, float current_pitch, float current_yaw_velo, float current_pitch_velo, float* yawOut, float* pitchOut, float* yawVelOut, float* pitchVelOut, int* action);
 
     

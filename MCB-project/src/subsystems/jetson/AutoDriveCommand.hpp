@@ -47,5 +47,6 @@ private:
 
     Pose2d targetPosition;
     Pose2d targetVelocity;
+
 };
 }  // namespace commands

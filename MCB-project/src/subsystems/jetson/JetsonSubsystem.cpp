@@ -41,18 +41,18 @@ void JetsonSubsystem::refresh() {
     drivers->leds.set(tap::gpio::Leds::Green, false);
 }
 
-void JetsonSubsystem::updateROS(Pose2d* targetPosition, Pose2d* targetVelocity, int* action) {
+void JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, int* action) {
     const ROSData* rez = drivers->uart.getLastROSData();
 
-      if(rez == nullptr){
+    if(rez == nullptr){
 
         *action = -1;
         return;
     }
 
-    *targetPosition = Pose2d(rez->x, rez->y, rez->theta);
+    *targetPosition = Vector2d(rez->x, rez->y);
     //todo make this work lmao
-    *targetVelocity = Pose2d(0, 0, 0);
+    *targetVelocity = Vector2d(0, 0);
 
     *action = 1;
     drivers->uart.clearNewDataFlag();

@@ -26,7 +26,7 @@ void OdometrySubsystem::initialize() {
     // targetOdoAngleWorld = odoAngleRelativeWorld;
     drivers->commandScheduler.registerSubsystem(this);
 }
-
+bool useController = false;
 void OdometrySubsystem::refresh() {
 
     odomX = drivers->i2c.odom.getX();
@@ -35,18 +35,21 @@ void OdometrySubsystem::refresh() {
     odomYVel = drivers->i2c.odom.getYVel();
 
     axonEncoder = drivers->i2c.encoder.getAngle();
-
-    loop++;
+    if(!useController){
+        motorOdo->setDesiredOutput(odoMotorVoltage);
+    }
     // odoAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw() - getOdoEncoderValue();
-    motorOdo->setDesiredOutput(odoMotorVoltage);
 }
 
 void OdometrySubsystem::updateMotor(float targetOdo, float odoAngleRelativeWorld, float odoVelRelativeWorld, float driveTrainAngularVelocity) {
-    
+    useController = true;
     odoMotorVoltage = getOdoVoltage(driveTrainAngularVelocity, std::fmod(odoAngleRelativeWorld, 2 * PI), odoVelRelativeWorld, targetOdo, 0, dt);
+    motorOdo->setDesiredOutput(odoMotorVoltage);
+
 }
 
 void OdometrySubsystem::stopMotors() {
+    useController = false;
     odoMotorVoltage = 0;
 
     odoController.clearBuildup();

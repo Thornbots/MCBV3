@@ -39,7 +39,7 @@ void GimbalSubsystem::refresh() {
 #endif
 
     driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
-    yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw() - imuOffset;
+    yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw() - imuOffset; 
     motorPitch->setDesiredOutput(pitchMotorVoltage);
     motorYaw->setDesiredOutput(yawMotorVoltage);
 }
@@ -85,8 +85,8 @@ void GimbalSubsystem::stopMotors() {
     
     #ifndef OLDINFANTRY //all robots with 3508 turrets
     if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
-        encoderOffset = -drivers->i2c.encoder.getAngle() + YAW_OFFSET;
-        motorYaw->resetEncoderValue();
+        // encoderOffset = -drivers->i2c.encoder.getAngle() + YAW_OFFSET;
+        // motorYaw->resetEncoderValue();
     }
     #endif
 
@@ -130,5 +130,5 @@ float GimbalSubsystem::getPitchEncoderValue() {
 }
 float GimbalSubsystem::getYawVel() { return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO; }
 float GimbalSubsystem::getPitchVel() { return motorPitch->getShaftRPM() * PI / 30; }
-float GimbalSubsystem::getYawAngleRelativeWorld() { return yawAngleRelativeWorld; }
-}  // namespace subsystems
+float GimbalSubsystem::getYawAngleRelativeWorld() { return yawController.estimatedPosition; }
+}  // namespace subsystems  
