@@ -57,6 +57,6 @@ void DrivetrainDriveCommand::execute() {
 
 bool DrivetrainDriveCommand::isFinished() const { return !drivers->remote.isConnected(); }
 
-void DrivetrainDriveCommand::end(bool cancel) {}
+void DrivetrainDriveCommand::end(bool) {}
 
 }  // namespace commands

@@ -44,7 +44,8 @@ bool UISubsystem::run() {
     }
 
     PT_BEGIN(); //ignore this error, it still builds, need to figure out how to make vscode not angry at this
-    // inside of a protothread, you aren't able to make new variables
+    // inside of a protothread, you aren't able to make new variables, errors with: 'jump to case label'
+    // so make new variables in the hpp and set their values here
 
     PT_WAIT_UNTIL(drivers->refSerial.getRefSerialReceivingData());
     
@@ -59,7 +60,7 @@ bool UISubsystem::run() {
         PT_WAIT_UNTIL(delayTimeout.execute());
     }
 
-    graphicsIndex=0; //might start with one or two already in the array from last time, so set it outside of the loop
+    graphicsIndex=0; //might start with one or two already in the array from last time, so set it once outside of the loop
     while (topLevelContainer) {
         hasResetIteration = false;
         nextGraphicsObject = topLevelContainer->getNext();  // if nullptr on first call, this while loop is skipped
@@ -126,7 +127,7 @@ bool UISubsystem::run() {
             objectsToSend[1] = objectsToSend[3]; //copy the fourth item into the second slot
             graphicsIndex = 2; //start with those two next time
         } else if (graphicsIndex == 3 || graphicsIndex == 6) { //save 1
-            objectsToSend[0] = objectsToSend[graphicsIndex-1]; //move the 1 we are saving to the front
+            objectsToSend[0] = objectsToSend[graphicsIndex-1]; //move the one we are saving to the front
             graphicsIndex = 1; //start with that one next time
         } else { //don't save any
             graphicsIndex = 0;

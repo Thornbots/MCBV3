@@ -45,7 +45,7 @@ public:
         flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
-        // ui.initialize();
+        ui.initialize();
         servo.initialize();
         cv.initialize();
         
@@ -69,8 +69,8 @@ public:
         autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->whileTrue(&shooterStart)->onTrue(&closeServo);
         // implement speed mode
 
-        // toggleUIKey.toggleOnFalse(&draw);
-        // drivers->commandScheduler.addCommand(&draw);
+        toggleUIKey.toggleOnFalse(&draw);
+        drivers->commandScheduler.addCommand(&draw);
    
         // drive commands and also enable mouse looking
 
@@ -103,7 +103,7 @@ public:
 
 
     // Subsystems
-    // subsystems::UISubsystem ui{drivers};
+    subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor};
@@ -113,7 +113,7 @@ public:
 
 
     // //commands
-    // commands::UIDrawCommand draw{&ui, &gimbal, &flywheel, &indexer, &drivetrain};
+    commands::UIDrawCommand draw{&ui, &gimbal, &flywheel, &indexer, &drivetrain};
     commands::AutoAimCommand autoCommand{drivers, &gimbal, &cv};
     // commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
 

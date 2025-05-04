@@ -17,7 +17,7 @@ public:
 
     void execute() override {drivetrain->stopMotors();}
 
-    void end(bool interrupted) override {};
+    void end(bool) override {};
 
     bool isFinished() const override {return false;};
 

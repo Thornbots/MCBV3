@@ -19,7 +19,7 @@ private:
     float clamp(float num, float min, float max) { return std::min(std::max(num, min), max); }
 
     // Helper for velocity control (sawtooth function)
-    float sawtooth(float freq, float amplitude) {
+    float sawtooth(__attribute__((unused)) float freq, float amplitude) {
         // A simple sawtooth wave function for variable speed beyblade
         return amplitude;  // * (1 - fmod(freq * (std::fmod(std::clock(), 1.0f) * 2 * 3.14159265f), 1.0f));
     }

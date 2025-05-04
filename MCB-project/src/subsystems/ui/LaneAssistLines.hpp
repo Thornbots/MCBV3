@@ -10,7 +10,7 @@ using namespace subsystems;
 // looks like / \ at the bottom of the screen
 class LaneAssistLines : public GraphicsContainer {
 public:
-    LaneAssistLines() {
+    LaneAssistLines(GimbalSubsystem* gimbal) : gimbal(gimbal) {
         addGraphicsObject(&left);
         addGraphicsObject(&right);
     }
@@ -26,7 +26,6 @@ public:
         right.x2 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH + topOffset);
     }
 
-    void setGimbalSubsystem(GimbalSubsystem* g) { gimbal = g; }
 
 private:
 #if defined(HERO)        // todo
