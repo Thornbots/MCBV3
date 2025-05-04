@@ -31,8 +31,8 @@ private:  // Private Variables
     static uint32_t currGraphicName;
     
     //for protothread
-    bool restarting = true; 
     bool needToDelete = true; 
+    bool hasResetIteration = false;
     static constexpr int TARGET_NUM_OBJECTS = 7; //could change this to test if 7 is the most efficient, and test wasteIsBetterForX's, but don't make this larger than 7
     GraphicsObject* objectsToSend[TARGET_NUM_OBJECTS];
     int graphicsIndex=0;
@@ -43,11 +43,6 @@ private:  // Private Variables
     RefSerialData::Tx::Graphic5Message message5;
     RefSerialData::Tx::Graphic7Message message7;
     RefSerialData::Tx::GraphicCharacterMessage messageCharacter;
-    uint8_t wasteNameArray[3];
-
-    //fps calc
-    float fps = 0.0f;
-    uint32_t startTime = 0;
 
     //when get UIDrawCommand, it should set this
     GraphicsContainer* topLevelContainer = nullptr;
@@ -77,7 +72,6 @@ public:  // Public Methods
 private:  // Private Methods
     bool run(); //for protothread
 
-    void updateFPS();
 
 };
 }  // namespace subsystems
