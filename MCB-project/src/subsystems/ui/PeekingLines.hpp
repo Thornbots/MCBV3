@@ -4,7 +4,6 @@
 #include "util/ui/GraphicsContainer.hpp"
 #include "util/ui/SimpleGraphicsObjects.hpp"
 
-using namespace tap::communication::serial;
 using namespace subsystems;
 
 class PeekingLines : public GraphicsContainer {
@@ -20,7 +19,7 @@ private:
     static constexpr uint16_t TOP_OFFSET = 320; //distance from the top of the line to the top of the screen
     static constexpr uint16_t THICKNESS = 2; //pixels
 
-    Line line{RefSerialData::Tx::GraphicColor::CYAN, 0, 0, 0, 0, THICKNESS};
+    Line line{UISubsystem::Color::CYAN, 0, 0, 0, 0, THICKNESS};
 
     void setLineLeft() {
         line.x1 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - DISTANCE_FROM_CENTER);

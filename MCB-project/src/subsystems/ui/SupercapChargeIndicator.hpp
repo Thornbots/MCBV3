@@ -4,7 +4,6 @@
 #include "util/ui/GraphicsContainer.hpp"
 #include "util/ui/SimpleGraphicsObjects.hpp"
 
-using namespace tap::communication::serial;
 using namespace subsystems;
 
 // looks like
@@ -42,18 +41,18 @@ private:
 
     int getInsideWidth() { return INSIDE_WIDTH * (getCurrentCharge() - MIN_CHARGE) / (MAX_CHARGE - MIN_CHARGE); }
 
-    RefSerialData::Tx::GraphicColor getCurrentColor() {
+    UISubsystem::Color getCurrentColor() {
         // depends on if keyboard mouse or controller, could also be another color if controller disconnected
-        return RefSerialData::Tx::GraphicColor::ORANGE;
+        return UISubsystem::Color::ORANGE;
     }
 
     UnfilledRectangle outside{
-        RefSerialData::Tx::GraphicColor::CYAN,
+        UISubsystem::Color::CYAN,
         static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - INSIDE_WIDTH / 2 - PADDING),
         HEIGHT_OFF_BOTTOM,
         INSIDE_WIDTH + 2 * PADDING,
         INSIDE_HEIGHT + 2 * PADDING,
         THICKNESS};
     UnfilledRectangle
-        inside{RefSerialData::Tx::GraphicColor::CYAN, static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - INSIDE_WIDTH / 2), HEIGHT_OFF_BOTTOM + PADDING, INSIDE_WIDTH, INSIDE_HEIGHT, THICKNESS};
+        inside{UISubsystem::Color::CYAN, static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - INSIDE_WIDTH / 2), HEIGHT_OFF_BOTTOM + PADDING, INSIDE_WIDTH, INSIDE_HEIGHT, THICKNESS};
 };

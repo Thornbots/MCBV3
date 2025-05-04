@@ -16,8 +16,9 @@ using namespace tap::communication::serial;
 
 class UISubsystem : public tap::control::Subsystem, ::modm::pt::Protothread
 {
-
+    
 public:
+    using Color = RefSerialData::Tx::GraphicColor; //makes it so you can use UISubsystem::Color::CYAN
     static constexpr uint16_t SCREEN_WIDTH = 1920; //pixels. x=0 is left
     static constexpr uint16_t SCREEN_HEIGHT = 1080; //pixels. y=0 is bottom
     static constexpr uint16_t HALF_SCREEN_WIDTH = SCREEN_WIDTH/2; //pixels

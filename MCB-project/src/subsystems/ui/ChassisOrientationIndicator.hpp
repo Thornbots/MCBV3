@@ -5,7 +5,6 @@
 #include "util/ui/GraphicsContainer.hpp"
 #include "util/ui/SimpleGraphicsObjects.hpp" 
 
-using namespace tap::communication::serial;
 using namespace subsystems;
 
 // looks like
@@ -52,6 +51,6 @@ private:
     static constexpr float YAW_MULT = 180 / PI;  // turns radians from gimbal's getYawEncoderValue into degrees, might need to be negative
     static constexpr float YAW_OFFSET = 360;     // degrees, 0 from the yaw might not be top on the screen, also needs to make sure it is positive because we are using uints
 
-    Arc left{RefSerialData::Tx::GraphicColor::RED_AND_BLUE, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, INNER_SIZE, INNER_SIZE, 0, INNER_ARC_LEN, THICKNESS};
-    Arc right{RefSerialData::Tx::GraphicColor::RED_AND_BLUE, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, INNER_SIZE, INNER_SIZE, 0, INNER_ARC_LEN, THICKNESS};
+    Arc left{UISubsystem::Color::RED_AND_BLUE, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, INNER_SIZE, INNER_SIZE, 0, INNER_ARC_LEN, THICKNESS};
+    Arc right{UISubsystem::Color::RED_AND_BLUE, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, INNER_SIZE, INNER_SIZE, 0, INNER_ARC_LEN, THICKNESS};
 };

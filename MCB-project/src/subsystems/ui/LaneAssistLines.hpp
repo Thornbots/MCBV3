@@ -4,7 +4,6 @@
 #include "util/ui/GraphicsContainer.hpp"
 #include "util/ui/SimpleGraphicsObjects.hpp"
 
-using namespace tap::communication::serial;
 using namespace subsystems;
 
 // looks like / \ at the bottom of the screen
@@ -16,7 +15,7 @@ public:
     }
 
     void update() {
-        float pitch = gimbal ? gimbal->getPitchEncoderValue() : 0;
+        float pitch = gimbal->getPitchEncoderValue();
         float bottomOffset = A_BOTTOM * std::sin(B_BOTTOM * pitch + C_BOTTOM) + D_BOTTOM;
         float topOffset = A_TOP * std::sin(B_TOP * pitch + C_TOP) + D_TOP;
 
@@ -74,6 +73,6 @@ private:
 
     GimbalSubsystem* gimbal = nullptr;
 
-    Line left{RefSerialData::Tx::GraphicColor::CYAN, 0, 0, 0, HEIGHT, THICKNESS};
-    Line right{RefSerialData::Tx::GraphicColor::CYAN, 0, 0, 0, HEIGHT, THICKNESS};
+    Line left{UISubsystem::Color::CYAN, 0, 0, 0, HEIGHT, THICKNESS};
+    Line right{UISubsystem::Color::CYAN, 0, 0, 0, HEIGHT, THICKNESS};
 };
