@@ -37,6 +37,7 @@ private:  // Private Variables
     GraphicsObject* objectsToSend[TARGET_NUM_OBJECTS];
     int graphicsIndex=0;
     int innerGraphicsIndex=0;
+    int numToSend=0;
     GraphicsObject* nextGraphicsObject=nullptr;
     RefSerialData::Tx::Graphic1Message message1;
     RefSerialData::Tx::Graphic2Message message2;

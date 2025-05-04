@@ -91,7 +91,7 @@ bool UISubsystem::run() {
         // drivers->leds.set(tap::gpio::Leds::Red, graphicsIndex == 1);
         // drivers->leds.set(tap::gpio::Leds::Green, graphicsIndex == 7);
 
-        int numToSend = graphicsIndex;
+        numToSend = graphicsIndex;
         if(numToSend==3 || numToSend==4){
             //can't send 3, will send 2 and save 1 for later
             //can't send 4, will send 2 and save 2 for later
