@@ -25,13 +25,14 @@ public:
     src::Drivers* drivers;
 
     //motors 
-    DjiMotor flywheelMotor1{drivers, MotorId::MOTOR5, CanBus::CAN_BUS2, true, "Flywheel", 0, 0};
-    DjiMotor flywheelMotor2{drivers, MotorId::MOTOR8, CanBus::CAN_BUS2, false, "Flywheel", 0, 0};
+    DjiMotor flywheelMotor1{drivers, MotorId::MOTOR3, CanBus::CAN_BUS2, true, "Flywheel", 0, 0};
+    DjiMotor flywheelMotor2{drivers, MotorId::MOTOR5, CanBus::CAN_BUS2, false, "Flywheel", 0, 0};
 
     DjiMotor yawMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS1, false, "Yaw", 0, 0};
     DjiMotor pitchMotor{drivers, MotorId::MOTOR6, CanBus::CAN_BUS2, false, "Pitch", 0, 0};
 
-    DjiMotor indexMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS2, false, "Indexer2", 0, 0};
+    DjiMotor indexTopMotor{drivers, MotorId::MOTOR1, CanBus::CAN_BUS2, false, "IndexerTop", 0, 0};
+    DjiMotor indexBottomMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS2, false, "IndexerBottom", 0, 0};
 
     DjiMotor driveMotor1{drivers, MotorId::MOTOR1, CanBus::CAN_BUS1, true, "Motor 1", 0, 0};
     DjiMotor driveMotor2{drivers, MotorId::MOTOR3, CanBus::CAN_BUS1, true, "Motor 2", 0, 0};
