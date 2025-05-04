@@ -5,6 +5,8 @@
 #include "subsystems/ui/UISubsystem.hpp"
 #include "subsystems/ui/UIDrawCommand.hpp"
 
+#include "subsystems/indexer/HeroIndexerSubsystem.hpp"
+
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
 
@@ -17,6 +19,7 @@
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
+#include "subsystems/indexer/IndexerLoadCommand.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/trigger.hpp"
 
@@ -30,10 +33,10 @@ public:
     // functions we are using
     void initialize() override {
         // Initialize subsystems
-        gimbal.initialize();
+        //gimbal.initialize();
         flywheel.initialize();
         indexer.initialize();
-        drivetrain.initialize();
+        //drivetrain.initialize();
         ui.initialize();
 
         // Run startup commands
@@ -42,8 +45,8 @@ public:
         indexer.setDefaultCommand(&indexerStopCommand);
         
 
-        shootButton.whileTrue(&indexer10Hz)->onTrue(&shooterStart);
-        unjamButton.whileTrue(&indexerUnjam)->onTrue(&shooterStop);
+        shootButton.whileTrue(&indexer10Hz)->onTrue(&shooterStart)->onFalse(&indexerLoadCommand);
+        unjamButton.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onFalse(&indexerLoadCommand);
 
 
         // //peeking
@@ -68,7 +71,7 @@ public:
     subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
-    subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor};
+    subsystems::HeroIndexerSubsystem indexer{drivers, &hardware.indexTopMotor, &hardware.indexBottomMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
 
     // //commands
@@ -80,9 +83,10 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 10};
+    commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 1};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
     commands::IndexerStopCommand indexerStopCommand{drivers, &indexer};
+    commands::IndexerLoadCommand indexerLoadCommand{drivers, &indexer};
 
     //CHANGE NUMBERS LATER
     commands::DrivetrainDriveCommand peekRight{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_RIGHT, commands::ControlMode::KEYBOARD};

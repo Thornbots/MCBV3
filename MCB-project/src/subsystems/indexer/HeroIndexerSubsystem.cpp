@@ -7,9 +7,9 @@
 namespace subsystems
 {
 
-HeroIndexerSubsystem::HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index1, tap::motor::DjiMotor* index2)
-    : IndexerSubsystem(drivers, index1), // Call base class constructor
-    bottomIndexer(index2),
+HeroIndexerSubsystem::HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* indexTop, tap::motor::DjiMotor* indexBottom)
+    : IndexerSubsystem(drivers, indexTop), // Call base class constructor
+    bottomIndexer(indexBottom),
     indexPIDController2(PID_CONF_INDEX)
 {
 
@@ -27,6 +27,8 @@ void HeroIndexerSubsystem::refresh() {
     IndexerSubsystem::refresh();
     // Set the desired output for both motors
     bottomIndexer->setDesiredOutput(indexerVoltage2);   // Second motor (same voltage)
+
+
 }
 
 void HeroIndexerSubsystem::indexAtRate(float ballsPerSecond){
@@ -34,7 +36,7 @@ void HeroIndexerSubsystem::indexAtRate(float ballsPerSecond){
 
     // Check if the firing rate should be limited to prevent overheating
     tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refSerial.getRobotData().turret;
-    if (drivers->refSerial.getRefSerialReceivingData() && (HEAT_PER_BALL * ballsPerSecond - turretData.coolingRate) * LATENCY > (turretData.heatLimit - turretData.heat17ID2)) {
+    if (drivers->refSerial.getRefSerialReceivingData() && (HEAT_PER_BALL * ballsPerSecond - turretData.coolingRate) * LATENCY > (turretData.heatLimit - turretData.heat42)) {
         ballsPerSecond = turretData.coolingRate / HEAT_PER_BALL;
     }
 
