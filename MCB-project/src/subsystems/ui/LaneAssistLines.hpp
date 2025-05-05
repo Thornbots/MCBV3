@@ -19,10 +19,10 @@ public:
         float bottomOffset = A_BOTTOM * std::sin(B_BOTTOM * pitch + C_BOTTOM) + D_BOTTOM;
         float topOffset = A_TOP * std::sin(B_TOP * pitch + C_TOP) + D_TOP;
 
-        left.x1 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - bottomOffset);
-        left.x2 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH - topOffset);
-        right.x1 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH + bottomOffset);
-        right.x2 = static_cast<uint16_t>(UISubsystem::HALF_SCREEN_WIDTH + topOffset);
+        left.x1 = UISubsystem::HALF_SCREEN_WIDTH - bottomOffset;
+        left.x2 = UISubsystem::HALF_SCREEN_WIDTH - topOffset;
+        right.x1 = UISubsystem::HALF_SCREEN_WIDTH + bottomOffset;
+        right.x2 = UISubsystem::HALF_SCREEN_WIDTH + topOffset;
     }
 
 

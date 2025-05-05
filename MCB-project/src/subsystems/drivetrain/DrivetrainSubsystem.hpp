@@ -42,6 +42,14 @@ public:  // Public Methods
 
     float imuAngle;
 
+    // For UI stuff
+    bool isPeekingLeft;
+    bool isPeekingRight;
+    bool isAtPeekTarget;  // when we start peeking, we need to get there first, this is to tell the ui if we are there or not
+    bool isInControllerMode;
+    bool isInKeyboardMode;
+    // End UI stuff
+
     /*
      * Call this function once, outside of the main loop.
      * This function will initalize all of the motors, timers, pidControllers, and any other used

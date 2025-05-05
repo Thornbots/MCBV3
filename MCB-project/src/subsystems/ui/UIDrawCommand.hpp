@@ -13,6 +13,7 @@
 #include "LaneAssistLines.hpp"
 #include "Reticle.hpp"
 #include "SupercapChargeIndicator.hpp"
+#include "PeekingLines.hpp"
 #include "TestFill.hpp"
 #include "TestGraphics.hpp"
 #include "drivers.hpp"
@@ -35,6 +36,7 @@ public:
         addGraphicsObject(&laneAssistLines);
         addGraphicsObject(&supercapChargeIndicator);
         addGraphicsObject(&chassisOrientationIndicator);
+        addGraphicsObject(&peekingLines);
 
     };
 
@@ -42,7 +44,9 @@ public:
 
     void execute() override {
         laneAssistLines.update();
+        supercapChargeIndicator.update();
         chassisOrientationIndicator.update();
+        peekingLines.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -63,7 +67,8 @@ private:
     // TestGraphics testGraphics{};
     // TestFill testFill{};
     LaneAssistLines laneAssistLines{gimbal};
-    SupercapChargeIndicator supercapChargeIndicator{};
+    SupercapChargeIndicator supercapChargeIndicator{drivetrain};
     ChassisOrientationIndicator chassisOrientationIndicator{gimbal};
+    PeekingLines peekingLines{drivetrain};
 };
 }  // namespace commands

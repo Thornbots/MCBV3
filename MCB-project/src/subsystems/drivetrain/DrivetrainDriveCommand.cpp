@@ -9,6 +9,11 @@ void DrivetrainDriveCommand::initialize() {
     x = 0;
     y = 0;
     r = 0;
+    
+    drivetrain->isPeekingLeft = driveMode == DriveMode::PEEK_LEFT;
+    drivetrain->isPeekingRight = driveMode == DriveMode::PEEK_RIGHT;
+    drivetrain->isInControllerMode = controlMode == ControlMode::CONTROLLER;
+    drivetrain->isInKeyboardMode = controlMode == ControlMode::KEYBOARD;
 }
 void DrivetrainDriveCommand::execute() {
     float referenceAngle = gimbal->getYawEncoderValue();
@@ -48,6 +53,7 @@ void DrivetrainDriveCommand::execute() {
             y *= 2.5f;
         }
         r = drivetrain->calculateRotationPID(targetAngle + referenceAngle); 
+        drivetrain->isAtPeekTarget = -IS_AT_PEEK_TARGET_THRESHOLD < r && r < IS_AT_PEEK_TARGET_THRESHOLD;
     }
 
     Pose2d drive(x, y, r);
@@ -57,6 +63,12 @@ void DrivetrainDriveCommand::execute() {
 
 bool DrivetrainDriveCommand::isFinished() const { return !drivers->remote.isConnected(); }
 
-void DrivetrainDriveCommand::end(bool) {}
+void DrivetrainDriveCommand::end(bool) {
+    drivetrain->isAtPeekTarget = false;
+    drivetrain->isPeekingLeft = false;
+    drivetrain->isPeekingRight = false;
+    drivetrain->isInControllerMode = false;
+    drivetrain->isInKeyboardMode = false;
+}
 
 }  // namespace commands

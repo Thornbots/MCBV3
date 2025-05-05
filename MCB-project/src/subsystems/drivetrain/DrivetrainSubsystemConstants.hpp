@@ -32,3 +32,5 @@ constexpr float PEEK_RIGHT_AMT = -0.6;  // amount to peek right
 // after the ifdefs
 
 constexpr float DEFAULT_POWER_LIMIT = 45;  // default power limit for drivetrain
+
+constexpr float IS_AT_PEEK_TARGET_THRESHOLD = 0.05;  // for knowing if isAtPeekTarget
