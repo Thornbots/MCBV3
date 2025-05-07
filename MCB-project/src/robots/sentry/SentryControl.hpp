@@ -49,7 +49,7 @@ public:
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
 
         autoTrigger.whileTrue(&autoFireCommand)->onFalse(&lookJoystick)->whileTrue(&shooterStart);
-        autoDriveTrigger.whileTrue(&autoDriveCommand)->whileTrue(&odoPointForwards);
+        autoDriveTrigger.whileTrue(&autoDriveCommand)->onTrue(&odoPointForwards);
         // drive commands 
 
         joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
