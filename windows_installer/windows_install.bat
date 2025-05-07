@@ -15,8 +15,8 @@ choco install -y python38 git vscode gcc-arm-embedded openocd mingw jq
 call refreshenv
 
 echo  --clone repo--
-git clone https://github.com/Thornbots/TeachingFreshies.git
-cd TeachingFreshies
+git clone https://github.com/Thornbots/MCBV3.git
+cd MCBV3
 
 echo  --setup pipenv--
 pip3 install pipenv

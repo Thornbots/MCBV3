@@ -86,7 +86,8 @@
         "stop_token": "cpp",
         "format": "cpp",
         "semaphore": "cpp",
-        "*.source": "cpp"
+        "*.source": "cpp",
+        "source_location": "cpp"
     },
     "files.exclude": {
         ".gitignore": true,

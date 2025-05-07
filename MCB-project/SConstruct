@@ -67,6 +67,7 @@ def _get_sim_modm_instance_path():
 
 # Define a new SCons environment and set up basic build variables
 env = DefaultEnvironment(ENV=os.environ)
+
 env["CONFIG_BUILD_BASE"] = abspath(join(BUILD_PATH, args["TARGET_ENV"]))
 env["CONFIG_PROJECT_NAME"] = PROJECT_NAME
 env["CONFIG_ARTIFACT_PATH"] = join(env["CONFIG_BUILD_BASE"], "artifact")
