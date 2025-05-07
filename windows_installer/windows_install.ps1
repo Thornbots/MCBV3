@@ -30,8 +30,8 @@ refreshenv # to update enviromen vars
 # mingw contains gcc and python3.9
 choco install -y python38 git vscode gcc-arm-embedded openocd mingw
 
-git clone https://github.com/Thornbots/TeachingFreshies.git
-cd TeachingFreshies
+git clone https://github.com/Thornbots/MCBV3.git
+cd MCBV3
 
 pip3 install pipenv
 cd MCB-project
