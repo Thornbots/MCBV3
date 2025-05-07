@@ -34,6 +34,7 @@ public:
     DjiMotor driveMotor3{drivers, MotorId::MOTOR3, CanBus::CAN_BUS1, false, "Motor 3"};
     DjiMotor driveMotor4{drivers, MotorId::MOTOR4, CanBus::CAN_BUS1, false, "Motor 4"};
 
+
 };
 
 }  // namespace ThornBots

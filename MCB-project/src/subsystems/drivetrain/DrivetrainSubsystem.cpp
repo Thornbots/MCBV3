@@ -88,6 +88,19 @@ void DrivetrainSubsystem::setTargetTranslation(Pose2d drive, bool shouldBoost) {
     }
 }
 
+void DrivetrainSubsystem::setTargetPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity){
+    throttle = (drivers->refSerial.getRobotData().chassis.powerBuffer <= 10) ? 10.0f : 0.0f;
+    
+    controller.followPosition(targetPosition, currentPosition, inputVelocity, powerLimit - throttle, imuAngle, motorVel, motorCurrent);
+
+    for (int i = 0; i < 4; i++) {
+        float adjustedCurrent = std::clamp(motorCurrent[i], -20.0f, 20.0f) * 819.2f;
+
+        motorArray[i]->setDesiredOutput(static_cast<int32_t>(adjustedCurrent));
+    }
+}
+
+
 // fix function
 void DrivetrainSubsystem::stopMotors() {
 #if defined(drivetrain_sysid)

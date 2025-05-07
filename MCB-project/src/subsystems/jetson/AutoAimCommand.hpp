@@ -6,7 +6,7 @@
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
 #include "subsystems/indexer/IndexerSubsystem.hpp"
-#include "subsystems/cv/ComputerVisionSubsystem.hpp"
+#include "subsystems/jetson/JetsonSubsystem.hpp"
 
 
 #include "drivers.hpp"
@@ -16,13 +16,13 @@ namespace commands
 {
 using subsystems::GimbalSubsystem;
 using subsystems::IndexerSubsystem;
-using subsystems::ComputerVisionSubsystem;
+using subsystems::JetsonSubsystem;
 using tap::communication::serial::Remote;
 
 class AutoAimCommand : public MouseMoveCommand
 {
 public:
-    AutoAimCommand(src::Drivers* drivers, GimbalSubsystem* gimbal,ComputerVisionSubsystem* cv)
+    AutoAimCommand(src::Drivers* drivers, GimbalSubsystem* gimbal,JetsonSubsystem* cv)
         : MouseMoveCommand(drivers, gimbal),
           cv(cv)
     {
@@ -42,7 +42,7 @@ public:
 
 
 private:
-    ComputerVisionSubsystem* cv;
+    JetsonSubsystem* cv;
     int shoot = 0;
     bool isCalibrated = false;
 

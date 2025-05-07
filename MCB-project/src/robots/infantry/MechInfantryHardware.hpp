@@ -2,8 +2,8 @@
 #include "tap/board/board.hpp"
 #include "tap/motor/dji_motor.hpp"
 #include "tap/motor/servo.hpp"
-
 #include "drivers.hpp"
+
 
 using namespace tap::motor;
 using namespace tap::can;
@@ -33,6 +33,7 @@ public:
     DjiMotor driveMotor2{drivers, MotorId::MOTOR3, CanBus::CAN_BUS1, true, "Motor 2"};
     DjiMotor driveMotor3{drivers, MotorId::MOTOR4, CanBus::CAN_BUS1, true, "Motor 3"};
     DjiMotor driveMotor4{drivers, MotorId::MOTOR2, CanBus::CAN_BUS1, true, "Motor 4"};
+
 
 };
 

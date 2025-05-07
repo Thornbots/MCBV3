@@ -38,6 +38,9 @@ public:
     ~ChassisController();
     //~YawController();
     void calculate(Pose2d targetVelLocal, float powerLimit, float angle, float motorVelocity[4], float motorCurrent[4]);
+
+    void followPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity, float powerLimit, float angle, float motorVelocity[4], float motorCurrent[4]);
+        
     float calculateBeybladeVelocity(float bb_freq, float bb_amp, Pose2d TargetVelocity);
 
     // intermediate functions

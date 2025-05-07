@@ -181,6 +181,18 @@ void ChassisController::calculatePowerLimiting(float powerLimit, float V_m_FF[4]
     }
 }
 
+void ChassisController::followPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity, float powerLimit, float angle, float motorVelocity[4], float motorCurrent[4]){
+    Vector2d controlEffort = (targetPosition - currentPosition.vec()) * KP;
+    
+
+
+    float normMagnitude = std::max(controlEffort.magnitude()/MAX_POS_VEL, 1.0f);
+
+    Pose2d targetVelocity = inputVelocity + controlEffort * (1/normMagnitude); // Normalize the control effort to get the target velocity
+  
+    // Calculate the target velocity in the local frame
+    calculate(targetVelocity.rotate(currentPosition.getRotation()), powerLimit, angle, motorVelocity, motorCurrent);
+}
 float estVelArr[3], estMotorArr[4];
 void ChassisController::calculate(Pose2d targetVelLocal, float powerLimit, float angle, float motorVelocity[4], float motorCurrent[4]) {
     multiplyMatrices(3, 4, forwardKinematics, motorVelocity, estVelArr);

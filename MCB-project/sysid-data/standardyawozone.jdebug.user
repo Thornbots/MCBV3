@@ -1,67 +1,42 @@
 
 
-Breakpoint=C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/src/subsystems/drivetrain/ChassisController.cpp:266:1, State=BP_STATE_DISABLED
-Breakpoint=C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/src/subsystems/drivetrain/DrivetrainSubsystem.cpp:37, State=BP_STATE_DISABLED
-Breakpoint=C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/lib/gcc-arm-embedded/tools/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/c++/10.3.1/ext/new_allocator.h:103:7, Permitted Impl.=BP_TYPE_MIXED, State=BP_STATE_DISABLED
-Breakpoint=C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/src/main.cpp:57, State=BP_STATE_DISABLED
-GraphedExpression="test3", Color=#e56a6f, Show=0
-GraphedExpression="test2", Color=#35792b, Show=0
-GraphedExpression="test4", Color=#769dda, Show=0
-GraphedExpression="test6", Color=#b14f0d, Show=0
-GraphedExpression="test5", Color=#b3c38e, Show=0
-GraphedExpression="test7", Color=#ab7b05, Show=0
-GraphedExpression="test1", Color=#7fd3b7, Show=0
-OpenDocument="can_rx_handler.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/src/tap/communication/can/can_rx_handler.cpp", Line=60
-OpenDocument="cmsis_gcc.h", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/modm/ext/cmsis/core/cmsis_gcc.h", Line=231
-OpenDocument="board.hpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/src/tap/board/board.hpp", Line=96
-OpenDocument="delay.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/modm/src/modm/platform/core/delay.cpp", Line=1
-OpenDocument="startup.c", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/modm/src/modm/platform/core/startup.c", Line=45
-OpenDocument="drivers.hpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/src/drivers.hpp", Line=0
-OpenDocument="IndexerNBallsCommand.hpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/src/subsystems/indexer/IndexerNBallsCommand.hpp", Line=0
-OpenDocument="ShooterStopCommand.hpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/src/subsystems/flywheel/ShooterStopCommand.hpp", Line=0
-OpenDocument="ChassisController.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/src/subsystems/drivetrain/ChassisController.cpp", Line=0
-OpenDocument="clock.hpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/src/tap/architecture/clock.hpp", Line=28
-OpenDocument="main.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/src/main.cpp", Line=33
-OpenDocument="pwm.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/src/tap/communication/gpio/pwm.cpp", Line=84
-OpenDocument="math_user_utils.hpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/src/tap/algorithms/math_user_utils.hpp", Line=58
-OpenDocument="stl_algobase.h", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/lib/gcc-arm-embedded/tools/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/c++/10.3.1/bits/stl_algobase.h", Line=0
-OpenDocument="bmi088.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/src/tap/communication/sensors/imu/bmi088/bmi088.cpp", Line=71
-OpenDocument="spi_master_1.hpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/modm/src/modm/platform/spi/spi_master_1.hpp", Line=106
-OpenDocument="resumable.hpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/modm/src/modm/processing/resumable/resumable.hpp", Line=77
-OpenDocument="set.hpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/modm/src/modm/platform/gpio/set.hpp", Line=45
-OpenDocument="reset_handler.sx", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/modm/src/modm/platform/core/reset_handler.sx", Line=0
-OpenDocument="stl_vector.h", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/lib/gcc-arm-embedded/tools/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/c++/10.3.1/bits/stl_vector.h", Line=0
-OpenDocument="ChassisController.hpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/src/subsystems/drivetrain/ChassisController.hpp", Line=7
-OpenDocument="tlsf.c", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/modm/ext/tlsf/tlsf.c", Line=597
-OpenDocument="heap_tlsf.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/modm/src/modm/platform/heap/heap_tlsf.cpp", Line=125
-OpenDocument="new_delete.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/modm/ext/gcc/new_delete.cpp", Line=28
-OpenDocument="new_allocator.h", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/lib/gcc-arm-embedded/tools/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/c++/10.3.1/ext/new_allocator.h", Line=0
-OpenDocument="imu_heater.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/src/tap/communication/sensors/imu_heater/imu_heater.cpp", Line=20
-OpenDocument="remote.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/src/tap/communication/serial/remote.cpp", Line=148
-OpenDocument="stl_deque.h", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/lib/gcc-arm-embedded/tools/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/c++/10.3.1/bits/stl_deque.h", Line=0
-OpenDocument="systick_timer.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/taproot/modm/src/modm/platform/clock/systick_timer.cpp", Line=51
-OpenDocument="DrivetrainSubsystem.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/TeachingFreshies/MCB-project/src/subsystems/drivetrain/DrivetrainSubsystem.cpp", Line=6
+GraphedExpression="odomX", Color=#e56a6f, Show=0
+GraphedExpression="odomY", Color=#35792b, Show=0
+GraphedExpression="odomXVel", Color=#769dda, Show=0
+GraphedExpression="odomYVel", Color=#b14f0d, Show=0
+GraphedExpression="axonEncoder", Color=#b3c38e, Show=0
+GraphedExpression="loop", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#ab7b05, Show=0
+OpenDocument="i2c_master_2.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/MCBV3/MCB-project/taproot/modm/src/modm/platform/i2c/i2c_master_2.cpp", Line=212
+OpenDocument="board.hpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/MCBV3/MCB-project/taproot/src/tap/board/board.hpp", Line=96
+OpenDocument="spi_master_1.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/MCBV3/MCB-project/taproot/modm/src/modm/platform/spi/spi_master_1.cpp", Line=84
+OpenDocument="dji_serial.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/MCBV3/MCB-project/taproot/src/tap/communication/serial/dji_serial.cpp", Line=61
+OpenDocument="OdometrySubsystem.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/MCBV3/MCB-project/src/subsystems/odometry/OdometrySubsystem.cpp", Line=0
+OpenDocument="delay.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/MCBV3/MCB-project/taproot/modm/src/modm/platform/core/delay.cpp", Line=2
+OpenDocument="main.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/MCBV3/MCB-project/src/main.cpp", Line=62
+OpenDocument="remote_map_state.cpp", FilePath="C:/Users/stedmaja/OneDrive - Rose-Hulman Institute of Technology/rhit/MCBV3/MCB-project/taproot/src/tap/control/remote_map_state.cpp", Line=116
 OpenToolbar="Debug", Floating=0, x=0, y=0
-OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=300, h=575, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
-OpenWindow="Source Files", DockArea=LEFT, x=0, y=3, w=578, h=161, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=300, h=327, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Break & Tracepoints", DockArea=LEFT, x=0, y=0, w=578, h=380, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VectorCatchIndexMask=0
-OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=1, w=578, h=171, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Functions", DockArea=LEFT, x=0, y=2, w=578, h=188, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=300, h=569, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
+OpenWindow="Source Files", DockArea=LEFT, x=0, y=3, w=1501, h=241, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=300, h=333, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Break & Tracepoints", DockArea=LEFT, x=0, y=0, w=1501, h=181, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VectorCatchIndexMask=0
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=1, w=1501, h=350, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Functions", DockArea=LEFT, x=0, y=2, w=1501, h=128, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 OpenWindow="Data Sampling", DockArea=BOTTOM, x=1, y=0, w=1584, h=524, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=1, UniformSampleSpacing=0
 OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=975, h=524, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 SmartViewPlugin="", Page="", Toolbar="Hidden", Window="SmartView 1"
-TableHeader="Functions", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Class";"Source"], ColWidths=[11409;100;100;100;4712;1328]
-TableHeader="Source Files", SortCol="File", SortOrder="ASCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[426;100;100;100;2237]
-TableHeader="Data Sampling Setup", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[114;100;144;124;114;144;115;134;595]
-TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";" test3";" test2";" test4";" test6";" test5";" test7";" test1"], ColWidths=[100;100;100;100;100;100;100;100;758]
+TableHeader="Vector Catches", SortCol="", SortOrder="ASCENDING", VisibleCols=["";"Vector Catch";"Description"], ColWidths=[50;300;1125]
+TableHeader="Break & Tracepoints", SortCol="", SortOrder="ASCENDING", VisibleCols=["";"Type";"Location";"Extras"], ColWidths=[100;100;878;423]
+TableHeader="Functions", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Class";"Source"], ColWidths=[11409;100;100;100;4712;1292]
+TableHeader="Source Files", SortCol="File", SortOrder="ASCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[426;100;100;100;2138]
+TableHeader="Data Sampling Setup", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[114;100;134;144;144;134;115;144;1505]
+TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";" odomX";" odomY";" odomXVel";" odomYVel";" axonEncoder";" loop"], ColWidths=[100;100;100;100;100;100;100;858]
 TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
 TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[100;144;329]
 TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh";"Access"], ColWidths=[100;100;104;274;923]
 TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;340]
-TableHeader="Vector Catches", SortCol="", SortOrder="ASCENDING", VisibleCols=["";"Vector Catch";"Description"], ColWidths=[50;300;500]
-TableHeader="Break & Tracepoints", SortCol="", SortOrder="ASCENDING", VisibleCols=["";"Type";"Location";"Extras"], ColWidths=[100;100;878;428]
-TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh";"Access"], ColWidths=[100;100;104;100;174]
-WatchedExpression="test1", Window=Watched Data 1
-WatchedExpression="test3", Window=Watched Data 1
-WatchedExpression="test7", Window=Watched Data 1
+WatchedExpression="axonEncoder", Window=Watched Data 1
+WatchedExpression="odomYVel", Window=Watched Data 1
+WatchedExpression="odomXVel", Window=Watched Data 1
+WatchedExpression="odomY", Window=Watched Data 1
+WatchedExpression="odomX", Window=Watched Data 1
