@@ -10,7 +10,7 @@ void AutoDriveCommand::initialize() {
     targetVelocity = Pose2d(0, 0, 8);
 }
 void AutoDriveCommand::execute() {
-    float referenceAngle = gimbal->getYawEncoderValue();
+    float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
   
     int action = 0;
     jetson->updateROS(&targetPosition, &targetVelocity, &action);
