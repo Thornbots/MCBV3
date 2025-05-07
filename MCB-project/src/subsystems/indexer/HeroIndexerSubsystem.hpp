@@ -12,7 +12,7 @@ public:
     // Additional Motor Constants (if necessary)
     tap::motor::DjiMotor* bottomIndexer;
 
-    HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index1, tap::motor::DjiMotor* index2);
+    HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* indexTop, tap::motor::DjiMotor* indexBottom);
 
     ~HeroIndexerSubsystem() {}
 

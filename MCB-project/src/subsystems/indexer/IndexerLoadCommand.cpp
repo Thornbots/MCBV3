@@ -10,7 +10,7 @@ void IndexerLoadCommand::initialize() {
 
 void IndexerLoadCommand::execute()
 {
-    indexer->indexAtRate(0.5f); // Set the indexer to a low speed
+    indexer->indexAtRate(1.0f); // Set the indexer to a low speed
 }
 
 void IndexerLoadCommand::end(bool) {
@@ -19,7 +19,7 @@ void IndexerLoadCommand::end(bool) {
 
 bool IndexerLoadCommand::isFinished(void) const {
     // Check if the indexer has loaded the balls
-    return !indexer->readBreakBeam(); // Assuming 5 is the number of balls to load
+    return !indexer->readBreakBeam() || !drivers->remote.isConnected(); // Assuming 5 is the number of balls to load
 }
 }  // namespace commands
 #endif
