@@ -6,8 +6,7 @@
 #include "tap/control/subsystem.hpp"
 #include "tap/motor/dji_motor.hpp"
 #include "tap/motor/servo.hpp"
-
-#include "communication/JetsonCommunication.hpp"
+#include "util/Pose2d.hpp"
 
 #include "drivers.hpp"
 
@@ -20,9 +19,9 @@ struct PanelData {
     double theta;
 };
 
-class ComputerVisionSubsystem : public tap::control::Subsystem {
+class JetsonSubsystem : public tap::control::Subsystem {
 private:  // Private Variables
-    JetsonCommunication comm;
+    src::Drivers* drivers;
 
 
     float q0, q1, q2, q3; //easier to convert frames of reference from the quatrenion directly
@@ -38,14 +37,15 @@ private:  // Private Variables
     float posXrelPitch, posYrelPitch, posZrelPitch; //position of panel relative to frame 2 but offset up
     float velXrelPitch, velYrelPitch, velZrelPitch;
 public:  // Public Methods
-    ComputerVisionSubsystem(tap::Drivers* drivers);
+    JetsonSubsystem(src::Drivers* drivers);
 
-    ~ComputerVisionSubsystem() {}
+    ~JetsonSubsystem() {}
 
     void initialize();
 
     void refresh() override;
 
+    void updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, int* action);
     void update(float current_yaw, float current_pitch, float current_yaw_velo, float current_pitch_velo, float* yawOut, float* pitchOut, float* yawVelOut, float* pitchVelOut, int* action);
 
     

@@ -24,13 +24,18 @@
 #include "tap/drivers.hpp"
 
 #include "communication/I2CCommunication.hpp"
+#include "communication/UARTCommunication.hpp"
 
 namespace src {
+    
+
 class Drivers : public tap::Drivers {
 public:
-    Drivers() : tap::Drivers() {}
-    communication::I2CCommunication i2c;
+    Drivers() : tap::Drivers(), uart(this, tap::communication::serial::Uart::Uart1, true) {}
 
+    communication::I2CCommunication i2c;
+    communication::UARTCommunication uart;
+    
 public:
 };  // class Drivers
 

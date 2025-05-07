@@ -1,6 +1,6 @@
-#include "ComputerVisionSubsystem.hpp"
+#include "JetsonSubsystem.hpp"
 
-#include "ComputerVisionSubsystemConstants.hpp"
+#include "JetsonSubsystemConstants.hpp"
 
 float posXdebug;
 float posYdebug;
@@ -19,23 +19,56 @@ float targetPitchTest;
 
 namespace subsystems {
 
-ComputerVisionSubsystem::ComputerVisionSubsystem(tap::Drivers* drivers) : tap::control::Subsystem(drivers), comm(drivers, tap::communication::serial::Uart::Uart1, true) {}
+JetsonSubsystem::JetsonSubsystem(src::Drivers* drivers) :
+     tap::control::Subsystem(drivers), drivers(drivers) {}
 
-void ComputerVisionSubsystem::initialize() {
+
+void JetsonSubsystem::initialize() {
     drivers->commandScheduler.registerSubsystem(this);
-    comm.initialize();
+    // comm.initialize();
 }
 
-void ComputerVisionSubsystem::refresh() { comm.updateSerial(); }
+void JetsonSubsystem::refresh() { 
+    drivers->leds.set(tap::gpio::Leds::Green, true);
+    drivers->uart.updateSerial(); 
+    AutoAimOutput a{0xA5, sizeof(float)*4, 
+        drivers->i2c.odom.getX(),
+        drivers->i2c.odom.getY(),
+        drivers->i2c.odom.getXVel(),
+        drivers->i2c.odom.getYVel(),
+         0x0A};
+    drivers->uart.sendAutoAimOutput(a);
+    drivers->leds.set(tap::gpio::Leds::Green, false);
+}
 
-void ComputerVisionSubsystem::update(float current_yaw, float current_pitch, float current_yaw_velo, float current_pitch_velo, float* yawOut, float* pitchOut, float* yawVelOut, float* pitchVelOut, int* action) {
-    const CVData* msg = comm.getLastCVData();
-    if (msg == nullptr) {
+void JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, int* action) {
+    const ROSData* rez = drivers->uart.getLastROSData();
+
+    if(rez == nullptr){
+
         *action = -1;
         return;
     }
 
-    comm.clearNewDataFlag();
+    *targetPosition = Vector2d(rez->x, rez->y);
+    //todo make this work lmao
+    *targetVelocity = Vector2d(0, 0);
+
+    *action = 1;
+    drivers->uart.clearNewDataFlag();
+
+    // comm.updateROS(msg);
+}
+void JetsonSubsystem::update(float current_yaw, float current_pitch, float current_yaw_velo, float current_pitch_velo, float* yawOut, float* pitchOut, float* yawVelOut, float* pitchVelOut, int* action) {
+    const ROSData* rez = nullptr;//drivers->uart.getLastROSData();
+    const CVData* msg = drivers->uart.getLastCVData();
+    if(msg == nullptr){
+
+        *action = -1;
+        return;
+    }
+
+    drivers->uart.clearNewDataFlag();
     // Add rotated offset vector of panel relative to RGB
     // if (msg->confidence <= 0.2f) return;
 

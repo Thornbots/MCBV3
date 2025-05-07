@@ -39,20 +39,19 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->can.initialize();
     drivers->errorController.init();
     drivers->refSerial.initialize();
+
     drivers->i2c.initialize();
-    modm::delay_ms(2);
-    drivers->i2c.refresh();
-    modm::delay_ms(20);
-    drivers->i2c.refresh();
+    drivers->uart.initialize();
 
 
     // drivers->cvBoard.initialize();
-    drivers->terminalSerial.initialize();
+    // drivers->terminalSerial.initialize();
     drivers->schedulerTerminalHandler.init();
     drivers->djiMotorTerminalSerialHandler.init();
     drivers->bmi088.initialize(500, 0.0f, 0.0f);
     drivers->bmi088.setCalibrationSamples(2000);
     drivers->bmi088.requestCalibration();
+
 
     drivers->leds.set(tap::gpio::Leds::Blue, false);
     drivers->leds.set(tap::gpio::Leds::Green, true);
@@ -68,7 +67,7 @@ static void updateIo(src::Drivers *drivers) {
 
     drivers->canRxHandler.pollCanData();
     drivers->refSerial.updateSerial();
-    // drivers->cvBoard.updateSerial();
+
     drivers->remote.read();
 }
 
@@ -90,13 +89,14 @@ int main() {
     while (1) {
         // do this as fast as you can
         updateIo(&drivers);
+        drivers.i2c.refresh();
+    drivers.uart.updateSerial();
 
         if (refreshTimer.execute()) {
             // tap::buzzer::playNote(&(drivers.pwm), 493);
 
             drivers.bmi088.periodicIMUUpdate();
             drivers.bmi088.read();
-            drivers.i2c.refresh();
             control.update();
             drivers.commandScheduler.run();
             drivers.djiMotorTxHandler.encodeAndSendCanData();

@@ -16,6 +16,7 @@ float YawController::calculate(float currentPosition, float currentVelocity, flo
 
     estimateState(&currentPosition, &currentVelocity, pastTorque, currentDrivetrainVelocity);
 
+    estimatedPosition = currentPosition;
     // float positionError = std::fmod(targetPosition - currentPosition + PI, 2 * PI) - PI;  // wrap to [-PI, PI]
     float positionError = targetPosition - currentPosition;  // wrap to [-PI, PI]
 

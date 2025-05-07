@@ -19,8 +19,8 @@
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
 #include "subsystems/gimbal/GimbalStopCommand.hpp"
-#include "subsystems/cv/AutoAimCommand.hpp"
-#include "subsystems/cv/AutoAimAndFireCommand.hpp"
+#include "subsystems/jetson/AutoAimCommand.hpp"
+#include "subsystems/jetson/AutoAimAndFireCommand.hpp"
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
@@ -47,7 +47,7 @@ public:
         drivetrain.initialize();
         ui.initialize();
         servo.initialize();
-        cv.initialize();
+        jetson.initialize();
         
         drivers->commandScheduler.addCommand(&closeServo); //close servo so I stop getting carbon splinters
 
@@ -102,17 +102,17 @@ public:
 
 
     // Subsystems
-    subsystems::UISubsystem ui{drivers};
+    // subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::ServoSubsystem servo{drivers, &hardware.servo};
-    subsystems::ComputerVisionSubsystem cv{drivers};
+    subsystems::JetsonSubsystem jetson{drivers};
 
 
     // //commands
-    commands::UIDrawCommand draw{&ui, &gimbal, &flywheel, &indexer, &drivetrain};
+    // commands::UIDrawCommand draw{&ui, &gimbal, &flywheel, &indexer, &drivetrain};
     commands::AutoAimCommand autoCommand{drivers, &gimbal, &cv};
     // commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
 

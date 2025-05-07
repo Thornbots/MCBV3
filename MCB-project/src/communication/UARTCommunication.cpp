@@ -1,21 +1,22 @@
-#include "JetsonCommunication.hpp"
+#include "UARTCommunication.hpp"
 #include <cstring> 
 #include <chrono>
 
 namespace communication
 {
-    JetsonCommunication::JetsonCommunication(tap::Drivers *drivers, tap::communication::serial::Uart::UartPort _port, bool isRxCRCEnforcementEnabled) :
+    UARTCommunication::UARTCommunication(tap::Drivers *drivers, tap::communication::serial::Uart::UartPort _port, bool isRxCRCEnforcementEnabled) :
         DJISerial(drivers, _port, isRxCRCEnforcementEnabled),
         port(_port),
         hasNewData(false)
     {
         // Good practice
         memset(&lastCVData, 0, sizeof(lastCVData));
+        // memset(&lastROSData, 0, sizeof(lastROSData));
         // Initial time
         lastReceivedTime = getCurrentTime();
     }
 
-    void JetsonCommunication::messageReceiveCallback(const ReceivedSerialMessage &completeMessage)
+    void UARTCommunication::messageReceiveCallback(const ReceivedSerialMessage &completeMessage)
     {
 
         size_t bytesToCopy = completeMessage.header.dataLength;
@@ -27,10 +28,11 @@ namespace communication
         if (bytesToCopy > 0 && completeMessage.data != nullptr)
         {
             memcpy(&lastCVData, completeMessage.data, bytesToCopy);
+            // memcpy(&lastROSData, completeMessage.data, bytesToCopy);
             if (bytesToCopy < sizeof(CVData))
             {
                 // need to do this for pointer arithmetic
-                memset(reinterpret_cast<uint8_t*>(&lastCVData) + bytesToCopy, 0, sizeof(CVData) - bytesToCopy);
+                memset(reinterpret_cast<uint8_t*>(&lastROSData) + bytesToCopy, 0, sizeof(CVData) - bytesToCopy);
             }
             // lastCVData.timestamp = getCurrentTime();
             hasNewData = true;
@@ -43,7 +45,7 @@ namespace communication
     }
 
     // Will we constantly receive data in a stream?
-    void JetsonCommunication::update()
+    void UARTCommunication::update()
     {
         // updateSerial();
         
@@ -53,12 +55,17 @@ namespace communication
         }
     }
 
-    const CVData* JetsonCommunication::getLastCVData()
+    const CVData* UARTCommunication::getLastCVData()
     {
         return hasNewData ? &lastCVData : nullptr;
     }
+    
+    const ROSData* UARTCommunication::getLastROSData()
+    {
+        return hasNewData ? &lastROSData : nullptr;
+    }
 
-    bool JetsonCommunication::sendAutoAimOutput(AutoAimOutput &output)
+    bool UARTCommunication::sendAutoAimOutput(AutoAimOutput &output)
     {
         // Flexible ports?
         tap::communication::serial::Uart::UartPort currentPort = port;
@@ -69,17 +76,17 @@ namespace communication
         return (bytesWritten == sizeof(AutoAimOutput));
     }
 
-    bool JetsonCommunication::isConnected() const
+    bool UARTCommunication::isConnected() const
     {
         return ((getCurrentTime() - lastReceivedTime) <= CONNECTION_TIMEOUT);
     }
 
-    void JetsonCommunication::clearNewDataFlag()
+    void UARTCommunication::clearNewDataFlag()
     {
         hasNewData = false;
     }
 
-    uint64_t JetsonCommunication::getCurrentTime() const
+    uint64_t UARTCommunication::getCurrentTime() const
     {
         auto now = std::chrono::system_clock::now();
 
@@ -94,7 +101,7 @@ namespace communication
         return milliseconds;
     }
 
-    tap::communication::serial::Uart::UartPort JetsonCommunication::getPort() const
+    tap::communication::serial::Uart::UartPort UARTCommunication::getPort() const
     {
         return port;
     }

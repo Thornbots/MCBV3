@@ -5,7 +5,7 @@
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
 #include "subsystems/indexer/IndexerSubsystem.hpp"
-#include "subsystems/cv/ComputerVisionSubsystem.hpp"
+#include "subsystems/jetson/JetsonSubsystem.hpp"
 
 #include "drivers.hpp"
 
@@ -15,13 +15,13 @@ namespace commands
 {
 using subsystems::GimbalSubsystem;
 using subsystems::IndexerSubsystem;
-using subsystems::ComputerVisionSubsystem;
+using subsystems::JetsonSubsystem;
 using tap::communication::serial::Remote;
 
 class AutoAimAndFireCommand : public tap::control::Command
 {
 public:
-    AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* indexer, ComputerVisionSubsystem* cv)
+    AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* indexer, JetsonSubsystem* cv)
         : drivers(drivers),
           gimbal(gimbal),
           indexer(indexer),
@@ -47,7 +47,7 @@ private:
     src::Drivers* drivers;
     GimbalSubsystem* gimbal;
     IndexerSubsystem* indexer;
-    ComputerVisionSubsystem* cv;
+    JetsonSubsystem* cv;
 
     bool isCalibrated = false;
     bool isShooting = false;
