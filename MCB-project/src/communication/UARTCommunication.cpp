@@ -10,8 +10,8 @@ namespace communication
         hasNewData(false)
     {
         // Good practice
-        // memset(&lastCVData, 0, sizeof(lastCVData));
-        memset(&lastROSData, 0, sizeof(lastROSData));
+        memset(&lastCVData, 0, sizeof(lastCVData));
+        // memset(&lastROSData, 0, sizeof(lastROSData));
         // Initial time
         lastReceivedTime = getCurrentTime();
     }
@@ -27,8 +27,8 @@ namespace communication
 
         if (bytesToCopy > 0 && completeMessage.data != nullptr)
         {
-            // memcpy(&lastCVData, completeMessage.data, bytesToCopy);
-            memcpy(&lastROSData, completeMessage.data, bytesToCopy);
+            memcpy(&lastCVData, completeMessage.data, bytesToCopy);
+            // memcpy(&lastROSData, completeMessage.data, bytesToCopy);
             if (bytesToCopy < sizeof(CVData))
             {
                 // need to do this for pointer arithmetic

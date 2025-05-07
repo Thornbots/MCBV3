@@ -33,7 +33,7 @@ public:
 
         // Initialize subsystems
         gimbal.initialize();
-        flywheel.initialize();
+        //flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
         odo.initialize();

@@ -4,20 +4,34 @@
 #include "util/Pose2d.hpp"
 
 namespace commands {
-
+int count = 0;
+Vector2d startPosition = Vector2d(0, 0);
 void AutoDriveCommand::initialize() {
+    count = 0;
     targetPosition = Pose2d(0, 0, 0);
     targetVelocity = Pose2d(0, 0, 8);
+    startPosition = Vector2d(drivers->i2c.odom.getX(), drivers->i2c.odom.getY());
 }
+
 void AutoDriveCommand::execute() {
     float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
   
     int action = 0;
-    jetson->updateROS(&targetPosition, &targetVelocity, &action);
+    count++;
+
+    if (count > 4000){
+        count = 0;
+    } else if (count > 2000){
+        targetPosition = Pose2d(1, 0, 0);
+    } else {
+        targetPosition = Pose2d(0, 0, 0);
+    }
+
+    // jetson->updateROS(&targetPosition, &targetVelocity, &action);
 
     Pose2d currentPosition = Pose2d(drivers->i2c.odom.getX(), drivers->i2c.odom.getY(), referenceAngle);
 
-    drivetrain->setTargetPosition(targetPosition.vec(), currentPosition, targetVelocity);
+    drivetrain->setTargetPosition(targetPosition.vec() + startPosition, currentPosition, targetVelocity);
     // drivetrain->setTargetTranslation(drive, false);
 }
 

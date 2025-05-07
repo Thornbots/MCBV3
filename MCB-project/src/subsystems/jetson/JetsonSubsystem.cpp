@@ -60,8 +60,8 @@ void JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVeloci
     // comm.updateROS(msg);
 }
 void JetsonSubsystem::update(float current_yaw, float current_pitch, float current_yaw_velo, float current_pitch_velo, float* yawOut, float* pitchOut, float* yawVelOut, float* pitchVelOut, int* action) {
-    const ROSData* rez = drivers->uart.getLastROSData();
-    const CVData* msg = nullptr;//comm.getLastCVData();
+    const ROSData* rez = nullptr;//drivers->uart.getLastROSData();
+    const CVData* msg = drivers->uart.getLastCVData();
     if(msg == nullptr){
 
         *action = -1;
