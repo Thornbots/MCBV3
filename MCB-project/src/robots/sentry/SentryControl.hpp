@@ -49,10 +49,10 @@ public:
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
 
         autoTrigger.whileTrue(&autoFireCommand)->onFalse(&lookJoystick)->whileTrue(&shooterStart);
-        autoDriveTrigger.whileTrue(&autoDriveCommand)->whileTrue(&odoPointForwards);
+        autoDriveTrigger.whileTrue(&autoDriveCommand)->onTrue(&odoPointForwards);
         // drive commands 
 
-        joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
+        joystickDrive0.onTrue(&lookJoystick);
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
     }
@@ -107,13 +107,13 @@ public:
     // controller driving
     Trigger joystickDrive0{
         drivers,
-        Remote::Switch::RIGHT_SWITCH,
-        Remote::SwitchState::UP};  // = (Trigger(drivers, Remote::Key::Q) & Trigger(drivers, Remote::Key::E)) | Trigger(drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP);
+        Remote::Switch::LEFT_SWITCH,
+        Remote::SwitchState::DOWN};  // = (Trigger(drivers, Remote::Key::Q) & Trigger(drivers, Remote::Key::E)) | Trigger(drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP);
     Trigger joystickDrive1{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::MID};
     Trigger joystickDrive2{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
 
     Trigger autoTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
-    Trigger autoDriveTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::DOWN};
+    Trigger autoDriveTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};
 
 
     Trigger* triggers[7] = {&joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &autoTrigger, &autoDriveTrigger};  //, &indexSpinButton};
