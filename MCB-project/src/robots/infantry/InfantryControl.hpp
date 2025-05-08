@@ -57,7 +57,6 @@ public:
         drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerStopCommand);
 
-
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz)->onTrue(&closeServo);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam)->onTrue(&openServo);
 
@@ -68,8 +67,8 @@ public:
         autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->whileTrue(&shooterStart)->onTrue(&closeServo);
         // implement speed mode
 
-        toggleUIKey.toggleOnFalse(&draw);
-        drivers->commandScheduler.addCommand(&draw);
+        toggleUIKey.onTrue(&draw); //press g to restart ui
+        // drivers->commandScheduler.addCommand(&draw);
    
         // drive commands and also enable mouse looking
 
@@ -102,7 +101,7 @@ public:
 
 
     // Subsystems
-    // subsystems::UISubsystem ui{drivers};
+    subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor};
@@ -112,8 +111,8 @@ public:
 
 
     // //commands
-    // commands::UIDrawCommand draw{&ui, &gimbal, &flywheel, &indexer, &drivetrain};
-    commands::AutoAimCommand autoCommand{drivers, &gimbal, &cv};
+    commands::UIDrawCommand draw{&ui, &gimbal, &flywheel, &indexer, &drivetrain};
+    commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
     // commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
