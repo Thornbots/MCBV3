@@ -43,9 +43,6 @@ public:  // Public Methods
     float imuAngle;
 
     // For UI stuff
-    bool isPeekingLeft;
-    bool isPeekingRight;
-    bool isAtPeekTarget;  // when we start peeking, we need to get there first, this is to tell the ui if we are there or not
     bool isInControllerMode;
     bool isInKeyboardMode;
     // End UI stuff

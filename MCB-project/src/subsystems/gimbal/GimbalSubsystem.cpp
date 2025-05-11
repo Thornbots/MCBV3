@@ -83,12 +83,12 @@ void GimbalSubsystem::stopMotors() {
     pitchMotorVoltage = 0;
     yawMotorVoltage = 0;
     
-    #if defined(INFANTRY) or defined(HERO)  //all robots with 3508 turrets
-    if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
-        encoderOffset = -drivers->i2c.encoder.getAngle() + YAW_OFFSET;
-        motorYaw->resetEncoderValue();
-    }
-    #endif
+    // #if defined(INFANTRY) or defined(HERO)  //all robots with 3508 turrets
+    // if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
+    //     encoderOffset = -drivers->i2c.encoder.getAngle() + YAW_OFFSET;
+    //     motorYaw->resetEncoderValue();
+    // }
+    // #endif
 
     pitchController.clearBuildup();
     yawController.clearBuildup();
