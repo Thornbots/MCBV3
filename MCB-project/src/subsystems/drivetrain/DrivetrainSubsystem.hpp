@@ -45,6 +45,7 @@ public:  // Public Methods
     // For UI stuff
     bool isInControllerMode;
     bool isInKeyboardMode;
+    bool isPeeking;
     // End UI stuff
 
     /*

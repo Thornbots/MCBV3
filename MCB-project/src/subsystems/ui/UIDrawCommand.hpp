@@ -33,21 +33,20 @@ public:
 
         // addGraphicsObject(&testGraphics);
         // addGraphicsObject(&testFill);
-        // addGraphicsObject(&laneAssistLines);
+        addGraphicsObject(&laneAssistLines);
         addGraphicsObject(&supercapChargeIndicator);
-        // addGraphicsObject(&chassisOrientationIndicator);
-        // addGraphicsObject(&peekingLines);
-        // addGraphicsObject(&testFill);
+        addGraphicsObject(&chassisOrientationIndicator);
+        addGraphicsObject(&peekingLines);
 
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
 
     void execute() override {
-        // laneAssistLines.update();
+        laneAssistLines.update();
         supercapChargeIndicator.update();
-        // chassisOrientationIndicator.update();
-        // peekingLines.update();
+        chassisOrientationIndicator.update();
+        peekingLines.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -67,9 +66,9 @@ private:
     // add top level graphics objects here and in the constructor
     // TestGraphics testGraphics{};
     // TestFill testFill{};
-    // LaneAssistLines laneAssistLines{gimbal};
+    LaneAssistLines laneAssistLines{gimbal};
     SupercapChargeIndicator supercapChargeIndicator{drivetrain};
-    // ChassisOrientationIndicator chassisOrientationIndicator{gimbal};
-    // PeekingLines peekingLines{drivetrain};
+    ChassisOrientationIndicator chassisOrientationIndicator{gimbal};
+    PeekingLines peekingLines{drivetrain, gimbal};
 };
 }  // namespace commands

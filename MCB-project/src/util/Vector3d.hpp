@@ -46,7 +46,7 @@ public:
     }
 
     // Compute magnitude (length) of vector
-    float magnitude() const { std::hypot(std::hypot(x, y), z); }
+    float magnitude() const { return std::hypot(std::hypot(x, y), z); }
 
     Vector3d clamp(Vector3d min, Vector3d max) { return Vector3d(valClamp(x, min.x, max.x), valClamp(y, min.y, max.y), valClamp(z, min.z, max.z)); }
 

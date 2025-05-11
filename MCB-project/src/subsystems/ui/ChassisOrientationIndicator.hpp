@@ -18,7 +18,7 @@ class ChassisOrientationIndicator : public GraphicsContainer {
 public:
     ChassisOrientationIndicator(GimbalSubsystem* gimbal) : gimbal(gimbal) {
         addGraphicsObject(&left);
-        // addGraphicsObject(&right);
+        addGraphicsObject(&right);
     }
 
     void update() {

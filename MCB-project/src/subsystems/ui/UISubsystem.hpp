@@ -32,8 +32,8 @@ private:  // Private Variables
     static uint32_t currGraphicName;
     
     //for protothread
-    bool needToDelete = true; 
-    bool hasResetIteration = false;
+    bool needToRestart = true; 
+    int timesResetIteration = 0;
     static constexpr int TARGET_NUM_OBJECTS = 7; //could change this to test if 7 is the most efficient, and test wasteIsBetterForX's, but don't make this larger than 7
     GraphicsObject* objectsToSend[TARGET_NUM_OBJECTS];
     int graphicsIndex=0;

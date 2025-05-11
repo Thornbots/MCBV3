@@ -38,8 +38,7 @@ void UISubsystem::refresh() {
 bool UISubsystem::run() {
     // The thread has exited the loop, meaning that there are no locked resources
     if (!this->isRunning()) {
-        needToDelete = true;
-
+        needToRestart = false;
         restart();  // Restart the thread
     }
 
@@ -49,22 +48,33 @@ bool UISubsystem::run() {
 
     PT_WAIT_UNTIL(drivers->refSerial.getRefSerialReceivingData());
     
-    // need to figure out delete at start. It seems like it wants to delete every time run is called
-    if (needToDelete) {
-        needToDelete = false;  // probably this needs to be first to not go in this branch next time, so set it to false before the pt call
-        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 0));
-        if (topLevelContainer) topLevelContainer->hasBeenCleared();
+    // delete the things
+    PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 0));
+    if (topLevelContainer){
+        topLevelContainer->hasBeenCleared();
+        topLevelContainer->resetIteration();
+    } 
 
-        //need to wait for graphics to delete. This might wait longer than is required, but it allows things to draw.
-        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
-        PT_WAIT_UNTIL(delayTimeout.execute());
-    }
+    
+    //need to wait for graphics to delete. This might wait longer than is required, but it allows things to draw.
+    delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+    PT_WAIT_UNTIL(delayTimeout.execute());
+
 
     graphicsIndex=0; //might start with one or two already in the array from last time, so set it once outside of the loop
-    while (topLevelContainer) {
-        hasResetIteration = false;
-        nextGraphicsObject = topLevelContainer->getNext();  // if nullptr on first call, this while loop is skipped
-        while (nextGraphicsObject) {
+    while (topLevelContainer && !needToRestart) {
+        drivers->leds.set(tap::gpio::Leds::Blue, true);
+        timesResetIteration = 0;
+        while (timesResetIteration<2) {
+            nextGraphicsObject = topLevelContainer->getNext();
+
+            //if we run out of objects, try looping around to the start
+            if(!nextGraphicsObject){
+                topLevelContainer->resetIteration();
+                timesResetIteration++;
+                continue;
+            }
+
             if (nextGraphicsObject->isStringGraphic()) {
                 // if it is a string, keep the array as it is and send the string on its own
                 nextGraphicsObject->configCharacterData(&messageCharacter);
@@ -75,16 +85,6 @@ bool UISubsystem::run() {
                 // if it isn't a string, add it to the array and see if it is full
                 objectsToSend[graphicsIndex++] = nextGraphicsObject;
                 if (graphicsIndex == TARGET_NUM_OBJECTS) break; //if full, stop trying to find more
-            }
-            nextGraphicsObject = topLevelContainer->getNext();
-
-            //if we run out of objects, try looping around to the start
-            if(!nextGraphicsObject && !hasResetIteration){
-                topLevelContainer->resetIteration();
-
-                //don't loop around to the start again
-                hasResetIteration = true;
-                //if we run out of objects again, we will send however many we got
             }
         }
         
@@ -120,7 +120,10 @@ bool UISubsystem::run() {
             for (innerGraphicsIndex = 0; innerGraphicsIndex < graphicsIndex; innerGraphicsIndex++) objectsToSend[innerGraphicsIndex]->configGraphicData(&message7.graphicData[innerGraphicsIndex]);
             PT_CALL(refSerialTransmitter.sendGraphic(&message7));
             delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message7));
-        } 
+        } else if (numToSend==0) {
+            //we might need to wait so things don't explode when nothing needs drawn
+            delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message1));
+        }
         
         if (graphicsIndex == 4) { //save 2
             objectsToSend[0] = objectsToSend[2]; //copy the third item into the first slot
@@ -134,14 +137,17 @@ bool UISubsystem::run() {
         }
 
         //if we sent something, wait for it so we don't lose packets
-        if(numToSend>0)
+        // if(numToSend>0)
             PT_WAIT_UNTIL(delayTimeout.execute());
 
         PT_YIELD();
     }
     // Breaking out of the loop successfully calls this method,
     // allowing us to know that all execution is over.
+    
+    needToRestart = false;
     PT_END();
+    restart();
 }
 
 // This is required for the UISubsystem to have anything to draw.
@@ -152,8 +158,7 @@ void UISubsystem::setTopLevelContainer(GraphicsContainer* container) {
         topLevelContainer->resetIteration();
         // drivers->leds.set(tap::gpio::Leds::Blue, true);
     }
-    needToDelete = true;
     topLevelContainer = container;
-    restart();
+    needToRestart = true;
 }
 }  // namespace subsystems
