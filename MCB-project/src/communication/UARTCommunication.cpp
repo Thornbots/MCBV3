@@ -65,15 +65,15 @@ namespace communication
         return hasNewData ? &lastROSData : nullptr;
     }
 
-    bool UARTCommunication::sendAutoAimOutput(AutoAimOutput &output)
+    bool UARTCommunication::sendRobotState(RobotState &output)
     {
         // Flexible ports?
         tap::communication::serial::Uart::UartPort currentPort = port;
         // Update the timestamp before sending.
         // output.timestamp = getCurrentTime();
         const uint8_t* msgData = reinterpret_cast<const uint8_t*>(&output);
-        int bytesWritten = drivers->uart.write(currentPort, msgData, sizeof(AutoAimOutput));
-        return (bytesWritten == sizeof(AutoAimOutput));
+        int bytesWritten = drivers->uart.write(currentPort, msgData, sizeof(RobotState));
+        return (bytesWritten == sizeof(RobotState));
     }
 
     bool UARTCommunication::isConnected() const

@@ -31,13 +31,15 @@ void JetsonSubsystem::initialize() {
 void JetsonSubsystem::refresh() { 
     drivers->leds.set(tap::gpio::Leds::Green, true);
     drivers->uart.updateSerial(); 
-    AutoAimOutput a{0xA5, sizeof(float)*4, 
+    RobotState a{0xA5, sizeof(float)*4, 
         drivers->i2c.odom.getX(),
         drivers->i2c.odom.getY(),
         drivers->i2c.odom.getXVel(),
         drivers->i2c.odom.getYVel(),
-         0x0A};
-    drivers->uart.sendAutoAimOutput(a);
+        0x0A, 
+        drivers->refSerial.getRobotData(),
+        drivers->refSerial.getGameData()};
+    drivers->uart.sendRobotState(a);
     drivers->leds.set(tap::gpio::Leds::Green, false);
 }
 
