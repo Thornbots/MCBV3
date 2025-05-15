@@ -24,10 +24,10 @@ void AutoAimAndFireCommand::execute() {
         pitch = 0.05; //pitch down to avoid looking into the sky
         numCyclesForBurst++;
         if(numCyclesForBurst==CYCLES_UNTIL_BURST){
-            gimbal->updateMotors(0.5, pitch);
+            gimbal->updateMotors(BURST_AMOUNT, pitch);
             numCyclesForBurst = 0;
         } else{
-            gimbal->updateMotors(0.003, pitch);
+            gimbal->updateMotors(PATROL_SPEED, pitch);
         }
     }
 
