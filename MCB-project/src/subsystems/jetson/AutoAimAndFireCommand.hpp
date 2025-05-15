@@ -53,6 +53,9 @@ private:
     bool isShooting = false;
     int shoot = 0;
 
+    int numCyclesForBurst = 0;
+    static constexpr int CYCLES_UNTIL_BURST = 300;
+
     float yaw = 0.0f, pitch = 0.0f;
     float yawvel = 0.0f, pitchvel = 0.0f;
     uint32_t lastSeenTime = 0;
