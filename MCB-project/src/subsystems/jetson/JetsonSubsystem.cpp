@@ -186,7 +186,7 @@ void JetsonSubsystem::update(float current_yaw, float current_pitch, float curre
 
   
 
-    if (abs(*yawOut) < PI / 16) {
+    if (abs(*yawOut) < PI / 4) {
         // Enable shooting
         *action = 1;
         return;

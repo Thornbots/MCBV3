@@ -26,7 +26,7 @@ public:
 
     void execute() override {    indexer->stopIndex();}
 
-    void end(bool interrupted) override {};
+    void end(bool) override {};
 
     bool isFinished() const override {return false;}
 

@@ -42,6 +42,12 @@ public:  // Public Methods
 
     float imuAngle;
 
+    // For UI stuff
+    bool isInControllerMode;
+    bool isInKeyboardMode;
+    bool isPeeking;
+    // End UI stuff
+
     /*
      * Call this function once, outside of the main loop.
      * This function will initalize all of the motors, timers, pidControllers, and any other used
