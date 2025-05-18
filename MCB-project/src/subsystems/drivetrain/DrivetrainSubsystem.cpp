@@ -39,6 +39,9 @@ void DrivetrainSubsystem::refresh() {
             powerLimit = std::min((uint16_t)45, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
             #endif
         }
+        else {
+            powerLimit = std::min((uint16_t)120, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
+        }
         
     for (int i = 0; i < 4; i++) {
         motorVel[i] = motorArray[i]->getShaftRPM() * PI / 30.0f;  // in rad/s
