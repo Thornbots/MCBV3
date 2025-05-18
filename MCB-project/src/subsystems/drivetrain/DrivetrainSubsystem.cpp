@@ -27,8 +27,19 @@ void DrivetrainSubsystem::refresh() {
     imuAngle = (drivers->bmi088.getYaw() - 180) * PI / 180;
 
     if (drivers->refSerial.getRefSerialReceivingData())  // check for uart disconnected
-        powerLimit = std::min((uint16_t)120, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
 
+        if ((drivers->refSerial.getGameData().gameType  == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3) &&
+            (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::INITIALIZATION ||
+             drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN)) {
+            #if defined(HERO)
+            powerLimit = std::min((uint16_t)60, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
+            #elif defined(SENTRY)
+            powerLimit = std::min((uint16_t)100, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
+            #else
+            powerLimit = std::min((uint16_t)45, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
+            #endif
+        }
+        
     for (int i = 0; i < 4; i++) {
         motorVel[i] = motorArray[i]->getShaftRPM() * PI / 30.0f;  // in rad/s
     }
