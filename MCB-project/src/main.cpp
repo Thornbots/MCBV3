@@ -51,9 +51,6 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->bmi088.setCalibrationSamples(2000);
     drivers->bmi088.requestCalibration();
 
-
-    drivers->leds.set(tap::gpio::Leds::Blue, false);
-    drivers->leds.set(tap::gpio::Leds::Green, true);
 }
 
 // Anything that you would like to be called place here. It will be called
@@ -84,20 +81,25 @@ int main() {
     control.initialize();
 
     tap::arch::PeriodicMilliTimer refreshTimer(2);
+    tap::arch::MilliTimeout waitForBmi088(4000);
 
     while (1) {
         // do this as fast as you can
         updateIo(&drivers);
         drivers.i2c.refresh();
-    drivers.uart.updateSerial();
+        drivers.uart.updateSerial();
 
         if (refreshTimer.execute()) {
             // tap::buzzer::playNote(&(drivers.pwm), 493);
 
             drivers.bmi088.periodicIMUUpdate();
             drivers.bmi088.read();
-            control.update();
-            drivers.commandScheduler.run();
+            if (waitForBmi088.isExpired()) { // do everything except things that do things if IMU isn't done
+                drivers.leds.set(tap::gpio::Leds::Blue, false);
+                drivers.leds.set(tap::gpio::Leds::Green, true);
+                control.update();
+                drivers.commandScheduler.run();
+            }
             drivers.djiMotorTxHandler.encodeAndSendCanData();
 
             drivers.terminalSerial.update(); //needs to be commented for cv to work?
