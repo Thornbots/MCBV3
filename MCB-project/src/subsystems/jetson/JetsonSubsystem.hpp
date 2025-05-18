@@ -7,6 +7,7 @@
 #include "tap/motor/dji_motor.hpp"
 #include "tap/motor/servo.hpp"
 #include "util/Pose2d.hpp"
+#include "tap/communication/serial/ref_serial_data.hpp"
 
 #include "drivers.hpp"
 

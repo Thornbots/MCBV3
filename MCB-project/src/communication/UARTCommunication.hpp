@@ -2,6 +2,7 @@
 
 #include "tap/communication/serial/dji_serial.hpp"
 #include "tap/communication/serial/uart.hpp"
+#include "tap/communication/serial/ref_serial_data.hpp"
 #include "tap/drivers.hpp"
 #include <cstdint>
 #include <cstring>
@@ -33,7 +34,7 @@ struct CVData
 };
 
 // Output
-struct AutoAimOutput
+struct RobotState
 {
     uint8_t header = 0xA5;           
     uint16_t data_len = sizeof(float); // litle endian
@@ -41,9 +42,11 @@ struct AutoAimOutput
     float y;                     
     float vel_x;                     
     float vel_y;                     
-    uint8_t newline = 0x0A;          
+    uint8_t newline = 0x0A;      
+    tap::communication::serial::RefSerial::Rx::RobotData robotData;
+    tap::communication::serial::RefSerial::Rx::GameData gameData;
     // uint64_t timestamp = 0;         
-} modm_packed;
+};
 
 class UARTCommunication : public tap::communication::serial::DJISerial
 {
@@ -63,7 +66,7 @@ public:
 
     void clearNewDataFlag();
 
-    bool sendAutoAimOutput(AutoAimOutput &output);
+    bool sendRobotState(RobotState &output);
 
     bool isConnected() const;
 
