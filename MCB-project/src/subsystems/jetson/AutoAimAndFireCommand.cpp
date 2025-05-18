@@ -1,10 +1,7 @@
 #include "AutoAimAndFireCommand.hpp"
 
 namespace commands {
-void AutoAimAndFireCommand::initialize() { 
-    shoot = -1; 
-    lastSeenTime = tap::arch::clock::getTimeMilliseconds();
-}
+void AutoAimAndFireCommand::initialize() { shoot = -1; }
 void AutoAimAndFireCommand::execute() {
     float dyaw = 0;
     float currentYaw = gimbal->getYawAngleRelativeWorld();
@@ -26,7 +23,7 @@ void AutoAimAndFireCommand::execute() {
         isShooting = false;
         pitch = 0.05; //pitch down to avoid looking into the sky
         numCyclesForBurst++;
-        if(numCyclesForBurst>=CYCLES_UNTIL_BURST){
+        if(numCyclesForBurst==CYCLES_UNTIL_BURST){
             gimbal->updateMotors(BURST_AMOUNT, pitch);
             numCyclesForBurst = 0;
         } else{
