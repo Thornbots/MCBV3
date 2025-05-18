@@ -57,6 +57,18 @@ public:
         }
     }
 
+    void hide() final {
+        for (GraphicsObject* p : objects) {
+            p->hide();
+        }
+    }
+
+    void show() final {
+        for (GraphicsObject* p : objects) {
+            p->show();
+        }
+    }
+
 private:
     std::vector<GraphicsObject*> objects;
 };

@@ -7,13 +7,16 @@
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
 #include "subsystems/indexer/IndexerSubsystem.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
-#include "util/ui/GraphicsContainer.hpp"
+#include "subsystems/servo/ServoSubsystem.hpp"
 
+#include "util/ui/GraphicsContainer.hpp"
 #include "ChassisOrientationIndicator.hpp"
 #include "LaneAssistLines.hpp"
 #include "Reticle.hpp"
 #include "SupercapChargeIndicator.hpp"
 #include "PeekingLines.hpp"
+#include "CapturePointStatusIndicator.hpp"
+#include "HopperLidIndicator.hpp"
 #include "TestFill.hpp"
 #include "TestGraphics.hpp"
 #include "drivers.hpp"
@@ -23,30 +26,36 @@ using subsystems::UISubsystem;
 
 class UIDrawCommand : public tap::control::Command, GraphicsContainer {
 public:
-    UIDrawCommand(UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain)
-        : ui(ui),
+    UIDrawCommand(tap::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain)
+        : drivers(drivers),
+          ui(ui),
           gimbal(gimbal),
           flywheel(flywheel),
           indexer(indexer),
-          drivetrain(drivetrain) {
+          drivetrain(drivetrain),
+          servo(servo) {
         addSubsystemRequirement(ui);
 
         // addGraphicsObject(&testGraphics);
         // addGraphicsObject(&testFill);
-        // addGraphicsObject(&laneAssistLines);
-        addGraphicsObject(&supercapChargeIndicator);
-        addGraphicsObject(&chassisOrientationIndicator);
-        // addGraphicsObject(&peekingLines);
 
+        addGraphicsObject(&lane);
+        addGraphicsObject(&supercap);
+        addGraphicsObject(&orient);
+        addGraphicsObject(&peek);
+        addGraphicsObject(&capture);
+        addGraphicsObject(&lid);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
 
     void execute() override {
-        // laneAssistLines.update();
-        supercapChargeIndicator.update();
-        chassisOrientationIndicator.update();
-        // peekingLines.update();
+        lane.update();
+        supercap.update();
+        orient.update();
+        peek.update();
+        capture.update();
+        lid.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -57,18 +66,23 @@ public:
     const char* getName() const override { return "ui draw command"; }
 
 private:
+    tap::Drivers* drivers;
     UISubsystem* ui; 
     GimbalSubsystem* gimbal;
     FlywheelSubsystem* flywheel;
     IndexerSubsystem* indexer;
     DrivetrainSubsystem* drivetrain;
+    ServoSubsystem* servo;
 
     // add top level graphics objects here and in the constructor
     // TestGraphics testGraphics{};
     // TestFill testFill{};
-    // LaneAssistLines laneAssistLines{gimbal};
-    SupercapChargeIndicator supercapChargeIndicator{drivetrain};
-    ChassisOrientationIndicator chassisOrientationIndicator{gimbal};
-    // PeekingLines peekingLines{drivetrain, gimbal};
+
+    LaneAssistLines lane{gimbal};
+    SupercapChargeIndicator supercap{drivetrain};
+    ChassisOrientationIndicator orient{gimbal};
+    PeekingLines peek{drivetrain, gimbal};
+    CapturePointStatusIndicator capture{drivers};
+    HopperLidIndicator lid{servo};
 };
 }  // namespace commands

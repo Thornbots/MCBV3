@@ -17,7 +17,7 @@ public:
         setPrev();
     }
 
-    bool needsRedrawn() final { return !(prevThickness == thickness && prevX1 == x1 && prevY1 == y1 && prevX2 == x2 && prevY2 == y2 && prevColor == color && hasDrawn); }
+    bool needsRedrawn() final { return !(prevThickness == thickness && prevX1 == x1 && prevY1 == y1 && prevX2 == x2 && prevY2 == y2 && prevColor == color); }
 
     uint16_t x1, y1, x2, y2, thickness;  // can set this directly, will appear next time drawn
 
@@ -50,7 +50,7 @@ public:
         setPrev();
     }
 
-    bool needsRedrawn() final { return !(prevThickness == thickness && prevX == x && prevY == y && prevWidth == width && prevHeight == height && prevColor == color && hasDrawn); }
+    bool needsRedrawn() final { return !(prevThickness == thickness && prevX == x && prevY == y && prevWidth == width && prevHeight == height && prevColor == color); }
 
     uint16_t x, y, width, height, thickness;  // can set this directly, will appear next time drawn
 
@@ -77,7 +77,7 @@ public:
         setPrev();
     }
 
-    bool needsRedrawn() final { return !(prevThickness == thickness && prevCx == cx && prevCy == cy && prevR == r && prevColor == color && hasDrawn); }
+    bool needsRedrawn() final { return !(prevThickness == thickness && prevCx == cx && prevCy == cy && prevR == r && prevColor == color); }
 
     uint16_t cx, cy, r, thickness;  // can set this directly, will appear next time drawn
 
@@ -109,7 +109,7 @@ public:
         setPrev();
     }
 
-    bool needsRedrawn() final { return !(prevThickness == thickness && prevCx == cx && prevCy == cy && prevWidth == width && prevHeight == height && prevColor == color && hasDrawn); }
+    bool needsRedrawn() final { return !(prevThickness == thickness && prevCx == cx && prevCy == cy && prevWidth == width && prevHeight == height && prevColor == color); }
 
     uint16_t cx, cy, width, height, thickness;  // can set this directly, will appear next time drawn
 
@@ -144,7 +144,7 @@ public:
         setPrev();
     }
 
-    bool needsRedrawn() final { return !(prevThickness == thickness && prevCx == cx && prevCy == cy && prevWidth == width && prevHeight == height && prevColor == color && prevStartAngle == startAngle&&prevEndAngle == endAngle&&hasDrawn); }
+    bool needsRedrawn() final { return !(prevThickness == thickness && prevCx == cx && prevCy == cy && prevWidth == width && prevHeight == height && prevColor == color && prevStartAngle == startAngle&&prevEndAngle == endAngle); }
 
     uint16_t startAngle, endAngle;  // can set this directly, will appear next time drawn, 0 is up, positive is clockwise, in degrees
     uint16_t cx, cy, width, height, thickness;  // can set this directly, will appear next time drawn
@@ -250,7 +250,7 @@ public:
         setPrev();
     }
 
-    bool needsRedrawn() final { return !(prevThickness == thickness && prevX == x && prevY == y && prevHeight == height && prevColor == color && prevInteger == integer && hasDrawn); }
+    bool needsRedrawn() final { return !(prevThickness == thickness && prevX == x && prevY == y && prevHeight == height && prevColor == color && prevInteger == integer); }
 
     uint16_t thickness = 0;
     int32_t integer = 0;
@@ -287,7 +287,7 @@ public:
         setPrev();
     }
 
-    bool needsRedrawn() final { return !(prevThickness == thickness && prevX == x && prevY == y && prevHeight == height && prevColor == color && prevFloat == _float && hasDrawn); }
+    bool needsRedrawn() final { return !(prevThickness == thickness && prevX == x && prevY == y && prevHeight == height && prevColor == color && prevFloat == _float); }
 
     uint16_t thickness = 0;
     float _float = 0;
@@ -339,7 +339,7 @@ public:
     // StringGraphics fill the data differently. configGraphicGenerics still needs called, but finishConfigGraphicData shouldn't do anything extra
     void finishConfigGraphicData(__attribute__((unused)) RefSerialData::Tx::GraphicData* graphicData) final {}
 
-    bool needsRedrawn() final { return !(prevThickness == thickness && prevX == x && prevY == y && prevHeight == height && prevColor == color && !std::strncmp(string, oldString, STRING_SIZE) && hasDrawn); }
+    bool needsRedrawn() final { return !(prevThickness == thickness && prevX == x && prevY == y && prevHeight == height && prevColor == color && !std::strncmp(string, oldString, STRING_SIZE)); }
 
     uint16_t thickness = 0;
     char string[STRING_SIZE];

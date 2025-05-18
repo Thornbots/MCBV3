@@ -1,9 +1,10 @@
 #pragma once
 
 #include "subsystems/ui/UISubsystem.hpp"
-#include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 #include "util/ui/GraphicsContainer.hpp"
 #include "util/ui/SimpleGraphicsObjects.hpp"
+
+#include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 
 using namespace subsystems;
 

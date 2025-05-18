@@ -1,11 +1,13 @@
 #pragma once
 
 #include "subsystems/ui/UISubsystem.hpp"
-#include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 #include "util/ui/GraphicsContainer.hpp"
 #include "util/ui/SimpleGraphicsObjects.hpp"
 #include "util/ui/Projections.hpp"
 #include "util/Vector3d.hpp"
+
+#include "subsystems/gimbal/GimbalSubsystem.hpp"
+#include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 
 using namespace subsystems;
 
