@@ -29,9 +29,5 @@ bool ServoSubsystem::getTargetIsClosed() {
     return targetIsClosed;
 }
 
-bool ServoSubsystem::isAtTarget() {
-    return servo->isRampTargetMet();
-}
-
 
 } //namespace subsystems

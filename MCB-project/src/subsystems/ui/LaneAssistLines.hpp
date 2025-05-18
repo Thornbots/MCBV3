@@ -42,20 +42,20 @@ public:
             temp3 = Projections::vtmSpaceToScreenSpace(temp2);
 
 
-            if(i%2==0){
-                //0 or 2, put into x and y as is unless y is less than 0, if it is then stop this loop and not show any lines
-                if(temp3.getY()<0){
-                    //would mean that the entire line would be below the screen, so don't try to calculate the other point
-                    this->hide(); //hide all the lines I contain
-                    return;
-                }
+            // if(i%2==0){
+            //     //0 or 2, put into x and y as is unless y is less than 0, if it is then stop this loop and not show any lines
+            //     if(temp3.getY()<0){
+            //         //would mean that the entire line would be below the screen, so don't try to calculate the other point
+            //         this->hide(); //hide all the lines I contain
+            //         return;
+            //     }
                 xPositions[i] = temp3.getX();
                 yPositions[i] = temp3.getY();
-            } else {
-                //1 or 3, x and y get extended to the bottom of the screen
-                xPositions[i] = xPositions[i-1] - (yPositions[i-1])*(xPositions[i-1]-xPositions[i])/(yPositions[i-1]-yPositions[i]);
-                yPositions[i] = 0;
-            }
+            // } else {
+            //     //1 or 3, x and y get extended to the bottom of the screen
+            //     xPositions[i] = xPositions[i-1] - (yPositions[i-1])*(xPositions[i-1]-xPositions[i])/(yPositions[i-1]-yPositions[i]);
+            //     yPositions[i] = 0;
+            // }
         }
 
         this->show(); //show all the lines I contain

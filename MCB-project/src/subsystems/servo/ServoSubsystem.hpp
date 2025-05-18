@@ -37,7 +37,6 @@ void setClosed();
 void setOpen();
 
 bool getTargetIsClosed();
-bool isAtTarget();
 
 private:  // Private Methods
 };

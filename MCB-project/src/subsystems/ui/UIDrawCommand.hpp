@@ -15,7 +15,6 @@
 #include "Reticle.hpp"
 #include "SupercapChargeIndicator.hpp"
 #include "PeekingLines.hpp"
-#include "CapturePointStatusIndicator.hpp"
 #include "HopperLidIndicator.hpp"
 #include "TestFill.hpp"
 #include "TestGraphics.hpp"
@@ -26,7 +25,7 @@ using subsystems::UISubsystem;
 
 class UIDrawCommand : public tap::control::Command, GraphicsContainer {
 public:
-    UIDrawCommand(tap::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain)
+    UIDrawCommand(tap::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain, ServoSubsystem* servo)
         : drivers(drivers),
           ui(ui),
           gimbal(gimbal),
@@ -43,7 +42,6 @@ public:
         addGraphicsObject(&supercap);
         addGraphicsObject(&orient);
         addGraphicsObject(&peek);
-        addGraphicsObject(&capture);
         addGraphicsObject(&lid);
     };
 
@@ -54,7 +52,6 @@ public:
         supercap.update();
         orient.update();
         peek.update();
-        capture.update();
         lid.update();
     };
 
@@ -82,7 +79,6 @@ private:
     SupercapChargeIndicator supercap{drivetrain};
     ChassisOrientationIndicator orient{gimbal};
     PeekingLines peek{drivetrain, gimbal};
-    CapturePointStatusIndicator capture{drivers};
     HopperLidIndicator lid{servo};
 };
 }  // namespace commands

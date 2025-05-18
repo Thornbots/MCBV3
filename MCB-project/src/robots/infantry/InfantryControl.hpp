@@ -111,7 +111,7 @@ public:
 
 
     // //commands
-    commands::UIDrawCommand draw{&ui, &gimbal, &flywheel, &indexer, &drivetrain};
+    commands::UIDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &servo};
     commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
     // commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
 
