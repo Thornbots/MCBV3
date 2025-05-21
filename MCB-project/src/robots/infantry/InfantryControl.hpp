@@ -41,13 +41,13 @@ public:
     // functions we are using
     void initialize() override {
         // Initialize subsystems (registration is internal)
-        gimbal.initialize();
-        flywheel.initialize();
+        // gimbal.initialize();
+        // flywheel.initialize();
         indexer.initialize();
-        drivetrain.initialize();
-        ui.initialize();
-        servo.initialize();
-        jetson.initialize();
+        // drivetrain.initialize();
+        // ui.initialize();
+        // servo.initialize();
+        // jetson.initialize();
         
         drivers->commandScheduler.addCommand(&closeServo); //close servo so I stop getting carbon splinters
 
