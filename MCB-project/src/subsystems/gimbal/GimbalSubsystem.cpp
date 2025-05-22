@@ -39,7 +39,7 @@ void GimbalSubsystem::refresh() {
 #endif
 
     driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
-    yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw() - imuOffset; 
+    yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw(); 
     motorPitch->setDesiredOutput(pitchMotorVoltage);
     motorYaw->setDesiredOutput(yawMotorVoltage);
 }
@@ -89,6 +89,7 @@ void GimbalSubsystem::stopMotors() {
         motorYaw->resetEncoderValue();
     }
     // #endif
+    targetYawAngleWorld = yawAngleRelativeWorld;
 
     pitchController.clearBuildup();
     yawController.clearBuildup();
