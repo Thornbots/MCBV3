@@ -15,8 +15,20 @@ public:
     }
 
 private:
-    
+    enum class ReticleMode : uint8_t
+    {
+        // LINES = 0,      // multiple of horizontal lines, widths represent panel widths, heights represent where the center of a standard panel needs to be to hit it, lines go across the center of a panel, endpoints are edges of panels
+        // CURVES = 1,     // two curves that act like the endpoints of a lot of LINES (see above)
+        RECTANGLES = 2, // multiple rectangles of different colors, tops and bottoms of them are tops and bottoms of panels, midpoints of sides are edges of panels
+    };
 
-    // Line left{UISubsystem::Color::CYAN, HALF_WIDTH - BOTTOM_OFFSET, 0, HALF_WIDTH - TOP_OFFSET, HEIGHT, THICKNESS};
-    // Line right{UISubsystem::Color::CYAN, HALF_WIDTH + BOTTOM_OFFSET, 0, HALF_WIDTH + TOP_OFFSET, HEIGHT, THICKNESS};
+    GraphicsContainer lines{};
+    GraphicsContainer curves{};
+    GraphicsContainer rects{};
+
+    static constexpr float DISTANCES[6] = {0.5, 1, 2, 5, 9, 12};
+
+    //for rectangles
+    static constexpr UISubsystem::Color COLORS[6] = {UISubsystem::Color::PURPLISH_RED, UISubsystem::Color::PINK, UISubsystem::Color::ORANGE, UISubsystem::Color::YELLOW, UISubsystem::Color::GREEN, UISubsystem::Color::CYAN};
+
 };
