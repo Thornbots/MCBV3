@@ -26,23 +26,14 @@ void DrivetrainSubsystem::refresh() {
     // need to actually fix this yay
     imuAngle = (drivers->bmi088.getYaw() - 180) * PI / 180;
 
-    if (drivers->refSerial.getRefSerialReceivingData())  // check for uart disconnected
+    uint16_t minLimit = 120;
+    if (drivers->refSerial.getRefSerialReceivingData() && 
+       (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3) &&
+       (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::INITIALIZATION || drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN)) {
+        minLimit = INITIAL_POWER_LIMIT_3V3;
+    }
+    powerLimit = std::min(minLimit, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
 
-        if ((drivers->refSerial.getGameData().gameType  == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3) &&
-            (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::INITIALIZATION ||
-             drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN)) {
-            #if defined(HERO)
-            powerLimit = std::min((uint16_t)60, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
-            #elif defined(SENTRY)
-            powerLimit = std::min((uint16_t)100, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
-            #else
-            powerLimit = std::min((uint16_t)45, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
-            #endif
-        }
-        else {
-            powerLimit = std::min((uint16_t)120, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
-        }
-        
     for (int i = 0; i < 4; i++) {
         motorVel[i] = motorArray[i]->getShaftRPM() * PI / 30.0f;  // in rad/s
     }
@@ -102,9 +93,9 @@ void DrivetrainSubsystem::setTargetTranslation(Pose2d drive, bool shouldBoost) {
     }
 }
 
-void DrivetrainSubsystem::setTargetPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity){
+void DrivetrainSubsystem::setTargetPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity) {
     throttle = (drivers->refSerial.getRobotData().chassis.powerBuffer <= 10) ? 10.0f : 0.0f;
-    
+
     controller.followPosition(targetPosition, currentPosition, inputVelocity, powerLimit - throttle, imuAngle, motorVel, motorCurrent);
 
     for (int i = 0; i < 4; i++) {
@@ -113,7 +104,6 @@ void DrivetrainSubsystem::setTargetPosition(Vector2d targetPosition, Pose2d curr
         motorArray[i]->setDesiredOutput(static_cast<int32_t>(adjustedCurrent));
     }
 }
-
 
 // fix function
 void DrivetrainSubsystem::stopMotors() {
