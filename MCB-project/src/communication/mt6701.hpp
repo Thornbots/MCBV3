@@ -39,11 +39,12 @@ public:
     // i dont like this but it kinda works for old read. NEED TO CHANGE
     // float getAngle() { return 0.0000457891f * angle * angle - 0.0361289286f * angle + 3.4231706783f; }
     float getAngle() { return getRawAngle() * 2 * PI / 16384.0f; }  // 0-2pi how it should be;
+
     uint16_t getRawAngle() {
         if (!angleInverted)
             return angle;
         else
-            return 16384.0f - angle;
+            return 16383 - angle; //range is 0-16383
     }
 
     void setAngleInvertedTrue() { angleInverted = true; }
