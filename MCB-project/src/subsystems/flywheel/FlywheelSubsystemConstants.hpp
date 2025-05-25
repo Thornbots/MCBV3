@@ -5,8 +5,8 @@
 constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 8333;  // We had 5000 last year, and we can go 30/18 times as fast. So 5000 * 30/18
 constexpr static int FLYWHEEL_RADIUS_MM = 60;
 #elif defined(SENTRY)
-constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 7500;  // We had 5000 last year, and we can go 30/18 times as fast. So 5000 * 30/18
-constexpr static int FLYWHEEL_RADIUS_MM = 60;
+constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 7000;  // We had 5000 last year, and we can go 30/18 times as fast. So 5000 * 30/18
+constexpr static int FLYWHEEL_RADIUS_MM = 48;
 #elif defined(INFANTRY)
 constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 6100;  // We had 5000 last year, and we can go 30/18 times as fast. So 5000 * 30/18
 constexpr static int FLYWHEEL_RADIUS_MM = 60;

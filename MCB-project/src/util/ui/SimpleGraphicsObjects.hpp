@@ -131,12 +131,12 @@ class Arc : public SimpleGraphicsObject {
 public:
     Arc(RefSerialData::Tx::GraphicColor color, uint16_t cx, uint16_t cy, uint16_t width, uint16_t height, uint16_t startAngle, uint16_t endAngle, uint16_t thickness)
         : SimpleGraphicsObject(color),
+          startAngle(startAngle),
+          endAngle(endAngle),
           cx(cx),
           cy(cy),
           width(width),
           height(height),
-          startAngle(startAngle),
-          endAngle(endAngle),
           thickness(thickness) {}
 
     virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {

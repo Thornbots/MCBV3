@@ -9,6 +9,10 @@ void DrivetrainDriveCommand::initialize() {
     x = 0;
     y = 0;
     r = 0;
+    
+    drivetrain->isInControllerMode = controlMode == ControlMode::CONTROLLER;
+    drivetrain->isInKeyboardMode = controlMode == ControlMode::KEYBOARD;
+    drivetrain->isPeeking = driveMode == DriveMode::PEEK_LEFT || driveMode == DriveMode::PEEK_RIGHT;
 }
 void DrivetrainDriveCommand::execute() {
     float referenceAngle = gimbal->getYawEncoderValue();
@@ -57,6 +61,9 @@ void DrivetrainDriveCommand::execute() {
 
 bool DrivetrainDriveCommand::isFinished() const { return !drivers->remote.isConnected(); }
 
-void DrivetrainDriveCommand::end(bool cancel) {}
+void DrivetrainDriveCommand::end(bool) {
+    drivetrain->isInControllerMode = false;
+    drivetrain->isInKeyboardMode = false;
+}
 
 }  // namespace commands

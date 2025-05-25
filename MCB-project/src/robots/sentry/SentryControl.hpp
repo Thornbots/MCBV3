@@ -33,7 +33,7 @@ public:
 
         // Initialize subsystems
         gimbal.initialize();
-        //flywheel.initialize();
+        flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
         odo.initialize();
@@ -48,7 +48,7 @@ public:
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
 
-        autoTrigger.whileTrue(&autoFireCommand)->onFalse(&lookJoystick)->whileTrue(&shooterStart);
+        autoTrigger.whileTrue(&autoFireCommand)->onFalse(&lookJoystick)->onTrue(&shooterStart);
         autoDriveTrigger.whileTrue(&autoDriveCommand)->onTrue(&odoPointForwards);
         // drive commands 
 

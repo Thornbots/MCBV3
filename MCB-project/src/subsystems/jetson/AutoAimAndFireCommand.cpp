@@ -22,7 +22,13 @@ void AutoAimAndFireCommand::execute() {
         //patrol, don't shoot
         isShooting = false;
         pitch = 0.05; //pitch down to avoid looking into the sky
-        gimbal->updateMotors(0.003, pitch);
+        numCyclesForBurst++;
+        if(numCyclesForBurst==CYCLES_UNTIL_BURST){
+            gimbal->updateMotors(BURST_AMOUNT, pitch);
+            numCyclesForBurst = 0;
+        } else{
+            gimbal->updateMotors(PATROL_SPEED, pitch);
+        }
     }
 
     if (isShooting) {
@@ -30,7 +36,8 @@ void AutoAimAndFireCommand::execute() {
         indexer->indexAtRate(20);
     } else {
         //if we haven't seen a panel for a bit
-        indexer->stopIndex();
+        // indexer->stopIndex();
+        indexer->unjam();
     }
 }
 

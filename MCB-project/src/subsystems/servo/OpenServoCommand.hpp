@@ -17,7 +17,7 @@ public:
 
     void execute() override {servo->setTargetPosition(ServoSubsystem::OPEN_POSITION);};
 
-    void end(bool interrupted) override {};
+    void end(bool) override {};
 
     bool isFinished() const override { return false; };
 
