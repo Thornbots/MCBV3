@@ -41,10 +41,10 @@ public:
     float getAngle() { return getRawAngle() * 2 * PI / 16384.0f; }  // 0-2pi how it should be;
 
     uint16_t getRawAngle() {
-        if (!angleInverted)
-            return angle;
-        else
+        if (angleInverted)
             return 16383 - angle; //range is 0-16383
+        else
+            return angle;
     }
 
     void setAngleInvertedTrue() { angleInverted = true; }
