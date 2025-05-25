@@ -32,7 +32,6 @@ static void initializeIo(src::Drivers *drivers) {
         modm::delay_us(10);
     }
 
-    drivers->leds.set(tap::gpio::Leds::Red, false);
     drivers->leds.set(tap::gpio::Leds::Blue, true);
 
     drivers->pwm.init();
@@ -41,15 +40,20 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->refSerial.initialize();
 
     drivers->i2c.initialize();
+    //try waiting 9 clock pulses? 
+    drivers->i2c.refresh();
     drivers->uart.initialize();
 
 
     drivers->terminalSerial.initialize(); //needs to be commented for cv to work?
     drivers->schedulerTerminalHandler.init();
     drivers->djiMotorTerminalSerialHandler.init();
+    
+    drivers->leds.set(tap::gpio::Leds::Red, false);
     drivers->bmi088.initialize(500, 0.0f, 0.0f);
     drivers->bmi088.setCalibrationSamples(2000);
     drivers->bmi088.requestCalibration();
+
 
 }
 

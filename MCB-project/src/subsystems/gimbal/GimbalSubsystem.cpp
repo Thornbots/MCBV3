@@ -85,7 +85,7 @@ void GimbalSubsystem::stopMotors() {
     
     // #if defined(INFANTRY) or defined(HERO) or defined(SENTRY)  //all robots with 3508 turrets
     if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
-        encoderOffset = -drivers->i2c.encoder.getAngle() + YAW_OFFSET;
+        encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
         motorYaw->resetEncoderValue();
     }
     // #endif

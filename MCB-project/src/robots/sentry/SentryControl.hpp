@@ -48,7 +48,7 @@ public:
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
 
-        autoTrigger.whileTrue(&autoFireCommand)->onFalse(&lookJoystick)->onTrue(&shooterStart);
+        autoFireTrigger.whileTrue(&autoFireCommand)->onFalse(&lookJoystick)->onTrue(&shooterStart)->onFalse(&shooterStop);
         autoDriveTrigger.whileTrue(&autoDriveCommand)->onTrue(&odoPointForwards);
         // drive commands 
 
@@ -112,10 +112,10 @@ public:
     Trigger joystickDrive1{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::MID};
     Trigger joystickDrive2{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
 
-    Trigger autoTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
+    Trigger autoFireTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
     Trigger autoDriveTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};
 
 
-    Trigger* triggers[7] = {&joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &autoTrigger, &autoDriveTrigger};  //, &indexSpinButton};
+    Trigger* triggers[7] = {&joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &autoFireTrigger, &autoDriveTrigger};  //, &indexSpinButton};
 };
 }  // namespace robots

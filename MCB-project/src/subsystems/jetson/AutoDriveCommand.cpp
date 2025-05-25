@@ -19,10 +19,10 @@ void AutoDriveCommand::execute() {
     int action = 0;
     count++;
 
-    if (count > 4000){
+    if (count > 400){
         count = 0;
-    } else if (count > 2000){
-        targetPosition = Pose2d(1, 0, 0);
+    } else if (count > 200){
+        targetPosition = Pose2d(0.05, 0, 0);
     } else {
         targetPosition = Pose2d(0, 0, 0);
     }
