@@ -63,9 +63,6 @@ public:  // Public Methods
 
     float getShootingVelocity();
 
-    inline void enable() { this->robotDisabled = false; }
-    inline void disable() { this->robotDisabled = true; }
-
     private:  // Private Methods
     };
 }  // namespace ThornBots

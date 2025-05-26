@@ -14,7 +14,9 @@ namespace robots
 class SentryHardware
 {
 public:
-    SentryHardware(src::Drivers* drivers) : drivers(drivers) {}
+    SentryHardware(src::Drivers* drivers) : drivers(drivers) {
+        drivers->i2c.encoder.setAngleInvertedTrue();
+    }
 
     //drivers
     src::Drivers* drivers;

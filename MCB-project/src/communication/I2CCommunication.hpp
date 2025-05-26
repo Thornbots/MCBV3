@@ -23,7 +23,7 @@ public:
 
     void refresh() { 
         encoder.run(); 
-        odom.run();
+        // odom.run();
     }
 
     MT6701<I2cMaster2> encoder{};
