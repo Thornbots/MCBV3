@@ -4,8 +4,12 @@
 #include "tap/control/command.hpp"
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
+#include "subsystems/flywheel/FlywheelSubsystem.hpp"
+#include "subsystems/flywheel/FlywheelSubsystemConstants.hpp"
 #include "subsystems/indexer/IndexerSubsystem.hpp"
 #include "subsystems/jetson/JetsonSubsystem.hpp"
+
+#include "AutoDriveCommand.hpp"
 
 #include "drivers.hpp"
 
@@ -16,19 +20,23 @@ namespace commands
 using subsystems::GimbalSubsystem;
 using subsystems::IndexerSubsystem;
 using subsystems::JetsonSubsystem;
+using subsystems::FlywheelSubsystem;
 using tap::communication::serial::Remote;
 
 class AutoAimAndFireCommand : public tap::control::Command
 {
 public:
-    AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* indexer, JetsonSubsystem* cv)
+    AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* indexer, FlywheelSubsystem* flywheel, JetsonSubsystem* cv, AutoDriveCommand* adc)
         : drivers(drivers),
           gimbal(gimbal),
           indexer(indexer),
-          cv(cv)
+          flywheel(flywheel),
+          cv(cv),
+          adc(adc)
     {
         addSubsystemRequirement(gimbal);
         addSubsystemRequirement(indexer);
+        addSubsystemRequirement(flywheel);
     }
 
     void initialize() override;
@@ -47,7 +55,9 @@ private:
     src::Drivers* drivers;
     GimbalSubsystem* gimbal;
     IndexerSubsystem* indexer;
+    FlywheelSubsystem* flywheel;
     JetsonSubsystem* cv;
+    AutoDriveCommand* adc;
 
     bool isCalibrated = false;
     bool isShooting = false;

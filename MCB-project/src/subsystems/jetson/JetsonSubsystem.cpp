@@ -29,7 +29,6 @@ void JetsonSubsystem::initialize() {
 }
 
 void JetsonSubsystem::refresh() { 
-    drivers->leds.set(tap::gpio::Leds::Green, true);
     drivers->uart.updateSerial(); 
     AutoAimOutput a{0xA5, sizeof(float)*4, 
         drivers->i2c.odom.getX(),
@@ -38,7 +37,6 @@ void JetsonSubsystem::refresh() {
         drivers->i2c.odom.getYVel(),
          0x0A};
     drivers->uart.sendAutoAimOutput(a);
-    drivers->leds.set(tap::gpio::Leds::Green, false);
 }
 
 void JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, int* action) {

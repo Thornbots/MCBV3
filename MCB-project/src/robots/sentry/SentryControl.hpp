@@ -48,7 +48,7 @@ public:
         shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
 
-        autoFireTrigger.whileTrue(&autoFireCommand)->onFalse(&lookJoystick)->onTrue(&shooterStart)->onFalse(&shooterStop);
+        autoFireTrigger.whileTrue(&autoFireCommand)->onFalse(&lookJoystick)->onFalse(&shooterStop);
         autoDriveTrigger.whileTrue(&autoDriveCommand)->onTrue(&odoPointForwards);
         // drive commands 
 
@@ -77,7 +77,8 @@ public:
     // commands
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
-    commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &jetson};
+    commands::AutoDriveCommand autoDriveCommand{drivers, &drivetrain, &gimbal, &jetson};
+    commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &flywheel, &jetson, &autoDriveCommand};
 
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
@@ -94,7 +95,6 @@ public:
     commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::CONTROLLER};
     commands::DrivetrainDriveCommand beybladeJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE2, commands::ControlMode::CONTROLLER};
     commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
-    commands::AutoDriveCommand autoDriveCommand{drivers, &drivetrain, &gimbal, &jetson};
 
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
 

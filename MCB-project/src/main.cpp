@@ -87,6 +87,8 @@ int main() {
     tap::arch::PeriodicMilliTimer refreshTimer(2);
     tap::arch::MilliTimeout waitForBmi088(4000);
 
+    bool imuIsReady = false;
+
     while (1) {
         // do this as fast as you can
         updateIo(&drivers);
@@ -100,11 +102,13 @@ int main() {
 
             drivers.bmi088.periodicIMUUpdate();
             drivers.bmi088.read();
-            if (waitForBmi088.isExpired()) { // do everything except things that do things if IMU isn't done
+            if (waitForBmi088.isExpired() && !imuIsReady) { // do everything except things that do things if IMU isn't done
+                imuIsReady = true;
                 drivers.leds.set(tap::gpio::Leds::Blue, false);
-                drivers.leds.set(tap::gpio::Leds::Green, true);
-                control.update();
+            }
+            if(imuIsReady){
                 drivers.commandScheduler.run();
+                control.update();
             }
             drivers.djiMotorTxHandler.encodeAndSendCanData();
 

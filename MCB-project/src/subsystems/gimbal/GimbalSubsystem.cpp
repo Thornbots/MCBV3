@@ -24,9 +24,6 @@ void GimbalSubsystem::initialize() {
     drivers->commandScheduler.registerSubsystem(this);
 }
 void GimbalSubsystem::refresh() {
-#ifndef OLDINFANTRY
-
-#endif
 
     yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
 
