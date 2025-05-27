@@ -1,15 +1,17 @@
 #include "IndexerSubsystem.hpp"
-#include "IndexerSubsystemConstants.hpp"
-#include "tap/communication/serial/ref_serial_data.hpp"
 
 namespace subsystems {
 using namespace tap::communication::serial;
     
 IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index)
+    : IndexerSubsystem(drivers, index, ShotCounter::BarrelType::TURRET_17MM_1){}
+
+IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, ShotCounter::BarrelType barrel)
     : tap::control::Subsystem(drivers),
     drivers(drivers),
     motorIndexer(index),
-    indexPIDController(PID_CONF_INDEX)
+    indexPIDController(PID_CONF_INDEX),
+    counter(drivers, barrel, index)
     {}
 
 void IndexerSubsystem::initialize() {
@@ -25,15 +27,10 @@ void IndexerSubsystem::refresh() {
     }
 }
 
-void IndexerSubsystem::indexAtRate(float ballsPerSecond) {
-    // Check if the firing rate should be limited to prevent overheating
-    tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refSerial.getRobotData().turret;
-    if (drivers->refSerial.getRefSerialReceivingData() && (HEAT_PER_BALL * ballsPerSecond - turretData.coolingRate) * LATENCY > (turretData.heatLimit - turretData.heat17ID1)) {
-        ballsPerSecond = turretData.coolingRate / HEAT_PER_BALL;
-    }
-
-    this->ballsPerSecond = ballsPerSecond;
-    setTargetMotorRPM(ballsPerSecond * 60.0f * REV_PER_BALL);
+float IndexerSubsystem::indexAtRate(float ballsPerSecond) {
+    this->ballsPerSecond = counter.getAllowableIndexRate(ballsPerSecond);
+    setTargetMotorRPM(this->ballsPerSecond * 60.0f * REV_PER_BALL);
+    return this->ballsPerSecond;
 }
 
 void IndexerSubsystem::indexAtMaxRate(){
@@ -41,7 +38,6 @@ void IndexerSubsystem::indexAtMaxRate(){
 }
 
 void IndexerSubsystem::stopIndex() {
-    // indexerVoltage = 0;
     indexAtRate(0);
 }
 
@@ -60,11 +56,11 @@ void IndexerSubsystem::setTargetMotorRPM(int targetMotorRPM) {
 
 // converts delta motor ticks to num balls shot using constants
 float IndexerSubsystem::getNumBallsShot() {
-    return (motorIndexer->getPositionUnwrapped() - numTicksAtInit) / (REV_PER_BALL * 2 * PI);
+    return counter.getRecentNumBallsShot();
 }
 
 void IndexerSubsystem::resetBallsCounter() {
-    numTicksAtInit = motorIndexer->getPositionUnwrapped();
+    counter.resetRecentBallsCounter();
 }
 
 float IndexerSubsystem::getBallsPerSecond() {

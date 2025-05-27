@@ -1,5 +1,4 @@
 #include "DoubleIndexerSubsystem.hpp"
-#include "IndexerSubsystemConstants.hpp"
 
 namespace subsystems
 {
@@ -7,7 +6,8 @@ namespace subsystems
 DoubleIndexerSubsystem::DoubleIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index1, tap::motor::DjiMotor* index2)
     : IndexerSubsystem(drivers, index1), // Call base class constructor
     motorIndexer2(index2),
-    indexPIDController2(PID_CONF_INDEX)
+    indexPIDController2(PID_CONF_INDEX),
+    counter2(drivers, ShotCounter::BarrelType::TURRET_17MM_2, index2)
 {
 
     // Any additional initialization for the second motor, if necessary
@@ -25,17 +25,17 @@ void DoubleIndexerSubsystem::refresh() {
     motorIndexer2->setDesiredOutput(indexerVoltage2);   // Second motor (same voltage)
 }
 
-void DoubleIndexerSubsystem::indexAtRate(float ballsPerSecond){
-    ballsPerSecond = ballsPerSecond/2;
-    IndexerSubsystem::indexAtRate(ballsPerSecond);
+float DoubleIndexerSubsystem::indexAtRate(float ballsPerSecond){
+    //first barrel
+    float ballsPerSecond1 = ballsPerSecond/2;
+    IndexerSubsystem::indexAtRate(ballsPerSecond1);
 
-    // Check if the firing rate should be limited to prevent overheating
-    tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refSerial.getRobotData().turret;
-    if (drivers->refSerial.getRefSerialReceivingData() && (HEAT_PER_BALL * ballsPerSecond - turretData.coolingRate) * LATENCY > (turretData.heatLimit - turretData.heat17ID2)) {
-        ballsPerSecond = turretData.coolingRate / HEAT_PER_BALL;
-    }
+    //second barrel
+    float ballsPerSecond2 = counter.getAllowableIndexRate(ballsPerSecond/2);
+    setTargetMotor2RPM(ballsPerSecond2 * 60.0f * REV_PER_BALL);
 
-    setTargetMotor2RPM(ballsPerSecond * 60.0f * REV_PER_BALL);
+    this->ballsPerSecond = ballsPerSecond1+ballsPerSecond2;
+    return this->ballsPerSecond;
 }
 
 void DoubleIndexerSubsystem::indexAtMaxRate(){

@@ -1,14 +1,12 @@
 //ignore this file if HERO is not defined
 #ifdef HERO
 #include "HeroIndexerSubsystem.hpp"
-#include "IndexerSubsystemConstants.hpp"
-#include "tap/board/board.hpp"
 
 namespace subsystems
 {
 
 HeroIndexerSubsystem::HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* indexTop, tap::motor::DjiMotor* indexBottom)
-    : IndexerSubsystem(drivers, indexTop), // Call base class constructor
+    : IndexerSubsystem(drivers, indexTop, ShotCounter::BarrelType::TURRET_42MM), // Call base class constructor with the 42 barrel
     bottomIndexer(indexBottom),
     indexPIDController2(PID_CONF_INDEX)
 {
@@ -17,30 +15,24 @@ HeroIndexerSubsystem::HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::Dj
 }
 
 void HeroIndexerSubsystem::initialize() {
-    IndexerSubsystem::initialize();
     // Initialize both motors
+    IndexerSubsystem::initialize();
     bottomIndexer->initialize();     // Initialize the second motor
-    Board::DigitalInPinB12::configure(modm::platform::Gpio::InputType::Floating);
+
+    Board::DigitalInPinB12::configure(modm::platform::Gpio::InputType::Floating); //initialze beambreak
 }
 
 void HeroIndexerSubsystem::refresh() {
-    IndexerSubsystem::refresh();
     // Set the desired output for both motors
+    IndexerSubsystem::refresh();
     bottomIndexer->setDesiredOutput(indexerVoltage2);   // Second motor (same voltage)
-
-
 }
 
-void HeroIndexerSubsystem::indexAtRate(float ballsPerSecond){
-    IndexerSubsystem::indexAtRate(ballsPerSecond);
-
-    // Check if the firing rate should be limited to prevent overheating
-    tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refSerial.getRobotData().turret;
-    if (drivers->refSerial.getRefSerialReceivingData() && (HEAT_PER_BALL * ballsPerSecond - turretData.coolingRate) * LATENCY > (turretData.heatLimit - turretData.heat42)) {
-        ballsPerSecond = turretData.coolingRate / HEAT_PER_BALL;
-    }
-
+float HeroIndexerSubsystem::indexAtRate(float ballsPerSecond){
+    // IndexerSubsystem will prevent overheat and tell me what ballsPerSecond to use
+    ballsPerSecond = IndexerSubsystem::indexAtRate(ballsPerSecond);
     setTargetMotor2RPM(ballsPerSecond * 60.0f * REV_PER_BALL_BOTTOM); // compiler being stupid
+    return ballsPerSecond;
 }
 
 void HeroIndexerSubsystem::indexAtMaxRate(){
@@ -49,7 +41,6 @@ void HeroIndexerSubsystem::indexAtMaxRate(){
 }
 
 void HeroIndexerSubsystem::setTargetMotor2RPM(int targetMotorRPM){
-
     indexPIDController2.runControllerDerivateError(targetMotorRPM - bottomIndexer->getShaftRPM(), 1);
 
     indexerVoltage2 = static_cast<int32_t>(indexPIDController2.getOutput());
