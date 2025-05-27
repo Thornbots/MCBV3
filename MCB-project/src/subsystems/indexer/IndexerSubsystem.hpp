@@ -6,7 +6,7 @@
 #include "tap/motor/servo.hpp"
 #include "tap/control/subsystem.hpp"
 
-
+#include "ShotCounter.hpp"
 #include "drivers.hpp"
 
 namespace subsystems
@@ -17,23 +17,18 @@ class IndexerSubsystem : public tap::control::Subsystem
 
 protected:  // Private Variables
 src::Drivers* drivers;
-// #if defined(sentry)
-tap::motor::DjiMotor* motorIndexer;//{drivers, tap::motor::MotorId::MOTOR4, tap::can::CanBus::CAN_BUS2, false, "Indexer", 0, 0};
-// #else
-// tap::motor::DjiMotor motorIndexer{drivers, tap::motor::MotorId::MOTOR7, tap::can::CanBus::CAN_BUS2, false, "Indexer", 0, 0};
-// #endif
+tap::motor::DjiMotor* motorIndexer;
 tap::algorithms::SmoothPid indexPIDController;
+ShotCounter counter;
 
 float ballsPerSecond = 0.0f;
 static constexpr int MAX_INDEX_RPM = 17000;
-static constexpr float HEAT_PER_BALL = 10.0f;
-static constexpr float LATENCY = 0.6f; //expected ref system latency for barrel heat limiting
 int32_t indexerVoltage = 0;
-int64_t numTicksAtInit = 0;
 
 public:  // Public Methods
 
 IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index);
+IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, ShotCounter::BarrelType barrel);
 
 ~IndexerSubsystem() {}
 
@@ -41,7 +36,7 @@ virtual void initialize();
 
 void refresh() override;
 
-virtual void indexAtRate(float ballsPerSecond);
+virtual float indexAtRate(float ballsPerSecond);
 virtual void indexAtMaxRate();
 
 void setTargetMotorRPM(int targetMotorRPM);

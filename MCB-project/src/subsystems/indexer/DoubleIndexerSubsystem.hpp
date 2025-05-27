@@ -17,13 +17,14 @@ public:
 
     void initialize() override;
     void refresh() override;
-    void indexAtRate(float ballsPerSecond) override;
+    float indexAtRate(float ballsPerSecond) override;
     void indexAtMaxRate() override;
     void setTargetMotor2RPM(int targetMotorRPM);
 
 private:
 tap::algorithms::SmoothPid indexPIDController2;
 int32_t indexerVoltage2 = 0;
+ShotCounter counter2;
 
 };
 

@@ -1,3 +1,4 @@
+#pragma once
 #include "tap/algorithms/smooth_pid.hpp"
 
 constexpr static int INDEXER_MOTOR_MAX_SPEED = 2000; //6177; // With the 2006, this should give
