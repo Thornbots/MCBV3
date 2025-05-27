@@ -31,9 +31,9 @@ void DoubleIndexerSubsystem::indexAtRate(float ballsPerSecond){
 
     // Check if the firing rate should be limited to prevent overheating
     tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refSerial.getRobotData().turret;
-    // if (drivers->refSerial.getRefSerialReceivingData() && (HEAT_PER_BALL * ballsPerSecond - turretData.coolingRate) * LATENCY > (turretData.heatLimit - turretData.heat17ID2)) {
-    //     ballsPerSecond = turretData.coolingRate / HEAT_PER_BALL;
-    // }
+    if (drivers->refSerial.getRefSerialReceivingData() && (HEAT_PER_BALL * ballsPerSecond - turretData.coolingRate) * LATENCY > (turretData.heatLimit - turretData.heat17ID2)) {
+        ballsPerSecond = turretData.coolingRate / HEAT_PER_BALL;
+    }
 
     setTargetMotor2RPM(ballsPerSecond * 60.0f * REV_PER_BALL);
 }
