@@ -14,7 +14,9 @@ namespace robots
 class InfantryHardware
 {
 public:
-    InfantryHardware(src::Drivers* drivers) : drivers(drivers) {}
+    InfantryHardware(src::Drivers* drivers) : drivers(drivers) {
+        drivers->i2c.encoder.setAngleInvertedTrue();
+    }
 
     //drivers
     src::Drivers* drivers;

@@ -47,8 +47,8 @@ constexpr float maxTorqueZ = 30;
 
 #elif defined(SENTRY)
 // START getters and setters
-constexpr float TRACKWIDTH = 0.49739;      // in m
-constexpr float M = 14.0;                  // robot mass kg
+constexpr float TRACKWIDTH = 0.50038;      // in m
+constexpr float M = 18.186;                  // robot mass kg
 constexpr float J = 0.44;                  // measured from sys id kg-m^2
 constexpr float R_WHEEL = 0.05;  // wheel radius m
 constexpr float J_WHEEL = 0.0009;          // wheel moment of inertia kg-m^2
@@ -58,7 +58,7 @@ constexpr float COF_WHEEL = 0.9;           // unitless COF
 
 constexpr float GEAR_RATIO = 3591/187.0f;  // gear ratio
 constexpr float P_IDLE = 3;         // W, idle power
-constexpr float P_FOS = 0.8;       // unitless, power factor of safety
+constexpr float P_FOS = 0.65;       // unitless, power factor of safety
 
 // Tunable Parameters
 constexpr float KP_V_XY = 1000;  // proportional gain for velocity
@@ -69,11 +69,11 @@ constexpr float KI_V = 0;  // integral gain for velocity
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
 constexpr float KP = 3;              // proportional gain for position control
-constexpr float BEYBLADE_DELAY = .25 * 5/6;  // delay for beyblade mode/
-constexpr float BBterm1 = 10.7717 * 5/6; //constant term
-constexpr float BBterm2 = -2.0342 * 5/6; //linear term
-constexpr float BBterm3 = -.5660 * 5/6; //quadratic term
-constexpr float BBmax = 10.5 * 5/6; //constant term
+constexpr float BEYBLADE_DELAY = .25 ;  // delay for beyblade mode/
+constexpr float BBterm1 = 9; //constant term
+constexpr float BBterm2 = -2.8647; //linear term
+constexpr float BBterm3 = -.3593; //quadratic term
+constexpr float BBmax = 9; //constant term
 constexpr float maxTorqueZ = 30 * 5/6;
 
 #elif defined(INFANTRY)

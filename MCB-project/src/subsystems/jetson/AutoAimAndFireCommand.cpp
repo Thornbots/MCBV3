@@ -1,47 +1,100 @@
 #include "AutoAimAndFireCommand.hpp"
 
 namespace commands {
-void AutoAimAndFireCommand::initialize() { shoot = -1; }
+using namespace tap::communication::serial;
+
+void AutoAimAndFireCommand::initialize() {
+    shoot = -1;
+
+    drivers->leds.set(tap::gpio::Leds::Green, true);
+}
 void AutoAimAndFireCommand::execute() {
+    bool allowShooting = true;
+    bool allowGimbal = true;
+
+    if (drivers->refSerial.getRefSerialReceivingData() && 
+       (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
+
+        allowShooting = false;
+        allowGimbal = false;
+
+        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
+            // allow both
+            allowShooting = true;
+            allowGimbal = true;
+        }
+
+        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
+            // countdown, only allow gimbal
+            allowGimbal = true;
+        }
+
+    }
+
+
     float dyaw = 0;
     float currentYaw = gimbal->getYawAngleRelativeWorld();
     float currentPitch = gimbal->getPitchEncoderValue();
     cv->update(currentYaw, currentPitch, yawvel, pitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
 
     if (shoot != -1) {
-        dyaw = fmod(dyaw, 2*PI);
-        //clamp between -Pi and PI to allow for dividing
-        dyaw = dyaw > PI ? dyaw - 2*PI : dyaw < -PI ? dyaw + 2*PI : dyaw; 
-        gimbal->updateMotorsAndVelocity(dyaw / 4.0f, pitch, yawvel, pitchvel); //division is to prevent overshoot from latency
+        if(tap::arch::clock::getTimeMilliseconds() - lastSeenTime >  PERSISTANCE) flip = flip * -1;
+        //Found a target, moving to it and maybe shooting at it
+
+        dyaw = fmod(dyaw, 2 * PI);
+        // clamp between -Pi and PI to allow for dividing
+        dyaw = dyaw > PI ? dyaw - 2 * PI : dyaw < -PI ? dyaw + 2 * PI : dyaw;
         lastSeenTime = tap::arch::clock::getTimeMilliseconds();
-        if(shoot==1) isShooting = true;
-    } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime<1500) {
-        //waiting for a bit, don't change isShooting
-        gimbal->updateMotors(0, pitch);
+
+        if (allowGimbal) gimbal->updateMotorsAndVelocity(dyaw / 3.0f, pitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
+        if (shoot == 1) isShooting = true;
+    } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime < PERSISTANCE) {
+        //Haven't found a target right now but I have recently, keep shooting if I was shooting
+
+        if(allowGimbal) gimbal->updateMotors(0, pitch);
     } else {
-        //patrol, don't shoot
+        //Haven't found a target, patrol
+
         isShooting = false;
-        pitch = 0.05; //pitch down to avoid looking into the sky
+        pitch = 0.05;  // pitch down to avoid looking into the sky
         numCyclesForBurst++;
-        if(numCyclesForBurst==CYCLES_UNTIL_BURST){
-            gimbal->updateMotors(BURST_AMOUNT, pitch);
-            numCyclesForBurst = 0;
-        } else{
-            gimbal->updateMotors(PATROL_SPEED, pitch);
+
+        if(allowGimbal) {
+            if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
+                gimbal->updateMotors(flip * BURST_AMOUNT, pitch);
+                numCyclesForBurst = 0;
+            } else {
+                gimbal->updateMotors(flip * PATROL_SPEED, pitch);
+            }
         }
     }
 
-    if (isShooting) {
-        //if we see a panel or recently have seen a panel
-        indexer->indexAtRate(20);
+    if(allowShooting){
+        if (isShooting) {
+            // if we see a panel or recently have seen a panel
+            indexer->indexAtRate(20);
+        } else {
+            // if we haven't seen a panel for a bit
+            //  indexer->stopIndex();
+            indexer->unjam();
+        }
     } else {
-        //if we haven't seen a panel for a bit
-        // indexer->stopIndex();
-        indexer->unjam();
+        indexer->stopIndex();
+        
+    }
+
+    if(allowGimbal) {
+        flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM);
+    } else {
+        gimbal->stopMotors();
+        if(adc->getIsScheduled()) flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM/4);
     }
 }
 
-void AutoAimAndFireCommand::end(bool) { pitch = 0; }
+void AutoAimAndFireCommand::end(bool) {
+    pitch = 0;
+    drivers->leds.set(tap::gpio::Leds::Green, false);
+}
 
 bool AutoAimAndFireCommand::isFinished() const { return !drivers->remote.isConnected(); }
 }  // namespace commands

@@ -38,8 +38,17 @@ public:
     }
     // i dont like this but it kinda works for old read. NEED TO CHANGE
     // float getAngle() { return 0.0000457891f * angle * angle - 0.0361289286f * angle + 3.4231706783f; }
-    float getAngle() { return angle / 16384.0f * 2 * PI; }  // 0-2pi how it should be;
-    uint16_t getRawAngle() { return angle; }
+    float getAngle() { return getRawAngle() * 2 * PI / 16384.0f; }  // 0-2pi how it should be;
+
+    uint16_t getRawAngle() {
+        if (angleInverted)
+            return 16383 - angle; //range is 0-16383
+        else
+            return angle;
+    }
+
+    void setAngleInvertedTrue() { angleInverted = true; }
+    void setAngleInvertedFalse() { angleInverted = false; }
 
 private:
     uint16_t angle = 0;
@@ -49,5 +58,6 @@ private:
 
     uint8_t buffer[2];
     bool online = false;
+    bool angleInverted = false;
 };
 }  // namespace communication

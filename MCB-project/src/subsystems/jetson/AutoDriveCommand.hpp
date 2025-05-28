@@ -38,6 +38,8 @@ public:
 
     const char* getName() const override { return "auto drive command"; }
 
+    bool getIsScheduled();
+
 
 private:
     src::Drivers* drivers;
@@ -47,6 +49,8 @@ private:
 
     Pose2d targetPosition;
     Pose2d targetVelocity;
+
+    bool isScheduled = false;
 
 };
 }  // namespace commands
