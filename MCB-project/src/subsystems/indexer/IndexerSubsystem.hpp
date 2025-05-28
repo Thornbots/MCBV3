@@ -34,23 +34,24 @@ IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, ShotCounter
 
 virtual void initialize();
 
-void refresh() override;
+virtual void refresh() override;
 
 virtual float indexAtRate(float ballsPerSecond);
 virtual void indexAtMaxRate();
 
-void setTargetMotorRPM(int targetMotorRPM);
-
 virtual void stopIndex();
 
-void unjam();
+virtual void unjam();
 
-float getNumBallsShot();
+virtual float getNumBallsShot();
 
-void resetBallsCounter();
+virtual void resetBallsCounter();
 
-float getBallsPerSecond();
+virtual float getBallsPerSecond();
 
 private:  // Private Methods
+
+void setTargetMotorRPM(int targetMotorRPM);
+
 };
 } //namespace subsystems
