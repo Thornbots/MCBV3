@@ -7,11 +7,15 @@ IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* 
     : IndexerSubsystem(drivers, index, ShotCounter::BarrelType::TURRET_17MM_1){}
 
 IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, ShotCounter::BarrelType barrel)
+    : IndexerSubsystem(drivers, index, barrel, REV_PER_BALL) {}
+
+IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, ShotCounter::BarrelType barrel, float revPerBall)
     : tap::control::Subsystem(drivers),
     drivers(drivers),
     motorIndexer(index),
     indexPIDController(PID_CONF_INDEX),
-    counter(drivers, barrel, index)
+    counter(drivers, barrel, index),
+    revPerBall(revPerBall)
     {}
 
 void IndexerSubsystem::initialize() {
@@ -29,7 +33,7 @@ void IndexerSubsystem::refresh() {
 
 float IndexerSubsystem::indexAtRate(float ballsPerSecond) {
     this->ballsPerSecond = counter.getAllowableIndexRate(ballsPerSecond);
-    setTargetMotorRPM(this->ballsPerSecond * 60.0f * REV_PER_BALL);
+    setTargetMotorRPM(this->ballsPerSecond * 60.0f * revPerBall);
     return this->ballsPerSecond;
 }
 

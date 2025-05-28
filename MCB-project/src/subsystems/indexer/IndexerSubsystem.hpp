@@ -20,6 +20,7 @@ src::Drivers* drivers;
 tap::motor::DjiMotor* motorIndexer;
 tap::algorithms::SmoothPid indexPIDController;
 ShotCounter counter;
+float revPerBall;
 
 float ballsPerSecond = 0.0f;
 static constexpr int MAX_INDEX_RPM = 17000;
@@ -29,28 +30,30 @@ public:  // Public Methods
 
 IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index);
 IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, ShotCounter::BarrelType barrel);
+IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, ShotCounter::BarrelType barrel, float revPerBall);
 
 ~IndexerSubsystem() {}
 
 virtual void initialize();
 
-void refresh() override;
+virtual void refresh() override;
 
 virtual float indexAtRate(float ballsPerSecond);
 virtual void indexAtMaxRate();
 
-void setTargetMotorRPM(int targetMotorRPM);
-
-virtual void stopIndex();
+void stopIndex();
 
 void unjam();
 
-float getNumBallsShot();
+virtual float getNumBallsShot();
 
-void resetBallsCounter();
+virtual void resetBallsCounter();
 
-float getBallsPerSecond();
+virtual float getBallsPerSecond();
 
 private:  // Private Methods
+
+void setTargetMotorRPM(int targetMotorRPM);
+
 };
 } //namespace subsystems
