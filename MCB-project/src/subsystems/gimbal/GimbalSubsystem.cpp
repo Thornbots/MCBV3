@@ -44,9 +44,9 @@ void GimbalSubsystem::refresh() {
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
     float pitchVel = getPitchVel();
     float pitch = getPitchEncoderValue();
-#if defined(INFANTRY)  // chicken mode, not working well yet
-    // targetPitch -= gimbalPitchAngleRelativeWorld;
-    // pitchVel += gimbalPitchAngularVelocity;
+#if defined(INFANTRY)  // chicken mode, gets bad when imu drifts
+    targetPitch -= gimbalPitchAngleRelativeWorld;
+    pitchVel += gimbalPitchAngularVelocity;
 #endif
 
     targetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
