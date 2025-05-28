@@ -51,7 +51,7 @@ static void initializeIo(src::Drivers *drivers) {
     
     drivers->leds.set(tap::gpio::Leds::Red, false);
     drivers->bmi088.initialize(500, 0.0f, 0.0f);
-    drivers->bmi088.setCalibrationSamples(2000);
+    drivers->bmi088.setCalibrationSamples(4000);
     drivers->bmi088.requestCalibration();
 
 
@@ -85,7 +85,6 @@ int main() {
     control.initialize();
 
     tap::arch::PeriodicMilliTimer refreshTimer(2);
-    tap::arch::MilliTimeout waitForBmi088(4000);
 
     bool imuIsReady = false;
 
@@ -102,7 +101,9 @@ int main() {
 
             drivers.bmi088.periodicIMUUpdate();
             drivers.bmi088.read();
-            if (waitForBmi088.isExpired() && !imuIsReady) { // do everything except things that do things if IMU isn't done
+
+            //only turn blue led off once in case someone elsewhere wants it on
+            if (drivers.bmi088.getImuState()==tap::communication::sensors::imu::AbstractIMU::ImuState::IMU_CALIBRATED) { // do everything except things that do things if IMU isn't done
                 imuIsReady = true;
                 drivers.leds.set(tap::gpio::Leds::Blue, false);
             }
@@ -110,9 +111,10 @@ int main() {
                 drivers.commandScheduler.run();
                 control.update();
             }
+
             drivers.djiMotorTxHandler.encodeAndSendCanData();
 
-            drivers.terminalSerial.update(); //needs to be commented for cv to work?
+            drivers.terminalSerial.update(); 
         } 
 
         // prevent looping too fast
