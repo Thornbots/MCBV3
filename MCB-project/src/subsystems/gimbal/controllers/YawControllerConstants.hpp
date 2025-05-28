@@ -42,7 +42,7 @@ constexpr float RATIO = 54/27.0f;                                         // uni
                                                                    // Position controller  constexprants
 constexpr float KP = 20;                                            // 10.5;  // sec^-1
 constexpr float THETA_DOT_BREAK = 10;                              // rad/s
-constexpr float A_DECEL = 0.2 * VOLT_MAX * KT * RATIO / (J * RA);  // experimental per Alex_Y
+constexpr float A_DECEL = 0.4 * VOLT_MAX * KT * RATIO / (J * RA);  // experimental per Alex_Y
 
 // Feedforward  constexprants
 constexpr float A_SCALE = 0.9;  // 0.8            // unitless
@@ -57,7 +57,7 @@ constexpr float KIV = 0.02;                      // A/rad
 constexpr float IV_MAX = 0.1 / KIV;              // units TBD
 constexpr float INT_THRESH = VOLT_MAX * 0.85;  // V
 constexpr float TAKEBACK = 0.1;               // unitless
-constexpr float CURRENT_MAX = 5;  // A
+constexpr float CURRENT_MAX = 20;  // A
 
 #elif defined(INFANTRY)
 
@@ -70,7 +70,7 @@ constexpr float KT = 0.4414;                                       // N-m/A
 constexpr float RA = .5592;                                        // ohm
 constexpr float RATIO = 54.0 / 27.0;                               // unitless
                                                                    // Position controller  constexprants
-constexpr float KP = 15;                                           // 10.5;  // sec^-1
+constexpr float KP = 13;                                           // 10.5;  // sec^-1
 constexpr float THETA_DOT_BREAK = 10;                              // rad/s
 constexpr float A_DECEL = 0.3 * VOLT_MAX * KT * RATIO / (J * RA);  // experimental per Alex_Y
 

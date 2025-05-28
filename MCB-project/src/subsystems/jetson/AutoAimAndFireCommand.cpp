@@ -38,6 +38,7 @@ void AutoAimAndFireCommand::execute() {
     cv->update(currentYaw, currentPitch, yawvel, pitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
 
     if (shoot != -1) {
+        if(tap::arch::clock::getTimeMilliseconds() - lastSeenTime >  PERSISTANCE) flip = flip * -1;
         //Found a target, moving to it and maybe shooting at it
 
         dyaw = fmod(dyaw, 2 * PI);
@@ -45,9 +46,9 @@ void AutoAimAndFireCommand::execute() {
         dyaw = dyaw > PI ? dyaw - 2 * PI : dyaw < -PI ? dyaw + 2 * PI : dyaw;
         lastSeenTime = tap::arch::clock::getTimeMilliseconds();
 
-        if (allowGimbal) gimbal->updateMotorsAndVelocity(dyaw / 4.0f, pitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
+        if (allowGimbal) gimbal->updateMotorsAndVelocity(dyaw / 3.0f, pitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
         if (shoot == 1) isShooting = true;
-    } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime < 500) {
+    } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime < PERSISTANCE) {
         //Haven't found a target right now but I have recently, keep shooting if I was shooting
 
         if(allowGimbal) gimbal->updateMotors(0, pitch);
@@ -60,10 +61,10 @@ void AutoAimAndFireCommand::execute() {
 
         if(allowGimbal) {
             if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
-                gimbal->updateMotors(BURST_AMOUNT, pitch);
+                gimbal->updateMotors(flip * BURST_AMOUNT, pitch);
                 numCyclesForBurst = 0;
             } else {
-                gimbal->updateMotors(PATROL_SPEED, pitch);
+                gimbal->updateMotors(flip * PATROL_SPEED, pitch);
             }
         }
     }

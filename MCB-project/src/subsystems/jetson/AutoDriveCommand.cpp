@@ -19,7 +19,7 @@ void AutoDriveCommand::initialize() {
 }
 
 void AutoDriveCommand::execute() {
-    targetVelocity = Pose2d(0, 0, 8);
+    targetVelocity = Pose2d(0, 0, 9);
     bool allowSpinning = true;
     bool allowMoving = true;
 
