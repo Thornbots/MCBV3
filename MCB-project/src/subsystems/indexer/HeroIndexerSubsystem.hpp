@@ -22,10 +22,6 @@ public:
     float loadAtRate(float ballsPerSecond);
     virtual void indexAtMaxRate();
 
-    virtual void stopIndex();
-
-    virtual void unjam();
-
     //counter stuff doesn't change
 
     bool isProjectileAtBeam();

@@ -41,9 +41,9 @@ virtual void refresh() override;
 virtual float indexAtRate(float ballsPerSecond);
 virtual void indexAtMaxRate();
 
-virtual void stopIndex();
+void stopIndex();
 
-virtual void unjam();
+void unjam();
 
 virtual float getNumBallsShot();
 

@@ -20,10 +20,6 @@ public:
     virtual float indexAtRate(float ballsPerSecond);
     virtual void indexAtMaxRate();
 
-    virtual void stopIndex();
-
-    virtual void unjam();
-
     virtual float getNumBallsShot();
 
     virtual void resetBallsCounter();

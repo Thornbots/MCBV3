@@ -27,16 +27,6 @@ void DoubleIndexerSubsystem::indexAtMaxRate(){
     other.indexAtMaxRate();
 }
 
-void DoubleIndexerSubsystem::stopIndex() {
-    IndexerSubsystem::stopIndex();
-    other.stopIndex();
-}
-
-void DoubleIndexerSubsystem::unjam() {
-    IndexerSubsystem::unjam();
-    other.unjam();
-}
-
 float DoubleIndexerSubsystem::getNumBallsShot(){
     return IndexerSubsystem::getNumBallsShot() + other.getNumBallsShot();
 }
