@@ -1,5 +1,3 @@
-//ignore this file if HERO is not defined
-#ifdef HERO
 #include "HeroIndexerSubsystem.hpp"
 
 namespace subsystems
@@ -53,4 +51,3 @@ bool HeroIndexerSubsystem::isProjectileAtBeam(){
 
 
 } // namespace subsystems
-#endif

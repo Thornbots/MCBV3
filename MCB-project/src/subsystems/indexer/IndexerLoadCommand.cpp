@@ -1,4 +1,3 @@
-#ifdef HERO
 #include "IndexerLoadCommand.hpp"
 
 namespace commands
@@ -22,4 +21,3 @@ bool IndexerLoadCommand::isFinished(void) const {
     return indexer->isProjectileAtBeam() || !drivers->remote.isConnected(); // Assuming 5 is the number of balls to load
 }
 }  // namespace commands
-#endif

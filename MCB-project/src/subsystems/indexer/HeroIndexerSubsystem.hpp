@@ -1,4 +1,3 @@
-#ifdef HERO
 #pragma once
 #include "IndexerSubsystem.hpp"
 
@@ -37,4 +36,3 @@ IndexerSubsystem bottom;
 };
 
 } // namespace subsystems
-#endif
