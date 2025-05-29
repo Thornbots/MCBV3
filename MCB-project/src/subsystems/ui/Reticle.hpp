@@ -10,8 +10,11 @@ using namespace subsystems;
 class Reticle : public GraphicsContainer {
 public:
     Reticle() {
-        // addGraphicsObject(&left);
-        // addGraphicsObject(&right);
+        addGraphicsObject(&rects);
+        addGraphicsObject(&lines);
+        addGraphicsObject(&curves);
+
+        updateHidden();
     }
 
 private:
@@ -33,4 +36,8 @@ private:
     //for rectangles
     static constexpr UISubsystem::Color COLORS[6] = {UISubsystem::Color::PURPLISH_RED, UISubsystem::Color::PINK, UISubsystem::Color::ORANGE, UISubsystem::Color::YELLOW, UISubsystem::Color::GREEN, UISubsystem::Color::CYAN};
 
+
+    void updateHidden() {
+
+    }
 };

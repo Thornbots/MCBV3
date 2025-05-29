@@ -75,6 +75,11 @@ bool UISubsystem::run() {
                 continue;
             }
 
+            if(nextGraphicsObject==objectsToSend[0]){
+                //looped back around and found a duplicate, don't try to send duplicates
+                break;
+            }
+
             if (nextGraphicsObject->isStringGraphic()) {
                 // if it is a string, keep the array as it is and send the string on its own
                 nextGraphicsObject->configCharacterData(&messageCharacter);
