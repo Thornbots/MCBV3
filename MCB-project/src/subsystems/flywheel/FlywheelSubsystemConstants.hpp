@@ -6,6 +6,7 @@ constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 10000;
 constexpr static int FLYWHEEL_RADIUS_MM = 60;
 #elif defined(SENTRY)
 constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 7000;  
+constexpr static int FLYWHEEL_RADIUS_MM = 48;
 #elif defined(INFANTRY)
 constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 6100; 
 constexpr static int FLYWHEEL_RADIUS_MM = 60;

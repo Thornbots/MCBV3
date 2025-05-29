@@ -24,7 +24,7 @@ void DrivetrainSubsystem::initialize() {
 void DrivetrainSubsystem::refresh() {
     // if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower & RefSerialData::Rx::RobotPower::CHASSIS_HAS_POWER) {
     // need to actually fix this yay
-    imuAngle = (drivers->bmi088.getYaw() - 180) * PI / 180;
+    imuAngle = (drivers->orientedIMU.getYaw() - 180) * PI / 180;
 
     uint16_t minLimit = 120;
     if (drivers->refSerial.getRefSerialReceivingData() && 

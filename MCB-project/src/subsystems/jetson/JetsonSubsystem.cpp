@@ -85,10 +85,10 @@ void JetsonSubsystem::update(float current_yaw, float current_pitch, float curre
     // state.acceleration = modm::Vector3f(0,0,0);
 
     // get the quaternion directly
-    q0 = drivers->bmi088.getq0();
-    q1 = -drivers->bmi088.getq1();  // axis is negated to swap IMU reference frame to the 3d dynamics reference frame
-    q2 = -drivers->bmi088.getq2();  // axis is negated to swap IMU reference frame to the 3d dynamics reference frame
-    q3 = drivers->bmi088.getq3();
+    q0 = drivers->orientedIMU.getq0();
+    q1 = -drivers->orientedIMU.getq1();  // axis is negated to swap IMU reference frame to the 3d dynamics reference frame
+    q2 = -drivers->orientedIMU.getq2();  // axis is negated to swap IMU reference frame to the 3d dynamics reference frame
+    q3 = drivers->orientedIMU.getq3();
 
     // express the IMU orientation in XYZ euler angles
     //formula linked from matlab code
@@ -99,9 +99,9 @@ void JetsonSubsystem::update(float current_yaw, float current_pitch, float curre
     currentYawTest = cvYaw;
     currentPitchTest = current_pitch;
     // express the body-fixed velocities in the correct convention
-    bodyXangVel = -drivers->bmi088.getGx() * PI / 180;
-    bodyYangVel = -drivers->bmi088.getGy() * PI / 180;
-    bodyZangVel = drivers->bmi088.getGz() * PI / 180;
+    bodyXangVel = -drivers->orientedIMU.getGx() * PI / 180;
+    bodyYangVel = -drivers->orientedIMU.getGy() * PI / 180;
+    bodyZangVel = drivers->orientedIMU.getGz() * PI / 180;
 
     // convert body-fixed angular velocities into euler angle velocities
     //cvRollVel = sinf(cvYaw) * bodyYangVel + cosf(cvPitch) * cosf(cvYaw) * bodyXangVel;

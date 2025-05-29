@@ -25,22 +25,18 @@ void GimbalSubsystem::initialize() {
 }
 void GimbalSubsystem::refresh() {
 
-#if defined(HERO)
-    yawAngularVelocity = PI / 180 * drivers->bmi088.getGx();
-#else
-    yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
-#endif
+    yawAngularVelocity = PI / 180 * drivers->orientedIMU.getGz();
 
 #if defined(INFANTRY)
-    gimbalPitchAngularVelocity = drivers->bmi088.getGx() * PI / 180;
+    gimbalPitchAngularVelocity = drivers->orientedIMU.getGx() * PI / 180;
 
     // this happens to work because the X axis is alined with the pitch axis
-    gimbalPitchAngleRelativeWorld = drivers->bmi088.getRoll() * PI / 180;
+    gimbalPitchAngleRelativeWorld = drivers->orientedIMU.getRoll() * PI / 180;
 
 #endif
 
     driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
-    yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw(); 
+    yawAngleRelativeWorld = PI / 180 * drivers->orientedIMU.getYaw(); 
     motorPitch->setDesiredOutput(pitchMotorVoltage);
     motorYaw->setDesiredOutput(yawMotorVoltage);
 }

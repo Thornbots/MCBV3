@@ -30,8 +30,8 @@ public:
     
     void execute() override {
         odoAngleRelativeWorld = gimbal->getYawAngleRelativeWorld() - gimbal->getYawEncoderValue() + odometry->getOdoEncoderValue();
-        odoVelRelativeWorld = PI / 180 * drivers->bmi088.getGz() - gimbal->getYawVel() + odometry->getOdoVel();
-        float dtAngularVelo = PI / 180 * drivers->bmi088.getGz() - gimbal->getYawVel();
+        odoVelRelativeWorld = PI / 180 * drivers->orientedIMU.getGz() - gimbal->getYawVel() + odometry->getOdoVel();
+        float dtAngularVelo = PI / 180 * drivers->orientedIMU.getGz() - gimbal->getYawVel();
         odometry->updateMotor(0, odoAngleRelativeWorld, odoVelRelativeWorld, dtAngularVelo);
     };
 

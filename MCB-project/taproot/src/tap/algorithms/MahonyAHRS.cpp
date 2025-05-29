@@ -182,16 +182,6 @@ void Mahony::update(
     q2 += (qa * gy - qb * gz + q3 * gx);
     q3 += (qa * gz + qb * gy - qc * gx);
 
-    //apply imu orientation transformation
-    float r0 = o0*q0 - o1*q1 - o2*q2 - o3*q3;
-    float r1 = o0*q1 + o1*q0 + o2*q3 - o3*q2;
-    float r2 = o0*q2 + o2*q0 + o3*q1 - o1*q3;
-    float r3 = o0*q3 + o3*q0 + o1*q2 - o2*q1;
-    q0=r0;
-    q1=r1;
-    q2=r2;
-    q3=r3;
-
     // Normalise quaternion
     recipNorm = fastInvSqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
     q0 *= recipNorm;
@@ -273,16 +263,6 @@ void Mahony::updateIMU(float gx, float gy, float gz, float ax, float ay, float a
     q2 += (qa * gy - qb * gz + q3 * gx);
     q3 += (qa * gz + qb * gy - qc * gx);
 
-    //apply imu orientation transformation
-    float r0 = o0*q0 - o1*q1 - o2*q2 - o3*q3;
-    float r1 = o0*q1 + o1*q0 + o2*q3 - o3*q2;
-    float r2 = o0*q2 + o2*q0 + o3*q1 - o1*q3;
-    float r3 = o0*q3 + o3*q0 + o1*q2 - o2*q1;
-    q0=r0;
-    q1=r1;
-    q2=r2;
-    q3=r3;
-
     // Normalise quaternion
     recipNorm = fastInvSqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
     q0 *= recipNorm;
@@ -320,13 +300,6 @@ float fastInvSqrt(float x)
     y = reinterpretCopy<int32_t, float>(i);
     y = y * (1.5f - (halfx * y * y));
     return y;
-}
-
-void Mahony::setOrientationQuaternion(float q0, float q1, float q2, float q3){
-    this->o0 = q0;
-    this->o1 = q1;
-    this->o2 = q2;
-    this->o3 = q3;
 }
 
 //============================================================================================
