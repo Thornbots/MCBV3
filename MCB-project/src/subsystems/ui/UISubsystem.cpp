@@ -63,7 +63,6 @@ bool UISubsystem::run() {
 
     graphicsIndex=0; //might start with one or two already in the array from last time, so set it once outside of the loop
     while (topLevelContainer && !needToRestart) {
-        drivers->leds.set(tap::gpio::Leds::Blue, true);
         timesResetIteration = 0;
         while (timesResetIteration<2) {
             nextGraphicsObject = topLevelContainer->getNext();
@@ -75,10 +74,9 @@ bool UISubsystem::run() {
                 continue;
             }
 
-            if(nextGraphicsObject==objectsToSend[0]){
-                //looped back around and found a duplicate, don't try to send duplicates
-                break;
-            }
+            //check if we already have this object, avoid sending duplicates
+            for (innerGraphicsIndex = 0; innerGraphicsIndex < graphicsIndex; innerGraphicsIndex++) 
+                if(objectsToSend[innerGraphicsIndex] == nextGraphicsObject) break;
 
             if (nextGraphicsObject->isStringGraphic()) {
                 // if it is a string, keep the array as it is and send the string on its own
@@ -114,20 +112,20 @@ bool UISubsystem::run() {
             PT_CALL(refSerialTransmitter.sendGraphic(&message1));
             delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message1));
         } else if (numToSend == 2) {
-            for (innerGraphicsIndex = 0; innerGraphicsIndex < graphicsIndex; innerGraphicsIndex++) objectsToSend[innerGraphicsIndex]->configGraphicData(&message2.graphicData[innerGraphicsIndex]);
+            for (innerGraphicsIndex = 0; innerGraphicsIndex < graphicsIndex; innerGraphicsIndex++) 
+                objectsToSend[innerGraphicsIndex]->configGraphicData(&message2.graphicData[innerGraphicsIndex]);
             PT_CALL(refSerialTransmitter.sendGraphic(&message2));
             delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message2));
         } else if (numToSend == 5) {
-            for (innerGraphicsIndex = 0; innerGraphicsIndex < graphicsIndex; innerGraphicsIndex++) objectsToSend[innerGraphicsIndex]->configGraphicData(&message5.graphicData[innerGraphicsIndex]);
+            for (innerGraphicsIndex = 0; innerGraphicsIndex < graphicsIndex; innerGraphicsIndex++) 
+                objectsToSend[innerGraphicsIndex]->configGraphicData(&message5.graphicData[innerGraphicsIndex]);
             PT_CALL(refSerialTransmitter.sendGraphic(&message5));
             delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message5));
         } else if (numToSend == 7) {
-            for (innerGraphicsIndex = 0; innerGraphicsIndex < graphicsIndex; innerGraphicsIndex++) objectsToSend[innerGraphicsIndex]->configGraphicData(&message7.graphicData[innerGraphicsIndex]);
+            for (innerGraphicsIndex = 0; innerGraphicsIndex < graphicsIndex; innerGraphicsIndex++) 
+                objectsToSend[innerGraphicsIndex]->configGraphicData(&message7.graphicData[innerGraphicsIndex]);
             PT_CALL(refSerialTransmitter.sendGraphic(&message7));
             delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message7));
-        } else if (numToSend==0) {
-            //we might need to wait so things don't explode when nothing needs drawn
-            delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message1));
         }
         
         if (graphicsIndex == 4) { //save 2
@@ -141,8 +139,12 @@ bool UISubsystem::run() {
             graphicsIndex = 0;
         }
 
+        //clear objects we don't want to send
+        for (innerGraphicsIndex = graphicsIndex; innerGraphicsIndex < TARGET_NUM_OBJECTS; innerGraphicsIndex++) 
+            objectsToSend[innerGraphicsIndex] = nullptr;
+
         //if we sent something, wait for it so we don't lose packets
-        // if(numToSend>0)
+        if(numToSend>0)
             PT_WAIT_UNTIL(delayTimeout.execute());
 
         PT_YIELD();

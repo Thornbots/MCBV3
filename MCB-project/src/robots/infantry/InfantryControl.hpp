@@ -67,7 +67,7 @@ public:
         autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->whileTrue(&shooterStart)->onTrue(&closeServo);
         // implement speed mode
 
-        toggleUIKey.onTrue(&draw); //press g to restart ui
+        toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
         // drivers->commandScheduler.addCommand(&draw);
    
         // drive commands and also enable mouse looking
@@ -166,12 +166,12 @@ public:
 
 
     //keyboard driving
-    Trigger speedModeKey{drivers, Remote::Key::SHIFT};
+    // Trigger speedModeKey{drivers, Remote::Key::SHIFT}; //drivetrain drive command reads shift
     Trigger beybladeType0Key{drivers, Remote::Key::X};
     Trigger beybladeType1Key{drivers, Remote::Key::C};
     Trigger beybladeType2Key{drivers, Remote::Key::V};
 
-    Trigger* triggers[15] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &unjamKey, &shootKey, &autoAimKey, &speedModeKey, &beybladeType0Key, &beybladeType1Key, &beybladeType2Key, &toggleUIKey};//, &indexSpinButton};
+    Trigger* triggers[14] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &unjamKey, &shootKey, &autoAimKey, &beybladeType0Key, &beybladeType1Key, &beybladeType2Key, &toggleUIKey};//, &indexSpinButton};
 
 };
 

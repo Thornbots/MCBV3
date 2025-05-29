@@ -38,11 +38,11 @@ public:
         // addGraphicsObject(&testGraphics);
         // addGraphicsObject(&testFill);
 
-        addGraphicsObject(&lane);
-        addGraphicsObject(&supercap);
+        // addGraphicsObject(&lane);
+        // addGraphicsObject(&supercap);
         addGraphicsObject(&orient);
-        addGraphicsObject(&peek);
-        addGraphicsObject(&lid);
+        // addGraphicsObject(&peek);
+        // addGraphicsObject(&lid);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
