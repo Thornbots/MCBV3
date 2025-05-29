@@ -44,7 +44,7 @@ public:
         // gimbal.initialize();
         flywheel.initialize();
         indexer.initialize();
-        // drivetrain.initialize();
+        drivetrain.initialize();
         ui.initialize();
         servo.initialize();
         jetson.initialize();
