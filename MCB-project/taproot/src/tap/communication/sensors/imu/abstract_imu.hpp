@@ -47,6 +47,8 @@ public:
 
     void setMountingTransform(const Transform& transform);
 
+    void setOrientationQuaternion(float q0, float q1, float q2, float q3);
+
     virtual ~AbstractIMU() = default;
 
     virtual void initialize(float sampleFrequency, float mahonyKp, float mahonyKi);
