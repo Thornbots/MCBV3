@@ -16,7 +16,7 @@ constexpr float MAX_POS_VEL = 1;
 #if defined(HERO)
 // START getters and setters
 constexpr float TRACKWIDTH = 0.49739;      // in m. We need to measure
-constexpr float M = 14.0;                  // robot mass kg
+constexpr float M = 18.774;                  // robot mass kg
 constexpr float J = 0.44;                  // measured from sys id kg-m^2
 constexpr float R_WHEEL = 0.048 / ROOT_2;  // wheel radius m
 constexpr float J_WHEEL = 0.0009;          // wheel moment of inertia kg-m^2

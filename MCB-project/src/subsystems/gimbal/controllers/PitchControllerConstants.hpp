@@ -3,7 +3,7 @@ constexpr float RA = 8.705;  // ohm
 
 #if defined(HERO)
 
-constexpr float RATIO = 1;         // unitless
+constexpr float RATIO = 4;         // unitless
 constexpr float VOLT_MAX = 22.2;   // V
 constexpr float ACCEL_MAX = 40.0;  // rad/s
 
