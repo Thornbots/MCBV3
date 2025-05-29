@@ -2,7 +2,7 @@
 #include "tap/algorithms/smooth_pid.hpp"
 
 #if defined(HERO)
-constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 4333;  
+constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 10000;  
 constexpr static int FLYWHEEL_RADIUS_MM = 60;
 #elif defined(SENTRY)
 constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 7000;  

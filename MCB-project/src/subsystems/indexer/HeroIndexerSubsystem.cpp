@@ -36,7 +36,7 @@ void HeroIndexerSubsystem::indexAtMaxRate(){
 }
 
 bool HeroIndexerSubsystem::isProjectileAtBeam(){
-    return false;//!Board::DigitalInPinB12::read(); // Assuming PF0 is the break beam sensor
+    return !Board::DigitalInPinB12::read(); // Assuming PF0 is the break beam sensor
 }
 
 
