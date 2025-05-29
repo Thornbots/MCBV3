@@ -25,7 +25,11 @@ void GimbalSubsystem::initialize() {
 }
 void GimbalSubsystem::refresh() {
 
+#if defined(HERO)
+    yawAngularVelocity = PI / 180 * drivers->bmi088.getGx();
+#else
     yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
+#endif
 
 #if defined(INFANTRY)
     gimbalPitchAngularVelocity = drivers->bmi088.getGx() * PI / 180;

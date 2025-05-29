@@ -6,8 +6,10 @@
 
 #include "drivers.hpp"
 
-uint16_t testvar = 0;
-float testvar2 = 0.0f;
+float roll = 0.0f;
+float pitch = 0.0f;
+float yaw = 0.0f;
+
 // Place any sort of input/output initialization here. For example, place
 // serial init stuff here.
 static void initializeIo(src::Drivers *drivers) {
@@ -93,14 +95,15 @@ int main() {
         updateIo(&drivers);
         // drivers.i2c.refresh();
         drivers.uart.updateSerial();
-        // testvar = drivers.i2c.encoder.getRawAngle();
-        // testvar2 = drivers.i2c.encoder.getAngle();
 
         if (refreshTimer.execute()) {
             // tap::buzzer::playNote(&(drivers.pwm), 493);
 
             drivers.bmi088.periodicIMUUpdate();
             drivers.bmi088.read();
+            roll = drivers.bmi088.getRoll();
+            pitch = drivers.bmi088.getPitch();
+            yaw = drivers.bmi088.getYaw();
 
             //only turn blue led off once in case someone elsewhere wants it on
             if (drivers.bmi088.getImuState()==tap::communication::sensors::imu::AbstractIMU::ImuState::IMU_CALIBRATED) { // do everything except things that do things if IMU isn't done
