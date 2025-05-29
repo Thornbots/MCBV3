@@ -16,6 +16,7 @@
 #include "subsystems/flywheel/ShooterStopCommand.hpp"
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
+#include "subsystems/gimbal/GimbalStopCommand.hpp"
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
@@ -116,15 +117,7 @@ public:
     commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
 
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
-
-    //CHANGE NUMBERS LATER
-    commands::DrivetrainDriveCommand peekRight{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_RIGHT, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand peekLeft{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_LEFT, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand peekCenterWASD{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand peekCenterJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::CONTROLLER};
-
-    commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
-
+    
     // mappings
     Trigger shootButton{drivers, Remote::Channel::WHEEL, -0.5};
     Trigger unjamButton{drivers, Remote::Channel::WHEEL, 0.5};
