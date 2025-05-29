@@ -35,21 +35,23 @@ public:
     void initialize() override {
         // Initialize subsystems
         //gimbal.initialize();
-        // flywheel.initialize();
+        flywheel.initialize();
         indexer.initialize();
         //drivetrain.initialize();
-        // ui.initialize();
+        ui.initialize();
 
         // Run startup commands
-        // gimbal.setDefaultCommand(&stopGimbal);
-        // flywheel.setDefaultCommand(&shooterStop);
-        // drivetrain.setDefaultCommand(&stopDriveCommand);
+         //gimbal.setDefaultCommand(&stopGimbal);
+         flywheel.setDefaultCommand(&shooterStop);
+         //drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerLoadCommand);
         
 
         // Mouse and Keyboard mappings
-        unjamKey./*whileTrue(&indexerUnjam)->onTrue(&shooterStop)->*/onFalse(&indexerLoadCommand);
-        shootKey./*whileTrue(&indexer1Hz)->onTrue(&shooterStart)->*/onFalse(&indexerLoadCommand);
+        unjamKey.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onFalse(&indexerLoadCommand);
+        shootKey.whileTrue(&indexer1Hz)->onTrue(&shooterStart)->onFalse(&indexerLoadCommand);
+        unjamButton.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onFalse(&indexerLoadCommand);
+        shootButton.whileTrue(&indexer1Hz)->onTrue(&shooterStart)->onFalse(&indexerLoadCommand);
         // autoAimKey./*whileTrue(&autoCommand)->onFalse(&lookMouse)->*/whileTrue(&shooterStart);
         // implement speed mode
 
@@ -81,12 +83,11 @@ public:
     HeroHardware hardware;
 
     // Subsystems
-    // subsystems::UISubsystem ui{drivers};
-    // subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
-    // subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
+     subsystems::UISubsystem ui{drivers};
+     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
+     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::HeroIndexerSubsystem indexer{drivers, &hardware.indexTopMotor, &hardware.indexBottomMotor};
-    // subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
-
+    subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     // //commands
 
     // commands::UIDrawCommand draw{&ui, &gimbal, &flywheel, &indexer, &drivetrain};
@@ -97,8 +98,8 @@ public:
     // commands::MouseMoveCommand lookMouse{drivers, &gimbal};
     // commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
 
-    // commands::ShooterStartCommand shooterStart{drivers, &flywheel};
-    // commands::ShooterStopCommand shooterStop{drivers, &flywheel};
+     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
+     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
     commands::IndexerNBallsCommand indexer1Hz{drivers, &indexer, -1, 1};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
@@ -119,8 +120,10 @@ public:
     // commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
 
     // mappings
-    Trigger shootButton{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};
-    Trigger unjamButton{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
+
+    //shooting
+    Trigger shootButton{drivers, Remote::Channel::WHEEL, -0.5};
+    Trigger unjamButton{drivers, Remote::Channel::WHEEL, 0.5};
     Trigger unjamKey{drivers, Remote::Key::Z}; //or R if based
     Trigger autoAimKey{drivers, MouseButton::RIGHT};
     Trigger shootKey{drivers, MouseButton::LEFT};
