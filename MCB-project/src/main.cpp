@@ -39,9 +39,9 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->errorController.init();
     drivers->refSerial.initialize();
 
-    drivers->i2c.initialize();
+    // drivers->i2c.initialize();
     //try waiting 9 clock pulses? 
-    drivers->i2c.refresh();
+    // drivers->i2c.refresh();
     drivers->uart.initialize();
 
 
@@ -78,8 +78,8 @@ RobotControl control{&drivers};
 int main() {
     Board::initialize();
     initializeIo(&drivers);
-    testvar = drivers.i2c.encoder.getRawAngle();
-    testvar2 = drivers.i2c.encoder.getAngle();
+    // testvar = drivers.i2c.encoder.getRawAngle();
+    // testvar2 = drivers.i2c.encoder.getAngle();
     tap::buzzer::silenceBuzzer(&(drivers.pwm));
 
     control.initialize();
@@ -91,10 +91,10 @@ int main() {
     while (1) {
         // do this as fast as you can
         updateIo(&drivers);
-        drivers.i2c.refresh();
+        // drivers.i2c.refresh();
         drivers.uart.updateSerial();
-        testvar = drivers.i2c.encoder.getRawAngle();
-        testvar2 = drivers.i2c.encoder.getAngle();
+        // testvar = drivers.i2c.encoder.getRawAngle();
+        // testvar2 = drivers.i2c.encoder.getAngle();
 
         if (refreshTimer.execute()) {
             // tap::buzzer::playNote(&(drivers.pwm), 493);

@@ -13,7 +13,7 @@ void HeroIndexerSubsystem::initialize() {
     IndexerSubsystem::initialize();
     bottom.initialize();
 
-    Board::DigitalInPinB12::configure(modm::platform::Gpio::InputType::Floating); //initialze beambreak
+    // Board::DigitalInPinB12::configure(modm::platform::Gpio::InputType::Floating); //initialze beambreak
 }
 
 void HeroIndexerSubsystem::refresh() {
@@ -36,7 +36,7 @@ void HeroIndexerSubsystem::indexAtMaxRate(){
 }
 
 bool HeroIndexerSubsystem::isProjectileAtBeam(){
-    return !Board::DigitalInPinB12::read(); // Assuming PF0 is the break beam sensor
+    return false;//!Board::DigitalInPinB12::read(); // Assuming PF0 is the break beam sensor
 }
 
 

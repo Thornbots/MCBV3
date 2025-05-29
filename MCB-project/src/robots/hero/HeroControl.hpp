@@ -35,39 +35,39 @@ public:
     void initialize() override {
         // Initialize subsystems
         //gimbal.initialize();
-        flywheel.initialize();
+        // flywheel.initialize();
         indexer.initialize();
         //drivetrain.initialize();
-        ui.initialize();
+        // ui.initialize();
 
         // Run startup commands
-        gimbal.setDefaultCommand(&stopGimbal);
-        flywheel.setDefaultCommand(&shooterStop);
-        drivetrain.setDefaultCommand(&stopDriveCommand);
-        indexer.setDefaultCommand(&indexerStopCommand);
+        // gimbal.setDefaultCommand(&stopGimbal);
+        // flywheel.setDefaultCommand(&shooterStop);
+        // drivetrain.setDefaultCommand(&stopDriveCommand);
+        indexer.setDefaultCommand(&indexerLoadCommand);
         
 
         // Mouse and Keyboard mappings
-        unjamKey.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onFalse(&indexerLoadCommand);
-        shootKey.whileTrue(&indexer1Hz)->onTrue(&shooterStart)->onFalse(&indexerLoadCommand);
-        autoAimKey./*whileTrue(&autoCommand)->*/onFalse(&lookMouse)->whileTrue(&shooterStart);
+        unjamKey./*whileTrue(&indexerUnjam)->onTrue(&shooterStop)->*/onFalse(&indexerLoadCommand);
+        shootKey./*whileTrue(&indexer1Hz)->onTrue(&shooterStart)->*/onFalse(&indexerLoadCommand);
+        // autoAimKey./*whileTrue(&autoCommand)->onFalse(&lookMouse)->*/whileTrue(&shooterStart);
         // implement speed mode
 
-        toggleUIKey.onTrue(&draw); //press g to restart ui
+        // toggleUIKey.onTrue(&draw); //press g to restart ui
         // drivers->commandScheduler.addCommand(&draw);
    
         // drive commands and also enable mouse looking
 
-        peekLeftButton.onTrue(&peekLeft)->onFalse(&beybladeSlowKeyboard);
-        peekRightButton.onTrue(&peekRight)->onFalse(&beybladeSlowKeyboard);
+        // peekLeftButton.onTrue(&peekLeft)->onFalse(&beybladeSlowKeyboard);
+        // peekRightButton.onTrue(&peekRight)->onFalse(&beybladeSlowKeyboard);
 
-        beybladeType0Key.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
-        beybladeType1Key.onTrue(&beybladeSlowKeyboard)->onTrue(&lookMouse);
-        beybladeType2Key.onTrue(&beybladeFastKeyboard)->onTrue(&lookMouse);
+        // beybladeType0Key.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
+        // beybladeType1Key.onTrue(&beybladeSlowKeyboard)->onTrue(&lookMouse);
+        // beybladeType2Key.onTrue(&beybladeFastKeyboard)->onTrue(&lookMouse);
  
-        joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
-        joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);
-        joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick);
+        // joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
+        // joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);
+        // joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick);
     }
 
     void update() override {
@@ -81,24 +81,24 @@ public:
     HeroHardware hardware;
 
     // Subsystems
-    subsystems::UISubsystem ui{drivers};
-    subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
-    subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
+    // subsystems::UISubsystem ui{drivers};
+    // subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
+    // subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::HeroIndexerSubsystem indexer{drivers, &hardware.indexTopMotor, &hardware.indexBottomMotor};
-    subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
+    // subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
 
     // //commands
 
-    commands::UIDrawCommand draw{&ui, &gimbal, &flywheel, &indexer, &drivetrain};
+    // commands::UIDrawCommand draw{&ui, &gimbal, &flywheel, &indexer, &drivetrain};
     // commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
     // commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
 
-    commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
-    commands::MouseMoveCommand lookMouse{drivers, &gimbal};
-    commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
+    // commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
+    // commands::MouseMoveCommand lookMouse{drivers, &gimbal};
+    // commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
 
-    commands::ShooterStartCommand shooterStart{drivers, &flywheel};
-    commands::ShooterStopCommand shooterStop{drivers, &flywheel};
+    // commands::ShooterStartCommand shooterStart{drivers, &flywheel};
+    // commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
     commands::IndexerNBallsCommand indexer1Hz{drivers, &indexer, -1, 1};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
@@ -107,20 +107,20 @@ public:
     commands::IndexerStopCommand indexerStopCommand{drivers, &indexer};
 
     //CHANGE NUMBERS LATER
-    commands::DrivetrainDriveCommand peekRight{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_RIGHT, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand peekLeft{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_LEFT, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand drivetrainFollowKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::CONTROLLER};
-    commands::DrivetrainDriveCommand beybladeJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE2, commands::ControlMode::CONTROLLER};
-    commands::DrivetrainDriveCommand beybladeSlowKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand beybladeFastKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE2, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
+    // commands::DrivetrainDriveCommand peekRight{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_RIGHT, commands::ControlMode::KEYBOARD};
+    // commands::DrivetrainDriveCommand peekLeft{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_LEFT, commands::ControlMode::KEYBOARD};
+    // commands::DrivetrainDriveCommand drivetrainFollowKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::KEYBOARD};
+    // commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::CONTROLLER};
+    // commands::DrivetrainDriveCommand beybladeJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE2, commands::ControlMode::CONTROLLER};
+    // commands::DrivetrainDriveCommand beybladeSlowKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE, commands::ControlMode::KEYBOARD};
+    // commands::DrivetrainDriveCommand beybladeFastKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE2, commands::ControlMode::KEYBOARD};
+    // commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
 
-    commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
-    
+    // commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
+
     // mappings
-    Trigger shootButton{drivers, Remote::Channel::WHEEL, -0.5};
-    Trigger unjamButton{drivers, Remote::Channel::WHEEL, 0.5};
+    Trigger shootButton{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};
+    Trigger unjamButton{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
     Trigger unjamKey{drivers, Remote::Key::Z}; //or R if based
     Trigger autoAimKey{drivers, MouseButton::RIGHT};
     Trigger shootKey{drivers, MouseButton::LEFT};
