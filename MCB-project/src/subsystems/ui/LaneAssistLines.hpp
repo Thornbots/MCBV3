@@ -57,19 +57,9 @@ public:
 
 
 private:
-#if defined(HERO)        // todo
-static constexpr float ROBOT_RADIUS = 0.3; //meters
-static constexpr float FORWARD_DISTANCE = 1.2; //meters, how far forward the laneassistlines extend to
-#elif defined(SENTRY)    // todo
-static constexpr float ROBOT_RADIUS = 0.3; //meters
-static constexpr float FORWARD_DISTANCE = 1.2; //meters, how far forward the laneassistlines extend to
-#elif defined(INFANTRY)  
+    //might be robot specific in the future, but right now standard and hero have the same drivetrain
     static constexpr float ROBOT_RADIUS = 0.3; //meters
     static constexpr float FORWARD_DISTANCE = 1.2; //meters, how far forward the laneassistlines extend to
-#else                    // old infantry, todo
-static constexpr float ROBOT_RADIUS = 0.3; //meters
-static constexpr float FORWARD_DISTANCE = 1.2; //meters, how far forward the laneassistlines extend to
-#endif
 
     static constexpr uint16_t THICKNESS = 2;  // pixels
 

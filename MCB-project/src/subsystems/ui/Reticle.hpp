@@ -17,14 +17,16 @@ public:
 private:
     enum class ReticleMode : uint8_t
     {
-        // LINES = 0,      // multiple of horizontal lines, widths represent panel widths, heights represent where the center of a standard panel needs to be to hit it, lines go across the center of a panel, endpoints are edges of panels
-        // CURVES = 1,     // two curves that act like the endpoints of a lot of LINES (see above)
-        RECTANGLES = 2, // multiple rectangles of different colors, tops and bottoms of them are tops and bottoms of panels, midpoints of sides are edges of panels
+        RECTANGLES = 0, // multiple rectangles of different colors, tops and bottoms of them are tops and bottoms of panels, midpoints of sides are edges of standard size panels
+        // LINES = 1,      // multiple of horizontal lines, widths represent panel widths, heights represent where the center of a standard panel needs to be to hit it, lines go across the center of a panel, endpoints are edges of panels
+        // CURVES = 2,     // two curves that act like the endpoints of a lot of LINES (see above)
     };
 
+    GraphicsContainer rects{};
     GraphicsContainer lines{};
     GraphicsContainer curves{};
-    GraphicsContainer rects{};
+
+    ReticleMode mode = ReticleMode::RECTANGLES;
 
     static constexpr float DISTANCES[6] = {0.5, 1, 2, 5, 9, 12};
 
