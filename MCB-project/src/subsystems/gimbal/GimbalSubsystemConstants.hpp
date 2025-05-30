@@ -17,12 +17,12 @@ static constexpr float CONTROLLER_YAW_PROPORTIONAL = -0.02;
 constexpr static int YAW_MOTOR_MAX_SPEED = 1000;  // TODO: Make this value relevent
                                                   // //TODO: Check the datasheets
 
-static constexpr float MAX_PITCH_UP = PI_CONST / 180 * 21;
-static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 48;
+static constexpr float MAX_PITCH_UP = PI_CONST / 180 * 55;
+static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 30;
 
 static constexpr float YAW_OFFSET = 3 * PI_CONST / 4;
 
-static constexpr float PITCH_OFFSET = 0.1 * PI_CONST;  // to make gimbal horizontal when told to go to 0
+static constexpr float PITCH_OFFSET = (.12 ) * PI_CONST;  // to make gimbal horizontal when told to go to 0
 
 static constexpr float YAW_TOTAL_RATIO = 32319.0f / 748.0f;  // unitless, ratio of encoder counts to degrees of rotation
 
