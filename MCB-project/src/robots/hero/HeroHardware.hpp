@@ -19,10 +19,7 @@ namespace robots
 class HeroHardware
 {
 public:
-    HeroHardware(src::Drivers* drivers) : drivers(drivers) {
-        float sqrt2over2 = std::sqrt(2.0f) / 2.0f;
-        drivers->bmi088.setOrientationQuaternion(sqrt2over2, 0, sqrt2over2, 0);
-    }
+    HeroHardware(src::Drivers* drivers) : drivers(drivers) {}
 
     //drivers
     src::Drivers* drivers;

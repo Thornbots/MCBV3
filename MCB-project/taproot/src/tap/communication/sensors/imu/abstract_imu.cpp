@@ -46,10 +46,6 @@ void AbstractIMU::setMountingTransform(const Transform& transform)
     mountingTransform = transform;
 }
 
-void AbstractIMU::setOrientationQuaternion(float q0, float q1, float q2, float q3){
-    this->mahonyAlgorithm.setOrientationQuaternion(q0, q1, q2, q3);
-}
-
 void AbstractIMU::periodicIMUUpdate()
 {
     if (imuState == ImuState::IMU_CALIBRATING)
