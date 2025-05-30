@@ -54,7 +54,7 @@ void DrivetrainDriveCommand::execute() {
         r = drivetrain->calculateRotationPID(targetAngle + referenceAngle); 
     }
 
-    Pose2d drive(x, y, 0);
+    Pose2d drive(x, y, r);
 
     drivetrain->setTargetTranslation(drive.rotate(referenceAngle), (bool)boost);
 }
