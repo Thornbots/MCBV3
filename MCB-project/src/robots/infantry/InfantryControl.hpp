@@ -41,7 +41,7 @@ public:
     // functions we are using
     void initialize() override {
         // Initialize subsystems (registration is internal)
-        // gimbal.initialize();
+        gimbal.initialize();
         flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();

@@ -110,16 +110,20 @@ void Mahony::update(
         float q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;
 
         // Auxiliary variables to avoid repeated arithmetic
-        q0q0 = q0 * q0;
-        q0q1 = q0 * q1;
-        q0q2 = q0 * q2;
-        q0q3 = q0 * q3;
-        q1q1 = q1 * q1;
-        q1q2 = q1 * q2;
-        q1q3 = q1 * q3;
-        q2q2 = q2 * q2;
-        q2q3 = q2 * q3;
-        q3q3 = q3 * q3;
+        float r0 = o0*q0 - o1*q1 - o2*q2 - o3*q3;
+        float r1 = o0*q1 + o1*q0 + o2*q3 - o3*q2;
+        float r2 = o0*q2 + o2*q0 + o3*q1 - o1*q3;
+        float r3 = o0*q3 + o3*q0 + o1*q2 - o2*q1;
+        q0q0 = r0 * r0;
+        q0q1 = r0 * r1;
+        q0q2 = r0 * r2;
+        q0q3 = r0 * r3;
+        q1q1 = r1 * r1;
+        q1q2 = r1 * r2;
+        q1q3 = r1 * r3;
+        q2q2 = r2 * r2;
+        q2q3 = r2 * r3;
+        q3q3 = r3 * r3;
 
         float hx, hy, bx, bz;
 
@@ -177,10 +181,22 @@ void Mahony::update(
     qa = q0;
     qb = q1;
     qc = q2;
+    float t0 = (-qb * gx - qc * gy - q3 * gz);
+    float t1 = (qa * gx + qc * gz - q3 * gy);
+    float t2 = (qa * gy - qb * gz + q3 * gx);
+    float t3 = (qa * gz + qb * gy - qc * gx);
     q0 += (-qb * gx - qc * gy - q3 * gz);
     q1 += (qa * gx + qc * gz - q3 * gy);
     q2 += (qa * gy - qb * gz + q3 * gx);
     q3 += (qa * gz + qb * gy - qc * gx);
+    // float t0 = (-qb * gx - qc * gy - q3 * gz);
+    // float t1 = (qa * gx + qc * gz - q3 * gy);
+    // float t2 = (qa * gy - qb * gz + q3 * gx);
+    // float t3 = (qa * gz + qb * gy - qc * gx);
+    // q0 += o0*t0 - o1*t1 - o2*t2 - o3*t3;
+    // q1 += o0*t1 + o1*t0 + o2*t3 - o3*t2;
+    // q2 += o0*t2 + o2*t0 + o3*t1 - o1*t3;
+    // q3 += o0*t3 + o3*t0 + o1*t2 - o2*t1;
 
     // Normalise quaternion
     recipNorm = fastInvSqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
@@ -217,9 +233,13 @@ void Mahony::updateIMU(float gx, float gy, float gz, float ax, float ay, float a
         float halfex, halfey, halfez;
 
         // Estimated direction of gravity
-        halfvx = q1 * q3 - q0 * q2;
-        halfvy = q0 * q1 + q2 * q3;
-        halfvz = q0 * q0 - 0.5f + q3 * q3;
+        float r0 = o0*q0 - o1*q1 - o2*q2 - o3*q3;
+        float r1 = o0*q1 + o1*q0 + o2*q3 - o3*q2;
+        float r2 = o0*q2 + o2*q0 + o3*q1 - o1*q3;
+        float r3 = o0*q3 + o3*q0 + o1*q2 - o2*q1;
+        halfvx = r1 * r3 - r0 * r2;
+        halfvy = r0 * r1 + r2 * r3;
+        halfvz = r0 * r0 - 0.5f + r3 * r3;
 
         // Error is sum of cross product between estimated
         // and measured direction of gravity
@@ -262,6 +282,14 @@ void Mahony::updateIMU(float gx, float gy, float gz, float ax, float ay, float a
     q1 += (qa * gx + qc * gz - q3 * gy);
     q2 += (qa * gy - qb * gz + q3 * gx);
     q3 += (qa * gz + qb * gy - qc * gx);
+    // float t0 = (-qb * gx - qc * gy - q3 * gz);
+    // float t1 = (qa * gx + qc * gz - q3 * gy);
+    // float t2 = (qa * gy - qb * gz + q3 * gx);
+    // float t3 = (qa * gz + qb * gy - qc * gx);
+    // q0 += o0*t0 - o1*t1 - o2*t2 - o3*t3;
+    // q1 += o0*t1 + o1*t0 + o2*t3 - o3*t2;
+    // q2 += o0*t2 + o2*t0 + o3*t1 - o1*t3;
+    // q3 += o0*t3 + o3*t0 + o1*t2 - o2*t1;
 
     // Normalise quaternion
     recipNorm = fastInvSqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
@@ -300,6 +328,13 @@ float fastInvSqrt(float x)
     y = reinterpretCopy<int32_t, float>(i);
     y = y * (1.5f - (halfx * y * y));
     return y;
+}
+
+void Mahony::setOrientationQuaternion(float q0, float q1, float q2, float q3){
+    this->o0 = q0;
+    this->o1 = q1;
+    this->o2 = q2;
+    this->o3 = q3;
 }
 
 //============================================================================================

@@ -12,11 +12,7 @@ public:
     }
 
     float getRoll() {
-        #if defined(HERO)
-            return -drivers->bmi088.getYaw();
-        #else
-            return drivers->bmi088.getRoll();
-        #endif
+        return drivers->bmi088.getRoll();
     }
 
     float getPitch() {
@@ -24,11 +20,7 @@ public:
     }
 
     float getYaw() {
-        #if defined(HERO)
-            return drivers->bmi088.getRoll();
-        #else
-            return drivers->bmi088.getYaw();
-        #endif
+        return drivers->bmi088.getYaw();
     }
 
 
@@ -56,36 +48,24 @@ public:
 
 
     float getq0(){
-        return o0*drivers->bmi088.getq0() - o1*drivers->bmi088.getq1() - o2*drivers->bmi088.getq2() - o3*drivers->bmi088.getq3();
+        return drivers->bmi088.getq0();
     }
 
     float getq1(){
-        return o0*drivers->bmi088.getq1() + o1*drivers->bmi088.getq0() + o2*drivers->bmi088.getq3() - o3*drivers->bmi088.getq2();
+        return drivers->bmi088.getq1();
     }
 
     float getq2(){
-        return o0*drivers->bmi088.getq2() + o2*drivers->bmi088.getq0() + o3*drivers->bmi088.getq1() - o1*drivers->bmi088.getq3();
+        return drivers->bmi088.getq2();
     }
 
     float getq3(){
-        return o0*drivers->bmi088.getq3() + o3*drivers->bmi088.getq0() + o1*drivers->bmi088.getq2() - o2*drivers->bmi088.getq1();
+        return drivers->bmi088.getq3();
     }
 
-
-    void setOrientationQuaternion(float q0, float q1, float q2, float q3){
-        this->o0 = q0;
-        this->o1 = q1;
-        this->o2 = q2;
-        this->o3 = q3;
-    }
 
 private:
     tap::Drivers *drivers;
-
-    float o0 = 1;
-    float o1 = 0;
-    float o2 = 0;
-    float o3 = 0;
 
 };
 

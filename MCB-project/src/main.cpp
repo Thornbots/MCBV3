@@ -41,9 +41,10 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->errorController.init();
     drivers->refSerial.initialize();
 
-    // drivers->i2c.initialize();
-    //try waiting 9 clock pulses? 
-    // drivers->i2c.refresh();
+    drivers->i2c.initialize();
+    //try waiting 9 clock pulses? (for preventing boot loop)
+    //or pull some pin low
+    drivers->i2c.refresh();
     drivers->uart.initialize();
 
 
@@ -93,7 +94,7 @@ int main() {
     while (1) {
         // do this as fast as you can
         updateIo(&drivers);
-        // drivers.i2c.refresh();
+        drivers.i2c.refresh();
         drivers.uart.updateSerial();
 
         if (refreshTimer.execute()) {

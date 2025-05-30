@@ -34,12 +34,18 @@ private:
     float roll, pitch, yaw;
     static float invSqrt(float x);
     void computeAngles();
+    
+    float o0 = 1;
+    float o1 = 0;
+    float o2 = 0;
+    float o3 = 0;
 
     //-------------------------------------------------------------------------------------------
     // Function declarations
 
 public:
     Mahony();
+    void setOrientationQuaternion(float q0, float q1, float q2, float q3);
 
     void begin(float sampleFrequency, float kp, float ki)
     {

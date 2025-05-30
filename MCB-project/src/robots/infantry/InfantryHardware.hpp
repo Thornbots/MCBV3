@@ -16,6 +16,10 @@ class InfantryHardware
 public:
     InfantryHardware(src::Drivers* drivers) : drivers(drivers) {
         drivers->i2c.encoder.setAngleInvertedTrue();
+
+        //try quat: should break chicken mode but leave yaw ok
+        float sqrt2over2 = std::sqrt(2.0f) / 2.0f;
+        drivers->bmi088.setOrientationQuaternion(sqrt2over2, 0, 0, sqrt2over2);
     }
 
     //drivers
