@@ -19,7 +19,15 @@ namespace robots
 class HeroHardware
 {
 public:
-    HeroHardware(src::Drivers* drivers) : drivers(drivers) {}
+    HeroHardware(src::Drivers* drivers) : drivers(drivers) {
+        drivers->bmi088.setMountingTransform(imuTransform);
+    }
+
+    
+
+    tap::algorithms::CMSISMat<3, 1> translation{{0,0,0}};
+    tap::algorithms::CMSISMat<3, 3> rotation{{0,0,1, 0,1,0, -1,0,0}};
+    tap::algorithms::transforms::Transform imuTransform{translation, rotation};
 
     //drivers
     src::Drivers* drivers;
