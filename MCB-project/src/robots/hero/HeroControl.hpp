@@ -37,7 +37,7 @@ public:
         gimbal.initialize();
         flywheel.initialize();
         indexer.initialize();
-        // drivetrain.initialize();
+        drivetrain.initialize();
         ui.initialize();
 
         // Run startup commands
@@ -101,7 +101,7 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexer1Hz{drivers, &indexer, -1, 5};
+    commands::IndexerNBallsCommand indexer1Hz{drivers, &indexer, -2, 10};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
     commands::IndexerLoadCommand indexerLoadCommand{drivers, &indexer};
 
