@@ -77,14 +77,14 @@ public:
      */
     virtual ImuState getImuState() const { return imuState; }
 
-    inline float getAx() const override { return imuData.accG.x(); }
-    inline float getAy() const override { return imuData.accG.y(); }
-    inline float getAz() const override { return imuData.accG.z(); }
-    inline float getAzMinusG() const { return imuData.accG.z() - GRAVITY_MPS2; }
+    inline float getAx() const override { return accGTransformed.data[0]; }
+    inline float getAy() const override { return accGTransformed.data[1]; }
+    inline float getAz() const override { return accGTransformed.data[2]; }
+    inline float getAzMinusG() const { return accGTransformed.data[2] - GRAVITY_MPS2; }
 
-    inline float getGx() const override { return imuData.gyroDegPerSec.x(); }
-    inline float getGy() const override { return imuData.gyroDegPerSec.y(); }
-    inline float getGz() const override { return imuData.gyroDegPerSec.z(); }
+    inline float getGx() const override { return gyroDegPerSecTransformed.data[0]; }
+    inline float getGy() const override { return gyroDegPerSecTransformed.data[1]; }
+    inline float getGz() const override { return gyroDegPerSecTransformed.data[2]; }
 
     inline float getTemp() const override { return imuData.temperature; }
 
@@ -132,6 +132,9 @@ protected:
     tap::arch::PeriodicMicroTimer readTimeout;
 
     uint32_t prevIMUDataReceivedTime = 0;
+
+    tap::algorithms::CMSISMat<3, 1> gyroDegPerSecTransformed;
+    tap::algorithms::CMSISMat<3, 1> accGTransformed;
 };
 
 }  // namespace tap::communication::sensors::imu

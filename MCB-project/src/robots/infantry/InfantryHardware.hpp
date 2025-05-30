@@ -5,6 +5,9 @@
 
 #include "drivers.hpp"
 
+
+#include "tap/algorithms/transforms/transform.hpp"
+
 using namespace tap::motor;
 using namespace tap::can;
 
@@ -16,11 +19,18 @@ class InfantryHardware
 public:
     InfantryHardware(src::Drivers* drivers) : drivers(drivers) {
         drivers->i2c.encoder.setAngleInvertedTrue();
+
+        
+        drivers->bmi088.setMountingTransform(imuTransform);
     }
 
     //drivers
     src::Drivers* drivers;
     Servo servo{drivers, tap::gpio::Pwm::C1, 0.3f, 0.2f, 0.01f};
+
+    tap::algorithms::CMSISMat<3, 1> translation{{0,0,0}};
+    tap::algorithms::CMSISMat<3, 3> rotation{{0,-1,0, 1,0,0, 0,0,1}};
+    tap::algorithms::transforms::Transform imuTransform{translation, rotation};
 
     //motors 
     DjiMotor flywheelMotor1{drivers, MotorId::MOTOR5, CanBus::CAN_BUS2, false, "Flywheel"};
