@@ -34,16 +34,16 @@ public:
     // functions we are using
     void initialize() override {
         // Initialize subsystems
-        gimbal.initialize();
+        // gimbal.initialize();
         flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
         ui.initialize();
 
         // Run startup commands
-         gimbal.setDefaultCommand(&stopGimbal);
-         flywheel.setDefaultCommand(&shooterStop);
-         drivetrain.setDefaultCommand(&stopDriveCommand);
+        gimbal.setDefaultCommand(&stopGimbal);
+        flywheel.setDefaultCommand(&shooterStop);
+        drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerLoadCommand);
         
 
@@ -83,9 +83,9 @@ public:
     HeroHardware hardware;
 
     // Subsystems
-     subsystems::UISubsystem ui{drivers};
-     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
-     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
+    subsystems::UISubsystem ui{drivers};
+    subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
+    subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::HeroIndexerSubsystem indexer{drivers, &hardware.indexTopMotor, &hardware.indexBottomMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     // //commands
@@ -98,8 +98,8 @@ public:
     commands::MouseMoveCommand lookMouse{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
 
-     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
-     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
+    commands::ShooterStartCommand shooterStart{drivers, &flywheel};
+    commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
     commands::IndexerNBallsCommand indexer1Hz{drivers, &indexer, -1, 5};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
