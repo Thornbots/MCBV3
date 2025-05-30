@@ -34,10 +34,10 @@ public:
     // functions we are using
     void initialize() override {
         // Initialize subsystems
-        // gimbal.initialize();
+        gimbal.initialize();
         flywheel.initialize();
         indexer.initialize();
-        drivetrain.initialize();
+        // drivetrain.initialize();
         ui.initialize();
 
         // Run startup commands

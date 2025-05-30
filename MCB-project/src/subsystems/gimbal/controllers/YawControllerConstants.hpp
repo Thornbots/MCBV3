@@ -11,7 +11,7 @@ constexpr float UK = 0.3;  // N-m
 constexpr float KB = 0.4538;                                       // V-rad/s
 constexpr float KT = 0.4414;                                       // N-m/A
 constexpr float RA = .5592;                                        // ohm
-constexpr float RATIO = 54.0 / 27.0;                               // unitless
+constexpr float RATIO = 54.0 / 24.0;                               // unitless
                                                                    // Position controller  constexprants
 constexpr float KP = 20;                                           // 10.5;  // sec^-1
 constexpr float THETA_DOT_BREAK = 10;                              // rad/s
