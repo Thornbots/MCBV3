@@ -27,6 +27,7 @@ float HeroIndexerSubsystem::indexAtRate(float ballsPerSecond){
 }
 
 float HeroIndexerSubsystem::loadAtRate(float ballsPerSecond){
+    IndexerSubsystem::indexAtRate(0);
     return bottom.indexAtRate(ballsPerSecond);
 }
 

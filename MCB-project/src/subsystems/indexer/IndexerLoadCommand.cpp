@@ -9,7 +9,7 @@ void IndexerLoadCommand::initialize() {
 
 void IndexerLoadCommand::execute()
 {
-    indexer->loadAtRate(1.0f); // Set the indexer to a low speed
+    indexer->loadAtRate(5.0f); // Set the indexer to a not so low speed
 }
 
 void IndexerLoadCommand::end(bool) {
