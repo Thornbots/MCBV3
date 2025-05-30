@@ -20,6 +20,7 @@ class HeroHardware
 {
 public:
     HeroHardware(src::Drivers* drivers) : drivers(drivers) {
+        drivers->i2c.encoder.setAngleInvertedTrue();
         drivers->bmi088.setMountingTransform(imuTransform);
     }
 

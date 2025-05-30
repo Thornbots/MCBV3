@@ -39,7 +39,7 @@ public:
         indexer.initialize();
         drivetrain.initialize();
         ui.initialize();
-
+        
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
         flywheel.setDefaultCommand(&shooterStop);
@@ -52,7 +52,7 @@ public:
         shootKey.whileTrue(&indexer1Hz)->onTrue(&shooterStart)->onFalse(&indexerLoadCommand);
         unjamButton.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onFalse(&indexerLoadCommand);
         shootButton.whileTrue(&indexer1Hz)->onTrue(&shooterStart)->onFalse(&indexerLoadCommand);
-        autoAimKey./*whileTrue(&autoCommand)->*/onFalse(&lookMouse)->whileTrue(&shooterStart);
+        //autoAimKey./*whileTrue(&autoCommand)->*/onFalse(&lookMouse)->whileTrue(&shooterStart);
         // implement speed mode
 
         toggleUIKey.onTrue(&draw); //press g to restart ui
