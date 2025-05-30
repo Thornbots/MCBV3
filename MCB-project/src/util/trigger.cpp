@@ -62,6 +62,15 @@ Trigger::Trigger(Drivers* drivers, MouseButton mouseButton)
     else m_condition = [drivers]() { return drivers->remote.getMouseR(); };
 
 }
+Trigger::Trigger(Drivers* drivers, MouseScrollDirection direction)
+    : m_drivers(drivers),
+      m_lastValue(false),
+      m_toggleState(false)
+{
+    if(direction == MouseScrollDirection::UP) m_condition =  [drivers]() { return drivers->remote.getMouseZ()>0; };
+    else m_condition = [drivers]() { return drivers->remote.getMouseZ()<0; };
+
+}
 Trigger Trigger::operator&(std::function<bool()> trigger)
 {
     auto triggerCpy = m_condition; //done to lower context switching. Allows dealloc of triggers made in the lambda

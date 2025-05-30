@@ -40,6 +40,12 @@ enum class MouseButton
     RIGHT
 };
 
+enum class MouseScrollDirection
+{
+    UP,
+    DOWN
+};
+
 using namespace tap::communication::serial;
 
 /**
@@ -83,9 +89,16 @@ public:
     /**
      * @brief Constructs a Trigger for left or right mouse button clicks.
      * @param drivers Pointer to the Drivers instance.
-     * @param mouseLR Boolean flag indicating left (false) or right (true) click.
+     * @param button Enum indicating left or right click.
      */
     Trigger(Drivers* drivers, MouseButton button);
+
+    /**
+     * @brief Constructs a Trigger for up or down mouse scrolling.
+     * @param drivers Pointer to the Drivers instance.
+     * @param direction Enum for up or down.
+     */
+    Trigger(Drivers* drivers, MouseScrollDirection direction);
 
     // Operators to combine triggers
     //and operator

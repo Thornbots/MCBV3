@@ -22,6 +22,11 @@ void DrivetrainDriveCommand::execute() {
         y = drivers->remote.keyPressed(Remote::Key::W) - drivers->remote.keyPressed(Remote::Key::S);
         boost = drivers->remote.keyPressed(Remote::Key::SHIFT);
 
+        int scroll = drivers->remote.getMouseZ()/10; //mouse z is in increments of 10
+        linearVelocityMultiplierTimes100 += scroll * LINEAR_VELOCITY_INCREMENT_TIMES_100;
+        if(linearVelocityMultiplierTimes100>MAX_LINEAR_VELOCITY_TIMES_100) linearVelocityMultiplierTimes100 = MAX_LINEAR_VELOCITY_TIMES_100;
+        else if(linearVelocityMultiplierTimes100<MIN_LINEAR_VELOCITY_TIMES_100) linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100;
+
     } else if (controlMode == ControlMode::CONTROLLER) {
         x = drivers->remote.getChannel(Remote::Channel::LEFT_HORIZONTAL);
         y = drivers->remote.getChannel(Remote::Channel::LEFT_VERTICAL);
@@ -32,13 +37,10 @@ void DrivetrainDriveCommand::execute() {
 
     if (driveMode == DriveMode::BEYBLADE) {
         r = 10.5f;
-        x *= 1.75f;
-        y *= 1.75f;
-    } else if (driveMode == DriveMode::BEYBLADE2) {
-        r = 10.5f;
+        x *= linearVelocityMultiplierTimes100 / 100.0f;
+        y *= linearVelocityMultiplierTimes100 / 100.0f;
     } else if (driveMode == DriveMode::NO_SPIN) {
         r = 0;
-
     } else {
         float targetAngle = 0.0f;
         if (driveMode == DriveMode::PEEK_LEFT) {
