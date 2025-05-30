@@ -92,8 +92,6 @@ public:
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
-        // drivers->terminalSerial.update(); //wait we were triple updating? remove for cv
-
     }
 
     src::Drivers *drivers;
