@@ -49,7 +49,7 @@ public:
 
         // Mouse and Keyboard mappings
         unjamKey.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onFalse(&indexerLoadCommand);
-        shootKey.whileTrue(&indexer1Hz)->onTrue(&shooterStart)->onFalse(&indexerLoadCommand);
+        shootKey.onTrue(&indexer1Hz)->onTrue(&shooterStart)->onFalse(&indexerLoadCommand);
         unjamButton.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onFalse(&indexerLoadCommand);
         shootButton.whileTrue(&indexer1Hz)->onTrue(&shooterStart)->onFalse(&indexerLoadCommand);
         //autoAimKey./*whileTrue(&autoCommand)->*/onFalse(&lookMouse)->whileTrue(&shooterStart);
@@ -101,7 +101,7 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexer1Hz{drivers, &indexer, -2, 10};
+    commands::IndexerNBallsCommand indexer1Hz{drivers, &indexer, 1, 10};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
     commands::IndexerLoadCommand indexerLoadCommand{drivers, &indexer};
 
