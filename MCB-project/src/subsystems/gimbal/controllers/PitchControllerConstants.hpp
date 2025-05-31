@@ -43,21 +43,21 @@ constexpr float TAKEBACK = 0.05;                // unitless
 
 constexpr float RATIO = 1;         // unitless
 constexpr float VOLT_MAX = 24;   // V
-constexpr float ACCEL_MAX = 240.0;  // rad/s^2
+constexpr float ACCEL_MAX = 3200.0;  // rad/s^2
 
 // Position controller constants
-constexpr float KP = 12;  // sec^-1
+constexpr float KP = 25;  // sec^-1
 
 // Feedforward constants
-constexpr float KSTATIC = 0.1;  // A
-constexpr float KF = 0.0;      //-0.001;                     // A
+constexpr float KSTATIC = 0;  // A
+constexpr float KF = -.8;      //-0.001;                     // A
 
 // Velocity feedback
-constexpr float KPV = 0.4;                      // 0.3                  // A-s/rad
-constexpr float KIV = 6;                        // 2                 // A/rad
+constexpr float KPV = .2; //0.4;                      // 0.3                  // A-s/rad
+constexpr float KIV = 6; //6;                        // 2                 // A/rad
 constexpr float IV_MAX = 1.5 / KIV;             // A
 constexpr float INT_THRESH = VOLT_MAX * 0.85l;  // V
-constexpr float TAKEBACK = 0.01;                // unitless
+constexpr float TAKEBACK = 0.1;                // unitless
 #else
 
 constexpr float RATIO = 1;         // unitless
