@@ -27,7 +27,7 @@ void GimbalSubsystem::refresh() {
 
     yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
 
-#if defined(INFANTRY)
+#if defined(INFANTRY) or defined(HERO)
     gimbalPitchAngularVelocity = drivers->bmi088.getGx() * PI / 180;
 
     // this happens to work because the X axis is alined with the pitch axis
@@ -44,7 +44,7 @@ void GimbalSubsystem::refresh() {
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
     float pitchVel = getPitchVel();
     float pitch = getPitchEncoderValue();
-#if defined(INFANTRY)  // chicken mode, gets bad when imu drifts
+#if defined(INFANTRY) or defined(HERO) // chicken mode, gets bad when imu drifts
     targetPitch -= gimbalPitchAngleRelativeWorld;
     pitchVel += gimbalPitchAngularVelocity;
 #endif
