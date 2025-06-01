@@ -7,7 +7,7 @@
 #endif
 
 #include "subsystems/ui/UISubsystem.hpp"
-#include "subsystems/ui/UIDrawCommand.hpp"
+#include "subsystems/ui/InfantryDrawCommand.hpp"
 
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
@@ -24,7 +24,6 @@
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
-#include "subsystems/ui/UISubsystem.hpp"
 #include "subsystems/servo/ServoSubsystem.hpp"
 #include "subsystems/servo/OpenServoCommand.hpp"
 #include "subsystems/servo/CloseServoCommand.hpp"
@@ -111,7 +110,7 @@ public:
 
 
     // //commands
-    commands::UIDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &servo};
+    commands::InfantryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &servo};
     commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
     // commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
 

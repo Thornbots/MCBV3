@@ -5,17 +5,14 @@
 #include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 #include "subsystems/flywheel/FlywheelSubsystem.hpp"
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
-#include "subsystems/indexer/IndexerSubsystem.hpp"
+#include "subsystems/indexer/HeroIndexerSubsystem.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
-#include "subsystems/servo/ServoSubsystem.hpp"
 
 #include "util/ui/GraphicsContainer.hpp"
 #include "ChassisOrientationIndicator.hpp"
 #include "LaneAssistLines.hpp"
 #include "Reticle.hpp"
 #include "SupercapChargeIndicator.hpp"
-#include "PeekingLines.hpp"
-#include "HopperLidIndicator.hpp"
 #include "TestFill.hpp"
 #include "TestGraphics.hpp"
 #include "drivers.hpp"
@@ -23,16 +20,15 @@
 namespace commands {
 using subsystems::UISubsystem;
 
-class InfantryDrawCommand : public tap::control::Command, GraphicsContainer {
+class HeroDrawCommand : public tap::control::Command, GraphicsContainer {
 public:
-    InfantryDrawCommand(tap::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain, ServoSubsystem* servo)
+    HeroDrawCommand(tap::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, HeroIndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain)
         : drivers(drivers),
           ui(ui),
           gimbal(gimbal),
           flywheel(flywheel),
           indexer(indexer),
-          drivetrain(drivetrain),
-          servo(servo) {
+          drivetrain(drivetrain) {
         addSubsystemRequirement(ui);
 
         // addGraphicsObject(&testGraphics);
@@ -41,8 +37,6 @@ public:
         addGraphicsObject(&lane);
         addGraphicsObject(&supercap);
         addGraphicsObject(&orient);
-        addGraphicsObject(&peek);
-        addGraphicsObject(&lid);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -51,8 +45,6 @@ public:
         lane.update();
         supercap.update();
         orient.update();
-        peek.update();
-        lid.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -67,9 +59,8 @@ private:
     UISubsystem* ui; 
     GimbalSubsystem* gimbal;
     FlywheelSubsystem* flywheel;
-    IndexerSubsystem* indexer;
+    HeroIndexerSubsystem* indexer;
     DrivetrainSubsystem* drivetrain;
-    ServoSubsystem* servo;
 
     // add top level graphics objects here and in the constructor
     // TestGraphics testGraphics{};
@@ -78,7 +69,5 @@ private:
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
     ChassisOrientationIndicator orient{gimbal};
-    PeekingLines peek{drivetrain, gimbal};
-    HopperLidIndicator lid{servo};
 };
 }  // namespace commands

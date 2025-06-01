@@ -3,7 +3,7 @@
 #include "robots/hero/HeroHardware.hpp"
 
 #include "subsystems/ui/UISubsystem.hpp"
-#include "subsystems/ui/UIDrawCommand.hpp"
+#include "subsystems/ui/HeroDrawCommand.hpp"
 
 #include "subsystems/indexer/HeroIndexerSubsystem.hpp"
 
@@ -75,7 +75,7 @@ public:
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
 
     // //commands
-    // commands::UIDrawCommand draw{&ui};
+    commands::HeroDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};
 
     commands::JoystickMoveCommand look{drivers, &gimbal};
     commands::MouseMoveCommand look2{drivers, &gimbal};
