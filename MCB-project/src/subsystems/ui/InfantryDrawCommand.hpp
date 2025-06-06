@@ -43,6 +43,7 @@ public:
         addGraphicsObject(&orient);
         addGraphicsObject(&peek);
         addGraphicsObject(&lid);
+        addGraphicsObject(&reticle);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -53,6 +54,7 @@ public:
         orient.update();
         peek.update();
         lid.update();
+        reticle.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -80,5 +82,6 @@ private:
     ChassisOrientationIndicator orient{gimbal};
     PeekingLines peek{drivetrain, gimbal};
     HopperLidIndicator lid{servo};
+    Reticle reticle{gimbal};
 };
 }  // namespace commands

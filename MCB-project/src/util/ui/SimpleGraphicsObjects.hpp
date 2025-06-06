@@ -12,6 +12,8 @@ public:
           y2(y2),
           thickness(thickness) {}
 
+    Line() : Line(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 0, 1) {}
+
     virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
         RefSerialTransmitter::configLine(thickness, x1, y1, x2, y2, graphicData);
         setPrev();
@@ -45,6 +47,8 @@ public:
           height(height),
           thickness(thickness) {}
 
+    UnfilledRectangle() : UnfilledRectangle(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 0, 1) {}
+
     virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
         RefSerialTransmitter::configRectangle(thickness, x, y, width + x, height + y, graphicData);
         setPrev();
@@ -71,6 +75,8 @@ private:
 class UnfilledCircle : public SimpleGraphicsObject {
 public:
     UnfilledCircle(RefSerialData::Tx::GraphicColor color, uint16_t cx, uint16_t cy, uint16_t r, uint16_t thickness) : SimpleGraphicsObject(color), cx(cx), cy(cy), r(r), thickness(thickness) {}
+
+    UnfilledCircle() : UnfilledCircle(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 1) {}
 
     virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
         RefSerialTransmitter::configCircle(thickness, cx, cy, r, graphicData);
@@ -103,6 +109,8 @@ public:
           width(width),
           height(height),
           thickness(thickness) {}
+
+    UnfilledEllipse() : UnfilledEllipse(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 0, 1) {}
 
     virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
         RefSerialTransmitter::configEllipse(thickness, cx, cy, width, height, graphicData);
@@ -139,14 +147,19 @@ public:
           height(height),
           thickness(thickness) {}
 
+    Arc() : Arc(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 0, 0, 0, 1) {}
+
     virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
         RefSerialTransmitter::configArc(startAngle, endAngle, thickness, cx, cy, width, height, graphicData);
         setPrev();
     }
 
-    bool needsRedrawn() final { return !(prevThickness == thickness && prevCx == cx && prevCy == cy && prevWidth == width && prevHeight == height && prevColor == color && prevStartAngle == startAngle&&prevEndAngle == endAngle); }
+    bool needsRedrawn() final {
+        return !(
+            prevThickness == thickness && prevCx == cx && prevCy == cy && prevWidth == width && prevHeight == height && prevColor == color && prevStartAngle == startAngle && prevEndAngle == endAngle);
+    }
 
-    uint16_t startAngle, endAngle;  // can set this directly, will appear next time drawn, 0 is up, positive is clockwise, in degrees
+    uint16_t startAngle, endAngle;              // can set this directly, will appear next time drawn, 0 is up, positive is clockwise, in degrees
     uint16_t cx, cy, width, height, thickness;  // can set this directly, will appear next time drawn
 
 private:
@@ -191,12 +204,11 @@ public:
     }
 
 private:
-
     // need to test/tune, was from ui website
     static constexpr uint16_t WIDTH_OFFSET_MULT = 19;
     static constexpr uint16_t WIDTH_OFFSET_DIV = 47;
 
-    void calculateWidth() { width = fontSize * len - fontSize*WIDTH_OFFSET_MULT / WIDTH_OFFSET_DIV; }
+    void calculateWidth() { width = fontSize * len - fontSize * WIDTH_OFFSET_MULT / WIDTH_OFFSET_DIV; }
 
 protected:
     uint16_t fontSize, textX, textY = 0;  // can read these, but don't set these, set with setTextNumbers
@@ -309,7 +321,7 @@ private:
 
 class StringGraphic : public SimpleGraphicsObject, public TextSizer {
 private:
-    static constexpr int STRING_SIZE = 31; //not sure if it should be 30 or 31
+    static constexpr int STRING_SIZE = 31;  // not sure if it should be 30 or 31
 
 public:
     StringGraphic(const char* newString, UnfilledRectangle* rect) : SimpleGraphicsObject(rect->color), TextSizer(stringLen(newString)), thickness(rect->thickness) {
@@ -324,9 +336,7 @@ public:
         setString(newString);
     }
 
-    void setString(const char* newString) {
-        strncpy(string, newString, STRING_SIZE);
-    }
+    void setString(const char* newString) { strncpy(string, newString, STRING_SIZE); }
 
     void configCharacterData(RefSerialData::Tx::GraphicCharacterMessage* characterData) final {
         setLen(stringLen(string));
@@ -359,5 +369,4 @@ private:
     uint16_t prevX, prevY, prevHeight, prevThickness = 0;
     char oldString[STRING_SIZE];
     RefSerialData::Tx::GraphicColor prevColor;
-
 };

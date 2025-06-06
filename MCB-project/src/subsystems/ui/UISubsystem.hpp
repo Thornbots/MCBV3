@@ -1,9 +1,8 @@
 #pragma once
-#include "tap/algorithms/smooth_pid.hpp"
+
 #include "tap/architecture/periodic_timer.hpp"
 #include "tap/board/board.hpp"
 #include "tap/control/subsystem.hpp"
-#include "tap/motor/dji_motor.hpp"
 #include "tap/communication/serial/ref_serial_transmitter.hpp"
 
 #include "drivers.hpp"

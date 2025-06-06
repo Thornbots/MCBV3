@@ -37,6 +37,7 @@ public:
         addGraphicsObject(&lane);
         addGraphicsObject(&supercap);
         addGraphicsObject(&orient);
+        addGraphicsObject(&reticle);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -45,6 +46,7 @@ public:
         lane.update();
         supercap.update();
         orient.update();
+        reticle.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -69,5 +71,6 @@ private:
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
     ChassisOrientationIndicator orient{gimbal};
+    Reticle reticle{gimbal};
 };
 }  // namespace commands
