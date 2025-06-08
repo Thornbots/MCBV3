@@ -14,6 +14,7 @@
 #include "Reticle.hpp"
 #include "SupercapChargeIndicator.hpp"
 #include "HitRing.hpp"
+#include "PredictedRemainingShotsIndicator.hpp"
 #include "TestFill.hpp"
 #include "TestGraphics.hpp"
 #include "drivers.hpp"
@@ -40,6 +41,7 @@ public:
         addGraphicsObject(&orient);
         addGraphicsObject(&reticle);
         addGraphicsObject(&ring);
+        addGraphicsObject(&remain);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -50,6 +52,7 @@ public:
         orient.update();
         reticle.update();
         ring.update();
+        remain.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -57,7 +60,7 @@ public:
 
     bool isFinished() const override { return false; };  // never done drawing ui
 
-    const char* getName() const override { return "ui draw command"; }
+    const char* getName() const override { return "hero ui draw command"; }
 
 private:
     tap::Drivers* drivers;
@@ -76,5 +79,6 @@ private:
     ChassisOrientationIndicator orient{gimbal};
     Reticle reticle{gimbal};
     HitRing ring{drivers, gimbal};
+    PredictedRemainingShotsIndicator remain{indexer};
 };
 }  // namespace commands

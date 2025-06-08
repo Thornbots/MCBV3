@@ -17,6 +17,7 @@
 #include "PeekingLines.hpp"
 #include "HopperLidIndicator.hpp"
 #include "HitRing.hpp"
+#include "PredictedRemainingShotsIndicator.hpp"
 #include "TestFill.hpp"
 #include "TestGraphics.hpp"
 #include "drivers.hpp"
@@ -46,6 +47,7 @@ public:
         addGraphicsObject(&lid);
         addGraphicsObject(&reticle);
         addGraphicsObject(&ring);
+        addGraphicsObject(&remain);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -58,6 +60,7 @@ public:
         lid.update();
         reticle.update();
         ring.update();
+        remain.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -65,7 +68,7 @@ public:
 
     bool isFinished() const override { return false; };  // never done drawing ui
 
-    const char* getName() const override { return "ui draw command"; }
+    const char* getName() const override { return "infantry ui draw command"; }
 
 private:
     tap::Drivers* drivers;
@@ -87,5 +90,6 @@ private:
     HopperLidIndicator lid{servo};
     Reticle reticle{gimbal};
     HitRing ring{drivers, gimbal};
+    PredictedRemainingShotsIndicator remain{indexer};
 };
 }  // namespace commands
