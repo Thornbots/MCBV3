@@ -16,6 +16,7 @@
 #include "SupercapChargeIndicator.hpp"
 #include "PeekingLines.hpp"
 #include "HopperLidIndicator.hpp"
+#include "HitRing.hpp"
 #include "TestFill.hpp"
 #include "TestGraphics.hpp"
 #include "drivers.hpp"
@@ -44,6 +45,7 @@ public:
         addGraphicsObject(&peek);
         addGraphicsObject(&lid);
         addGraphicsObject(&reticle);
+        addGraphicsObject(&ring);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -55,6 +57,7 @@ public:
         peek.update();
         lid.update();
         reticle.update();
+        ring.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -83,5 +86,6 @@ private:
     PeekingLines peek{drivetrain, gimbal};
     HopperLidIndicator lid{servo};
     Reticle reticle{gimbal};
+    HitRing ring{drivers, gimbal};
 };
 }  // namespace commands
