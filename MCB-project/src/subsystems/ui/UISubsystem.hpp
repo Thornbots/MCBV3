@@ -5,7 +5,7 @@
 #include "tap/control/subsystem.hpp"
 #include "tap/communication/serial/ref_serial_transmitter.hpp"
 
-#include "drivers.hpp"
+#include "tap/drivers.hpp"
 #include "util/ui/GraphicsContainer.hpp"
 #include "modm/processing/protothread/protothread.hpp"
 
@@ -49,7 +49,7 @@ private:  // Private Variables
     GraphicsContainer* topLevelContainer = nullptr;
 
 public:  // Public Methods
-    UISubsystem(tap::Drivers* driver);
+    UISubsystem(tap::Drivers* drivers);
     ~UISubsystem() {}  // Intentionally blank
 
 

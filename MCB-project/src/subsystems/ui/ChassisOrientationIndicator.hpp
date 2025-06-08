@@ -36,9 +36,13 @@ public:
     }
 
 
-    void fixAngle(uint16_t* a) {
+    static void fixAngle(uint16_t* a) {
         *a %= 360;  // set a to the remainder after dividing by 360, so if it was 361 it would now be 1
     }
+
+    static constexpr float YAW_MULT = 180 / PI;  // turns radians from gimbal's getYawEncoderValue into degrees, might need to be negative
+    static constexpr float YAW_OFFSET = 360;     // degrees, 0 from the yaw might not be top on the screen, also needs to make sure it is positive because we are using uints
+    //YAW_OFFSET might not be necessary, need to test it (ChassisOrientationIndicator and HitRing would be affected)
 
 private:
     GimbalSubsystem* gimbal;
@@ -48,9 +52,6 @@ private:
     static constexpr uint16_t INNER_ARC_LEN = 40;  // Used if the arcs are supposed to be inside the barrel heat circle, degrees
     static constexpr uint16_t OUTER_SIZE = 180;    // Used if the arcs are supposed to be outside the barrel heat circle, pixels
     static constexpr uint16_t OUTER_ARC_LEN = 30;  // Used if the arcs are supposed to be outside the barrel heat circle, degrees
-
-    static constexpr float YAW_MULT = 180 / PI;  // turns radians from gimbal's getYawEncoderValue into degrees, might need to be negative
-    static constexpr float YAW_OFFSET = 360;     // degrees, 0 from the yaw might not be top on the screen, also needs to make sure it is positive because we are using uints
 
     Arc left{UISubsystem::Color::RED_AND_BLUE, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, INNER_SIZE, INNER_SIZE, 0, 90, THICKNESS};
     Arc right{UISubsystem::Color::RED_AND_BLUE, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, INNER_SIZE, INNER_SIZE, 0, 90, THICKNESS};
