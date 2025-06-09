@@ -20,7 +20,7 @@ public:
     virtual bool needsRedrawn() = 0;
 
     GraphicsObject* getNext() final {
-        if (countIndex == 0 && (isHidden!=wasHidden || needsRedrawn())) {
+        if (countIndex == 0 && !markedToDraw && (isHidden!=wasHidden || needsRedrawn())) {
             countIndex = 1;
             return this;
         }
@@ -60,6 +60,14 @@ public:
         isHidden = false;
     }
 
+    void resetDrawMarks() final {
+        markedToDraw = false;
+    }
+
+    void markToDraw() final {
+        markedToDraw = true;
+    }
+
 private:
     RefSerialData::Tx::GraphicOperation getNextOperation() {
         if(isHidden){
@@ -75,6 +83,7 @@ private:
 protected:
     bool isHidden = false;
     bool wasHidden = true;
+    bool markedToDraw = false;
 
     uint8_t graphicNameArray[3];
 };

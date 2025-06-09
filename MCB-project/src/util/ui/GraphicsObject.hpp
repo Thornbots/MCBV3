@@ -91,6 +91,9 @@ public:
         hidden ? hide() : show();
     }
 
+    virtual void resetDrawMarks() = 0;
+    virtual void markToDraw() {}; //only applies to objects, marking a container to draw doesn't make sense
+
 protected:
     u_int16_t countIndex = 0;
 };

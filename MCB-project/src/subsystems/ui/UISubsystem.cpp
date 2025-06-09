@@ -64,6 +64,7 @@ bool UISubsystem::run() {
     graphicsIndex=0; //might start with one or two already in the array from last time, so set it once outside of the loop
     while (topLevelContainer && !needToRestart) {
         timesResetIteration = 0;
+        topLevelContainer->resetDrawMarks();
         while (timesResetIteration<2) {
             nextGraphicsObject = topLevelContainer->getNext();
 
@@ -85,8 +86,8 @@ bool UISubsystem::run() {
                 objectsToSend[graphicsIndex++] = nextGraphicsObject;
                 if (graphicsIndex == TARGET_NUM_OBJECTS) break; //if full, stop trying to find more
 
-                //mark the object as 'drawn' to prevent it from being gotten again from the container
-                objectsToSend[0]->configGraphicData(&message1.graphicData);
+                //mark the object as 'to draw' to prevent it from being gotten again from the container
+                objectsToSend[0]->markToDraw();
             }
         }
         

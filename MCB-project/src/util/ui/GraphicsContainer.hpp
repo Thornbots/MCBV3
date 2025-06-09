@@ -69,6 +69,13 @@ public:
         }
     }
 
+    void resetDrawMarks() final {
+        for (GraphicsObject* p : objects) {
+            p->resetDrawMarks();
+        }
+    }
+
+
 private:
     std::vector<GraphicsObject*> objects;
 };
