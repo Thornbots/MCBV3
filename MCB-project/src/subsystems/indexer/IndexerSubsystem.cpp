@@ -63,6 +63,10 @@ float IndexerSubsystem::getNumBallsShot() {
     return counter.getRecentNumBallsShot();
 }
 
+float IndexerSubsystem::getTotalNumBallsShot() {
+    return counter.getTotalNumBallsShot();
+}
+
 void IndexerSubsystem::resetBallsCounter() {
     counter.resetRecentBallsCounter();
 }
