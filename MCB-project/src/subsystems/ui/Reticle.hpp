@@ -12,14 +12,16 @@ using namespace subsystems;
 class Reticle : public GraphicsContainer {
 public:
     Reticle(GimbalSubsystem* gimbal) : gimbal(gimbal) {
-        addGraphicsObject(&rectsContainer);
-        addGraphicsObject(&linesContainer);
-        // addGraphicsObject(&curvesContainer);
-
         for(int i=0;i<NUM_THINGS;i++){
             rects[i].color = COLORS[i];
             lines[i].color = COLORS[i];
+            rectsContainer.addGraphicsObject(rects+i);
+            linesContainer.addGraphicsObject(lines+i);
         }
+        
+        addGraphicsObject(&rectsContainer);
+        addGraphicsObject(&linesContainer);
+        // addGraphicsObject(&curvesContainer);
 
         updateHidden();
 
@@ -28,19 +30,19 @@ public:
     void update() {
         float pitch = gimbal->getPitchEncoderValue();
         Vector3d temp{0,initialShotVelocity,0};
-        Vector3d initialVelo = temp.rotatePitch(pitch);
+        Vector3d initialVelo = temp.rotatePitch(-pitch);
 
         Vector3d initialPos{0,0,0}; //shot starts in barrel space
         temp = Projections::barrelSpaceToPivotSpace(initialPos);
-        initialPos = temp.rotatePitch(pitch);
+        initialPos = temp.rotatePitch(-pitch);
 
         //initialPos and initialVelo are in pivot space, parallel to the ground so gravity is pulling in the -z direction only
         
         //NUM_THINGS applies with rectangles and lines (so far, other modes may be added)
         if(mode==ReticleMode::RECTANGLES || mode==ReticleMode::LINES)
             for(int i=0;i<NUM_THINGS;i++){
-                float t = (DISTANCES[i] - initialPos.getY()) / initialVelo.getY(); //(distance to travel) divided by (speed to get there) gives (time to get there)
-                float zFinal = initialPos.getZ() + initialVelo.getZ() * t + tap::algorithms::ACCELERATION_GRAVITY/2 * t * t;
+                float t = (DISTANCES[i] - initialPos.getY()) / initialVelo.getY(); //(distance to travel [meters]) divided by (speed to get there [meters/seconds]) gives (time to get there [seconds])
+                float zFinal = initialPos.getZ() + initialVelo.getZ() * t - tap::algorithms::ACCELERATION_GRAVITY/2 * t * t; //make sure gravity is negative, the taproot constant is positive, need to subtract
                 Vector3d landingSpot{initialPos.getX(), DISTANCES[i], zFinal}; //side to side doesn't change, we are defining the down range distance, and we calculated the height off the ground
 
                 if(mode==ReticleMode::RECTANGLES){
@@ -103,9 +105,9 @@ private:
 
     
     //for rectangles and lines
-    static constexpr int NUM_THINGS = 6;
-    static constexpr float DISTANCES[NUM_THINGS] = {0.5, 1, 2, 5, 9, 12}; //y distances, in meters
-    static constexpr UISubsystem::Color COLORS[NUM_THINGS] = {UISubsystem::Color::PURPLISH_RED, UISubsystem::Color::PINK, UISubsystem::Color::ORANGE, UISubsystem::Color::YELLOW, UISubsystem::Color::GREEN, UISubsystem::Color::CYAN};
+    static constexpr int NUM_THINGS = 1;
+    static constexpr float DISTANCES[NUM_THINGS] = {12/*, 2, 3, 4, 5, 6*/}; //y distances, in meters
+    static constexpr UISubsystem::Color COLORS[NUM_THINGS] = {UISubsystem::Color::PURPLISH_RED/*, UISubsystem::Color::PINK, UISubsystem::Color::ORANGE, UISubsystem::Color::YELLOW, UISubsystem::Color::GREEN, UISubsystem::Color::CYAN*/};
 
     UnfilledRectangle rects[NUM_THINGS];
     Line lines[NUM_THINGS];
@@ -114,9 +116,9 @@ private:
         //maybe make it so that objects at the same index have the same graphics name, so instead of hide one show another replace
         //would require an ExclusiveContainer or SelectionContainer, each has one graphics name and many graphics objects, and you can set which is selected
         //but for now assume reticle doesn't change mode very often (if ever)
-        rectsContainer.setHidden(mode==ReticleMode::RECTANGLES);
-        linesContainer.setHidden(mode==ReticleMode::LINES);
-        // curvesContainer.setHidden(mode==ReticleMode::CURVES);
+        rectsContainer.setHidden(mode!=ReticleMode::RECTANGLES); //hidden if not rects
+        linesContainer.setHidden(mode!=ReticleMode::LINES); //hidden if not lines
+        // curvesContainer.setHidden(mode!=ReticleMode::CURVES);
     }
 
     Vector2d project(Vector3d in, float pitch){

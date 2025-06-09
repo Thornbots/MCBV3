@@ -25,6 +25,7 @@ public:
             rings[i].cy = UISubsystem::HALF_SCREEN_HEIGHT;
             expirationTimeouts[i].stop();        // timers might be initialized started, we need them to be stopped until we get hit
             this->addGraphicsObject(rings + i);  // pointer math
+            rings[i].hide();
         }
     }
 

@@ -42,7 +42,7 @@ static constexpr float OFFSET_Z_PITCH_PIVOT_TO_VTM = 0.0072336; //meters, vertic
 
 static constexpr float OFFSET_X_PITCH_PIVOT_TO_BARREL = 0; //meters, like OFFSET_X_PITCH_PIVOT_TO_VTM but for where shots exit. Exit velocity is in JetsonSubsystemConstants.hpp, as J
 static constexpr float OFFSET_Y_PITCH_PIVOT_TO_BARREL = 0.1555; //meters
-static constexpr float OFFSET_Z_PITCH_PIVOT_TO_BARREL = 0.0072336; //meters
+static constexpr float OFFSET_Z_PITCH_PIVOT_TO_BARREL = 0; //meters
 #else                    // old infantry, todo
 //no OFFSET_X_ROBOT_TO_PITCH_PIVOT because pitch rotates around x
 static constexpr float OFFSET_Y_ROBOT_TO_PITCH_PIVOT = 0;  // meters, forward distance from robot center to pitch rotate point, positive means it is in front of robot center
