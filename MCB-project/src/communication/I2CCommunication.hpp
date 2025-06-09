@@ -23,7 +23,9 @@ public:
 
     void refresh() { 
         encoder.run(); 
-        // odom.run();
+        #if defined(SENTRY)
+        odom.run();
+        #endif
     }
 
     MT6701<I2cMaster2> encoder{};

@@ -5,6 +5,9 @@
 
 #include "drivers.hpp"
 
+
+#include "tap/algorithms/transforms/transform.hpp"
+
 using namespace tap::motor;
 using namespace tap::can;
 

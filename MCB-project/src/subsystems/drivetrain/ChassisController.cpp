@@ -6,16 +6,6 @@
 #include <string>
 // TODO: Calculate function that takes in target x, y velocities as well as a target angle as inputs, outputs 4 motor current summations
 
-float test1;
-float test2;
-float test3;
-float test4;
-float test5;
-float test6;
-float test7;
-float test8;
-float test9;
-
 namespace subsystems {
 ChassisController::ChassisController() {
     targetVelocityHistory = new float[Q_SIZE];
