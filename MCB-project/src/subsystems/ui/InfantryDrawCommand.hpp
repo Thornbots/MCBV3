@@ -90,6 +90,6 @@ private:
     HopperLidIndicator lid{servo};
     Reticle reticle{gimbal};
     HitRing ring{drivers, gimbal};
-    PredictedRemainingShotsIndicator remain{indexer};
+    PredictedRemainingShotsIndicator remain{drivers, indexer};
 };
 }  // namespace commands

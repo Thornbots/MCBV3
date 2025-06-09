@@ -104,7 +104,7 @@ private:
     float hitOrientations[NUM_HISTORY];
 
     void updateRing(int i, uint16_t heading) {
-        rings[i].startAngle = heading - hitOrientations[NUM_HISTORY] - ARC_LEN / 2;
+        rings[i].startAngle = heading - hitOrientations[i] - ARC_LEN / 2;
         ChassisOrientationIndicator::fixAngle(&rings[i].startAngle);
         rings[i].endAngle = rings[i].startAngle + ARC_LEN;
     }
