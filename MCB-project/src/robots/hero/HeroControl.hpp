@@ -36,7 +36,7 @@ public:
         // Initialize subsystems
         gimbal.initialize();
         flywheel.initialize();
-        indexer.initialize();
+        indexer.initialize(); //geometry issue or something, it physically doesn't work right now
         drivetrain.initialize();
         ui.initialize();
         
@@ -55,7 +55,7 @@ public:
         //autoAimKey./*whileTrue(&autoCommand)->*/onFalse(&lookMouse)->whileTrue(&shooterStart);
         // implement speed mode
 
-        toggleUIKey.onTrue(&draw); //press g to restart ui
+        toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
         drivers->commandScheduler.addCommand(&draw);
    
         // drive commands and also enable mouse looking

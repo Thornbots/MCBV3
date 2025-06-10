@@ -109,7 +109,7 @@ private:
     // GraphicsContainer curvesContainer{};
     GimbalSubsystem* gimbal;
 
-    ReticleDrawMode mode = ReticleDrawMode::RECTANGLES;
+    ReticleDrawMode mode = ReticleDrawMode::LINES;
 
     
     //for rectangles and lines

@@ -18,7 +18,7 @@ static void initializeIo(src::Drivers *drivers) {
 
     //if controller is on when the robot turns on, wait for it to be off.
     //This is to prevent the shredding of wires
-    modm::delay_ms(1000);
+    modm::delay_ms(3000);
     drivers->leds.set(tap::gpio::Leds::Red, true);
     int i = 0;
     while(i < 5000){
