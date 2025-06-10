@@ -15,16 +15,20 @@ namespace subsystems
 class IndexerSubsystem : public tap::control::Subsystem
 {
 
+    
+public: 
+ShotCounter counter;
+
 protected:  // Private Variables
 src::Drivers* drivers;
 tap::motor::DjiMotor* motorIndexer;
 tap::algorithms::SmoothPid indexPIDController;
-ShotCounter counter;
 float revPerBall;
 
 float ballsPerSecond = 0.0f;
 static constexpr int MAX_INDEX_RPM = 17000;
 int32_t indexerVoltage = 0;
+
 
 public:  // Public Methods
 

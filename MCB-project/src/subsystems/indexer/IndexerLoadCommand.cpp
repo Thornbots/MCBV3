@@ -18,6 +18,6 @@ void IndexerLoadCommand::end(bool) {
 
 bool IndexerLoadCommand::isFinished(void) const {
     // Check if the indexer has loaded the balls
-    return indexer->isProjectileAtBeam() || !drivers->remote.isConnected(); // Assuming 5 is the number of balls to load
+    return indexer->isProjectileAtBeam() || !drivers->remote.isConnected();
 }
 }  // namespace commands

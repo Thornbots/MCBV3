@@ -22,11 +22,15 @@ void HeroIndexerSubsystem::refresh() {
 }
 
 float HeroIndexerSubsystem::indexAtRate(float ballsPerSecond){
+    IndexerSubsystem::counter.enable();
+    bottom.counter.enable();
     IndexerSubsystem::indexAtRate(ballsPerSecond);
     return bottom.indexAtRate(ballsPerSecond);
 }
 
 float HeroIndexerSubsystem::loadAtRate(float ballsPerSecond){
+    IndexerSubsystem::counter.disable();
+    bottom.counter.disable();
     IndexerSubsystem::indexAtRate(ballsPerSecond);
     return bottom.indexAtRate(ballsPerSecond);
 }
