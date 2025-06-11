@@ -18,8 +18,8 @@ public:
 
     virtual void refresh() override;
 
-    virtual float indexAtRate(float ballsPerSecond);
-    float loadAtRate(float ballsPerSecond);
+    virtual float indexAtRate(float inputBallsPerSecond);
+    float loadAtRate(float inputBallsPerSecond);
     virtual void indexAtMaxRate();
 
     //counter stuff doesn't change
@@ -28,6 +28,11 @@ public:
 
 private:
 IndexerSubsystem bottom;
+
+tap::arch::MilliTimeout timeout;
+bool isAutoUnjamming = false;
+
+bool doAutoUnjam(float inputBallsPerSecond);
 
 };
 

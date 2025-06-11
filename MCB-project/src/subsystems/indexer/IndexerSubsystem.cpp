@@ -71,4 +71,8 @@ float IndexerSubsystem::getBallsPerSecond() {
     return ballsPerSecond;
 }
 
+float IndexerSubsystem::getActualBallsPerSecond() {
+    return motorIndexer->getShaftRPM() / (60.0f * revPerBall);
+}
+
 } //namespace subsystems

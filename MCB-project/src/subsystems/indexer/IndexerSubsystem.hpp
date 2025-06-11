@@ -55,6 +55,8 @@ virtual void resetBallsCounter();
 
 virtual float getBallsPerSecond();
 
+float getActualBallsPerSecond();
+
 private:  // Private Methods
 
 void setTargetMotorRPM(int targetMotorRPM);

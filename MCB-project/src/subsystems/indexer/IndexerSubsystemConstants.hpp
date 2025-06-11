@@ -3,6 +3,13 @@
 
 constexpr static int INDEXER_MOTOR_MAX_SPEED = 18000; //6177; // With the 2006, this should give
 
+
+//only hero has unjam code for now
+constexpr static float AUTO_UNJAM_BALLS_PER_SEC_THRESH = 0.2;  // balls/sec, if the motor gets stopped or slowed enough to be below this speed, the index will consider unjamming
+constexpr static float AUTO_UNJAM_TIME_UNDER_THRESH = 0.05;      // sec, if the motor gets stopped or slowed enough for this time, the index will start to unjam
+constexpr static float AUTO_UNJAM_TIME_UNJAMMING = 0.5;         // sec, once unjamming, it will continue unjamming for this long
+
+
 #if defined(HERO)
 // motor ratio * ball rolling * diameter or spacing of balls / wheel circumference
 constexpr static float REV_PER_BALL = 42.0f / (50.0f * 3.1415926353f) * 2.0f * 36.0f; // GUESS, this value should be tuned since it isn't exactly known
