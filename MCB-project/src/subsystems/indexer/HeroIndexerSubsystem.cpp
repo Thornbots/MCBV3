@@ -21,57 +21,24 @@ void HeroIndexerSubsystem::refresh() {
     bottom.refresh();
 }
 
-bool HeroIndexerSubsystem::doAutoUnjam(float inputBallsPerSecond) {
-    //if unjamming
-    if(isAutoUnjamming){
-        if(timeout.isExpired()){
-            timeout.stop();
-            isAutoUnjamming = false;
-        } else if (inputBallsPerSecond > 0) {
-            //prevent infinite recursion, unjam calls indexAtRate with a negative number
-            unjam();
-            return true;
-        }
-    }
-    
-    //if we are here, isAutoUnjamming is false or inputBallsPerSecond<=0
-    //if we are slow and trying to go forward
-    if(inputBallsPerSecond > 0 && bottom.getActualBallsPerSecond()<AUTO_UNJAM_BALLS_PER_SEC_THRESH){
-        if(timeout.isStopped()){
-            timeout.restart(AUTO_UNJAM_TIME_UNDER_THRESH*1000);
-        }
-
-        if(timeout.isExpired()){
-            isAutoUnjamming = true;
-            timeout.restart(AUTO_UNJAM_TIME_UNJAMMING*1000);
-            unjam();
-            return true;
-        }
-    }
-
-    //for stopIndex
-    if(inputBallsPerSecond==0){
-        timeout.stop();
-        isAutoUnjamming = false;
-    }
-
-    return false;
-}
-
 float HeroIndexerSubsystem::indexAtRate(float inputBallsPerSecond){
-    if(doAutoUnjam(inputBallsPerSecond)) return UNJAM_BALL_PER_SECOND;
-
     IndexerSubsystem::counter.enable();
     bottom.counter.enable();
+
+    // float top = IndexerSubsystem::indexAtRate(inputBallsPerSecond);
+    // return isAutoUnjamming ? top : bottom.indexAtRate(inputBallsPerSecond); //if top decides to unjam both, let it do so, else let bottom decide
+
     IndexerSubsystem::indexAtRate(inputBallsPerSecond);
     return bottom.indexAtRate(inputBallsPerSecond);
 }
 
 float HeroIndexerSubsystem::loadAtRate(float inputBallsPerSecond){
-    if(doAutoUnjam(inputBallsPerSecond)) return UNJAM_BALL_PER_SECOND;
-
     IndexerSubsystem::counter.disable();
     bottom.counter.disable();
+
+    // float top = IndexerSubsystem::indexAtRate(inputBallsPerSecond);
+    // return isAutoUnjamming ? top : bottom.indexAtRate(inputBallsPerSecond);
+    
     IndexerSubsystem::indexAtRate(inputBallsPerSecond);
     return bottom.indexAtRate(inputBallsPerSecond);
 }
@@ -83,6 +50,10 @@ void HeroIndexerSubsystem::indexAtMaxRate(){
 
 bool HeroIndexerSubsystem::isProjectileAtBeam(){
     return !Board::DigitalInPinB12::read(); // Assuming PF0 is the break beam sensor
+}
+
+float HeroIndexerSubsystem::getActualBallsPerSecond() {
+    return std::min(IndexerSubsystem::getActualBallsPerSecond(), bottom.getActualBallsPerSecond());
 }
 
 

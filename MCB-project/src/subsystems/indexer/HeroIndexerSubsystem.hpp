@@ -26,13 +26,9 @@ public:
 
     bool isProjectileAtBeam();
 
+    virtual float getActualBallsPerSecond();
 private:
 IndexerSubsystem bottom;
-
-tap::arch::MilliTimeout timeout;
-bool isAutoUnjamming = false;
-
-bool doAutoUnjam(float inputBallsPerSecond);
 
 };
 

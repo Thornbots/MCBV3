@@ -30,6 +30,9 @@ static constexpr int MAX_INDEX_RPM = 17000;
 int32_t indexerVoltage = 0;
 
 
+tap::arch::MilliTimeout timeout;
+bool isAutoUnjamming = false;
+
 public:  // Public Methods
 
 IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index);
@@ -55,11 +58,17 @@ virtual void resetBallsCounter();
 
 virtual float getBallsPerSecond();
 
-float getActualBallsPerSecond();
+virtual float getActualBallsPerSecond();
 
 private:  // Private Methods
 
 void setTargetMotorRPM(int targetMotorRPM);
+
+protected: 
+
+bool doAutoUnjam(float inputBallsPerSecond);
+
+
 
 };
 } //namespace subsystems
