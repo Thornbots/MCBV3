@@ -6,8 +6,6 @@
 
 #include "drivers.hpp"
 
-uint16_t testvar = 0;
-float testvar2 = 0.0f;
 // Place any sort of input/output initialization here. For example, place
 // serial init stuff here.
 static void initializeIo(src::Drivers *drivers) {
@@ -78,8 +76,6 @@ RobotControl control{&drivers};
 int main() {
     Board::initialize();
     initializeIo(&drivers);
-    testvar = drivers.i2c.encoder.getRawAngle();
-    testvar2 = drivers.i2c.encoder.getAngle();
     tap::buzzer::silenceBuzzer(&(drivers.pwm));
 
     control.initialize();
@@ -93,8 +89,6 @@ int main() {
         updateIo(&drivers);
         drivers.i2c.refresh();
         drivers.uart.updateSerial();
-        testvar = drivers.i2c.encoder.getRawAngle();
-        testvar2 = drivers.i2c.encoder.getAngle();
 
         if (refreshTimer.execute()) {
             // tap::buzzer::playNote(&(drivers.pwm), 493);
