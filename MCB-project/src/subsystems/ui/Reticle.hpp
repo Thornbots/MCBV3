@@ -29,56 +29,46 @@ public:
 
     void update() {
         float pitch = gimbal->getPitchEncoderValue();
-        Vector3d temp{0,initialShotVelocity,0};
-        Vector3d initialVelo = temp.rotatePitch(-pitch);
-
-        Vector3d initialPos{0,0,0}; //shot starts in barrel space
-        temp = Projections::barrelSpaceToPivotSpace(initialPos);
-        initialPos = temp.rotatePitch(-pitch);
-
-        //initialPos and initialVelo are in pivot space, parallel to the ground so gravity is pulling in the -z direction only
         
-        //NUM_THINGS applies with rectangles and lines (so far, other modes may be added)
-        if(mode==ReticleDrawMode::RECTANGLES || mode==ReticleDrawMode::LINES)
-            for(int i=0;i<NUM_THINGS;i++){
-                float t = (DISTANCES[i] - initialPos.getY()) / initialVelo.getY(); //(distance to travel [meters]) divided by (speed to get there [meters/seconds]) gives (time to get there [seconds])
-                float zFinal = initialPos.getZ() + initialVelo.getZ() * t - tap::algorithms::ACCELERATION_GRAVITY/2 * t * t; //make sure gravity is negative, the taproot constant is positive, need to subtract
-                Vector3d landingSpot{initialPos.getX(), DISTANCES[i], zFinal}; //side to side doesn't change, we are defining the down range distance, and we calculated the height off the ground
+        
+        for(int i=0;i<NUM_THINGS;i++){
+            Vector3d landingSpot = calculateLandingSpot(pitch, DISTANCES[i]);
 
-                if(mode==ReticleDrawMode::RECTANGLES){
-                    //need the edges because the corners will trace a trapezoid
-                    Vector2d right = project(landingSpot + panelEdges[0], pitch); //gives width by right x minus left x
-                    Vector2d left = project(landingSpot + panelEdges[1], pitch); //gives x of rect
-                    Vector2d top = project(landingSpot + panelEdges[2], pitch); //gives height by top y minus bottom y
-                    Vector2d bottom = project(landingSpot + panelEdges[3], pitch); //gives y of rect
+            if(drawMode==ReticleDrawMode::RECTANGLES){
+                //need the edges because the corners will trace a trapezoid
+                Vector2d right = project(landingSpot + panelEdges[0], pitch); //gives width by right x minus left x
+                Vector2d left = project(landingSpot + panelEdges[1], pitch); //gives x of rect
+                Vector2d top = project(landingSpot + panelEdges[2], pitch); //gives height by top y minus bottom y
+                Vector2d bottom = project(landingSpot + panelEdges[3], pitch); //gives y of rect
 
-                    rects[i].x = left.getX();
-                    rects[i].width = right.getX() - left.getX();
-                    rects[i].y = bottom.getY();
-                    rects[i].height = top.getY() - bottom.getY();
-                } else {
-                    //lines just wants left and right edges
-                    Vector2d right = project(landingSpot + panelEdges[0], pitch); //gives width by right x minus left x
-                    Vector2d left = project(landingSpot + panelEdges[1], pitch); //gives x of rect
-                    
-                    lines[i].x1 = left.getX();
-                    lines[i].x2 = right.getX();
-                    lines[i].y1 = left.getY();
-                    lines[i].y2 = right.getY(); //should be the same as left.getY()
-                }
+                rects[i].x = left.getX();
+                rects[i].width = right.getX() - left.getX();
+                rects[i].y = bottom.getY();
+                rects[i].height = top.getY() - bottom.getY();
+            } else if(drawMode==ReticleDrawMode::HORIZ_LINES) {
+                //lines just wants left and right edges
+                Vector2d right = project(landingSpot + panelEdges[0], pitch); //gives width by right x minus left x
+                Vector2d left = project(landingSpot + panelEdges[1], pitch); //gives x of rect
+                
+                lines[i].x1 = left.getX();
+                lines[i].x2 = right.getX();
+                lines[i].y1 = left.getY();
+                lines[i].y2 = right.getY(); //should be the same as left.getY()
             }
+        }
 
         //CURVES is not implemented yet
 
-        //maybe reticle mode changed
+        //maybe reticle drawMode changed
         updateHidden();
     }
 
 private:
     enum class ReticleDrawMode : uint8_t
     {
-        RECTANGLES = 0, // multiple rectangles of different colors, tops and bottoms of them are tops and bottoms of panels, midpoints of sides are edges of standard size panels
-        LINES = 1,      // multiple of horizontal lines, widths represent panel widths, heights represent where the center of a standard panel needs to be to hit it, lines go across the center of a panel, endpoints are edges of panels
+        RECTANGLES = 0,  // multiple rectangles of different colors, tops and bottoms of them are tops and bottoms of panels, midpoints of sides are edges of standard size panels
+        HORIZ_LINES = 1, // multiple of horizontal lines, widths represent panel widths, heights represent where the center of a standard panel needs to be to hit it, lines go across the center of a panel, endpoints are edges of panels
+        VERT_LINES = 2,  // multiple of vertical lines, heights represent panel heights, heights represent where the top and bottom edges of either panel needs to be to hit it, lines might not go across the center of a panel (might be staggered to prevent overlapping)
     };
 
     enum class ReticleSolveMode : uint8_t
@@ -109,7 +99,8 @@ private:
     // GraphicsContainer curvesContainer{};
     GimbalSubsystem* gimbal;
 
-    ReticleDrawMode mode = ReticleDrawMode::LINES;
+    ReticleDrawMode drawMode = ReticleDrawMode::HORIZ_LINES;
+    ReticleSolveMode solveMode = ReticleSolveMode::FOR_HEIGHT_OFF_GROUND;
 
     
     //for rectangles and lines
@@ -123,10 +114,10 @@ private:
     void updateHidden() {
         //maybe make it so that objects at the same index have the same graphics name, so instead of hide one show another replace
         //would require an ExclusiveContainer or SelectionContainer, each has one graphics name and many graphics objects, and you can set which is selected
-        //but for now assume reticle doesn't change mode very often (if ever)
-        rectsContainer.setHidden(mode!=ReticleDrawMode::RECTANGLES); //hidden if not rects
-        linesContainer.setHidden(mode!=ReticleDrawMode::LINES); //hidden if not lines
-        // curvesContainer.setHidden(mode!=ReticleDrawMode::CURVES);
+        //but for now assume reticle doesn't change drawMode very often (if ever)
+        rectsContainer.setHidden(drawMode!=ReticleDrawMode::RECTANGLES); //hidden if not rects
+        linesContainer.setHidden(drawMode!=ReticleDrawMode::HORIZ_LINES && drawMode!=ReticleDrawMode::VERT_LINES); //hidden if not either lines
+        // curvesContainer.setHidden(drawMode!=ReticleDrawMode::CURVES);
     }
 
     Vector2d project(Vector3d in, float pitch){
@@ -139,5 +130,28 @@ private:
         temp2 = Projections::pivotSpaceToVtmSpace(temp);
         //now get to screen space
         return Projections::vtmSpaceToScreenSpace(temp2);
+    }
+
+    Vector3d calculateLandingSpot(float pitch, float distanceDownRange) {
+
+        if(solveMode == ReticleSolveMode::FOR_HEIGHT_OFF_GROUND){
+            Vector3d temp{0,initialShotVelocity,0};
+            Vector3d initialVelo = temp.rotatePitch(-pitch);
+            Vector3d initialPos{0,0,0}; //shot starts in barrel space
+            temp = Projections::barrelSpaceToPivotSpace(initialPos);
+            initialPos = temp.rotatePitch(-pitch);
+            //initialPos and initialVelo are in pivot space, parallel to the ground so gravity is pulling in the -z direction only
+            
+            float t = (distanceDownRange - initialPos.getY()) / initialVelo.getY(); //(distance to travel [meters]) divided by (speed to get there [meters/seconds]) gives (time to get there [seconds])
+            float zFinal = initialPos.getZ() + initialVelo.getZ() * t - tap::algorithms::ACCELERATION_GRAVITY/2 * t * t; //make sure gravity is negative, the taproot constant is positive, need to subtract
+            return Vector3d{initialPos.getX(), distanceDownRange, zFinal}; //side to side doesn't change, we are defining the down range distance, and we calculated the height off the ground
+        } else if(solveMode == ReticleSolveMode::FOR_PITCH){
+
+        } else { //FOR_DISTANCE_AWAY
+
+        }
+
+
+        return Vector3d{0,0,0};
     }
 };
