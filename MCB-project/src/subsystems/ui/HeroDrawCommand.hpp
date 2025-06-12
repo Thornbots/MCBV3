@@ -14,6 +14,7 @@
 #include "Reticle.hpp"
 #include "SupercapChargeIndicator.hpp"
 #include "HitRing.hpp"
+#include "AllRobotHealthNumbers.hpp"
 #include "TestFill.hpp"
 #include "TestGraphics.hpp"
 #include "drivers.hpp"
@@ -40,6 +41,7 @@ public:
         addGraphicsObject(&orient);
         addGraphicsObject(&reticle);
         addGraphicsObject(&ring);
+        addGraphicsObject(&numbers);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -50,6 +52,7 @@ public:
         orient.update();
         reticle.update();
         ring.update();
+        numbers.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -76,5 +79,6 @@ private:
     ChassisOrientationIndicator orient{gimbal};
     Reticle reticle{gimbal};
     HitRing ring{drivers, gimbal};
+    AllRobotHealthNumbers numbers{drivers};
 };
 }  // namespace commands

@@ -18,6 +18,7 @@
 #include "HopperLidIndicator.hpp"
 #include "HitRing.hpp"
 #include "PredictedRemainingShotsIndicator.hpp"
+#include "AllRobotHealthNumbers.hpp"
 #include "TestFill.hpp"
 #include "TestGraphics.hpp"
 #include "drivers.hpp"
@@ -48,6 +49,7 @@ public:
         addGraphicsObject(&reticle);
         addGraphicsObject(&ring);
         addGraphicsObject(&remain);
+        addGraphicsObject(&numbers);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -61,6 +63,7 @@ public:
         reticle.update();
         ring.update();
         remain.update();
+        numbers.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -91,5 +94,6 @@ private:
     Reticle reticle{gimbal};
     HitRing ring{drivers, gimbal};
     PredictedRemainingShotsIndicator remain{drivers, indexer};
+    AllRobotHealthNumbers numbers{drivers};
 };
 }  // namespace commands

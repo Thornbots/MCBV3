@@ -61,7 +61,7 @@ public:
         // check for a new hit
         if (drivers->refSerial.getRefSerialReceivingData()) {
             RefSerialData::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-            if (robotData.previousHp > robotData.currentHp && robotData.damageType == RefSerialData::Rx::DamageType::ARMOR_DAMAGE) {
+            if (robotData.previousHp > robotData.currentHp && (robotData.damageType == RefSerialData::Rx::DamageType::ARMOR_DAMAGE || robotData.damageType == RefSerialData::Rx::DamageType::COLLISION)) {
                 // took some sort of damage and we think we took panel damage
 
                 // damagedArmorId==0 is forward, subtract 0*90 degrees keeps heading unchanged, so if was facing forward (heading was 360) then draw at angle 360: top

@@ -203,6 +203,14 @@ public:
         rect->height = height;
     }
 
+    /* call this if you set text and height and want an up to date width */
+    void calculateNumbers() {
+        fontSize = height;
+        textX = x;
+        textY = y + height;
+        calculateWidth();
+    }
+
 private:
     // need to test/tune, was from ui website
     static constexpr uint16_t WIDTH_OFFSET_MULT = 19;
@@ -213,13 +221,6 @@ private:
 protected:
     uint16_t fontSize, textX, textY = 0;  // can read these, but don't set these, set with setTextNumbers
     uint16_t len = 0;                     // for sending integer 123 or text ABC, len would be 3. Not sure about floats yet, need to test
-
-    void calculateNumbers() {
-        fontSize = height;
-        textX = x;
-        textY = y + height;
-        calculateWidth();
-    }
 
     uint16_t intLen(int32_t n) {
         if (n == 0) return 1;
@@ -249,6 +250,8 @@ protected:
 class IntegerGraphic : public SimpleGraphicsObject, public TextSizer {
 public:
     IntegerGraphic(int32_t newInteger, UnfilledRectangle* rect) : SimpleGraphicsObject(rect->color), TextSizer(intLen(newInteger)), thickness(rect->thickness), integer(newInteger) { inputRect(rect); }
+
+    IntegerGraphic() : IntegerGraphic(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 0, 1) {};
 
     IntegerGraphic(RefSerialData::Tx::GraphicColor color, int32_t newInteger, uint16_t x, uint16_t y, uint16_t height, uint16_t thickness)
         : SimpleGraphicsObject(color),

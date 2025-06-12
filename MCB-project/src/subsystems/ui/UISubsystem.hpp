@@ -1,11 +1,12 @@
 #pragma once
-
+#include "tap/algorithms/smooth_pid.hpp"
 #include "tap/architecture/periodic_timer.hpp"
 #include "tap/board/board.hpp"
 #include "tap/control/subsystem.hpp"
+#include "tap/motor/dji_motor.hpp"
 #include "tap/communication/serial/ref_serial_transmitter.hpp"
 
-#include "tap/drivers.hpp"
+#include "drivers.hpp"
 #include "util/ui/GraphicsContainer.hpp"
 #include "modm/processing/protothread/protothread.hpp"
 
@@ -49,7 +50,7 @@ private:  // Private Variables
     GraphicsContainer* topLevelContainer = nullptr;
 
 public:  // Public Methods
-    UISubsystem(tap::Drivers* drivers);
+    UISubsystem(tap::Drivers* driver);
     ~UISubsystem() {}  // Intentionally blank
 
 
