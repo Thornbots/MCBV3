@@ -64,7 +64,7 @@ private:
     //and still not be able to hit us. As a driver, the goal while peeking is to keep the enemy inside
     //of these bounds.
     static constexpr float ANGLE1 = PI / 2 - PEEK_RIGHT_AMT; //zero would be directly to the right/left, 90 would be directly forward
-    static constexpr float ANGLE2 = ANGLE1 - 0.16;
+    static constexpr float ANGLE2 = ANGLE1 + 0.06;
     static constexpr float ANGLES[4] = {ANGLE1, ANGLE2, PI-ANGLE1, PI-ANGLE2};
     static constexpr float MAGNITUDE = 0.3; //need a magnitude to make a 3d point to project
 

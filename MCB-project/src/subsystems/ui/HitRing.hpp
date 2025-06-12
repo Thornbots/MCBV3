@@ -31,6 +31,7 @@ public:
 
     void update() {
         uint16_t heading = static_cast<uint16_t>(gimbal->getYawEncoderValue() * ChassisOrientationIndicator::YAW_MULT + ChassisOrientationIndicator::YAW_OFFSET + 360);
+        uint16_t heading2 = static_cast<uint16_t>(gimbal->getYawAngleRelativeWorld() * ChassisOrientationIndicator::YAW_MULT + ChassisOrientationIndicator::YAW_OFFSET + 360);
         // if the gimbal compared to the drivetrain (from the encoder) is facing forward, heading would be 360, if facing right, heading would be 90
 
         // update/clear old hits
@@ -61,7 +62,7 @@ public:
         // check for a new hit
         if (drivers->refSerial.getRefSerialReceivingData()) {
             RefSerialData::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-            if (robotData.previousHp > robotData.currentHp && (robotData.damageType == RefSerialData::Rx::DamageType::ARMOR_DAMAGE || robotData.damageType == RefSerialData::Rx::DamageType::COLLISION)) {
+            if (previousHp > robotData.currentHp && (robotData.damageType == RefSerialData::Rx::DamageType::ARMOR_DAMAGE || robotData.damageType == RefSerialData::Rx::DamageType::COLLISION)) {
                 // took some sort of damage and we think we took panel damage
 
                 // damagedArmorId==0 is forward, subtract 0*90 degrees keeps heading unchanged, so if was facing forward (heading was 360) then draw at angle 360: top
@@ -69,7 +70,7 @@ public:
                 // 2 is back, subtract 2*90 degrees to make 360 into 180: bottom
                 // 3 is right, subtract 3*90 degrees to make 360 into 90: bottom
                 // 4 is top, we don't have panels on top (yet?)
-                hitOrientations[nextIndex] = heading - (uint8_t)robotData.damagedArmorId * PI / 2;
+                hitOrientations[nextIndex] = heading2 - 90 * ((uint16_t) robotData.damagedArmorId);
                 rings[nextIndex].show();
                 expirationTimeouts[nextIndex].restart(RECENT_TIME + EXPIRATION_TIME);
                 rings[nextIndex].color = UISubsystem::Color::PINK;
@@ -79,6 +80,8 @@ public:
                 nextIndex++;
                 if (nextIndex == NUM_HISTORY) nextIndex = 0;  // cycle back around and overwrite if we get hit really often
             }
+
+            previousHp = robotData.currentHp;
         }
     }
 
@@ -86,14 +89,16 @@ private:
     tap::Drivers* drivers;
     GimbalSubsystem* gimbal;
 
+    uint16_t previousHp;
+
     static constexpr uint16_t THICKNESS = 2;        // pixels
-    static constexpr uint16_t ARC_LEN = 5;          // degrees
+    static constexpr uint16_t ARC_LEN = 6;          // degrees
     static constexpr uint16_t STARTING_SIZE = 190;  // pixels
     static constexpr uint16_t SIZE_INCREMENT = 5;   // pixels. If 0, the history of lines will all be overlapping,
 
     static constexpr int NUM_HISTORY = 5;              // how many shots to keep track of
     static constexpr uint32_t RECENT_TIME = 200;       // once hit, it shows for 0.2 seconds pink
-    static constexpr uint32_t EXPIRATION_TIME = 2000;  // then next it shows for 2 seconds purple
+    static constexpr uint32_t EXPIRATION_TIME = 5000;  // then next it shows for 5 seconds purple
 
     Arc rings[NUM_HISTORY];
     int nextIndex = 0;

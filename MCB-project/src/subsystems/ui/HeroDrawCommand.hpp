@@ -40,7 +40,7 @@ public:
         addGraphicsObject(&supercap);
         addGraphicsObject(&orient);
         addGraphicsObject(&reticle);
-        addGraphicsObject(&ring);
+        // addGraphicsObject(&ring);
         addGraphicsObject(&numbers);
     };
 
@@ -51,7 +51,7 @@ public:
         supercap.update();
         orient.update();
         reticle.update();
-        ring.update();
+        // ring.update();
         numbers.update();
     };
 
@@ -78,7 +78,7 @@ private:
     SupercapChargeIndicator supercap{drivetrain};
     ChassisOrientationIndicator orient{gimbal};
     Reticle reticle{gimbal};
-    HitRing ring{drivers, gimbal};
+    // HitRing ring{drivers, gimbal};
     AllRobotHealthNumbers numbers{drivers};
 };
 }  // namespace commands

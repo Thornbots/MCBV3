@@ -47,7 +47,7 @@ public:
         addGraphicsObject(&peek);
         addGraphicsObject(&lid);
         addGraphicsObject(&reticle);
-        addGraphicsObject(&ring);
+        // addGraphicsObject(&ring);
         addGraphicsObject(&remain);
         addGraphicsObject(&numbers);
     };
@@ -61,7 +61,7 @@ public:
         peek.update();
         lid.update();
         reticle.update();
-        ring.update();
+        // ring.update();
         remain.update();
         numbers.update();
     };
@@ -92,7 +92,7 @@ private:
     PeekingLines peek{drivetrain, gimbal};
     HopperLidIndicator lid{servo};
     Reticle reticle{gimbal};
-    HitRing ring{drivers, gimbal};
+    // HitRing ring{drivers, gimbal};
     PredictedRemainingShotsIndicator remain{drivers, indexer};
     AllRobotHealthNumbers numbers{drivers};
 };
