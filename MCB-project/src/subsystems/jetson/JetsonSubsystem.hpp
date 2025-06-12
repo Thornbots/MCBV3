@@ -91,8 +91,6 @@ struct RefSysMsg
     bool doesGimbalHavePower;
 } modm_packed;
 
-static constexpr int test = sizeof(struct RefSysMsg);
-
 // ==== struct type to enum mapping ===
 template<typename T>
 struct StructToMessageType;
