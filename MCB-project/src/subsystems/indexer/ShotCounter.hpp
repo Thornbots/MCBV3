@@ -28,7 +28,7 @@ public:
     float getAllowableIndexRate(float desiredBallsPerSecond) {
         // Old overheating prevention
         tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refSerial.getRobotData().turret;
-        if (drivers->refSerial.getRefSerialReceivingData() && 
+        if (enabled && drivers->refSerial.getRefSerialReceivingData() && 
            (getHeatPerBall() * desiredBallsPerSecond - turretData.coolingRate) * LATENCY > (turretData.heatLimit - getCurrentHeat(&turretData))) {
             return turretData.coolingRate / getHeatPerBall();
         }
@@ -48,13 +48,21 @@ public:
         recentPosition = index->getPositionUnwrapped();
     }
 
-    
+    void enable() {
+        enabled = true;
+    }
+
+    void disable() {
+        enabled = false;
+    }
     
 
 private:
     src::Drivers* drivers;
     BarrelType barrel;
     tap::motor::DjiMotor* index;
+
+    bool enabled = true;
 
     
     int64_t recentPosition = 0;
