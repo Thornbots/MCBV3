@@ -2,52 +2,44 @@
 
 #include "tap/communication/serial/dji_serial.hpp"
 #include "tap/communication/serial/uart.hpp"
+#include "tap/algorithms/crc.hpp"
 #include "tap/drivers.hpp"
 #include <cstdint>
 #include <cstring>
 
 namespace communication {
 
-struct ROSData
-{
-    float x = 0;
-    float y = 0;
-    float theta = 0;
-    float rho = 0;
-};
-
-// Incoming
-struct CVData 
-{
-    float x = 0;          // meters
-    float y = 0;          // meters
-    float z = 0;          // meters
-    float v_x = 0;        // m/s
-    float v_y = 0;        // m/s
-    float v_z = 0;        // m/s
-    float a_x = 0;        // m/s^2
-    float a_y = 0;        // m/s^2
-    float a_z = 0;        // m/s^2
-    float confidence = 0; // 0.0 to 1.0
-    // uint64_t timestamp = 0;
-};
-
-// Output
-struct AutoAimOutput
-{
-    uint8_t header = 0xA5;           
-    uint16_t data_len = sizeof(float); // litle endian
-    float x;                     
-    float y;                     
-    float vel_x;                     
-    float vel_y;                     
-    uint8_t newline = 0x0A;          
-    // uint64_t timestamp = 0;         
-} modm_packed;
-
 class UARTCommunication : public tap::communication::serial::DJISerial
 {
 public:
+    struct cleanedData{
+            uint16_t messageType;
+            uint16_t dataLength;
+            uint8_t data[SERIAL_RX_BUFF_SIZE];
+    } modm_packed;
+
+    struct send_back {
+        uint8_t head = SERIAL_HEAD_BYTE;
+        uint16_t dataLen;
+        uint16_t messageType;
+        uint8_t data[SERIAL_RX_BUFF_SIZE];
+        send_back(uint16_t dataLen, uint16_t messageType, uint8_t *dataToBeSent): dataLen(dataLen), messageType(messageType){
+            memcpy(data, dataToBeSent, dataLen);
+
+            size_t raw_msg_len =
+                sizeof(head)+ // head byte (0xA0)
+                sizeof(dataLen) + // 2 bytes for data length
+                sizeof(messageType) + // 2 bytes msg type 
+                dataLen; // dataToBeSent
+
+            uint16_t crc = tap::algorithms::calculateCRC16(
+                reinterpret_cast<uint8_t *>(this),
+                raw_msg_len);
+            data[dataLen] = crc & 0xFF;
+            data[dataLen+1] = crc >> 8;
+        }
+    } modm_packed;
+
     UARTCommunication(tap::Drivers *drivers,
                         tap::communication::serial::Uart::UartPort port,
                         bool isRxCRCEnforcementEnabled);
@@ -58,26 +50,33 @@ public:
 
     void update();
 
-    const CVData* getLastCVData();
-    const ROSData* getLastROSData();
+    const cleanedData getLastMsg();
 
     void clearNewDataFlag();
 
-    bool sendAutoAimOutput(AutoAimOutput &output);
+    bool sendMsg(uint8_t *dataToBeSent, uint16_t messageType, uint16_t dataLen);
 
     bool isConnected() const;
+
+    bool isFinishedWriting() const{
+        return drivers->uart.isWriteFinished(port);
+    }
 
     inline bool hasNewMessage() { return hasNewData;}
 
     uint64_t getCurrentTime() const;
+    
 
     tap::communication::serial::Uart::UartPort getPort() const;
 
 private:
-    CVData lastCVData;
-    ROSData lastROSData;
     bool hasNewData;
     uint64_t lastReceivedTime;
+
+    //TODO: maybe implement cicular queue one day to prevent starving of msg
+    // static constexpr int queueLength = 5;
+    // ReceivedSerialMessage messageQueue[queueLength];
+    cleanedData mostRecentMessage;
 
     const tap::communication::serial::Uart::UartPort port;
     bool rxCRCEnforcementEnabled;

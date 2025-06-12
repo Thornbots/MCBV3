@@ -43,7 +43,9 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->uart.initialize();
 
 
+    #ifndef SENTRY
     drivers->terminalSerial.initialize(); //needs to be commented for cv to work?
+    #endif
     drivers->schedulerTerminalHandler.init();
     drivers->djiMotorTerminalSerialHandler.init();
     
@@ -108,7 +110,9 @@ int main() {
 
             drivers.djiMotorTxHandler.encodeAndSendCanData();
 
+            #ifndef SENTRY
             drivers.terminalSerial.update(); 
+            #endif // SENTRY
         } 
 
         // prevent looping too fast

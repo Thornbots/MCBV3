@@ -44,18 +44,18 @@ void AutoDriveCommand::execute() {
 
     float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
 
-    int action = 0;
-    count++;
+    // crude autodrive implemtation
+    // count++;
 
-    if (count > 400) {
-        count = 0;
-    } else if (count > 200) {
-        targetPosition = Pose2d(0.05, 0, 0);
-    } else {
-        targetPosition = Pose2d(0, 0, 0);
-    }
+    // if (count > 400) {
+    //     count = 0;
+    // } else if (count > 200) {
+    //     targetPosition = Pose2d(0.05, 0, 0);
+    // } else {
+    //     targetPosition = Pose2d(0, 0, 0);
+    // }
 
-    // jetson->updateROS(&targetPosition, &targetVelocity, &action);
+    bool result = jetson->updateROS(&targetPosition, &targetVelocity);
 
     Vector2d targetPositionAdjusted = targetPosition.vec() + startPosition;
     Pose2d currentPosition = Pose2d(drivers->i2c.odom.getX(), drivers->i2c.odom.getY(), referenceAngle);

@@ -14,6 +14,74 @@ using namespace communication;
 using namespace tap::algorithms::ballistics;
 
 namespace subsystems {
+
+enum UartMessage : uint8_t{
+    // incoming
+    ROS_MSG = 0,
+    CV_MSG = 1,
+
+    // outgoing
+    POSE_MSG = 2,
+    REF_SYS_MSG = 3,
+};
+
+// =================== Incoming message types =======================
+
+struct ROSData
+{
+    float x = 0;
+    float y = 0;
+    float theta = 0;
+    float rho = 0;
+};
+
+struct CVData 
+{
+    float x = 0;          // meters
+    float y = 0;          // meters
+    float z = 0;          // meters
+    float v_x = 0;        // m/s
+    float v_y = 0;        // m/s
+    float v_z = 0;        // m/s
+    float a_x = 0;        // m/s^2
+    float a_y = 0;        // m/s^2
+    float a_z = 0;        // m/s^2
+    float confidence = 0; // 0.0 to 1.0
+    // uint64_t timestamp = 0;
+};
+
+// =================== Output message types =======================
+
+struct PoseData
+{
+    float x;                     
+    float y;                     
+    float vel_x;                     
+    float vel_y;                     
+    float head_pitch;                     
+    float head_yaw;                     
+    float imu_roll;
+    float imu_pitch;
+    float imu_yaw;
+    float imu_Ax;
+    float imu_Ay;
+    float imu_Az;
+    // uint64_t timestamp = 0;         
+} modm_packed;
+// static_assert(sizeof(PoseData)<1024, "msg too large"); //TODO: implement static check
+
+struct RefSysMsg
+{
+} modm_packed;
+
+// ==== struct type to enum mapping ===
+template<typename T>
+struct StructToMessageType;
+template<> struct StructToMessageType<ROSData> { static constexpr UartMessage value = ROS_MSG; };
+template<> struct StructToMessageType<CVData> { static constexpr UartMessage value = CV_MSG; };
+template<> struct StructToMessageType<PoseData> { static constexpr UartMessage value = POSE_MSG; };
+
+
 struct PanelData {
     double r;
     double theta;
@@ -45,7 +113,7 @@ public:  // Public Methods
 
     void refresh() override;
 
-    void updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, int* action);
+    bool updateROS(Vector2d* targetPosition, Vector2d* targetVelocity);
     void update(float current_yaw, float current_pitch, float current_yaw_velo, float current_pitch_velo, float* yawOut, float* pitchOut, float* yawVelOut, float* pitchVelOut, int* action);
 
     
@@ -58,5 +126,26 @@ private:  // Private Methods
  
         // Height rejection offset
     std::vector<PanelData> panelData;
+
+
+    template<class msg_type> 
+    inline bool getMsg(msg_type* output){
+        if(!drivers->uart.hasNewMessage())
+            return false;
+        const UARTCommunication::cleanedData msg = drivers->uart.getLastMsg();
+        if (msg.messageType != StructToMessageType<msg_type>::value || msg.dataLength != sizeof(msg_type))
+            return false;
+        memcpy(output, (uint8_t*) msg.data, msg.dataLength);
+        return true;
+    }
+
+    template<class msg_type> 
+    inline bool sendMsg(msg_type* msg){
+        bool status = drivers->uart.isFinishedWriting();
+        if(status)
+            return drivers->uart.sendMsg((uint8_t*)msg, StructToMessageType<msg_type>::value, sizeof(msg_type));
+        return false;
+    }
+
 };
 }  // namespace subsystems
