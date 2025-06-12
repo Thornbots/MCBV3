@@ -8,6 +8,8 @@
 #include "tap/motor/servo.hpp"
 #include "util/Pose2d.hpp"
 
+#include "subsystems/gimbal/GimbalSubsystem.hpp"
+
 #include "drivers.hpp"
 
 using namespace communication;
@@ -72,7 +74,24 @@ struct PoseData
 
 struct RefSysMsg
 {
+    uint8_t gameStage;
+    uint16_t stageTimeRemaining;
+    uint16_t robotHp;
+    uint8_t robotID; //if was on red team, so hero will always be 1 and not 101
+    float deltaAngleGotHitIn; //if we are looking in a certain direction and get hit in the left, this would be PI/2
+
+    // uint8_t booleans;
+    bool isOnBlueTeam;
+    bool isHealing;
+    bool isInReloadZone;
+    bool isInCenterZone;
+    bool doesTeamOccupyCenterZone;
+    bool doesOpponentTeamOccupyCenterZone;
+    bool doesChassisHavePower;
+    bool doesGimbalHavePower;
 } modm_packed;
+
+static constexpr int test = sizeof(struct RefSysMsg);
 
 // ==== struct type to enum mapping ===
 template<typename T>
@@ -90,6 +109,11 @@ struct PanelData {
 class JetsonSubsystem : public tap::control::Subsystem {
 private:  // Private Variables
     src::Drivers* drivers;
+    GimbalSubsystem* gimbal;
+
+    tap::arch::MilliTimeout refDataSendingTimeout;
+    // bool needToSendRefData = false;
+    static constexpr int TIME_FOR_REF_DATA = 100; //send at 10hz
 
 
     float q0, q1, q2, q3; //easier to convert frames of reference from the quatrenion directly
@@ -105,7 +129,7 @@ private:  // Private Variables
     float posXrelPitch, posYrelPitch, posZrelPitch; //position of panel relative to frame 2 but offset up
     float velXrelPitch, velYrelPitch, velZrelPitch;
 public:  // Public Methods
-    JetsonSubsystem(src::Drivers* drivers);
+    JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal);
 
     ~JetsonSubsystem() {}
 
