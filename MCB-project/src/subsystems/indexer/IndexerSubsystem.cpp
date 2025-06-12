@@ -31,8 +31,48 @@ void IndexerSubsystem::refresh() {
     }
 }
 
-float IndexerSubsystem::indexAtRate(float ballsPerSecond) {
-    this->ballsPerSecond = counter.getAllowableIndexRate(ballsPerSecond);
+
+bool IndexerSubsystem::doAutoUnjam(float inputBallsPerSecond) {
+    //if unjamming
+    if(isAutoUnjamming){
+        if(timeout.isExpired()){
+            timeout.stop();
+            isAutoUnjamming = false;
+        } else if (inputBallsPerSecond > 0) {
+            //prevent infinite recursion, unjam calls indexAtRate with a negative number
+            IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
+            return true;
+        }
+    }
+    
+    //if we are here, isAutoUnjamming is false or inputBallsPerSecond<=0
+    //if we are slow and trying to go forward
+    if(inputBallsPerSecond > 0 && getActualBallsPerSecond()<AUTO_UNJAM_BALLS_PER_SEC_THRESH){
+        if(timeout.isStopped()){
+            timeout.restart(AUTO_UNJAM_TIME_UNDER_THRESH*1000);
+        }
+
+        if(timeout.isExpired()){
+            isAutoUnjamming = true;
+            timeout.restart(AUTO_UNJAM_TIME_UNJAMMING*1000);
+            IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
+            return true;
+        }
+    }
+
+    //for stopIndex
+    if(inputBallsPerSecond==0){
+        timeout.stop();
+        isAutoUnjamming = false;
+    }
+
+    return false;
+}
+
+float IndexerSubsystem::indexAtRate(float inputBallsPerSecond) {
+    if(doAutoUnjam(inputBallsPerSecond)) return UNJAM_BALL_PER_SECOND;
+
+    this->ballsPerSecond = counter.getAllowableIndexRate(inputBallsPerSecond);
     setTargetMotorRPM(this->ballsPerSecond * 60.0f * revPerBall);
     return this->ballsPerSecond;
 }
@@ -69,6 +109,10 @@ void IndexerSubsystem::resetBallsCounter() {
 
 float IndexerSubsystem::getBallsPerSecond() {
     return ballsPerSecond;
+}
+
+float IndexerSubsystem::getActualBallsPerSecond() {
+    return motorIndexer->getShaftRPM() / (60.0f * revPerBall);
 }
 
 } //namespace subsystems
