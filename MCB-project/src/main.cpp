@@ -43,7 +43,7 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->uart.initialize();
 
 
-    drivers->terminalSerial.initialize(); //needs to be commented for cv to work?
+    // drivers->terminalSerial.initialize(); //interferes with jetson because uses the same uart port. Previously believed to be necessary for ui to work, turns out it isn't 
     drivers->schedulerTerminalHandler.init();
     drivers->djiMotorTerminalSerialHandler.init();
     
@@ -108,7 +108,7 @@ int main() {
 
             drivers.djiMotorTxHandler.encodeAndSendCanData();
 
-            drivers.terminalSerial.update(); 
+            // drivers.terminalSerial.update(); 
         } 
 
         // prevent looping too fast
