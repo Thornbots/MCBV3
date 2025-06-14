@@ -42,7 +42,12 @@ public:
 
     void setControlMode(ControlMode newControlMode) { controlMode = newControlMode; }
 
-    int getLinearVelocityMultiplierTimes100() {return linearVelocityMultiplierTimes100;}
+    int getLinearVelocityMultiplierTimes100() { return linearVelocityMultiplierTimes100; }
+
+    static constexpr int MAX_LINEAR_VELOCITY_TIMES_100 = 175;
+    static constexpr int MIN_LINEAR_VELOCITY_TIMES_100 = 75;
+    static constexpr int LINEAR_VELOCITY_INCREMENT_TIMES_100 = 25;
+    int linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100; //increased and decreased with scroll wheel
 
 private:
     src::Drivers* drivers;
@@ -51,11 +56,8 @@ private:
     DriveMode driveMode;
     ControlMode controlMode;
     float x, y, r;
-    float boost;
+    bool boost;
 
-    static constexpr int MAX_LINEAR_VELOCITY_TIMES_100 = 175;
-    static constexpr int MIN_LINEAR_VELOCITY_TIMES_100 = 75;
-    static constexpr int LINEAR_VELOCITY_INCREMENT_TIMES_100 = 25;
-    int linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100; //increased and decreased with scroll wheel
+    
 };
 }  // namespace commands

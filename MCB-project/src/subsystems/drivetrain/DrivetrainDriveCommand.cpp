@@ -58,7 +58,7 @@ void DrivetrainDriveCommand::execute() {
 
     Pose2d drive(x, y, r);
 
-    drivetrain->setTargetTranslation(drive.rotate(referenceAngle), (bool)boost);
+    drivetrain->setTargetTranslation(drive.rotate(referenceAngle), boost);
 }
 
 bool DrivetrainDriveCommand::isFinished() const { return !drivers->remote.isConnected(); }
