@@ -12,18 +12,18 @@ namespace communication {
 class UARTCommunication : public tap::communication::serial::DJISerial
 {
 public:
-    struct cleanedData{
+    struct uartMsg{
             uint16_t messageType;
             uint16_t dataLength;
             uint8_t data[SERIAL_RX_BUFF_SIZE];
     } modm_packed;
 
-    struct send_back {
+    struct outgoingDataFrame {
         uint8_t head = SERIAL_HEAD_BYTE;
         uint16_t dataLen;
         uint16_t messageType;
         uint8_t data[SERIAL_RX_BUFF_SIZE];
-        send_back(uint16_t dataLen, uint16_t messageType, uint8_t *dataToBeSent): dataLen(dataLen), messageType(messageType){
+        outgoingDataFrame(uint16_t dataLen, uint16_t messageType, uint8_t *dataToBeSent): dataLen(dataLen), messageType(messageType){
             memcpy(data, dataToBeSent, dataLen);
 
             size_t raw_msg_len =
@@ -50,7 +50,7 @@ public:
 
     void update();
 
-    const cleanedData getLastMsg();
+    const uartMsg getLastMsg();
 
     void clearNewDataFlag();
 
@@ -76,7 +76,7 @@ private:
     //TODO: maybe implement cicular queue one day to prevent starving of msg
     // static constexpr int queueLength = 5;
     // ReceivedSerialMessage messageQueue[queueLength];
-    cleanedData mostRecentMessage;
+    uartMsg mostRecentMessage;
 
     const tap::communication::serial::Uart::UartPort port;
     bool rxCRCEnforcementEnabled;

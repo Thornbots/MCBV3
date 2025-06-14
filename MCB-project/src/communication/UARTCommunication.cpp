@@ -10,17 +10,20 @@ namespace communication
         hasNewData(false)
     {
         // Good practice
-        memset(&mostRecentMessage,0,sizeof(cleanedData));
+        memset(&mostRecentMessage,0,sizeof(uartMsg));
         // Initial time
         lastReceivedTime = getCurrentTime();
     }
 
     void UARTCommunication::messageReceiveCallback(const ReceivedSerialMessage &completeMessage)
     {
+        if(completeMessage.header.dataLength <= 0 || completeMessage.data  == nullptr)
+            return;
         mostRecentMessage.messageType = completeMessage.messageType;
         mostRecentMessage.dataLength = completeMessage.header.dataLength;
         memcpy((void*)mostRecentMessage.data, completeMessage.data, completeMessage.header.dataLength);
         hasNewData = true;
+        lastReceivedTime = getCurrentTime();
     }
 
     // Will we constantly receive data in a stream?
@@ -34,7 +37,7 @@ namespace communication
         }
     }
 
-    const UARTCommunication::cleanedData UARTCommunication::getLastMsg()
+    const UARTCommunication::uartMsg UARTCommunication::getLastMsg()
     {
         return mostRecentMessage;
     }
@@ -52,7 +55,7 @@ namespace communication
         }
 
 
-        send_back msg_data(dataLen, messageType, dataToBeSent);
+        outgoingDataFrame msg_data(dataLen, messageType, dataToBeSent);
         size_t numBytesToSend =
             sizeof(msg_data.head)+ // head byte (0xA0)
             sizeof(msg_data.dataLen) + // 2 bytes for data length
@@ -61,7 +64,7 @@ namespace communication
             sizeof(uint16_t); // crc
 
         int bytesWritten = drivers->uart.write(currentPort, (uint8_t*)&msg_data, numBytesToSend);
-        return (bytesWritten == sizeof(send_back));
+        return (bytesWritten == sizeof(outgoingDataFrame));
     }
 
     bool UARTCommunication::isConnected() const

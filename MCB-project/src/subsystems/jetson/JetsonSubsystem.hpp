@@ -132,16 +132,17 @@ private:  // Private Methods
     inline bool getMsg(msg_type* output){
         if(!drivers->uart.hasNewMessage())
             return false;
-        const UARTCommunication::cleanedData msg = drivers->uart.getLastMsg();
+        const UARTCommunication::uartMsg msg = drivers->uart.getLastMsg();
         if (msg.messageType != StructToMessageType<msg_type>::value || msg.dataLength != sizeof(msg_type))
             return false;
         memcpy(output, (uint8_t*) msg.data, msg.dataLength);
+        drivers->uart.clearNewDataFlag();
         return true;
     }
 
     template<class msg_type> 
     inline bool sendMsg(msg_type* msg){
-        bool status = drivers->uart.isFinishedWriting();
+        bool status = drivers->uart.isFinishedWriting(); //TODO: this is not necessary because uart has a buffer?
         if(status)
             return drivers->uart.sendMsg((uint8_t*)msg, StructToMessageType<msg_type>::value, sizeof(msg_type));
         return false;

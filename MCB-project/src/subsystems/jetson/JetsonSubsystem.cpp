@@ -48,27 +48,23 @@ void JetsonSubsystem::refresh() {
 }
 
 bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity) {
-    ROSData msg;
-    if(!getMsg(&msg))
+    ROSData ros_msg;
+    if(!getMsg(&ros_msg))
         return false;
-    *targetPosition = Vector2d(msg.x, msg.y);
+    *targetPosition = Vector2d(ros_msg.x, ros_msg.y);
     //todo make this work lmao
     *targetVelocity = Vector2d(0, 0);
-
-    drivers->uart.clearNewDataFlag();
     return true;
 }
 
 void JetsonSubsystem::update(float current_yaw, float current_pitch, float current_yaw_velo, float current_pitch_velo, float* yawOut, float* pitchOut, float* yawVelOut, float* pitchVelOut, int* action) {
-    drivers->leds.set(tap::gpio::Leds::Green,false);
     *action = -1;
 
     CVData cv_msg;
-    if(!getMsg(&cv_msg) == -1)
+    if(!getMsg(&cv_msg))
         return;
     CVData* msg = &cv_msg;
 
-    drivers->uart.clearNewDataFlag();
     // Add rotated offset vector of panel relative to RGB
     // if (msg->confidence <= 0.2f) return;
 
