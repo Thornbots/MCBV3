@@ -17,6 +17,7 @@ public:
             lines[i].color = COLORS[i];
             rectsContainer.addGraphicsObject(rects+i);
             linesContainer.addGraphicsObject(lines+i);
+            forPitchLandingSpotsSolved[i] = false;
         }
         
         addGraphicsObject(&rectsContainer);
@@ -30,9 +31,9 @@ public:
     void update() {
         float pitch = gimbal->getPitchEncoderValue();
         
-        
+        solvedForPitchLandingSpotThisCycle = false;
         for(int i=0;i<NUM_THINGS;i++){
-            Vector3d landingSpot = calculateLandingSpot(pitch, DISTANCES[i]);
+            Vector3d landingSpot = calculateLandingSpot(&pitch, i);
 
             if(drawMode==ReticleDrawMode::RECTANGLES){
                 //need the edges because the corners will trace a trapezoid
@@ -55,6 +56,11 @@ public:
                 lines[i].y1 = left.getY();
                 lines[i].y2 = right.getY(); //should be the same as left.getY()
             }
+
+            if(solvedForPitchLandingSpotThisCycle){
+                //if we just solved a pitch, don't solve any more this update(), do it the next time
+                break;
+            }
         }
 
         //CURVES is not implemented yet
@@ -75,11 +81,13 @@ private:
     {
         FOR_HEIGHT_OFF_GROUND = 0, // uses pitch and DISTANCES away to solve for height, redraws the reticle often because pitch changes often
         FOR_PITCH = 1,             // uses AVERAGE_HEIGHT_OFF_GROUND and DISTANCES away to solve for pitch, reticle doesn't ever need redrawn because constants are constant
-        FOR_DISTANCE_AWAY = 2      // uses pitch and AVERAGE_HEIGHT_OFF_GROUND to solve for distance away, redraws the reticle often because pitch changes often
+        // FOR_DISTANCE_AWAY = 2      // uses pitch and AVERAGE_HEIGHT_OFF_GROUND to solve for distance away, redraws the reticle often because pitch changes often
     };
-
-    static constexpr float AVERAGE_HEIGHT_OFF_GROUND = 0.07; //meters, center of panel to ground, for calculating where on screen reticle things should be
-
+    
+    ReticleDrawMode drawMode = ReticleDrawMode::HORIZ_LINES;
+    ReticleSolveMode solveMode = ReticleSolveMode::FOR_PITCH;
+    
+    //panel sizes
     static constexpr float PANEL_WIDTH = 0.135; //meters
     static constexpr float PANEL_HEIGHT = 0.125; //meters, height across the surface
     static constexpr float PANEL_ANGLE = 15 * PI / 180; // radians, tilt of the panel, 0 would be panel is not tilted
@@ -99,17 +107,23 @@ private:
     // GraphicsContainer curvesContainer{};
     GimbalSubsystem* gimbal;
 
-    ReticleDrawMode drawMode = ReticleDrawMode::HORIZ_LINES;
-    ReticleSolveMode solveMode = ReticleSolveMode::FOR_HEIGHT_OFF_GROUND;
-
     
     //for rectangles and lines
     static constexpr int NUM_THINGS = 6;
-    static constexpr float DISTANCES[NUM_THINGS] = {1, 2, 3, 4, 5, 6}; //y distances, in meters
+    static constexpr float DISTANCES[NUM_THINGS] = {1, 2, 3, 4, 5, 6}; //meters, y distances, measured from center of robot to center of panel
     static constexpr UISubsystem::Color COLORS[NUM_THINGS] = {UISubsystem::Color::PURPLISH_RED, UISubsystem::Color::PINK, UISubsystem::Color::ORANGE, UISubsystem::Color::YELLOW, UISubsystem::Color::GREEN, UISubsystem::Color::CYAN};
 
     UnfilledRectangle rects[NUM_THINGS];
     Line lines[NUM_THINGS];
+
+
+    //for solving for pitch
+    static constexpr float AVERAGE_HEIGHT_OFF_GROUND = 0.07; //meters, center of panel to ground, for calculating where on screen reticle things should be
+    static constexpr int MAX_NUM_ITERATIONS = 20; //it is difficult to actually solve for pitch because initial launch positions depend on pitch
+    int forPitchLandingSpotsSolved[NUM_THINGS]; //so we do a binary search, guessing a pitch, calculating where it lands, and trying a higher or lower pitch accordingly
+    Vector3d forPitchLandingSpots[NUM_THINGS];
+    float forPitchPitches[NUM_THINGS];
+    bool solvedForPitchLandingSpotThisCycle = false; //prevent solving for multiple in one update() cycle so it doesn't take a long time
 
     void updateHidden() {
         //maybe make it so that objects at the same index have the same graphics name, so instead of hide one show another replace
@@ -132,23 +146,50 @@ private:
         return Projections::vtmSpaceToScreenSpace(temp2);
     }
 
-    Vector3d calculateLandingSpot(float pitch, float distanceDownRange) {
+
+    Vector3d calculateLandingSpot(float* pitch, int i) {
 
         if(solveMode == ReticleSolveMode::FOR_HEIGHT_OFF_GROUND){
             Vector3d temp{0,initialShotVelocity,0};
-            Vector3d initialVelo = temp.rotatePitch(-pitch);
+            Vector3d initialVelo = temp.rotatePitch(-*pitch);
             Vector3d initialPos{0,0,0}; //shot starts in barrel space
             temp = Projections::barrelSpaceToPivotSpace(initialPos);
-            initialPos = temp.rotatePitch(-pitch);
+            initialPos = temp.rotatePitch(-*pitch);
             //initialPos and initialVelo are in pivot space, parallel to the ground so gravity is pulling in the -z direction only
             
-            float t = (distanceDownRange - initialPos.getY()) / initialVelo.getY(); //(distance to travel [meters]) divided by (speed to get there [meters/seconds]) gives (time to get there [seconds])
+            float t = (DISTANCES[i] - initialPos.getY()) / initialVelo.getY(); //(distance to travel [meters]) divided by (speed to get there [meters/seconds]) gives (time to get there [seconds])
             float zFinal = initialPos.getZ() + initialVelo.getZ() * t - tap::algorithms::ACCELERATION_GRAVITY/2 * t * t; //make sure gravity is negative, the taproot constant is positive, need to subtract
-            return Vector3d{initialPos.getX(), distanceDownRange, zFinal}; //side to side doesn't change, we are defining the down range distance, and we calculated the height off the ground
+            return Vector3d{initialPos.getX(), DISTANCES[i], zFinal}; //side to side doesn't change, we are defining the down range distance, and we calculated the height off the ground
         } else if(solveMode == ReticleSolveMode::FOR_PITCH){
+            //if solved it earlier, return saved result
+            if(forPitchLandingSpotsSolved[i]){
+                *pitch = forPitchPitches[i];
+                return forPitchLandingSpots[i];
+            }
 
-        } else { //FOR_DISTANCE_AWAY
+            //solve
+            forPitchPitches[i] = 0;
+            solveMode = ReticleSolveMode::FOR_HEIGHT_OFF_GROUND; //switch to height mode to recurse and calculate the other way
+            for(int j = 0; j<MAX_NUM_ITERATIONS; j++){
+                forPitchLandingSpots[i] = calculateLandingSpot(forPitchPitches+i, i);
 
+                if(forPitchLandingSpots[i].getZ()<AVERAGE_HEIGHT_OFF_GROUND){
+                    //landed too low, aim higher
+                    //if j is 0, we add pi/4, 45 degrees
+                    //if j is 1, we add pi/8, 22.5 degrees
+                    forPitchPitches[i] += PI / (4 << j); 
+                } else {
+                    //landed too high, aim lower
+                    //if j is 0, we subtract pi/4, 45 degrees
+                    //if j is 1, we subtract pi/8, 22.5 degrees
+                    forPitchPitches[i] -= PI / (4 << j); 
+                }
+            }
+
+            solvedForPitchLandingSpotThisCycle = true;
+            solveMode = ReticleSolveMode::FOR_PITCH; //go back to original mode
+        } else {
+            //FOR_DISTANCE_AWAY not implemented yet
         }
 
 
