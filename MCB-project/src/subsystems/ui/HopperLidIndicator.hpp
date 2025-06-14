@@ -1,10 +1,9 @@
 #pragma once
 
+#include "subsystems/servo/ServoSubsystem.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/ui/GraphicsContainer.hpp"
 #include "util/ui/SimpleGraphicsObjects.hpp"
-
-#include "subsystems/servo/ServoSubsystem.hpp"
 
 using namespace tap::communication::serial;
 using namespace subsystems;
@@ -17,20 +16,25 @@ public:
     }
 
     void update() {
-        if(servo->getTargetIsClosed()){
-            lid.x1 = 690;
-            lid.y1 = 820;
-            lid.y2 = 820;
+        if (servo->getTargetIsClosed()) {
+            lid.x2 = CENTER_X + SIZE;
+            lid.y1 = CENTER_Y + SIZE / 2;
         } else {
-            lid.x1 = 650;
-            lid.y1 = 800;
-            lid.y2 = 800;
+            lid.x2 = CENTER_X - SIZE;
+            lid.y1 = CENTER_Y - SIZE / 2;
         }
+        lid.y2 = lid.y1;
     }
 
 private:
     ServoSubsystem* servo;
+
+    Line lid{UISubsystem::Color::GREEN, CENTER_X, 0, 0, 0, SIZE};
+    UnfilledRectangle frame{UISubsystem::Color::WHITE, CENTER_X - FRAME_THICKNESS / 2, CENTER_Y - FRAME_THICKNESS / 2, SIZE + FRAME_THICKNESS, SIZE + FRAME_THICKNESS, FRAME_THICKNESS};
+
+    static constexpr uint16_t CENTER_X = 1250;  // puts it on top of )
+    static constexpr uint16_t CENTER_Y = 810;   // puts it on top of )
     
-    Line lid{UISubsystem::Color::GREEN, 690, 820, 670, 820, 20};
-    UnfilledRectangle frame{UISubsystem::Color::WHITE, 670, 810, 20, 20, 2};
+    static constexpr uint16_t SIZE = 20;
+    static constexpr uint16_t FRAME_THICKNESS = 2;
 };

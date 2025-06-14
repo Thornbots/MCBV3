@@ -14,14 +14,36 @@ public:
 
     void update() {
         // check if reloaded
-        if (drivers->refSerial.getRefSerialReceivingData() &&
-            drivers->refSerial.getRobotData().rfidStatus & (RefSerialData::Rx::RFIDActivationStatus::RESTORATION_ZONE | RefSerialData::Rx::RFIDActivationStatus::EXCHANGE_ZONE)) {
-            // not sure if it is the restoration or exchange zone that is what we use in 3v3
-            shotsAtLastReload = index->getTotalNumBallsShot();
+        tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
+        if (drivers->refSerial.getRefSerialReceivingData()) {
+            if (robotData.rfidStatus.any(RefSerialData::Rx::RFIDActivationStatus::RESTORATION_ZONE | RefSerialData::Rx::RFIDActivationStatus::EXCHANGE_ZONE)) {
+                // not sure if it is the restoration or exchange zone that is what we use in 3v3
+                shotsAtLastReload = index->getTotalNumBallsShot();
+            }
+
+            float shotsShot = index->getTotalNumBallsShot() + shotsAtLastReload;
+            // shots can be negative (ref system isn't able to cut off power in time to prevent shots), taproot should change the uint to int
+            int16_t shotsBought = robotData.turret.bulletsRemaining17;
+            if (shotsBought == 0) 
+                shotsBought = robotData.turret.bulletsRemaining42;
+
+            if (shotsBought < 0) {
+                // shotsShot is lower, you have shot more than you have bought
+                // shotsBought shots is higher
+                arc.setLower((FILLED_NUM_SHOTS - shotsShot)/FILLED_NUM_SHOTS);
+                arc.setHigher((FILLED_NUM_SHOTS - shotsShot - shotsBought)/FILLED_NUM_SHOTS);
+                arc.color = UISubsystem::Color::GREEN;
+            } else {
+                // shotsShot is higher, haven't shot more than you have bought
+                // shotsBought shots is lower
+                arc.setHigher((FILLED_NUM_SHOTS - shotsShot)/FILLED_NUM_SHOTS);
+                arc.setLower((FILLED_NUM_SHOTS - shotsShot - shotsBought)/FILLED_NUM_SHOTS);
+                arc.color = UISubsystem::Color::PINK;
+            }
         }
 
         // update arc
-        arc.endAngle = static_cast<uint16_t>(std::lerp(START_ANGLE, END_ANGLE, (FILLED_NUM_SHOTS - index->getTotalNumBallsShot() + shotsAtLastReload)/FILLED_NUM_SHOTS));
+        // (FILLED_NUM_SHOTS - index->getTotalNumBallsShot() + shotsAtLastReload)/FILLED_NUM_SHOTS)
     }
 
 private:
@@ -36,5 +58,5 @@ private:
     static constexpr int FILLED_NUM_SHOTS = 500;  // this would be ifdefed, but only infantry draws it right now
     float shotsAtLastReload = 0;                  // when we enter the reload zone, assume we fill completely
 
-    Arc arc{UISubsystem::Color::GREEN, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, SIZE, SIZE, START_ANGLE, END_ANGLE, THICKNESS};
+    LargeCenteredArc arc{false, 0};  // arc on the right size in first lane
 };

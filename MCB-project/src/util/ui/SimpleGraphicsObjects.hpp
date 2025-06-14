@@ -178,6 +178,59 @@ private:
     RefSerialData::Tx::GraphicColor prevColor;
 };
 
+
+class LargeCenteredArc : public Arc {
+public:
+    
+
+    LargeCenteredArc(bool isLeft, uint16_t lane) : Arc(), isLeft(isLeft), lane(lane) {
+        cx = UISubsystem::HALF_SCREEN_WIDTH;
+        cy = UISubsystem::HALF_SCREEN_HEIGHT;
+        setLower(0);
+        setHigher(1);
+        thickness = THICKNESS;
+        width = SIZE0 - lane*THICKNESS;
+        height = SIZE0 - lane*THICKNESS;
+    }
+
+    void setLower(float r){
+        if(isLeft){
+            startAngle = static_cast<uint16_t>(std::lerp(START_ANGLE_LEFT, END_ANGLE_LEFT, r));
+        } else {
+            endAngle = static_cast<uint16_t>(std::lerp(END_ANGLE_RIGHT, START_ANGLE_RIGHT, r));
+        }
+    }
+
+    void setHigher(float r){
+        if(isLeft){
+            endAngle = static_cast<uint16_t>(std::lerp(START_ANGLE_LEFT, END_ANGLE_LEFT, r));
+        } else {
+            startAngle = static_cast<uint16_t>(std::lerp(END_ANGLE_RIGHT, START_ANGLE_RIGHT, r));
+        }
+    }
+
+    void setIsLeft(bool newIsLeft){
+        isLeft = newIsLeft;
+    }
+
+private:
+    static constexpr uint16_t THICKNESS = 5;      // pixels
+    static constexpr uint16_t SIZE0 = 392;        // pixels, makes it so we are just inside the left parenthesis thingy if in lane 0, higher number lanes are further in
+    
+    static constexpr uint16_t START_ANGLE_LEFT = 227;  // degrees, lines up with the bottom of the left parenthesis thingy that is drawn by default
+    static constexpr uint16_t END_ANGLE_LEFT = 313;    // degrees, lines up with the top
+    
+    static constexpr uint16_t START_ANGLE_RIGHT = START_ANGLE_LEFT-180;  // degrees, lines up with the bottom of the left parenthesis thingy that is drawn by default
+    static constexpr uint16_t END_ANGLE_RIGHT = END_ANGLE_LEFT-180;    // degrees, lines up with the top
+
+    bool isLeft;
+    uint16_t lane;
+
+};
+
+
+
+
 class TextSizer {
 public:
     uint16_t height, x, y = 0;  // can set this directly, will appear next time drawn
