@@ -27,7 +27,7 @@ void GimbalSubsystem::refresh() {
 
     yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
 
-#if defined(INFANTRY)
+#if defined(INFANTRY) or defined(HERO)
     gimbalPitchAngularVelocity = drivers->bmi088.getGx() * PI / 180;
 
     // this happens to work because the X axis is alined with the pitch axis
@@ -44,7 +44,7 @@ void GimbalSubsystem::refresh() {
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
     float pitchVel = getPitchVel();
     float pitch = getPitchEncoderValue();
-#if defined(INFANTRY)  // chicken mode, gets bad when imu drifts
+#if defined(INFANTRY) or defined(HERO) // chicken mode, gets bad when imu drifts
     targetPitch -= gimbalPitchAngleRelativeWorld;
     pitchVel += gimbalPitchAngularVelocity;
 #endif
@@ -122,9 +122,13 @@ int GimbalSubsystem::getPitchVoltage(float targetAngle, float pitchAngleRelative
 
 float GimbalSubsystem::getYawEncoderValue() { return std::fmod(motorYaw->getPositionUnwrapped() / YAW_TOTAL_RATIO + encoderOffset, 2 * PI); }
 
-float GimbalSubsystem::getPitchEncoderValue() {
+float GimbalSubsystem::getPitchEncoderValue() { //more like get pitch relative to frame
     float temp = std::fmod(motorPitch->getPositionWrapped() / PITCH_RATIO - PITCH_OFFSET, 2 * PI);
+    #if defined(HERO) //wraparound fix  
+    return (temp > (1.3 * PI/PITCH_RATIO)) ? temp - 2 * PI/PITCH_RATIO : temp;
+    #else
     return (temp > PI) ? temp - 2 * PI : temp;
+    #endif
 }
 float GimbalSubsystem::getYawVel() { return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO; }
 float GimbalSubsystem::getPitchVel() { return motorPitch->getShaftRPM() * PI / 30; }

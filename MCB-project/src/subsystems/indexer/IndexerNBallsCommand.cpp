@@ -8,7 +8,7 @@ void IndexerNBallsCommand::initialize() {
 }
 void IndexerNBallsCommand::execute()
 {
-    if (indexer->getNumBallsShot() < 0.9) { //make first shot fast, but don't make second fast
+    if (indexer->getNumBallsShot() < INITIAL_BURST_NUM_BALLS) { //make first shot fast, but don't make second fast
         indexer->indexAtMaxRate();
     } else {
         indexer->indexAtRate(ballsPerSecond);
