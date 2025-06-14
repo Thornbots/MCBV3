@@ -30,8 +30,8 @@ public:
     }
 
     void update() {
-        uint16_t heading = static_cast<uint16_t>(gimbal->getYawEncoderValue() * ChassisOrientationIndicator::YAW_MULT + ChassisOrientationIndicator::YAW_OFFSET + 360);
-        uint16_t heading2 = static_cast<uint16_t>(gimbal->getYawAngleRelativeWorld() * ChassisOrientationIndicator::YAW_MULT + ChassisOrientationIndicator::YAW_OFFSET + 360);
+        uint16_t encoder = static_cast<uint16_t>(gimbal->getYawEncoderValue() * ChassisOrientationIndicator::YAW_MULT + ChassisOrientationIndicator::YAW_OFFSET + 360);
+        uint16_t imu = static_cast<uint16_t>(drivers->bmi088.getYaw() + 360);
         // if the gimbal compared to the drivetrain (from the encoder) is facing forward, heading would be 360, if facing right, heading would be 90
 
         // update/clear old hits
@@ -52,7 +52,7 @@ public:
                 // don't get to reclaim slot, update rotation
                 allSlotsUnused = false;
 
-                updateRing(i, heading);
+                updateRing(i, imu);
             }
         }
 
@@ -65,16 +65,16 @@ public:
             if (previousHp > robotData.currentHp && (robotData.damageType == RefSerialData::Rx::DamageType::ARMOR_DAMAGE || robotData.damageType == RefSerialData::Rx::DamageType::COLLISION)) {
                 // took some sort of damage and we think we took panel damage
 
-                // damagedArmorId==0 is forward, subtract 0*90 degrees keeps heading unchanged, so if was facing forward (heading was 360) then draw at angle 360: top
-                // 1 is left, subtract 1*90 degrees to make 360 into 270: left
-                // 2 is back, subtract 2*90 degrees to make 360 into 180: bottom
-                // 3 is right, subtract 3*90 degrees to make 360 into 90: bottom
-                // 4 is top, we don't have panels on top (yet?)
-                hitOrientations[nextIndex] = heading2 - 90 * ((uint16_t) robotData.damagedArmorId);
+                // damagedArmorId==0 is forward, add 0*90 degrees
+                // 1 is left, add 1*90 degrees
+                // 2 is back, add 2*90 degrees
+                // 3 is right, add 3*90 degrees
+                // 4 is top, don't care because we don't have panels on top (yet?)
+                hitOrientations[nextIndex] = encoder + imu + 90 * ((uint16_t) robotData.damagedArmorId);
                 rings[nextIndex].show();
                 expirationTimeouts[nextIndex].restart(RECENT_TIME + EXPIRATION_TIME);
                 rings[nextIndex].color = UISubsystem::Color::PINK;
-                updateRing(nextIndex, heading);
+                updateRing(nextIndex, imu);
 
                 //get the next index
                 nextIndex++;
@@ -108,8 +108,10 @@ private:
     // This is a combination of which panel got hit and what angle the drivetrain is at (compared to gimbal)
     float hitOrientations[NUM_HISTORY];
 
-    void updateRing(int i, uint16_t heading) {
-        rings[i].startAngle = heading - hitOrientations[i] - ARC_LEN / 2;
+    //once we know what direction we hit in, we no longer care about the drivetrain spinning (encoder)
+    //we just need to know if the head moved in space (imu)
+    void updateRing(int i, uint16_t imu) {
+        rings[i].startAngle = imu - hitOrientations[i] - ARC_LEN / 2;
         ChassisOrientationIndicator::fixAngle(&rings[i].startAngle);
         rings[i].endAngle = rings[i].startAngle + ARC_LEN;
     }

@@ -20,8 +20,6 @@
 #include "PredictedRemainingShotsIndicator.hpp"
 #include "AllRobotHealthNumbers.hpp"
 #include "Countdown.hpp"
-#include "TestFill.hpp"
-#include "TestGraphics.hpp"
 #include "drivers.hpp"
 
 namespace commands {
@@ -39,16 +37,13 @@ public:
           servo(servo) {
         addSubsystemRequirement(ui);
 
-        // addGraphicsObject(&testGraphics);
-        // addGraphicsObject(&testFill);
-
         addGraphicsObject(&lane);
         addGraphicsObject(&supercap);
         addGraphicsObject(&orient);
         addGraphicsObject(&peek);
         addGraphicsObject(&lid);
         addGraphicsObject(&reticle);
-        // addGraphicsObject(&ring);
+        addGraphicsObject(&ring);
         addGraphicsObject(&remain);
         addGraphicsObject(&numbers);
         addGraphicsObject(&countdown);
@@ -63,7 +58,7 @@ public:
         peek.update();
         lid.update();
         reticle.update();
-        // ring.update();
+        ring.update();
         remain.update();
         numbers.update();
         countdown.update();
@@ -86,16 +81,13 @@ private:
     ServoSubsystem* servo;
 
     // add top level graphics objects here and in the constructor
-    // TestGraphics testGraphics{};
-    // TestFill testFill{};
-
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
     ChassisOrientationIndicator orient{drivers, gimbal, drivetrain};
     PeekingLines peek{drivetrain, gimbal};
     HopperLidIndicator lid{servo};
     Reticle reticle{gimbal};
-    // HitRing ring{drivers, gimbal};
+    HitRing ring{drivers, gimbal};
     PredictedRemainingShotsIndicator remain{drivers, indexer};
     AllRobotHealthNumbers numbers{drivers};
     Countdown countdown{drivers};

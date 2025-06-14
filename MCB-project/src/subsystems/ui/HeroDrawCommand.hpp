@@ -16,8 +16,6 @@
 #include "HitRing.hpp"
 #include "AllRobotHealthNumbers.hpp"
 #include "Countdown.hpp"
-#include "TestFill.hpp"
-#include "TestGraphics.hpp"
 #include "drivers.hpp"
 
 namespace commands {
@@ -34,14 +32,11 @@ public:
           drivetrain(drivetrain) {
         addSubsystemRequirement(ui);
 
-        // addGraphicsObject(&testGraphics);
-        // addGraphicsObject(&testFill);
-
         addGraphicsObject(&lane);
         addGraphicsObject(&supercap);
         addGraphicsObject(&orient);
         addGraphicsObject(&reticle);
-        // addGraphicsObject(&ring);
+        addGraphicsObject(&ring);
         addGraphicsObject(&numbers);
         addGraphicsObject(&countdown);
     };
@@ -53,7 +48,7 @@ public:
         supercap.update();
         orient.update();
         reticle.update();
-        // ring.update();
+        ring.update();
         numbers.update();
         countdown.update();
     };
@@ -74,14 +69,11 @@ private:
     DrivetrainSubsystem* drivetrain;
 
     // add top level graphics objects here and in the constructor
-    // TestGraphics testGraphics{};
-    // TestFill testFill{};
-
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
     ChassisOrientationIndicator orient{drivers, gimbal, drivetrain};
     Reticle reticle{gimbal};
-    // HitRing ring{drivers, gimbal};
+    HitRing ring{drivers, gimbal};
     AllRobotHealthNumbers numbers{drivers};
     Countdown countdown{drivers};
 };
