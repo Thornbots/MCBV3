@@ -80,15 +80,15 @@ struct RefSysMsg
     uint8_t robotID; //if was on red team, so hero will always be 1 and not 101
     float deltaAngleGotHitIn; //if we are looking in a certain direction and get hit in the left, this would be PI/2
 
-    // uint8_t booleans;
-    bool isOnBlueTeam;
-    bool isHealing;
-    bool isInReloadZone;
-    bool isInCenterZone;
-    bool doesTeamOccupyCenterZone;
-    bool doesOpponentTeamOccupyCenterZone;
-    bool doesChassisHavePower;
-    bool doesGimbalHavePower;
+    uint8_t booleans;
+    // bool isOnBlueTeam;
+    // bool isHealing;
+    // bool isInReloadZone;
+    // bool isInCenterZone;
+    // bool doesTeamOccupyCenterZone;
+    // bool doesOpponentTeamOccupyCenterZone;
+    // bool doesChassisHavePower;
+    // bool doesGimbalHavePower;
 } modm_packed;
 
 // ==== struct type to enum mapping ===
@@ -97,6 +97,7 @@ struct StructToMessageType;
 template<> struct StructToMessageType<ROSData> { static constexpr UartMessage value = ROS_MSG; };
 template<> struct StructToMessageType<CVData> { static constexpr UartMessage value = CV_MSG; };
 template<> struct StructToMessageType<PoseData> { static constexpr UartMessage value = POSE_MSG; };
+template<> struct StructToMessageType<RefSysMsg> { static constexpr UartMessage value = REF_SYS_MSG; };
 
 
 struct PanelData {

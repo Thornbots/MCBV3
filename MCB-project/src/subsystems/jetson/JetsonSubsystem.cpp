@@ -46,16 +46,17 @@ void JetsonSubsystem::refresh() {
             (uint8_t) robotData.robotId % 100, //blue hero is 101, we want to send 1
             12.34, //calculating this is not easy, jetson knows that if greater than pi or less than -pi that it is invalid
 
-            drivers->refSerial.isBlueTeam(robotData.robotId),
-            robotData.robotBuffStatus.recoveryBuff > 0,
-            robotData.rfidStatus.any(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE | tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE),
-            robotData.rfidStatus.any(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::CENTRAL_BUFF),
-            gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_TEAM),
-            gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_OPPONENT),
-            robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::CHASSIS_HAS_POWER),
-            robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::GIMBAL_HAS_POWER),
+            drivers->refSerial.isBlueTeam(robotData.robotId) << 7 |
+            (robotData.robotBuffStatus.recoveryBuff > 0) << 6 |
+            (robotData.rfidStatus.any(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE | tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE)) << 5 |
+            robotData.rfidStatus.any(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::CENTRAL_BUFF) << 4 |
+            gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_TEAM) << 3 |
+            gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_OPPONENT) << 2 |
+            robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::CHASSIS_HAS_POWER) << 1 |
+            robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::GIMBAL_HAS_POWER) 
         };
-        // needToSendRefData = !sendMsg(&r);
+        //needToSendRefData = !
+        sendMsg(&r);
     }
 
     PoseData p{
