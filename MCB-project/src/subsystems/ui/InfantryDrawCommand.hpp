@@ -88,7 +88,7 @@ private:
 
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
-    ChassisOrientationIndicator orient{gimbal};
+    ChassisOrientationIndicator orient{gimbal, drivetrain};
     PeekingLines peek{drivetrain, gimbal};
     HopperLidIndicator lid{servo};
     Reticle reticle{gimbal};

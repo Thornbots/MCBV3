@@ -76,7 +76,7 @@ private:
 
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
-    ChassisOrientationIndicator orient{gimbal};
+    ChassisOrientationIndicator orient{gimbal, drivetrain};
     Reticle reticle{gimbal};
     // HitRing ring{drivers, gimbal};
     AllRobotHealthNumbers numbers{drivers};
