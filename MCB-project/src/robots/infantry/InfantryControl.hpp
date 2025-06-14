@@ -105,7 +105,7 @@ public:
     subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::ServoSubsystem servo{drivers, &hardware.servo};
-    subsystems::JetsonSubsystem jetson{drivers};
+    subsystems::JetsonSubsystem jetson{drivers, &gimbal};
 
 
     // //commands

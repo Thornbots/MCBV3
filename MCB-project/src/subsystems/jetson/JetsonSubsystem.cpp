@@ -19,8 +19,8 @@ float targetPitchTest;
 
 namespace subsystems {
 
-JetsonSubsystem::JetsonSubsystem(src::Drivers* drivers) :
-     tap::control::Subsystem(drivers), drivers(drivers) {}
+JetsonSubsystem::JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal) :
+     tap::control::Subsystem(drivers), drivers(drivers), gimbal(gimbal) {}
 
 
 void JetsonSubsystem::initialize() {
@@ -30,13 +30,42 @@ void JetsonSubsystem::initialize() {
 
 void JetsonSubsystem::refresh() { 
     drivers->uart.updateSerial(); 
+
+    //if we need to not lose a ref message, use needToSendRefData
+    if(refDataSendingTimeout.execute() && drivers->refSerial.getRefSerialReceivingData()){
+    //     needToSendRefData = true;
+    // }
+
+    // if(needToSendRefData){
+        tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
+        tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
+        RefSysMsg r{
+            (uint8_t) gameData.gameStage,
+            (uint16_t) gameData.stageTimeRemaining,
+            (uint16_t) robotData.currentHp,
+            (uint8_t) robotData.robotId % 100, //blue hero is 101, we want to send 1
+            12.34, //calculating this is not easy, jetson knows that if greater than pi or less than -pi that it is invalid
+
+            drivers->refSerial.isBlueTeam(robotData.robotId) << 7 |
+            (robotData.robotBuffStatus.recoveryBuff > 0) << 6 |
+            (robotData.rfidStatus.any(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE | tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE)) << 5 |
+            robotData.rfidStatus.any(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::CENTRAL_BUFF) << 4 |
+            gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_TEAM) << 3 |
+            gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_OPPONENT) << 2 |
+            robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::CHASSIS_HAS_POWER) << 1 |
+            robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::GIMBAL_HAS_POWER) 
+        };
+        //needToSendRefData = !
+        sendMsg(&r);
+    }
+
     PoseData p{
-        drivers->i2c.odom.getX(),
+        drivers->i2c.odom.getX(), //OdometrySubsystem doesn't provide wrappers for these
         drivers->i2c.odom.getY(),
         drivers->i2c.odom.getXVel(),
         drivers->i2c.odom.getYVel(),
-        0,
-        drivers->i2c.encoder.getAngle(),
+        gimbal->getPitchEncoderValue(), 
+        gimbal->getYawEncoderValue(),
         drivers->bmi088.getRoll(),
         drivers->bmi088.getPitch(),
         drivers->bmi088.getYaw(),
@@ -45,6 +74,8 @@ void JetsonSubsystem::refresh() {
         drivers->bmi088.getAz()
     };
     sendMsg(&p);
+
+    
 }
 
 bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity) {
@@ -154,7 +185,7 @@ void JetsonSubsystem::update(float current_yaw, float current_pitch, float curre
     SecondOrderKinematicState state(position, velocity, acceleration);  //(pos,vel,acc);
 
     float targetYaw, targetPitch, travelTime;
-    bool valid = tap::algorithms::ballistics::findTargetProjectileIntersection(state, J, 3, &targetPitch, &targetYaw, &travelTime, 0);
+    bool valid = tap::algorithms::ballistics::findTargetProjectileIntersection(state, initialShotVelocity, 3, &targetPitch, &targetYaw, &travelTime, 0);
 
     posXdebug = posXrelPitch;
     posYdebug = posYrelPitch;
