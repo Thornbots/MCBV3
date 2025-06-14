@@ -13,7 +13,7 @@ static constexpr float MOUSE_PITCH_PROPORTIONAL = 0.00005;
 
 static constexpr float CONTROLLER_YAW_PROPORTIONAL = -0.02;
 
-static constexpr int LATENCY_Q_SIZE = 12; //12 cycles = 24ms
+static constexpr int LATENCY_Q_SIZE = 11; //12 cycles = 24ms
 
 #if defined(HERO)
 constexpr static int YAW_MOTOR_MAX_SPEED = 1000;  // TODO: Make this value relevent
