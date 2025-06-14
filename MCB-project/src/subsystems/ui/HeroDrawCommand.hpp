@@ -15,6 +15,7 @@
 #include "SupercapChargeIndicator.hpp"
 #include "HitRing.hpp"
 #include "AllRobotHealthNumbers.hpp"
+#include "Countdown.hpp"
 #include "TestFill.hpp"
 #include "TestGraphics.hpp"
 #include "drivers.hpp"
@@ -42,6 +43,7 @@ public:
         addGraphicsObject(&reticle);
         // addGraphicsObject(&ring);
         addGraphicsObject(&numbers);
+        addGraphicsObject(&countdown);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -53,6 +55,7 @@ public:
         reticle.update();
         // ring.update();
         numbers.update();
+        countdown.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -76,9 +79,10 @@ private:
 
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
-    ChassisOrientationIndicator orient{gimbal, drivetrain};
+    ChassisOrientationIndicator orient{drivers, gimbal, drivetrain};
     Reticle reticle{gimbal};
     // HitRing ring{drivers, gimbal};
     AllRobotHealthNumbers numbers{drivers};
+    Countdown countdown{drivers};
 };
 }  // namespace commands

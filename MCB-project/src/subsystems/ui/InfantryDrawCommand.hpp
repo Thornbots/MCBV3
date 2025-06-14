@@ -19,6 +19,7 @@
 #include "HitRing.hpp"
 #include "PredictedRemainingShotsIndicator.hpp"
 #include "AllRobotHealthNumbers.hpp"
+#include "Countdown.hpp"
 #include "TestFill.hpp"
 #include "TestGraphics.hpp"
 #include "drivers.hpp"
@@ -50,6 +51,7 @@ public:
         // addGraphicsObject(&ring);
         addGraphicsObject(&remain);
         addGraphicsObject(&numbers);
+        addGraphicsObject(&countdown);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -64,6 +66,7 @@ public:
         // ring.update();
         remain.update();
         numbers.update();
+        countdown.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -88,12 +91,13 @@ private:
 
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
-    ChassisOrientationIndicator orient{gimbal, drivetrain};
+    ChassisOrientationIndicator orient{drivers, gimbal, drivetrain};
     PeekingLines peek{drivetrain, gimbal};
     HopperLidIndicator lid{servo};
     Reticle reticle{gimbal};
     // HitRing ring{drivers, gimbal};
     PredictedRemainingShotsIndicator remain{drivers, indexer};
     AllRobotHealthNumbers numbers{drivers};
+    Countdown countdown{drivers};
 };
 }  // namespace commands
