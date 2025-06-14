@@ -47,6 +47,7 @@ public:  // Public Methods
     bool isInControllerMode;
     bool isInKeyboardMode;
     bool isPeeking;
+    bool isPeekingLeft;
     // End UI stuff
 
     /*

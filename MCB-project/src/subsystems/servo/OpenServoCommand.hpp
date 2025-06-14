@@ -15,7 +15,7 @@ public:
 
     void initialize() override {};
 
-    void execute() override {servo->setTargetPosition(ServoSubsystem::OPEN_POSITION);};
+    void execute() override {servo->setOpen();};
 
     void end(bool) override {};
 

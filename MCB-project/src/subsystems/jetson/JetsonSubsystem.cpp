@@ -156,7 +156,7 @@ void JetsonSubsystem::update(float current_yaw, float current_pitch, float curre
     SecondOrderKinematicState state(position, velocity, acceleration);  //(pos,vel,acc);
 
     float targetYaw, targetPitch, travelTime;
-    bool valid = tap::algorithms::ballistics::findTargetProjectileIntersection(state, J, 3, &targetPitch, &targetYaw, &travelTime, 0);
+    bool valid = tap::algorithms::ballistics::findTargetProjectileIntersection(state, initialShotVelocity, 3, &targetPitch, &targetYaw, &travelTime, 0);
 
     posXdebug = posXrelPitch;
     posYdebug = posYrelPitch;

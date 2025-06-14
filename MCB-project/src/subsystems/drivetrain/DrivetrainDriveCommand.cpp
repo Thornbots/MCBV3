@@ -13,6 +13,7 @@ void DrivetrainDriveCommand::initialize() {
     drivetrain->isInControllerMode = controlMode == ControlMode::CONTROLLER;
     drivetrain->isInKeyboardMode = controlMode == ControlMode::KEYBOARD;
     drivetrain->isPeeking = driveMode == DriveMode::PEEK_LEFT || driveMode == DriveMode::PEEK_RIGHT;
+    drivetrain->isPeekingLeft = driveMode == DriveMode::PEEK_LEFT;
 }
 void DrivetrainDriveCommand::execute() {
     float referenceAngle = gimbal->getYawEncoderValue();
