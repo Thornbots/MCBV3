@@ -37,6 +37,7 @@ void GimbalSubsystem::refresh() {
 
     driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
     yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw(); 
+    updatePositionHistory(yawAngleRelativeWorld);
     motorPitch->setDesiredOutput(pitchMotorVoltage);
     motorYaw->setDesiredOutput(yawMotorVoltage);
 }
@@ -76,6 +77,13 @@ void GimbalSubsystem::updateMotorsAndVelocity(float changeInTargetYaw, float tar
     yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, targetYawVel, dt);
 }
 
+//latency compensation to improve yaw tracking
+void GimbalSubsystem::updateMotorsAndVelocityWithLatencyCompensation(float changeInTargetYaw, float targetPitch, float targetYawVel, float targetPitchVel){
+    float newChangeInTargetYaw = changeInTargetYaw - yawAngleRelativeWorld + positionHistory[LATENCY_Q_SIZE - 1]; //offsets change in yaw based on how far the yaw has moved since the camera captures a frame
+    updateMotorsAndVelocity(newChangeInTargetYaw, targetPitch, targetYawVel, targetPitchVel);
+
+}
+
 void GimbalSubsystem::stopMotors() {
     pitchMotorVoltage = 0;
     yawMotorVoltage = 0;
@@ -94,6 +102,16 @@ void GimbalSubsystem::stopMotors() {
 
 void GimbalSubsystem::reZeroYaw() {
     // TODO
+}
+
+void GimbalSubsystem::updatePositionHistory(float newPos) {
+    for (int i = LATENCY_Q_SIZE - 1; i >= 0; i--) {
+        // Store the current values in the history
+        // load in new value if i is not > 0
+        // flast element in the queue gets kicked out every call
+        positionHistory[i] = (i > 0) ? positionHistory[i - 1] : newPos;
+
+    }
 }
 
 // assume yawAngleRelativeWorld is in radians, not sure
