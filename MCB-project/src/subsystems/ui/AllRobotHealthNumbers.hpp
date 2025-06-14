@@ -18,15 +18,12 @@ public:
             this->addGraphicsObject(numbers + i);  // pointer math
         }
 
-        for(int i=0; i<3; i++){
-            numbers[i].color = UISubsystem::Color::PINK;
-            numbers[i+3].color = UISubsystem::Color::CYAN;
-        }
     }
 
     void update() {
 
         if (drivers->refSerial.getRefSerialReceivingData()) {
+            //set numbers
             RefSerialData::Rx::RobotHpData data = drivers->refSerial.getRobotData().allRobotHp;
             numbers[0].integer = data.red.sentry7;
             numbers[1].integer = data.red.standard3;
@@ -60,20 +57,30 @@ public:
                 }
             }
 
-            
+            //reset colors
+            for(int i=0; i<3; i++){
+                numbers[i].color = UISubsystem::Color::PINK;
+                numbers[i+3].color = UISubsystem::Color::CYAN;
+            }            
 
             for(int i=0; i<6; i++){
-                numbers[i].calculateNumbers();
-
+                //highlight own robot
                 if(drivers->refSerial.getRobotData().robotId == ids[i])
                     numbers[i].color = UISubsystem::Color::RED_AND_BLUE;
-            }
-            
-            for(int i=0; i<3; i++){
-                int j = 5-i; //if i is 0, j is 5; 1 and 4; 2 and 3
-
+                
+                //highlight robots taking damage by turning the number white and doubling the size for one frame
+                if(numbers[i].integerChanged()){
+                    numbers[i].color = UISubsystem::Color::WHITE;
+                    numbers[i].y = Y_POSITION-LINE_HEIGHT;
+                    numbers[i].height = 2*LINE_HEIGHT;
+                } else {
+                    numbers[i].y = Y_POSITION;
+                    numbers[i].height = LINE_HEIGHT;
+                }
+                 
+                //calulate width and center the numbers
+                numbers[i].calculateNumbers();
                 numbers[i].x = centerXs[i] - numbers[i].width/2;
-                numbers[j].x = centerXs[j] - numbers[j].width/2;
             }
         }
     }

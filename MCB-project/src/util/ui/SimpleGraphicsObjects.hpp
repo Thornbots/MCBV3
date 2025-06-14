@@ -323,6 +323,8 @@ public:
     uint16_t thickness = 0;
     int32_t integer = 0;
 
+    bool integerChanged() {return prevInteger != integer; }
+
 private:
     void setPrev() {
         prevThickness = thickness;
