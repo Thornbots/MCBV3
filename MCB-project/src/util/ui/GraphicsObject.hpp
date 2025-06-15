@@ -67,21 +67,32 @@ public:
     /*
      * Containers do nothing, SimpleGraphicsObject's fill the graphic data
      */
-    virtual void configGraphicData(__attribute__((unused)) RefSerialData::Tx::GraphicData* graphicData) {}
-    virtual void configCharacterData(__attribute__((unused)) RefSerialData::Tx::GraphicCharacterMessage* graphicData) {}
+    virtual void configGraphicData(RefSerialData::Tx::GraphicData*) {}
+    virtual void configCharacterData(RefSerialData::Tx::GraphicCharacterMessage*) {}
 
     /*
      * For when everything gets cleared. This should make it so next
      * time this object or all contained objects are told to draw,
      * they use GRAPHIC_ADD and not GRAPHIC_MODIFY
      */
-    virtual void hasBeenCleared() {}
+    virtual void hasBeenCleared() = 0;
 
     /*
      * Graphics representing strings need to be sent as a CharacterMessage,
      * and can't be sent in a group of 7 like other graphics can.
      */
     virtual bool isStringGraphic() { return false; }
+
+    virtual void hide() = 0;
+
+    virtual void show() = 0;
+
+    void setHidden(bool hidden) {
+        hidden ? hide() : show();
+    }
+
+    virtual void resetDrawMarks() = 0;
+    virtual void markToDraw() {}; //only applies to objects, marking a container to draw doesn't make sense
 
 protected:
     u_int16_t countIndex = 0;

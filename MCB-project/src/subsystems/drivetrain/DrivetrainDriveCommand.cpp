@@ -13,6 +13,8 @@ void DrivetrainDriveCommand::initialize() {
     drivetrain->isInControllerMode = controlMode == ControlMode::CONTROLLER;
     drivetrain->isInKeyboardMode = controlMode == ControlMode::KEYBOARD;
     drivetrain->isPeeking = driveMode == DriveMode::PEEK_LEFT || driveMode == DriveMode::PEEK_RIGHT;
+    drivetrain->isPeekingLeft = driveMode == DriveMode::PEEK_LEFT;
+    drivetrain->isBeyblading = driveMode == DriveMode::BEYBLADE;
 }
 void DrivetrainDriveCommand::execute() {
     float referenceAngle = gimbal->getYawEncoderValue();
@@ -21,6 +23,17 @@ void DrivetrainDriveCommand::execute() {
         x = drivers->remote.keyPressed(Remote::Key::D) - drivers->remote.keyPressed(Remote::Key::A);
         y = drivers->remote.keyPressed(Remote::Key::W) - drivers->remote.keyPressed(Remote::Key::S);
         boost = drivers->remote.keyPressed(Remote::Key::SHIFT);
+
+        int scroll = signum(drivers->remote.getMouseZ()); //mouse z is in increments of 10, making it -1, 0, or 1
+        if(oldScroll!=scroll)
+            drivetrain->linearVelocityMultiplierTimes100 += scroll * LINEAR_VELOCITY_INCREMENT_TIMES_100;
+        oldScroll = scroll;
+
+        //clamp
+        if(drivetrain->linearVelocityMultiplierTimes100>MAX_LINEAR_VELOCITY_TIMES_100) 
+            drivetrain->linearVelocityMultiplierTimes100 = MAX_LINEAR_VELOCITY_TIMES_100;
+        else if(drivetrain->linearVelocityMultiplierTimes100<MIN_LINEAR_VELOCITY_TIMES_100) 
+            drivetrain->linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100;
 
     } else if (controlMode == ControlMode::CONTROLLER) {
         x = drivers->remote.getChannel(Remote::Channel::LEFT_HORIZONTAL);
@@ -32,13 +45,10 @@ void DrivetrainDriveCommand::execute() {
 
     if (driveMode == DriveMode::BEYBLADE) {
         r = 10.5f;
-        x *= 1.75f;
-        y *= 1.75f;
-    } else if (driveMode == DriveMode::BEYBLADE2) {
-        r = 10.5f;
+        x *= drivetrain->linearVelocityMultiplierTimes100 / 100.0f;
+        y *= drivetrain->linearVelocityMultiplierTimes100 / 100.0f;
     } else if (driveMode == DriveMode::NO_SPIN) {
         r = 0;
-
     } else {
         float targetAngle = 0.0f;
         if (driveMode == DriveMode::PEEK_LEFT) {
@@ -56,7 +66,7 @@ void DrivetrainDriveCommand::execute() {
 
     Pose2d drive(x, y, r);
 
-    drivetrain->setTargetTranslation(drive.rotate(referenceAngle), (bool)boost);
+    drivetrain->setTargetTranslation(drive.rotate(referenceAngle), boost);
 }
 
 bool DrivetrainDriveCommand::isFinished() const { return !drivers->remote.isConnected(); }
@@ -64,6 +74,9 @@ bool DrivetrainDriveCommand::isFinished() const { return !drivers->remote.isConn
 void DrivetrainDriveCommand::end(bool) {
     drivetrain->isInControllerMode = false;
     drivetrain->isInKeyboardMode = false;
+    drivetrain->isBeyblading = false;
+    drivetrain->isPeeking = false;
+    drivetrain->isPeekingLeft = false;
 }
 
 }  // namespace commands

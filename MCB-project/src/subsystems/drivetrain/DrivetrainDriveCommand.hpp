@@ -14,7 +14,7 @@ using subsystems::GimbalSubsystem;
 
 using tap::communication::serial::Remote;
 
-enum DriveMode { BEYBLADE, BEYBLADE2, NO_SPIN, FOLLOW_TURRET, PEEK_LEFT, PEEK_RIGHT };
+enum DriveMode { BEYBLADE, NO_SPIN, FOLLOW_TURRET, PEEK_LEFT, PEEK_RIGHT };
 enum ControlMode { KEYBOARD, CONTROLLER, DISABLED  };
 
 class DrivetrainDriveCommand : public tap::control::Command {
@@ -42,6 +42,10 @@ public:
 
     void setControlMode(ControlMode newControlMode) { controlMode = newControlMode; }
 
+    static constexpr int MAX_LINEAR_VELOCITY_TIMES_100 = 175;
+    static constexpr int MIN_LINEAR_VELOCITY_TIMES_100 = 75;
+    static constexpr int LINEAR_VELOCITY_INCREMENT_TIMES_100 = 25;
+
 private:
     src::Drivers* drivers;
     DrivetrainSubsystem* drivetrain;
@@ -49,6 +53,12 @@ private:
     DriveMode driveMode;
     ControlMode controlMode;
     float x, y, r;
-    float boost;
+    bool boost;
+
+    int oldScroll = 0;
+    
+    float signum(float num) { return (num > 0) ? 1 : ((num < 0) ? -1 : 0); }
+
+    
 };
 }  // namespace commands
