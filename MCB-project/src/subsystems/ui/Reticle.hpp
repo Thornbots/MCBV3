@@ -103,7 +103,7 @@ private:
     };
 
     ReticleDrawMode drawMode = ReticleDrawMode::VERT_LINES;
-    ReticleSolveMode solveMode = ReticleSolveMode::FOR_HEIGHT_OFF_GROUND;
+    ReticleSolveMode solveMode = ReticleSolveMode::FOR_PITCH;
     bool vertLinesAlternate = false;
 
     // panel sizes
@@ -178,6 +178,7 @@ private:
             float t = (DISTANCES[i] - initialPos.getY()) / initialVelo.getY();  //(distance to travel [meters]) divided by (speed to get there [meters/seconds]) gives (time to get there [seconds])
             float zFinal =
                 initialPos.getZ() + initialVelo.getZ() * t - tap::algorithms::ACCELERATION_GRAVITY / 2 * t * t;  // make sure gravity is negative, the taproot constant is positive, need to subtract
+            
             return Vector3d{initialPos.getX(), DISTANCES[i], zFinal};  // side to side doesn't change, we are defining the down range distance, and we calculated the height off the ground
         } else if (solveMode == ReticleSolveMode::FOR_PITCH) {
             // if solved it earlier, return saved result
@@ -192,13 +193,12 @@ private:
             for (int j = 0; j < MAX_NUM_ITERATIONS; j++) {
                 forPitchLandingSpots[i] = calculateLandingSpot(forPitchPitches + i, i);
 
-                if (forPitchLandingSpots[i].getZ() < AVERAGE_HEIGHT_OFF_GROUND) {
-                    // landed too low, aim higher
+                //this seems backwards, maybe positive pitch is downward?
+                if (forPitchLandingSpots[i].getZ() > AVERAGE_HEIGHT_OFF_GROUND) {
                     // if j is 0, we add pi/4, 45 degrees
                     // if j is 1, we add pi/8, 22.5 degrees
                     forPitchPitches[i] += PI / (4 << j);
                 } else {
-                    // landed too high, aim lower
                     // if j is 0, we subtract pi/4, 45 degrees
                     // if j is 1, we subtract pi/8, 22.5 degrees
                     forPitchPitches[i] -= PI / (4 << j);
@@ -208,6 +208,9 @@ private:
             forPitchLandingSpotsSolved[i] = true;
             solvedForPitchLandingSpotThisCycle = true;
             solveMode = ReticleSolveMode::FOR_PITCH;  // go back to original mode
+
+            *pitch = forPitchPitches[i];
+            return forPitchLandingSpots[i];
         } else {
             // FOR_DISTANCE_AWAY not implemented yet
         }
