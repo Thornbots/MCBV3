@@ -46,6 +46,7 @@ public:  // Public Methods
     int linearVelocityMultiplierTimes100;
     bool isInControllerMode;
     bool isInKeyboardMode;
+    bool isBeyblading;
     bool isPeeking;
     bool isPeekingLeft;
     // End UI stuff

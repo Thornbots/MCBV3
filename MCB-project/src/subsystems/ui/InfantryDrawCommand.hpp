@@ -20,6 +20,7 @@
 #include "PredictedRemainingShotsIndicator.hpp"
 #include "AllRobotHealthNumbers.hpp"
 #include "Countdown.hpp"
+#include "LinearVelocityIndicator.hpp"
 #include "drivers.hpp"
 
 namespace commands {
@@ -47,6 +48,7 @@ public:
         addGraphicsObject(&remain);
         addGraphicsObject(&numbers);
         addGraphicsObject(&countdown);
+        addGraphicsObject(&velo);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -62,6 +64,7 @@ public:
         remain.update();
         numbers.update();
         countdown.update();
+        velo.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -91,5 +94,6 @@ private:
     PredictedRemainingShotsIndicator remain{drivers, indexer};
     AllRobotHealthNumbers numbers{drivers};
     Countdown countdown{drivers};
+    LinearVelocityIndicator velo{drivetrain};
 };
 }  // namespace commands
