@@ -104,7 +104,7 @@ private:
 
     ReticleDrawMode drawMode = ReticleDrawMode::VERT_LINES;
     ReticleSolveMode solveMode = ReticleSolveMode::FOR_HEIGHT_OFF_GROUND;
-    bool vertLinesAlternate = true;
+    bool vertLinesAlternate = false;
 
     // panel sizes
     static constexpr float PANEL_WIDTH = 0.135;          // meters
@@ -130,7 +130,7 @@ private:
 
     // for rectangles and lines
     static constexpr int NUM_THINGS = 6;
-    static constexpr float DISTANCES[NUM_THINGS] = {1, 2, 3, 4, 5, 6};  // meters, y distances, measured from center of robot to center of panel
+    static constexpr float DISTANCES[NUM_THINGS] = {0.5, 1, 2.5, 4, 6, 10};  // meters, y distances, measured from center of robot to center of panel
     static constexpr UISubsystem::Color COLORS[NUM_THINGS] =
         {UISubsystem::Color::PURPLISH_RED, UISubsystem::Color::PINK, UISubsystem::Color::ORANGE, UISubsystem::Color::YELLOW, UISubsystem::Color::GREEN, UISubsystem::Color::CYAN};
 

@@ -24,7 +24,7 @@ public:
                 isReloaded = true;
             }
 
-            float shotsShot = index->getTotalNumBallsShot() + shotsAtLastReload;
+            float shotsShot = index->getTotalNumBallsShot() + shotsAtLastReload + 0.2; //add 0.2 for wiggleroom from unjam
 
             // shots can be negative (ref system isn't able to cut off power in time to prevent shots), taproot should change the uint to int
             #if defined(HERO)
@@ -70,7 +70,12 @@ private:
     static constexpr uint16_t END_ANGLE = 313;    // degrees, lines up with the top
     static constexpr uint16_t SIZE = 392;         // pixels, makes it so we are just inside the left parenthesis thingy
 
-    static constexpr int FILLED_NUM_SHOTS = 500;  // this would be ifdefed, but only infantry draws it right now
+    #if defined(HERO)
+    static constexpr int FILLED_NUM_SHOTS = 80; 
+    #else
+    static constexpr int FILLED_NUM_SHOTS = 500; 
+    #endif
+
     static constexpr int MAX_SHOTS_1v1 = 200;     // if in 1v1, then you are a standard, and you can shoot only 200
     float shotsAtLastReload = 0;                  // when we enter the reload zone, assume we fill completely
 

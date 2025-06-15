@@ -199,6 +199,8 @@ public:
         } else {
             endAngle = static_cast<uint16_t>(std::lerp(END_ANGLE_RIGHT, START_ANGLE_RIGHT, r));
         }
+
+        fixZeroThickness();
     }
 
     void setHigher(float r){
@@ -207,6 +209,8 @@ public:
         } else {
             startAngle = static_cast<uint16_t>(std::lerp(END_ANGLE_RIGHT, START_ANGLE_RIGHT, r));
         }
+
+        fixZeroThickness();
     }
 
     void setIsLeft(bool newIsLeft){
@@ -226,6 +230,10 @@ private:
     bool isLeft;
     uint16_t lane;
 
+    //in the event the start and end angle are the same, hide the arc, not have it be a full circle
+    void fixZeroThickness() {
+        setHidden(startAngle==endAngle);
+    }
 };
 
 
