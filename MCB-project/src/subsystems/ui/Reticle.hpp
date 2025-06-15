@@ -103,7 +103,7 @@ private:
     };
 
     ReticleDrawMode drawMode = ReticleDrawMode::VERT_LINES;
-    ReticleSolveMode solveMode = ReticleSolveMode::FOR_PITCH;
+    ReticleSolveMode solveMode = ReticleSolveMode::FOR_HEIGHT_OFF_GROUND;
     bool vertLinesAlternate = true;
 
     // panel sizes
@@ -205,6 +205,7 @@ private:
                 }
             }
 
+            forPitchLandingSpotsSolved[i] = true;
             solvedForPitchLandingSpotThisCycle = true;
             solveMode = ReticleSolveMode::FOR_PITCH;  // go back to original mode
         } else {

@@ -33,15 +33,15 @@ public:
         front.endAngle = front.startAngle + INNER_ARC_LEN;
 
         //side arc is concave, so angle is flipped
-        side.setHidden(drivetrain->isPeeking);
+        side.setHidden(!drivetrain->isPeeking);
         side.startAngle = (drivetrain->isPeekingLeft ? 90 : 270) + heading - INNER_ARC_LEN / 2;
         fixAngle(&side.startAngle);
         side.endAngle = side.startAngle + INNER_ARC_LEN;
 
         // and xy location isn't the center
         float angleRadians = (drivetrain->isPeekingLeft ? PI/2 : 3*PI/2) + gimbal->getYawEncoderValue();
-        side.cx = front.cx + 2*side.width*sin(angleRadians);
-        side.cy = front.cy + 2*side.width*cos(angleRadians);
+        side.cx = front.cx - 2*side.width*sin(angleRadians);
+        side.cy = front.cy - 2*side.width*cos(angleRadians);
 
         //set side color to pink if on red team, cyan if on blue team
         if (drivers->refSerial.getRefSerialReceivingData()) {
@@ -55,7 +55,7 @@ public:
     }
 
     static constexpr float YAW_MULT = 180 / PI;  // turns radians from gimbal's getYawEncoderValue into degrees, might need to be negative
-    static constexpr float YAW_OFFSET = 360;     // degrees, 0 from the yaw might not be top on the screen, also needs to make sure it is positive because we are using uints
+    static constexpr float YAW_OFFSET = 0;     // degrees, 0 from the yaw might not be top on the screen, also needs to make sure it is positive because we are using uints
     //YAW_OFFSET might not be necessary, need to test it (ChassisOrientationIndicator and HitRing would be affected)
 
 private:

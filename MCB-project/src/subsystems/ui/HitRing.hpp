@@ -30,8 +30,8 @@ public:
     }
 
     void update() {
-        uint16_t encoder = static_cast<uint16_t>(gimbal->getYawEncoderValue() * ChassisOrientationIndicator::YAW_MULT + ChassisOrientationIndicator::YAW_OFFSET + 360);
-        uint16_t imu = static_cast<uint16_t>(drivers->bmi088.getYaw() + 360);
+        float encoder = gimbal->getYawEncoderValue() * ChassisOrientationIndicator::YAW_MULT + ChassisOrientationIndicator::YAW_OFFSET;
+        float imu = drivers->bmi088.getYaw();
         // if the gimbal compared to the drivetrain (from the encoder) is facing forward, heading would be 360, if facing right, heading would be 90
 
         // update/clear old hits
@@ -70,7 +70,7 @@ public:
                 // 2 is back, add 2*90 degrees
                 // 3 is right, add 3*90 degrees
                 // 4 is top, don't care because we don't have panels on top (yet?)
-                hitOrientations[nextIndex] = encoder + imu + 90 * ((uint16_t) robotData.damagedArmorId);
+                hitOrientations[nextIndex] = -encoder + imu + 90 * ((uint16_t) robotData.damagedArmorId);
                 rings[nextIndex].show();
                 expirationTimeouts[nextIndex].restart(RECENT_TIME + EXPIRATION_TIME);
                 rings[nextIndex].color = UISubsystem::Color::PINK;
@@ -110,8 +110,8 @@ private:
 
     //once we know what direction we hit in, we no longer care about the drivetrain spinning (encoder)
     //we just need to know if the head moved in space (imu)
-    void updateRing(int i, uint16_t imu) {
-        rings[i].startAngle = imu - hitOrientations[i] - ARC_LEN / 2;
+    void updateRing(int i, float imu) {
+        rings[i].startAngle = static_cast<uint16_t>(3 * 360 + imu - hitOrientations[i] - ARC_LEN / 2);
         ChassisOrientationIndicator::fixAngle(&rings[i].startAngle);
         rings[i].endAngle = rings[i].startAngle + ARC_LEN;
     }
