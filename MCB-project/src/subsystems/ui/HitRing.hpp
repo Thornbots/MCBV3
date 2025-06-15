@@ -30,7 +30,7 @@ public:
     }
 
     void update() {
-        float encoder = gimbal->getYawEncoderValue() * ChassisOrientationIndicator::YAW_MULT + ChassisOrientationIndicator::YAW_OFFSET;
+        float encoder = gimbal->getYawEncoderValue() * ChassisOrientationIndicator::YAW_MULT;
         float imu = drivers->bmi088.getYaw();
         // if the gimbal compared to the drivetrain (from the encoder) is facing forward, heading would be 360, if facing right, heading would be 90
 
