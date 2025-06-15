@@ -55,8 +55,7 @@ public:
     }
 
     static constexpr float YAW_MULT = 180 / PI;  // turns radians from gimbal's getYawEncoderValue into degrees, might need to be negative
-    static constexpr float YAW_OFFSET = 360;     // degrees, 0 from the yaw might not be top on the screen, also needs to make sure it is positive because we are using uints
-    //YAW_OFFSET might not be necessary, need to test it (ChassisOrientationIndicator and HitRing would be affected)
+    static constexpr float YAW_OFFSET = 2*360;     // degrees, 0 from the yaw might not be top on the screen, also needs to make sure it is positive because we are using uints
 
 private:
     tap::Drivers* drivers;

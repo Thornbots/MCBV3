@@ -269,6 +269,7 @@ private:
     static constexpr uint16_t WIDTH_OFFSET_MULT = 19;
     static constexpr uint16_t WIDTH_OFFSET_DIV = 47;
 
+    //need polymorphism later to get len because width depends on len
     void calculateWidth() { width = fontSize * len - fontSize * WIDTH_OFFSET_MULT / WIDTH_OFFSET_DIV; }
 
 protected:
