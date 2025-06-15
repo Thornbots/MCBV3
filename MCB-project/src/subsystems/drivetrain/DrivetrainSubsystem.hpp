@@ -42,10 +42,13 @@ public:  // Public Methods
 
     float imuAngle;
 
-    // For UI stuff
+    // For UI stuff, all of these set by DrivetrainDriveCommand
+    int linearVelocityMultiplierTimes100;
     bool isInControllerMode;
     bool isInKeyboardMode;
+    bool isBeyblading;
     bool isPeeking;
+    bool isPeekingLeft;
     // End UI stuff
 
     /*

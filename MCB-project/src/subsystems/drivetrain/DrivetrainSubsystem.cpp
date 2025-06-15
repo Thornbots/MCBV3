@@ -83,7 +83,7 @@ void DrivetrainSubsystem::setTargetTranslation(Pose2d drive, bool shouldBoost) {
     for (int i = 0; i < 4; i++) motorCurrent[i] = 0;
 
 #else
-    boost = shouldBoost && (drivers->refSerial.getRobotData().chassis.powerBuffer > 30) ? 20.0f : 0.0f;
+    boost = (shouldBoost && (drivers->refSerial.getRobotData().chassis.powerBuffer > 30)) ? 20.0f : 0.0f;
     throttle = (drivers->refSerial.getRobotData().chassis.powerBuffer <= 15) ? 10.0f : 0.0f;
     controller.calculate(lastDrive, powerLimit + boost - throttle, imuAngle, motorVel, motorCurrent);
 

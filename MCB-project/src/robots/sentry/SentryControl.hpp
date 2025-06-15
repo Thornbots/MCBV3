@@ -42,14 +42,14 @@ public:
         gimbal.setDefaultCommand(&stopGimbal);
         flywheel.setDefaultCommand(&shooterStop);
         drivetrain.setDefaultCommand(&stopDriveCommand);
-        indexer.setDefaultCommand(&indexerStopCommand);
+        indexer.setDefaultCommand(&indexerStop);
         odo.setDefaultCommand(&odoStop);
 
-        shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz);
+        shootButton.onTrue(&shooterStart)->whileTrue(&indexerStart);
         unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
 
-        autoFireTrigger.whileTrue(&autoFireCommand)->onFalse(&lookJoystick)->onFalse(&shooterStop);
-        autoDriveTrigger.whileTrue(&autoDriveCommand)->onTrue(&odoPointForwards);
+        autoFireTrigger.whileTrue(&autoFire)->onFalse(&lookJoystick)->onFalse(&shooterStop);
+        autoDriveTrigger.whileTrue(&autoDrive)->onTrue(&odoPointForwards);
         // drive commands 
 
         joystickDrive0.onTrue(&lookJoystick);
@@ -77,23 +77,23 @@ public:
     // commands
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
-    commands::AutoDriveCommand autoDriveCommand{drivers, &drivetrain, &gimbal, &jetson};
-    commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &flywheel, &jetson, &autoDriveCommand};
+    commands::AutoDriveCommand autoDrive{drivers, &drivetrain, &gimbal, &jetson};
+    commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, &autoDrive};
 
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 10};
+    commands::IndexerNBallsCommand indexerStart{drivers, &indexer, -1, 10};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
 
-    commands::IndexerStopCommand indexerStopCommand{drivers, &indexer};
+    commands::IndexerStopCommand indexerStop{drivers, &indexer};
 
     commands::OdometryPointForwardsCommand odoPointForwards{drivers, &odo, &gimbal};
     commands::OdometryStopCommand odoStop{drivers, &odo};
 
     // CHANGE NUMBERS LATER
     commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::CONTROLLER};
-    commands::DrivetrainDriveCommand beybladeJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE2, commands::ControlMode::CONTROLLER};
+    commands::DrivetrainDriveCommand beybladeJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE, commands::ControlMode::CONTROLLER};
     commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
 
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};

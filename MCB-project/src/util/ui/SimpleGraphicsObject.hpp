@@ -20,7 +20,7 @@ public:
     virtual bool needsRedrawn() = 0;
 
     GraphicsObject* getNext() final {
-        if (countIndex == 0 && needsRedrawn()) {  // could do !countIndex
+        if (countIndex == 0 && !markedToDraw && (isHidden!=wasHidden || needsRedrawn())) {
             countIndex = 1;
             return this;
         }
@@ -37,21 +37,53 @@ public:
         RefSerialTransmitter::configGraphicGenerics(
             graphicData,
             graphicNameArray,
-            hasDrawn ? RefSerialData::Tx::GraphicOperation::GRAPHIC_MODIFY : RefSerialData::Tx::GraphicOperation::GRAPHIC_ADD,
+            getNextOperation(),
             0,
             color);
-        hasDrawn = true;
+        wasHidden = isHidden;
         finishConfigGraphicData(graphicData);
     }
 
     void resetIteration() final { countIndex = 0; }
 
-    void hasBeenCleared() final { hasDrawn = false; }
+    void hasBeenCleared() final { 
+        wasHidden = true; //was deleted, doesn't set if I want to be hidden or not
+    }
 
     RefSerialData::Tx::GraphicColor color;  // can set this directly, will appear next time drawn
 
+    void hide() final {
+        isHidden = true;
+    }
+
+    void show() final {
+        isHidden = false;
+    }
+
+    void resetDrawMarks() final {
+        markedToDraw = false;
+    }
+
+    void markToDraw() final {
+        markedToDraw = true;
+    }
+
+private:
+    RefSerialData::Tx::GraphicOperation getNextOperation() {
+        if(isHidden){
+            return RefSerialData::Tx::GraphicOperation::GRAPHIC_DELETE;
+        } else {
+            if(wasHidden)
+                return RefSerialData::Tx::GraphicOperation::GRAPHIC_ADD;
+            else
+                return RefSerialData::Tx::GraphicOperation::GRAPHIC_MODIFY;
+        }
+    }
+
 protected:
-    bool hasDrawn = false;  // to determine if we need to modify or add
+    bool isHidden = false;
+    bool wasHidden = true;
+    bool markedToDraw = false;
 
     uint8_t graphicNameArray[3];
 };

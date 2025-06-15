@@ -53,6 +53,7 @@ void stopIndex();
 void unjam();
 
 virtual float getNumBallsShot();
+virtual float getTotalNumBallsShot();
 
 virtual void resetBallsCounter();
 
