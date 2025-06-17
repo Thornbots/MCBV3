@@ -11,68 +11,141 @@ using namespace tap::communication::serial;
 using namespace subsystems;
 
 class Reticle : public GraphicsContainer {
+public:  // important constants and enums
+    // panel things
+    static constexpr float PANEL_WIDTH = 0.135;               // meters
+    static constexpr float PANEL_HEIGHT = 0.125;              // meters, height across the surface
+    static constexpr float PANEL_ANGLE = 15 * PI / 180;       // radians, tilt of the panel, 0 would be panel is not tilted
+    static constexpr float AVERAGE_HEIGHT_OFF_GROUND = 0.07;  // meters, center of panel to ground, for calculating where on screen reticle things should be
+
+    // distances down range and colors to draw them
+    static constexpr int NUM_THINGS = 6;
+    static constexpr float DISTANCES[NUM_THINGS] = {0.5, 1, 2.5, 4, 6, 10};  // meters, y distances, measured from center of robot to center of panel
+    static constexpr UISubsystem::Color COLORS[NUM_THINGS] =
+        {UISubsystem::Color::PURPLISH_RED, UISubsystem::Color::PINK, UISubsystem::Color::ORANGE, UISubsystem::Color::YELLOW, UISubsystem::Color::GREEN, UISubsystem::Color::CYAN};
+
+    enum class ReticleDrawMode : uint8_t {
+        RECTANGLES = 0,   // multiple rectangles of different colors, tops and bottoms of them are tops and bottoms of panels, midpoints of sides are edges of standard size panels
+        HORIZ_LINES = 1,  // multiple of horizontal lines, widths represent panel widths, heights represent where the center of a standard panel needs to be to hit it, lines go across the center of a
+                          // panel, endpoints are edges of panels
+        VERT_LINES = 2,   // multiple of (almost) vertical lines, heights represent panel heights, heights represent where the top and bottom edges of either panel needs to be to hit it, lines go
+                          // across the left and/or right edge of the panel, depending on ReticleSidedMode
+        TRAPEZOIDS = 3,   // like RECTANGLES but uses many lines to make it a trapezoid, tracing the edges of panels. Not recommended for use with ReticleSolveMode::FOR_HEIGHT_OFF_GROUND
+        BOTH_LINES = 4,   // combination of HORIZ_LINES and VERT_LINES
+    };
+
+    enum class ReticleSolveMode : uint8_t {
+        FOR_HEIGHT_OFF_GROUND = 0,  // uses pitch and DISTANCES away to solve for height, redraws the reticle often because pitch changes often
+        FOR_PITCH = 1,              // uses AVERAGE_HEIGHT_OFF_GROUND and DISTANCES away to solve for pitch, reticle doesn't ever need redrawn because constants are constant
+    };
+
+    enum class ReticleSidedMode : uint8_t {
+        LEFT = 0,
+        RIGHT = 1,
+        BOTH = 2,  // both left and right
+        ALT = 3,   // alternate between left and right
+    };
+
+private: // draw settings
+    ReticleDrawMode drawMode = ReticleDrawMode::TRAPEZOIDS;
+    ReticleSolveMode solveMode = ReticleSolveMode::FOR_PITCH;
+    ReticleSidedMode sidedMode = ReticleSidedMode::ALT;
+    bool drawVerticalLine = false;
+
 public:
     Reticle(GimbalSubsystem* gimbal) : gimbal(gimbal) {
         for (int i = 0; i < NUM_THINGS; i++) {
             rects[i].color = COLORS[i];
-            lines[i].color = COLORS[i];
             rectsContainer.addGraphicsObject(rects + i);
-            linesContainer.addGraphicsObject(lines + i);
+            for (int j = 0; j < NUM_LINES; j++) {
+                lines[i][j].color = COLORS[i];
+                linesContainer.addGraphicsObject(&lines[i][j]);
+            }
             forPitchLandingSpotsSolved[i] = false;
         }
+        verticalLine.x1 = UISubsystem::HALF_SCREEN_WIDTH;
+        verticalLine.x2 = UISubsystem::HALF_SCREEN_WIDTH;
 
         addGraphicsObject(&rectsContainer);
         addGraphicsObject(&linesContainer);
-        // addGraphicsObject(&curvesContainer);
-
-        updateHidden();
+        addGraphicsObject(&verticalLine);
     }
 
     void update() {
         float pitch = gimbal->getPitchEncoderValue();
 
+        ReticleSidedMode adjustedSidedMode = drawMode == ReticleDrawMode::TRAPEZOIDS ? ReticleSidedMode::BOTH : sidedMode;
+        verticalLine.setHidden(!drawVerticalLine);
+
         solvedForPitchLandingSpotThisCycle = false;
         for (int i = 0; i < NUM_THINGS; i++) {
+            // assume all lines are hidden, if we are drawing lines
+            for (int j = 0; j < NUM_LINES; j++) {
+                lines[i][j].hide();
+            }
+            rects[i].setHidden(drawMode == ReticleDrawMode::RECTANGLES);
+
             Vector3d landingSpot = calculateLandingSpot(&pitch, i);
+
+            Vector2d r = project(landingSpot + panelEdges[0], pitch);
+            Vector2d l = project(landingSpot + panelEdges[1], pitch);
+            Vector2d t = project(landingSpot + panelEdges[2], pitch);
+            Vector2d b = project(landingSpot + panelEdges[3], pitch);
+
+            Vector2d rt = project(landingSpot + panelCorners[0], pitch);
+            Vector2d rb = project(landingSpot + panelCorners[1], pitch);
+            Vector2d lt = project(landingSpot + panelCorners[2], pitch);
+            Vector2d lb = project(landingSpot + panelCorners[3], pitch);
 
             if (drawMode == ReticleDrawMode::RECTANGLES) {
                 // need the edges because the corners will trace a trapezoid
-                Vector2d right = project(landingSpot + panelEdges[0], pitch);   // gives width by right x minus left x
-                Vector2d left = project(landingSpot + panelEdges[1], pitch);    // gives x of rect
-                Vector2d top = project(landingSpot + panelEdges[2], pitch);     // gives height by top y minus bottom y
-                Vector2d bottom = project(landingSpot + panelEdges[3], pitch);  // gives y of rect
+                rects[i].x = l.getX();
+                rects[i].width = r.getX() - l.getX();
+                rects[i].y = b.getY();
+                rects[i].height = t.getY() - b.getY();
+            }
+            if (drawMode == ReticleDrawMode::HORIZ_LINES || drawMode == ReticleDrawMode::BOTH_LINES) {
+                // horiz lines just wants left and right edges
+                lines[i][2].x1 = l.getX();
+                lines[i][2].x2 = r.getX();
+                lines[i][2].y1 = l.getY();
+                lines[i][2].y2 = r.getY();  // should be the same as left.getY()
 
-                rects[i].x = left.getX();
-                rects[i].width = right.getX() - left.getX();
-                rects[i].y = bottom.getY();
-                rects[i].height = top.getY() - bottom.getY();
-            } else if (drawMode == ReticleDrawMode::HORIZ_LINES) {
-                // lines just wants left and right edges
-                Vector2d right = project(landingSpot + panelEdges[0], pitch);
-                Vector2d left = project(landingSpot + panelEdges[1], pitch);
+                lines[i][2].show();
+            }
+            bool drawVertLines = drawMode == ReticleDrawMode::VERT_LINES || drawMode == ReticleDrawMode::BOTH_LINES || drawMode == ReticleDrawMode::TRAPEZOIDS;
+            if (drawVerticalLine || drawVertLines) {
+                // vert lines traces one edge of the panel, so they aren't always exactly vertical
 
-                lines[i].x1 = left.getX();
-                lines[i].x2 = right.getX();
-                lines[i].y1 = left.getY();
-                lines[i].y2 = right.getY();  // should be the same as left.getY()
-            } else if (drawMode == ReticleDrawMode::VERT_LINES) {
-                // assume using left pair of panelCorners
-                int i1 = 2;
-                int i2 = 3;
+                lines[i][0].x1 = rt.getX();
+                lines[i][0].y1 = rt.getY();
+                lines[i][0].x2 = rb.getX();
+                lines[i][0].y2 = rb.getY();
 
-                if (vertLinesAlternate && i % 2) {
-                    // use right pair
-                    i1 = 0;
-                    i2 = 1;
-                }
+                lines[i][1].x1 = lt.getX();
+                lines[i][1].y1 = lt.getY();
+                lines[i][1].x2 = lb.getX();
+                lines[i][1].y2 = lb.getY();
 
-                Vector2d v1 = project(landingSpot + panelCorners[i1], pitch);
-                Vector2d v2 = project(landingSpot + panelCorners[i2], pitch);
+                bool showRight = drawVertLines && (adjustedSidedMode == ReticleSidedMode::BOTH || adjustedSidedMode == ReticleSidedMode::RIGHT || (adjustedSidedMode == ReticleSidedMode::ALT && (i % 2)));
+                bool showLeft = drawVertLines && (adjustedSidedMode == ReticleSidedMode::BOTH || adjustedSidedMode == ReticleSidedMode::LEFT || (adjustedSidedMode == ReticleSidedMode::ALT && !(i % 2)));
 
-                lines[i].x1 = v1.getX();
-                lines[i].y1 = v1.getY();
-                lines[i].x2 = v2.getX();
-                lines[i].y2 = v2.getY();
+                lines[i][0].setHidden(!showRight);
+                lines[i][1].setHidden(!showLeft);
+            }
+            if (drawMode == ReticleDrawMode::TRAPEZOIDS) {
+                lines[i][2].x1 = rt.getX();
+                lines[i][2].y1 = rt.getY();
+                lines[i][2].x2 = lt.getX();
+                lines[i][2].y2 = lt.getY();
+
+                lines[i][3].x1 = lb.getX();
+                lines[i][3].y1 = lb.getY();
+                lines[i][3].x2 = rb.getX();
+                lines[i][3].y2 = rb.getY();
+
+                lines[i][2].show();
+                lines[i][3].show();
             }
 
             if (solvedForPitchLandingSpotThisCycle) {
@@ -81,36 +154,14 @@ public:
             }
         }
 
-        // CURVES is not implemented yet
+        verticalLine.y1 = lines[0][0].y1;
+        verticalLine.y2 = lines[NUM_THINGS-1][0].y2;
 
-        // maybe reticle drawMode changed
-        updateHidden();
     }
 
 private:
-    enum class ReticleDrawMode : uint8_t {
-        RECTANGLES = 0,   // multiple rectangles of different colors, tops and bottoms of them are tops and bottoms of panels, midpoints of sides are edges of standard size panels
-        HORIZ_LINES = 1,  // multiple of horizontal lines, widths represent panel widths, heights represent where the center of a standard panel needs to be to hit it, lines go across the center of a
-                          // panel, endpoints are edges of panels
-        VERT_LINES = 2,   // multiple of (almost) vertical lines, heights represent panel heights, heights represent where the top and bottom edges of either panel needs to be to hit it, lines go
-                          // across the left (and sometimes right if vertLinesAlternate) edge of the panel
-    };
-
-    enum class ReticleSolveMode : uint8_t {
-        FOR_HEIGHT_OFF_GROUND = 0,  // uses pitch and DISTANCES away to solve for height, redraws the reticle often because pitch changes often
-        FOR_PITCH = 1,              // uses AVERAGE_HEIGHT_OFF_GROUND and DISTANCES away to solve for pitch, reticle doesn't ever need redrawn because constants are constant
-        // FOR_DISTANCE_AWAY = 2      // uses pitch and AVERAGE_HEIGHT_OFF_GROUND to solve for distance away, redraws the reticle often because pitch changes often
-    };
-
-    ReticleDrawMode drawMode = ReticleDrawMode::VERT_LINES;
-    ReticleSolveMode solveMode = ReticleSolveMode::FOR_PITCH;
-    bool vertLinesAlternate = false;
-
-    // panel sizes
-    static constexpr float PANEL_WIDTH = 0.135;          // meters
-    static constexpr float PANEL_HEIGHT = 0.125;         // meters, height across the surface
-    static constexpr float PANEL_ANGLE = 15 * PI / 180;  // radians, tilt of the panel, 0 would be panel is not tilted
-
+    GimbalSubsystem* gimbal;
+    
     Vector3d panelEdges[4] = {
         {PANEL_WIDTH / 2, 0, 0},                                                                     // right
         {-PANEL_WIDTH / 2, 0, 0},                                                                    // left
@@ -125,34 +176,18 @@ private:
 
     GraphicsContainer rectsContainer{};
     GraphicsContainer linesContainer{};
-    // GraphicsContainer curvesContainer{};
-    GimbalSubsystem* gimbal;
-
-    // for rectangles and lines
-    static constexpr int NUM_THINGS = 6;
-    static constexpr float DISTANCES[NUM_THINGS] = {0.5, 1, 2.5, 4, 6, 10};  // meters, y distances, measured from center of robot to center of panel
-    static constexpr UISubsystem::Color COLORS[NUM_THINGS] =
-        {UISubsystem::Color::PURPLISH_RED, UISubsystem::Color::PINK, UISubsystem::Color::ORANGE, UISubsystem::Color::YELLOW, UISubsystem::Color::GREEN, UISubsystem::Color::CYAN};
-
+    
+    static constexpr int NUM_LINES = 4;  // enough to support trapezoids
+    Line lines[NUM_THINGS][NUM_LINES];   // not all are used in every mode
     UnfilledRectangle rects[NUM_THINGS];
-    Line lines[NUM_THINGS];
+    Line verticalLine;
 
     // for solving for pitch
-    static constexpr float AVERAGE_HEIGHT_OFF_GROUND = 0.07;  // meters, center of panel to ground, for calculating where on screen reticle things should be
-    static constexpr int MAX_NUM_ITERATIONS = 20;             // it is difficult to actually solve for pitch because initial launch positions depend on pitch
-    int forPitchLandingSpotsSolved[NUM_THINGS];               // so we do a binary search, guessing a pitch, calculating where it lands, and trying a higher or lower pitch accordingly
+    static constexpr int MAX_NUM_ITERATIONS = 20;  // it is difficult to actually solve for pitch because initial launch positions depend on pitch
+    int forPitchLandingSpotsSolved[NUM_THINGS];    // so we do a binary search, guessing a pitch, calculating where it lands, and trying a higher or lower pitch accordingly
     Vector3d forPitchLandingSpots[NUM_THINGS];
     float forPitchPitches[NUM_THINGS];
     bool solvedForPitchLandingSpotThisCycle = false;  // prevent solving for multiple in one update() cycle so it doesn't take a long time
-
-    void updateHidden() {
-        // maybe make it so that objects at the same index have the same graphics name, so instead of hide one show another replace
-        // would require an ExclusiveContainer or SelectionContainer, each has one graphics name and many graphics objects, and you can set which is selected
-        // but for now assume reticle doesn't change drawMode very often (if ever)
-        rectsContainer.setHidden(drawMode != ReticleDrawMode::RECTANGLES);                                              // hidden if not rects
-        linesContainer.setHidden(drawMode != ReticleDrawMode::HORIZ_LINES && drawMode != ReticleDrawMode::VERT_LINES);  // hidden if not either lines
-        // curvesContainer.setHidden(drawMode!=ReticleDrawMode::CURVES);
-    }
 
     Vector2d project(Vector3d in, float pitch) {
         Vector3d temp;
@@ -178,9 +213,9 @@ private:
             float t = (DISTANCES[i] - initialPos.getY()) / initialVelo.getY();  //(distance to travel [meters]) divided by (speed to get there [meters/seconds]) gives (time to get there [seconds])
             float zFinal =
                 initialPos.getZ() + initialVelo.getZ() * t - tap::algorithms::ACCELERATION_GRAVITY / 2 * t * t;  // make sure gravity is negative, the taproot constant is positive, need to subtract
-            
+
             return Vector3d{initialPos.getX(), DISTANCES[i], zFinal};  // side to side doesn't change, we are defining the down range distance, and we calculated the height off the ground
-        } else if (solveMode == ReticleSolveMode::FOR_PITCH) {
+        } else { //FOR_PITCH
             // if solved it earlier, return saved result
             if (forPitchLandingSpotsSolved[i]) {
                 *pitch = forPitchPitches[i];
@@ -193,7 +228,7 @@ private:
             for (int j = 0; j < MAX_NUM_ITERATIONS; j++) {
                 forPitchLandingSpots[i] = calculateLandingSpot(forPitchPitches + i, i);
 
-                //this seems backwards, maybe positive pitch is downward?
+                // this seems backwards, maybe positive pitch is downward?
                 if (forPitchLandingSpots[i].getZ() > AVERAGE_HEIGHT_OFF_GROUND) {
                     // if j is 0, we add pi/4, 45 degrees
                     // if j is 1, we add pi/8, 22.5 degrees
@@ -211,10 +246,6 @@ private:
 
             *pitch = forPitchPitches[i];
             return forPitchLandingSpots[i];
-        } else {
-            // FOR_DISTANCE_AWAY not implemented yet
         }
-
-        return Vector3d{0, 0, 0};
     }
 };
