@@ -62,12 +62,13 @@ struct PoseData
     float vel_y;                     
     float head_pitch;                     
     float head_yaw;                     
-    float imu_roll;
-    float imu_pitch;
-    float imu_yaw;
-    float imu_Ax;
-    float imu_Ay;
-    float imu_Az;
+    // float imu_q0;
+    // float imu_q1;
+    // float imu_q2;
+    // float imu_q3;
+    // float imu_Ax;
+    // float imu_Ay;
+    // float imu_Az;
     // uint64_t timestamp = 0;         
 } modm_packed;
 // static_assert(sizeof(PoseData)<1024, "msg too large"); //TODO: implement static check
@@ -110,9 +111,9 @@ private:  // Private Variables
     src::Drivers* drivers;
     GimbalSubsystem* gimbal;
 
-    tap::arch::MilliTimeout refDataSendingTimeout;
-    // bool needToSendRefData = false;
     static constexpr int TIME_FOR_REF_DATA = 100; //send at 10hz
+    tap::arch::PeriodicMilliTimer refDataSendingTimeout{TIME_FOR_REF_DATA};
+    // bool needToSendRefData = false;
 
 
     float q0, q1, q2, q3; //easier to convert frames of reference from the quatrenion directly

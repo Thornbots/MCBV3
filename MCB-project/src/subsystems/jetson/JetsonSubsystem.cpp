@@ -65,13 +65,14 @@ void JetsonSubsystem::refresh() {
         drivers->i2c.odom.getXVel(),
         drivers->i2c.odom.getYVel(),
         gimbal->getPitchEncoderValue(), 
-        gimbal->getYawEncoderValue(),
-        drivers->bmi088.getRoll(),
-        drivers->bmi088.getPitch(),
-        drivers->bmi088.getYaw(),
-        drivers->bmi088.getAx(),
-        drivers->bmi088.getAy(),
-        drivers->bmi088.getAz()
+        gimbal->getYawAngleRelativeWorld(),
+        // drivers->bmi088.getq0(),
+        // drivers->bmi088.getq1(),
+        // drivers->bmi088.getq2(),
+        // drivers->bmi088.getq3(),
+        // drivers->bmi088.getAx(),
+        // drivers->bmi088.getAy(),
+        // drivers->bmi088.getAz()
     };
     sendMsg(&p);
 
