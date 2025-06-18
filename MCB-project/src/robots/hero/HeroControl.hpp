@@ -48,10 +48,11 @@ public:
         
 
         // Mouse and Keyboard mappings
-        unjamKey.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onFalse(&indexerLoad);
-        shootKey.onTrue(&indexerStart)->onTrue(&shooterStart)->onFalse(&indexerLoad);
-        unjamButton.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onFalse(&indexerLoad);
-        shootButton.whileTrue(&indexerStart)->onTrue(&shooterStart)->onFalse(&indexerLoad);
+        unjamKey.whileTrue(&indexerUnjam)->onFalse(&indexerLoad);
+        shootKey.onTrue(&indexerSemi)->onTrue(&shooterStart)->onFalse(&indexerLoad);
+        unjamButton.whileTrue(&indexerUnjam)->onFalse(&indexerLoad);
+        shootButton.whileTrue(&indexerAuto)->onTrue(&shooterStart)->onFalse(&indexerLoad);
+        stopFlywheelTrigger.onTrue(&shooterStop);
         //autoAimKey./*whileTrue(&autoCommand)->*/onFalse(&lookMouse)->whileTrue(&shooterStart);
         // implement speed mode
 
@@ -75,6 +76,11 @@ public:
 
         for (Trigger* trigger : triggers) {
             trigger->update();
+        }
+        
+        //if we don't have ref uart or we do and we aren't currently in game, we are able to stop flywheels by buttons
+        if(!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getGameData().gameStage!=RefSerialData::Rx::GameStage::IN_GAME){
+            stopFlywheelTrigger.update();
         }
     }
 
@@ -100,7 +106,8 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexerStart{drivers, &indexer, 1, 2};
+    commands::IndexerNBallsCommand indexerSemi{drivers, &indexer, 1, 2}; //semiauto, each click is one shot
+    commands::IndexerNBallsCommand indexerAuto{drivers, &indexer, -1, 2};//full auto, holding the wheel it the forward position shoots as long as it is held
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
     commands::IndexerLoadCommand indexerLoad{drivers, &indexer};
 
@@ -148,6 +155,8 @@ public:
     Trigger beybladeType1Key{drivers, Remote::Key::C};
     Trigger beybladeType2Key{drivers, Remote::Key::V};
     Trigger startBeybladeKey = beybladeType1Key | beybladeType2Key | scrollUp | scrollDown;
+
+    Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
     Trigger* triggers[17] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &unjamKey, &shootKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
 

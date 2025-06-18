@@ -26,6 +26,7 @@ public:
             expirationTimeouts[i].stop();        // timers might be initialized started, we need them to be stopped until we get hit
             this->addGraphicsObject(rings + i);  // pointer math
             rings[i].hide();
+            rings[i].thickness = THICKNESS;
         }
     }
 
@@ -39,8 +40,8 @@ public:
         for (int i = 0; i < NUM_HISTORY; i++) {
             if (expirationTimeouts[i].isStopped()) continue;  // if timer not running, ignore this ring and go to the next
 
-            // downgrade pink to purple
-            if (expirationTimeouts[i].timeRemaining() > RECENT_TIME) {
+            // downgrade white to purple
+            if (expirationTimeouts[i].timeRemaining() - EXPIRATION_TIME > RECENT_TIME) {
                 rings[i].color = UISubsystem::Color::PURPLISH_RED;
             }
 
@@ -73,7 +74,7 @@ public:
                 hitOrientations[nextIndex] = -encoder + imu + 90 * ((uint16_t) robotData.damagedArmorId);
                 rings[nextIndex].show();
                 expirationTimeouts[nextIndex].restart(RECENT_TIME + EXPIRATION_TIME);
-                rings[nextIndex].color = UISubsystem::Color::PINK;
+                rings[nextIndex].color = UISubsystem::Color::WHITE;
                 updateRing(nextIndex, imu);
 
                 //get the next index
@@ -91,13 +92,13 @@ private:
 
     uint16_t previousHp;
 
-    static constexpr uint16_t THICKNESS = 2;        // pixels
-    static constexpr uint16_t ARC_LEN = 6;          // degrees
-    static constexpr uint16_t STARTING_SIZE = 190;  // pixels
-    static constexpr uint16_t SIZE_INCREMENT = 5;   // pixels. If 0, the history of lines will all be overlapping,
+    static constexpr uint16_t THICKNESS = 10;        // pixels
+    static constexpr uint16_t ARC_LEN = 10;          // degrees
+    static constexpr uint16_t STARTING_SIZE = 180;  // pixels
+    static constexpr uint16_t SIZE_INCREMENT = 15;   // pixels. If 0, the history of lines will all be overlapping
 
-    static constexpr int NUM_HISTORY = 5;              // how many shots to keep track of
-    static constexpr uint32_t RECENT_TIME = 200;       // once hit, it shows for 0.2 seconds pink
+    static constexpr int NUM_HISTORY = 3;              // how many shots to keep track of
+    static constexpr uint32_t RECENT_TIME = 500;       // once hit, it shows for 0.5 seconds white
     static constexpr uint32_t EXPIRATION_TIME = 5000;  // then next it shows for 5 seconds purple
 
     Arc rings[NUM_HISTORY];
