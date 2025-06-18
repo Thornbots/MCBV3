@@ -36,7 +36,7 @@ public:
         // Initialize subsystems
         gimbal.initialize();
         flywheel.initialize();
-        indexer.initialize(); //geometry issue or something, it physically doesn't work right now
+        indexer.initialize();
         drivetrain.initialize();
         ui.initialize();
         
@@ -57,7 +57,7 @@ public:
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
-        drivers->commandScheduler.addCommand(&draw);
+        // drivers->commandScheduler.addCommand(&draw);
    
         // drive commands and also enable mouse looking
 
@@ -70,9 +70,13 @@ public:
         joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick);
+
+        isStopped = false;
     }
 
     void update() override {
+        if(isStopped)
+            return;
 
         for (Trigger* trigger : triggers) {
             trigger->update();
@@ -83,6 +87,23 @@ public:
             stopFlywheelTrigger.update();
         }
     }
+
+    void stopForImuRecal() override {
+        drivers->commandScheduler.addCommand(&stopGimbal);
+        drivers->commandScheduler.addCommand(&shooterStop);
+        drivers->commandScheduler.addCommand(&stopDriveCommand);
+        drivers->commandScheduler.addCommand(&indexerStop);
+        isStopped = true;
+    }
+
+    void resumeAfterImuRecal() override {
+        isStopped = false;
+        update();
+        drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
+        drivers->commandScheduler.addCommand(&lookMouse);
+    }
+
+    bool isStopped = true;
 
     src::Drivers *drivers;
     HeroHardware hardware;

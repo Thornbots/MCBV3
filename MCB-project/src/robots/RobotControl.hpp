@@ -20,7 +20,8 @@ public:
     //functions that all robots must have or at least share
     virtual void initialize() {}
     virtual void update() {}
-
+    virtual void stopForImuRecal() {} //main calls this to stop the robot to recalibrate the imu
+    virtual void resumeAfterImuRecal() {} //main calls this to after recalibrating the imu
 };
 
 

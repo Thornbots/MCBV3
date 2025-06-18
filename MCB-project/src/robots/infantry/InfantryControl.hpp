@@ -82,11 +82,12 @@ public:
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick);
 
-    // drivers->terminalSerial.initialize();
-
+        isStopped = false;
     }
 
     void update() override {
+        if(isStopped)
+            return;
 
         for (Trigger* trigger : triggers) {
             trigger->update();
@@ -97,6 +98,23 @@ public:
             stopFlywheelTrigger.update();
         }
     }
+
+    void stopForImuRecal() override {
+        drivers->commandScheduler.addCommand(&stopGimbal);
+        drivers->commandScheduler.addCommand(&shooterStop);
+        drivers->commandScheduler.addCommand(&stopDriveCommand);
+        drivers->commandScheduler.addCommand(&indexerStop);
+        isStopped = true;
+    }
+    
+    void resumeAfterImuRecal() override {
+        isStopped = false;
+        update();
+        drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
+        drivers->commandScheduler.addCommand(&lookMouse);
+    }
+
+    bool isStopped = true;
 
     src::Drivers *drivers;
     InfantryHardware hardware;

@@ -18,6 +18,7 @@
 #include "AllRobotHealthNumbers.hpp"
 #include "Countdown.hpp"
 #include "LinearVelocityIndicator.hpp"
+#include "ImuRecalibrationIndicator.hpp"
 #include "drivers.hpp"
 
 namespace commands {
@@ -25,7 +26,7 @@ using subsystems::UISubsystem;
 
 class HeroDrawCommand : public tap::control::Command, GraphicsContainer {
 public:
-    HeroDrawCommand(tap::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, HeroIndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain)
+    HeroDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, HeroIndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain)
         : drivers(drivers),
           ui(ui),
           gimbal(gimbal),
@@ -43,6 +44,7 @@ public:
         addGraphicsObject(&numbers);
         addGraphicsObject(&countdown);
         addGraphicsObject(&velo);
+        addGraphicsObject(&recal);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -57,6 +59,7 @@ public:
         numbers.update();
         countdown.update();
         velo.update();
+        recal.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -67,7 +70,7 @@ public:
     const char* getName() const override { return "hero ui draw command"; }
 
 private:
-    tap::Drivers* drivers;
+    src::Drivers* drivers;
     UISubsystem* ui; 
     GimbalSubsystem* gimbal;
     FlywheelSubsystem* flywheel;
@@ -84,5 +87,6 @@ private:
     AllRobotHealthNumbers numbers{drivers};
     Countdown countdown{drivers};
     LinearVelocityIndicator velo{drivetrain};
+    ImuRecalibrationIndicator recal{drivers};
 };
 }  // namespace commands

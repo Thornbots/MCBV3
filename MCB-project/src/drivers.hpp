@@ -28,6 +28,45 @@
 
 namespace src {
     
+class ImuRecalibration {
+public:
+
+void requestRecalibration() {
+    requestingRecalibration = true;
+}
+
+void cancelRequestRecalibration() {
+    requestingRecalibration = false;
+}
+
+bool isRequestingRecalibration() {
+    return requestingRecalibration;
+}
+
+void markAsRecalibrating() {
+    requestingRecalibration = false;
+    isRecalibrating = true;
+}
+
+bool getIsRecalibrating(){
+    return isRecalibrating;
+}
+
+void markAsDoneRecalibrating() {
+    isRecalibrating = false;
+    isDoneRecalibrating = true;
+}
+
+bool getIsDoneRecalibrating() {
+    return isDoneRecalibrating;
+}
+
+private:
+bool requestingRecalibration = false; 
+bool isRecalibrating = false; //occurs in 15 sec countdown
+bool isDoneRecalibrating = false;
+
+}; //class ImuRecalibration
 
 class Drivers : public tap::Drivers {
 public:
@@ -35,9 +74,17 @@ public:
 
     communication::I2CCommunication i2c;
     communication::UARTCommunication uart;
+    ImuRecalibration recal;
     
-public:
+
+
+
+
+
 };  // class Drivers
+
+
+
 
 }  // namespace src
 

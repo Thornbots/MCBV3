@@ -12,7 +12,7 @@ using namespace subsystems;
 //this is drawn to the side so you can still know the countdown
 class Countdown : public GraphicsContainer {
 public:
-    Countdown(tap::Drivers* drivers) : drivers(drivers) {
+    Countdown(src::Drivers* drivers) : drivers(drivers) {
         addGraphicsObject(&number);
         number.x = X_POSITION;
         number.y = Y_POSITION;
@@ -20,6 +20,10 @@ public:
     }
 
     void update() {
+        
+        // if(drivers->remote.keyPressed(Remote::Key::R))
+        //     drivers->recal.requestRecalibration();
+
         if (drivers->refSerial.getRefSerialReceivingData()) {
             RefSerialData::Rx::GameData gameData = drivers->refSerial.getGameData();
             number.integer = gameData.stageTimeRemaining;
@@ -39,7 +43,7 @@ public:
     }
 
 private:
-    tap::Drivers* drivers;
+    src::Drivers* drivers;
 
     static constexpr uint16_t X_POSITION = 1680; //pixels, all numbers at the same y level on screen
     static constexpr uint16_t Y_POSITION = 610; //pixels, all numbers at the same y level on screen

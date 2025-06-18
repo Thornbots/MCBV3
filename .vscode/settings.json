@@ -87,7 +87,8 @@
         "format": "cpp",
         "semaphore": "cpp",
         "*.source": "cpp",
-        "source_location": "cpp"
+        "source_location": "cpp",
+        "*.in": "cpp"
     },
     "files.exclude": {
         ".gitignore": true,

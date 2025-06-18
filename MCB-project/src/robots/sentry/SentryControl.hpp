@@ -57,9 +57,14 @@ public:
         joystickDrive0.onTrue(&lookJoystick);
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
+        
+        isStopped = false;
     }
 
     void update() override {
+        if(isStopped)
+            return;
+
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
@@ -69,6 +74,21 @@ public:
             stopFlywheelTrigger.update();
         }
     }
+
+    void stopForImuRecal() override {
+        drivers->commandScheduler.addCommand(&stopGimbal);
+        drivers->commandScheduler.addCommand(&shooterStop);
+        drivers->commandScheduler.addCommand(&stopDriveCommand);
+        drivers->commandScheduler.addCommand(&indexerStop);
+        isStopped = true;
+    }
+
+    void resumeAfterImuRecal() override {
+        isStopped = false;
+        update();
+    }
+
+    bool isStopped = true;
 
     src::Drivers* drivers;
     SentryHardware hardware;

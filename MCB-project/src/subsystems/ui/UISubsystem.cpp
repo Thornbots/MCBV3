@@ -48,18 +48,19 @@ bool UISubsystem::run() {
 
     PT_WAIT_UNTIL(drivers->refSerial.getRefSerialReceivingData());
     
-    // delete the things
-    PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 0));
+    // delete on all layers. we currently only use layer 0, but other teams could have put stuff on other layers we need to delete
+    for(graphicsIndex=0; graphicsIndex<10; graphicsIndex++){
+        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, graphicsIndex));
+        
+        //need to wait for graphics to delete. This might wait longer than is required, but it allows things to draw.
+        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+        PT_WAIT_UNTIL(delayTimeout.execute());
+    } 
+
     if (topLevelContainer){
         topLevelContainer->hasBeenCleared();
         topLevelContainer->resetIteration();
-    } 
-
-    
-    //need to wait for graphics to delete. This might wait longer than is required, but it allows things to draw.
-    delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
-    PT_WAIT_UNTIL(delayTimeout.execute());
-
+    }
 
     graphicsIndex=0; //might start with one or two already in the array from last time, so set it once outside of the loop
     while (topLevelContainer && !needToRestart) {

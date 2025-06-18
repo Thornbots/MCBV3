@@ -81,8 +81,12 @@ int main() {
     control.initialize();
 
     tap::arch::PeriodicMilliTimer refreshTimer(2);
+    tap::arch::MilliTimeout waitForRobotToStopMoving{};
+    waitForRobotToStopMoving.stop();
 
     bool imuIsReady = false;
+
+    int timesImuHasBeenReady = 0;
 
     while (1) {
         // do this as fast as you can
@@ -92,14 +96,28 @@ int main() {
 
         if (refreshTimer.execute()) {
             // tap::buzzer::playNote(&(drivers.pwm), 493);
+            bool goingToRecalibrate = drivers.recal.isRequestingRecalibration() && drivers.refSerial.getRefSerialReceivingData() && drivers.refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::SETUP  && drivers.refSerial.getGameData().stageTimeRemaining < 20;
+            if(goingToRecalibrate){
+                control.stopForImuRecal();
+            }
+
+            if(waitForRobotToStopMoving.isExpired()){
+                waitForRobotToStopMoving.stop();
+                drivers.bmi088.requestCalibration();
+            }
+
 
             drivers.bmi088.periodicIMUUpdate();
             drivers.bmi088.read();
 
             //only turn blue led off once in case someone elsewhere wants it on
-            if (drivers.bmi088.getImuState()==tap::communication::sensors::imu::AbstractIMU::ImuState::IMU_CALIBRATED) { // do everything except things that do things if IMU isn't done
+            if (!imuIsReady && waitForRobotToStopMoving.isStopped() && drivers.bmi088.getImuState()==tap::communication::sensors::imu::AbstractIMU::ImuState::IMU_CALIBRATED) { // do everything except things that do things if IMU isn't done
                 imuIsReady = true;
                 drivers.leds.set(tap::gpio::Leds::Blue, false);
+                drivers.recal.markAsDoneRecalibrating();
+                timesImuHasBeenReady++;
+                if(timesImuHasBeenReady>1)
+                    control.resumeAfterImuRecal();
             }
             if(imuIsReady){
                 drivers.commandScheduler.run();
@@ -109,10 +127,19 @@ int main() {
             drivers.djiMotorTxHandler.encodeAndSendCanData();
 
             // drivers.terminalSerial.update(); 
-        } 
 
+            if(goingToRecalibrate){
+                imuIsReady = false;
+                drivers.recal.markAsRecalibrating();
+                drivers.leds.set(tap::gpio::Leds::Blue, true);
+                waitForRobotToStopMoving.restart(6000);
+            }
+                
+        }
         // prevent looping too fast
         modm::delay_us(10);
     }
+    
     return 0;
 }
+
