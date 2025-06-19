@@ -29,6 +29,12 @@ void DrivetrainDriveCommand::execute() {
             drivetrain->linearVelocityMultiplierTimes100 += scroll * LINEAR_VELOCITY_INCREMENT_TIMES_100;
         oldScroll = scroll;
 
+        if(drivers->remote.keyPressed(Remote::Key::V))
+            drivetrain->linearVelocityMultiplierTimes100 = MAX_LINEAR_VELOCITY_TIMES_100;
+            
+        if(drivers->remote.keyPressed(Remote::Key::C))
+            drivetrain->linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100;
+
         //clamp
         if(drivetrain->linearVelocityMultiplierTimes100>MAX_LINEAR_VELOCITY_TIMES_100) 
             drivetrain->linearVelocityMultiplierTimes100 = MAX_LINEAR_VELOCITY_TIMES_100;

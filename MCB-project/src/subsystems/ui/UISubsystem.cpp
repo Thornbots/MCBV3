@@ -5,7 +5,10 @@ namespace subsystems {
 // define the static variable, if this isnt here things go wrong saying it is a undefined reference
 uint32_t UISubsystem::currGraphicName = 0;
 
-UISubsystem::UISubsystem(tap::Drivers* drivers) : tap::control::Subsystem(drivers), drivers(drivers), refSerialTransmitter(drivers) { }
+UISubsystem::UISubsystem(tap::Drivers* drivers) : tap::control::Subsystem(drivers), drivers(drivers), refSerialTransmitter(drivers) { 
+    for(int i=0; i<NUM_LAYERS; i++)
+        layersAreCleared[i] = false;
+}
 
 uint32_t UISubsystem::getUnusedGraphicName() {
     if (currGraphicName > 0xffffff) {
@@ -48,18 +51,23 @@ bool UISubsystem::run() {
 
     PT_WAIT_UNTIL(drivers->refSerial.getRefSerialReceivingData());
     
-    // delete the things
-    PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 0));
+    // delete on all layers. we currently only use layer 0, but other teams could have put stuff on other layers we need to delete
+    for(graphicsIndex=0; graphicsIndex<NUM_LAYERS; graphicsIndex++){
+        if(layersAreCleared[graphicsIndex])
+            continue;
+
+        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, graphicsIndex));
+        
+        //need to wait for graphics to delete. This might wait longer than is required, but it allows things to draw.
+        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+        PT_WAIT_UNTIL(delayTimeout.execute());
+        layersAreCleared[graphicsIndex] = true;
+    } 
+
     if (topLevelContainer){
         topLevelContainer->hasBeenCleared();
         topLevelContainer->resetIteration();
-    } 
-
-    
-    //need to wait for graphics to delete. This might wait longer than is required, but it allows things to draw.
-    delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
-    PT_WAIT_UNTIL(delayTimeout.execute());
-
+    }
 
     graphicsIndex=0; //might start with one or two already in the array from last time, so set it once outside of the loop
     while (topLevelContainer && !needToRestart) {
@@ -78,6 +86,7 @@ bool UISubsystem::run() {
             if (nextGraphicsObject->isStringGraphic()) {
                 // if it is a string, keep the array as it is and send the string on its own
                 nextGraphicsObject->configCharacterData(&messageCharacter);
+                layersAreCleared[messageCharacter.graphicData.layer] = false;
                 PT_CALL(refSerialTransmitter.sendGraphic(&messageCharacter));
                 delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
                 PT_WAIT_UNTIL(delayTimeout.execute());
@@ -109,21 +118,28 @@ bool UISubsystem::run() {
         // so we have up to 7 objects to update. Would do a switch case but might confict with protothread's switch case
         if (numToSend == 1) {
             objectsToSend[0]->configGraphicData(&message1.graphicData);
+            layersAreCleared[message1.graphicData.layer] = false;
             PT_CALL(refSerialTransmitter.sendGraphic(&message1));
             delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message1));
         } else if (numToSend == 2) {
-            for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) 
+            for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) {
                 objectsToSend[innerGraphicsIndex]->configGraphicData(&message2.graphicData[innerGraphicsIndex]);
+                layersAreCleared[message2.graphicData[innerGraphicsIndex].layer] = false;
+            }
             PT_CALL(refSerialTransmitter.sendGraphic(&message2));
             delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message2));
         } else if (numToSend == 5) {
-            for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) 
+            for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) {
                 objectsToSend[innerGraphicsIndex]->configGraphicData(&message5.graphicData[innerGraphicsIndex]);
+                layersAreCleared[message5.graphicData[innerGraphicsIndex].layer] = false;
+            }
             PT_CALL(refSerialTransmitter.sendGraphic(&message5));
             delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message5));
         } else if (numToSend == 7) {
-            for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) 
+            for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) {
                 objectsToSend[innerGraphicsIndex]->configGraphicData(&message7.graphicData[innerGraphicsIndex]);
+                layersAreCleared[message7.graphicData[innerGraphicsIndex].layer] = false;
+            }
             PT_CALL(refSerialTransmitter.sendGraphic(&message7));
             delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message7));
         }

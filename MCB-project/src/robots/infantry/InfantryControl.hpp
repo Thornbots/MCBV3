@@ -57,13 +57,15 @@ public:
         indexer.setDefaultCommand(&indexerStop);
 
         shootButton.onTrue(&shooterStart)->whileTrue(&indexerStart)->onTrue(&closeServo);
-        unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam)->onTrue(&openServo);
+        unjamButton.whileTrue(&indexerUnjam)->onTrue(&openServo);
 
+        stopFlywheelTrigger.onTrue(&shooterStop);
 
         // Mouse and Keyboard mappings
-        unjamKey.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onTrue(&openServo);
+        unjamKey.whileTrue(&indexerUnjam)->onTrue(&openServo);
+        onlyCloseLidKey.onTrue(&closeServo);
         shootKey.whileTrue(&indexerStart)->onTrue(&shooterStart)->onTrue(&closeServo);
-        autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->whileTrue(&shooterStart)->onTrue(&closeServo);
+        autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart)->onTrue(&closeServo);
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
@@ -81,16 +83,40 @@ public:
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick);
 
-    // drivers->terminalSerial.initialize();
-
+        isStopped = false;
     }
 
     void update() override {
+        if(isStopped)
+            return;
 
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
+
+        //if we don't have ref uart or we do and we aren't currently in game, we are able to stop flywheels by buttons
+        if(!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getGameData().gameStage!=RefSerialData::Rx::GameStage::IN_GAME){
+            stopFlywheelTrigger.update();
+        }
     }
+
+    void stopForImuRecal() override {
+        drivers->commandScheduler.addCommand(&stopGimbal);
+        drivers->commandScheduler.addCommand(&shooterStop);
+        drivers->commandScheduler.addCommand(&stopDriveCommand);
+        drivers->commandScheduler.addCommand(&indexerStop);
+        isStopped = true;
+    }
+    
+    void resumeAfterImuRecal() override {
+        isStopped = false;
+        gimbal.clearBuildup();
+        drivers->commandScheduler.addCommand(&lookMouse);
+        drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
+        update();
+    }
+
+    bool isStopped = true;
 
     src::Drivers *drivers;
     InfantryHardware hardware;
@@ -144,6 +170,7 @@ public:
     Trigger shootButton{drivers, Remote::Channel::WHEEL, -0.5};
     Trigger unjamButton{drivers, Remote::Channel::WHEEL, 0.5};
     Trigger unjamKey{drivers, Remote::Key::Z}; //or R if based
+    Trigger onlyCloseLidKey{drivers, Remote::Key::CTRL}; //blame peter
     Trigger autoAimKey{drivers, MouseButton::RIGHT};
     Trigger shootKey{drivers, MouseButton::LEFT};
 
@@ -166,11 +193,13 @@ public:
     //keyboard driving
     // Trigger speedModeKey{drivers, Remote::Key::SHIFT}; //drivetrain drive command reads shift
     Trigger stopBeybladeKey{drivers, Remote::Key::X};
-    Trigger beybladeType1Key{drivers, Remote::Key::C};
-    Trigger beybladeType2Key{drivers, Remote::Key::V};
+    Trigger beybladeType1Key{drivers, Remote::Key::C}; //most beyblade, checked in DrivetrainDriveCommand
+    Trigger beybladeType2Key{drivers, Remote::Key::V}; //most translation, checked in DrivetrainDriveCommand
     Trigger startBeybladeKey = beybladeType1Key | beybladeType2Key | scrollUp | scrollDown;
 
-    Trigger* triggers[17] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &unjamKey, &shootKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
+    Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
+
+    Trigger* triggers[18] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &onlyCloseLidKey, &unjamKey, &shootKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
 
 };
 

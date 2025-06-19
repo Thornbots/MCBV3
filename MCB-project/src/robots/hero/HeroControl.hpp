@@ -36,7 +36,7 @@ public:
         // Initialize subsystems
         gimbal.initialize();
         flywheel.initialize();
-        indexer.initialize(); //geometry issue or something, it physically doesn't work right now
+        indexer.initialize();
         drivetrain.initialize();
         ui.initialize();
         
@@ -48,15 +48,16 @@ public:
         
 
         // Mouse and Keyboard mappings
-        unjamKey.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onFalse(&indexerLoad);
-        shootKey.onTrue(&indexerStart)->onTrue(&shooterStart)->onFalse(&indexerLoad);
-        unjamButton.whileTrue(&indexerUnjam)->onTrue(&shooterStop)->onFalse(&indexerLoad);
-        shootButton.whileTrue(&indexerStart)->onTrue(&shooterStart)->onFalse(&indexerLoad);
-        //autoAimKey./*whileTrue(&autoCommand)->*/onFalse(&lookMouse)->whileTrue(&shooterStart);
+        unjamKey.whileTrue(&indexerUnjam)->onFalse(&indexerLoad);
+        shootKey.onTrue(&indexerSemi)->onTrue(&shooterStart)->onFalse(&indexerLoad);
+        unjamButton.whileTrue(&indexerUnjam)->onFalse(&indexerLoad);
+        shootButton.whileTrue(&indexerAuto)->onTrue(&shooterStart)->onFalse(&indexerLoad);
+        stopFlywheelTrigger.onTrue(&shooterStop);
+        autoAimKey./*whileTrue(&autoCommand)->*/onFalse(&lookMouse)->onTrue(&shooterStart);
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
-        drivers->commandScheduler.addCommand(&draw);
+        // drivers->commandScheduler.addCommand(&draw);
    
         // drive commands and also enable mouse looking
 
@@ -69,14 +70,41 @@ public:
         joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick);
+
+        isStopped = false;
     }
 
     void update() override {
+        if(isStopped)
+            return;
 
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
+        
+        //if we don't have ref uart or we do and we aren't currently in game, we are able to stop flywheels by buttons
+        if(!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getGameData().gameStage!=RefSerialData::Rx::GameStage::IN_GAME){
+            stopFlywheelTrigger.update();
+        }
     }
+
+    void stopForImuRecal() override {
+        drivers->commandScheduler.addCommand(&stopGimbal);
+        drivers->commandScheduler.addCommand(&shooterStop);
+        drivers->commandScheduler.addCommand(&stopDriveCommand);
+        drivers->commandScheduler.addCommand(&indexerStop);
+        isStopped = true;
+    }
+
+    void resumeAfterImuRecal() override {
+        isStopped = false;
+        gimbal.clearBuildup();
+        drivers->commandScheduler.addCommand(&lookMouse);
+        drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
+        update();
+    }
+
+    bool isStopped = true;
 
     src::Drivers *drivers;
     HeroHardware hardware;
@@ -100,7 +128,8 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexerStart{drivers, &indexer, 1, 2};
+    commands::IndexerNBallsCommand indexerSemi{drivers, &indexer, 1, 2}; //semiauto, each click is one shot
+    commands::IndexerNBallsCommand indexerAuto{drivers, &indexer, -1, 2};//full auto, holding the wheel it the forward position shoots as long as it is held
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
     commands::IndexerLoadCommand indexerLoad{drivers, &indexer};
 
@@ -145,9 +174,11 @@ public:
     //keyboard driving
     // Trigger speedModeKey{drivers, Remote::Key::SHIFT}; //drivetrain drive command reads shift
     Trigger stopBeybladeKey{drivers, Remote::Key::X};
-    Trigger beybladeType1Key{drivers, Remote::Key::C};
-    Trigger beybladeType2Key{drivers, Remote::Key::V};
+    Trigger beybladeType1Key{drivers, Remote::Key::C}; //most beyblade, checked in DrivetrainDriveCommand
+    Trigger beybladeType2Key{drivers, Remote::Key::V}; //most translation, checked in DrivetrainDriveCommand
     Trigger startBeybladeKey = beybladeType1Key | beybladeType2Key | scrollUp | scrollDown;
+
+    Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
     Trigger* triggers[17] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &unjamKey, &shootKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
 
