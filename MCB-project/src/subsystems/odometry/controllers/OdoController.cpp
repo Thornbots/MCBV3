@@ -34,12 +34,18 @@ float OdoController::calculate(float currentPosition, float currentVelocity, flo
     float targetVelocity = decelProfile(positionError, currentVelocity, inputVelocity, currentDrivetrainVelocity);
 
     // experimental
-    //  targetVelocity = signum(positionError)*sqrt(currentVelocity*currentVelocity + 2 * A_DECEL * abs(positionError));
 
     // model based motion profile
-    float aMaxTemp = (C + (KB * KT * RATIO * RATIO) / RA + UK * signum(currentDrivetrainVelocity - currentVelocity));
-    float maxVelocity = std::min(VELO_MAX, pastTargetVelocity + 1 / J * (aMaxTemp + (VOLT_MAX * KT * RATIO) / RA) * A_SCALE * deltaT);
-    float minVelocity = std::max(-VELO_MAX, pastTargetVelocity + 1 / J * (aMaxTemp - (VOLT_MAX * KT * RATIO) / RA) * A_SCALE * deltaT);
+    float frictionTorque = (C * (currentDrivetrainVelocity - currentVelocity) + UK * signum(currentDrivetrainVelocity - currentVelocity));
+    float backEMF = KB*RATIO * (currentDrivetrainVelocity - currentVelocity);
+    float maxVelocity = std::min(VELO_MAX, 
+        pastTargetVelocity + 1 / J * (frictionTorque 
+            + std::min(std::max((backEMF + VOLT_MAX ) / RA, -CURRENT_MAX), CURRENT_MAX) //current from applied voltage, clamped to current max
+         * KT * RATIO) * A_SCALE * deltaT);
+    float minVelocity = std::max(-VELO_MAX, 
+        pastTargetVelocity + 1 / J * (frictionTorque 
+            + std::min(std::max((backEMF - VOLT_MAX ) / RA, -CURRENT_MAX), CURRENT_MAX)
+         * KT * RATIO) * A_SCALE * deltaT);
     targetVelocity = std::clamp(targetVelocity, minVelocity, maxVelocity);
 
     // velocity controller
