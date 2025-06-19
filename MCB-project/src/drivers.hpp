@@ -100,6 +100,12 @@ bool isAfterSecondCalibration() {
     return state==ImuRecalibrationState::AFTER_SECOND_CALIBRATION;
 }
 
+//when in a best of 3 (or best of 2) game, we allow third and fourth calibrations by going back to first calibration
+void allowAnotherRecalibration() {
+    if(state==ImuRecalibrationState::AFTER_SECOND_CALIBRATION)
+        state = ImuRecalibrationState::AFTER_FIRST_CALIBRATION;
+}
+
 ImuRecalibrationState getState() {
     return state;
 }

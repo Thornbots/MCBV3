@@ -53,7 +53,7 @@ public:
         unjamButton.whileTrue(&indexerUnjam)->onFalse(&indexerLoad);
         shootButton.whileTrue(&indexerAuto)->onTrue(&shooterStart)->onFalse(&indexerLoad);
         stopFlywheelTrigger.onTrue(&shooterStop);
-        //autoAimKey./*whileTrue(&autoCommand)->*/onFalse(&lookMouse)->whileTrue(&shooterStart);
+        autoAimKey./*whileTrue(&autoCommand)->*/onFalse(&lookMouse)->onTrue(&shooterStart);
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot

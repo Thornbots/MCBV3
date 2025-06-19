@@ -16,7 +16,7 @@ public:
     }
 
     void update() {
-        if(drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_FIRST_CALIBRATION){
+        if(drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_FIRST_CALIBRATION && isInPrematch()){
             line1.setString("CTRL+R to schedule");
             line2.setString("imu recalibration");
             line1.color = colorUnscheduled;
@@ -27,7 +27,7 @@ public:
                 ignoreKeyPresses = true;
                 update();
             }
-        } else if(drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED){
+        } else if(drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED && isInPrematch()){
             line1.setString("Imu recal scheduled");
             line2.setString("R to cancel");
             line1.color = colorScheduled;
@@ -44,11 +44,11 @@ public:
             line1.color = colorWaiting;
             line2.color = colorWaiting;
         } else if (drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::SECOND_CALIBRATION_JUST_BEFORE_START) {
-            line1.setString("Recalibrating");
-            line2.setString("");
+            line1.setString("Recalibrating. Robot");
+            line2.setString("might move on startup!");
             line1.color = colorRecalibrating;
             line2.color = colorRecalibrating;
-        } else if (drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_SECOND_CALIBRATION && !(drivers->refSerial.getRefSerialReceivingData() && drivers->refSerial.getGameData().gameStage>RefSerialData::Rx::GameStage::COUNTDOWN)) {
+        } else if (drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_SECOND_CALIBRATION && !(drivers->refSerial.getRefSerialReceivingData() && drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::COUNTDOWN)) {
             line1.setString("Done Recalibrating");
             line2.setString("Good Luck");
             line1.color = colorDoneRecalibrating;
@@ -58,6 +58,13 @@ public:
             line2.hide();
         }
 
+        //when in a best of 3 (or best of 2) game, we allow third and fourth calibrations
+        if(isInPrematch()){
+            drivers->recal.allowAnotherRecalibration();
+            line1.show();
+            line2.show();
+        }
+
         if(!drivers->remote.keyPressed(Remote::Key::R))
             ignoreKeyPresses = false;
     }
@@ -65,10 +72,10 @@ public:
 private:
     src::Drivers* drivers;
 
-    static constexpr uint16_t X_POSITION = 1680; //pixels, all numbers at the same y level on screen
-    static constexpr uint16_t Y_POSITION = 610; //pixels, all numbers at the same y level on screen
-    static constexpr uint16_t LINE_HEIGHT = 200; //pixels, this is a large number
-    static constexpr uint16_t THICKENSS = 10; //pixels, this is a large number
+    static constexpr uint16_t X_POSITION = 40;  //pixels
+    static constexpr uint16_t Y_POSITION = 550; //pixels
+    static constexpr uint16_t LINE_HEIGHT = 20; //pixels
+    static constexpr uint16_t THICKNESS = 2;    //pixels
 
     
     static constexpr UISubsystem::Color colorUnscheduled = UISubsystem::Color::CYAN;
@@ -77,8 +84,12 @@ private:
     static constexpr UISubsystem::Color colorWaiting = UISubsystem::Color::YELLOW;
     static constexpr UISubsystem::Color colorDoneRecalibrating = UISubsystem::Color::GREEN;
 
-    StringGraphic line1{UISubsystem::Color::CYAN, "l1", 80, 600, 20, 2};
-    StringGraphic line2{UISubsystem::Color::CYAN, "l2", 80, 550, 20, 2};
+    StringGraphic line1{UISubsystem::Color::CYAN, "l1", X_POSITION, Y_POSITION + 2*LINE_HEIGHT + LINE_HEIGHT/2, LINE_HEIGHT, THICKNESS};
+    StringGraphic line2{UISubsystem::Color::CYAN, "l2", X_POSITION, Y_POSITION, LINE_HEIGHT, THICKNESS};
 
     bool ignoreKeyPresses = false;
+
+    bool isInPrematch() {
+        return drivers->refSerial.getRefSerialReceivingData() && (drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::SETUP || drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::PREMATCH);
+    }
 };
