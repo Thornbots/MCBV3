@@ -47,6 +47,8 @@ private:  // Private Variables
     std::uniform_int_distribution<int> distYaw;
     std::uniform_int_distribution<int> distPitch;
 
+    float prevTargetPitch = 0;
+
 public:  // Public Methods
     GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* yaw, tap::motor::DjiMotor* pitch);
 
@@ -70,6 +72,8 @@ public:  // Public Methods
      * tells the motors to move the gimbal to its specified angle calculated in update();
      */
     void updateMotors(float changeInTargetYaw, float targetPitch);
+
+    float getPrevTargetPitch();
 
     /*
      *   Straight up gives a full state for the controllers to target

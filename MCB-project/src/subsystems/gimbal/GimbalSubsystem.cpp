@@ -49,13 +49,13 @@ void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
     pitchVel += gimbalPitchAngularVelocity;
 #endif
 
-    targetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
+    prevTargetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
 
     driveTrainEncoder = getYawEncoderValue();
     yawEncoderCache = driveTrainEncoder;
     // THIS LINE BELOW WAS CAUSING ERROR
     targetYawAngleWorld += changeInTargetYaw;  // std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
-    pitchMotorVoltage = getPitchVoltage(targetPitch, pitch, pitchVel, dt);
+    pitchMotorVoltage = getPitchVoltage(prevTargetPitch, pitch, pitchVel, dt);
 
     yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, changeInTargetYaw / dt, dt);
     // moved
@@ -65,13 +65,13 @@ void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
 void GimbalSubsystem::updateMotorsAndVelocity(float changeInTargetYaw, float targetPitch, float targetYawVel, float targetPitchVel) {
     float pitch = getPitchEncoderValue();
 
-    targetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
+    prevTargetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
 
     driveTrainEncoder = getYawEncoderValue();
     yawEncoderCache = driveTrainEncoder;
     // THIS LINE BELOW WAS CAUSING ERROR
     targetYawAngleWorld += changeInTargetYaw;  // std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
-    pitchMotorVoltage = getPitchVoltage(targetPitch, pitch, targetPitchVel, dt);
+    pitchMotorVoltage = getPitchVoltage(prevTargetPitch, pitch, targetPitchVel, dt);
 
     yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, targetYawVel, dt);
 }
