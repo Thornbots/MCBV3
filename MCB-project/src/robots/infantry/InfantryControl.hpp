@@ -63,6 +63,7 @@ public:
 
         // Mouse and Keyboard mappings
         unjamKey.whileTrue(&indexerUnjam)->onTrue(&openServo);
+        onlyCloseLidKey.onTrue(&closeServo);
         shootKey.whileTrue(&indexerStart)->onTrue(&shooterStart)->onTrue(&closeServo);
         autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->whileTrue(&shooterStart)->onTrue(&closeServo);
         // implement speed mode
@@ -109,9 +110,10 @@ public:
     
     void resumeAfterImuRecal() override {
         isStopped = false;
-        update();
-        drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
+        gimbal.clearBuildup();
         drivers->commandScheduler.addCommand(&lookMouse);
+        drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
+        update();
     }
 
     bool isStopped = true;
@@ -168,6 +170,7 @@ public:
     Trigger shootButton{drivers, Remote::Channel::WHEEL, -0.5};
     Trigger unjamButton{drivers, Remote::Channel::WHEEL, 0.5};
     Trigger unjamKey{drivers, Remote::Key::Z}; //or R if based
+    Trigger onlyCloseLidKey{drivers, Remote::Key::CTRL}; //blame peter
     Trigger autoAimKey{drivers, MouseButton::RIGHT};
     Trigger shootKey{drivers, MouseButton::LEFT};
 
@@ -196,7 +199,7 @@ public:
 
     Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
-    Trigger* triggers[17] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &unjamKey, &shootKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
+    Trigger* triggers[18] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &onlyCloseLidKey, &unjamKey, &shootKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
 
 };
 

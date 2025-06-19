@@ -98,9 +98,10 @@ public:
 
     void resumeAfterImuRecal() override {
         isStopped = false;
-        update();
-        drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
+        gimbal.clearBuildup();
         drivers->commandScheduler.addCommand(&lookMouse);
+        drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
+        update();
     }
 
     bool isStopped = true;

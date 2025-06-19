@@ -31,40 +31,81 @@ namespace src {
 class ImuRecalibration {
 public:
 
+enum class ImuRecalibrationState : uint8_t {
+    BEFORE_FIRST_CALIBRATION = 0,  
+    FIRST_CALIBRATING = 1,         
+    AFTER_FIRST_CALIBRATION = 2,   // recalibration is availiable
+    SECOND_CALIBRATION_REQUESTED = 3, //if cancelled go back to AFTER_FIRST_CALIBRATION
+    SECOND_CALIBRATION_WAITING_TO_START = 4, //when robot gets disabled and waiting for head to fall
+    SECOND_CALIBRATION_JUST_BEFORE_START = 5, 
+    SECOND_CALIBRATING = 6,
+    AFTER_SECOND_CALIBRATION = 7
+};
+
 void requestRecalibration() {
-    requestingRecalibration = true;
+    if(state==ImuRecalibrationState::AFTER_FIRST_CALIBRATION)
+        state = ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED;
 }
 
 void cancelRequestRecalibration() {
-    requestingRecalibration = false;
+    if(state==ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED)
+        state = ImuRecalibrationState::AFTER_FIRST_CALIBRATION;
+}
+
+void setIsWaiting() {
+    if(state==ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED)
+        state = ImuRecalibrationState::SECOND_CALIBRATION_WAITING_TO_START;
+}
+
+void setIsFirstCalibrating() {
+    if(state==ImuRecalibrationState::BEFORE_FIRST_CALIBRATION)
+        state = ImuRecalibrationState::FIRST_CALIBRATING;
+}
+
+void setJustBeforeSecondCalibrating() {
+    if(state==ImuRecalibrationState::SECOND_CALIBRATION_WAITING_TO_START)
+        state = ImuRecalibrationState::SECOND_CALIBRATION_JUST_BEFORE_START;
+}
+
+void setIsSecondCalibrating() {
+    if(state==ImuRecalibrationState::SECOND_CALIBRATION_JUST_BEFORE_START)
+        state = ImuRecalibrationState::SECOND_CALIBRATING;
+}
+
+bool getIsCalibrating() {
+    return state==ImuRecalibrationState::FIRST_CALIBRATING || state==ImuRecalibrationState::SECOND_CALIBRATING;
+}
+
+void setIsDoneCalibrating() {
+    if(state==ImuRecalibrationState::FIRST_CALIBRATING)
+        state = ImuRecalibrationState::AFTER_FIRST_CALIBRATION;
+
+    if(state==ImuRecalibrationState::SECOND_CALIBRATING)
+        state = ImuRecalibrationState::AFTER_SECOND_CALIBRATION;
+}
+
+bool getIsImuReady() {
+    return state==ImuRecalibrationState::SECOND_CALIBRATION_WAITING_TO_START || 
+            state==ImuRecalibrationState::SECOND_CALIBRATION_JUST_BEFORE_START || 
+            state==ImuRecalibrationState::AFTER_FIRST_CALIBRATION || 
+            state==ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED || 
+            state==ImuRecalibrationState::AFTER_SECOND_CALIBRATION;
 }
 
 bool isRequestingRecalibration() {
-    return requestingRecalibration;
+    return state==ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED;
 }
 
-void markAsRecalibrating() {
-    requestingRecalibration = false;
-    isRecalibrating = true;
+bool isAfterSecondCalibration() {
+    return state==ImuRecalibrationState::AFTER_SECOND_CALIBRATION;
 }
 
-bool getIsRecalibrating(){
-    return isRecalibrating;
-}
-
-void markAsDoneRecalibrating() {
-    isRecalibrating = false;
-    isDoneRecalibrating = true;
-}
-
-bool getIsDoneRecalibrating() {
-    return isDoneRecalibrating;
+ImuRecalibrationState getState() {
+    return state;
 }
 
 private:
-bool requestingRecalibration = false; 
-bool isRecalibrating = false; //occurs in 15 sec countdown
-bool isDoneRecalibrating = false;
+ImuRecalibrationState state = ImuRecalibrationState::BEFORE_FIRST_CALIBRATION;
 
 }; //class ImuRecalibration
 

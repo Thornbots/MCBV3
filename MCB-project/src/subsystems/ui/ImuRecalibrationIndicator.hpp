@@ -16,35 +16,7 @@ public:
     }
 
     void update() {
-        if (drivers->refSerial.getRefSerialReceivingData() && drivers->refSerial.getGameData().gameStage>RefSerialData::Rx::GameStage::COUNTDOWN){
-            line1.hide();
-            line2.hide();
-            return;
-        }
-
-        if(expectingRecalibration && drivers->recal.getIsDoneRecalibrating()){
-            line1.setString("Done Recalibrating");
-            line2.setString("");
-            line1.color = colorDoneRecalibrating;
-            line2.color = colorDoneRecalibrating;
-        } else if(drivers->recal.getIsRecalibrating()){
-            line1.setString("Recalibrating");
-            line2.setString("");
-            line1.color = colorRecalibrating;
-            line2.color = colorRecalibrating;
-            expectingRecalibration = true;
-        } else if (drivers->recal.isRequestingRecalibration()) {
-            line1.setString("Imu recal scheduled");
-            line2.setString("R to cancel");
-            line1.color = colorScheduled;
-            line2.color = colorScheduled;
-            
-            if(!ignoreKeyPresses && drivers->remote.keyPressed(Remote::Key::R)){
-                drivers->recal.cancelRequestRecalibration();
-                ignoreKeyPresses = true;
-                update();
-            }
-        } else {
+        if(drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_FIRST_CALIBRATION){
             line1.setString("CTRL+R to schedule");
             line2.setString("imu recalibration");
             line1.color = colorUnscheduled;
@@ -55,8 +27,35 @@ public:
                 ignoreKeyPresses = true;
                 update();
             }
-
-            expectingRecalibration = false;
+        } else if(drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED){
+            line1.setString("Imu recal scheduled");
+            line2.setString("R to cancel");
+            line1.color = colorScheduled;
+            line2.color = colorScheduled;
+            
+            if(!ignoreKeyPresses && drivers->remote.keyPressed(Remote::Key::R)){
+                drivers->recal.cancelRequestRecalibration();
+                ignoreKeyPresses = true;
+                update();
+            }
+        } else if (drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::SECOND_CALIBRATION_WAITING_TO_START) {
+            line1.setString("Waiting for robot");
+            line2.setString("to settle");
+            line1.color = colorWaiting;
+            line2.color = colorWaiting;
+        } else if (drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::SECOND_CALIBRATION_JUST_BEFORE_START) {
+            line1.setString("Recalibrating");
+            line2.setString("");
+            line1.color = colorRecalibrating;
+            line2.color = colorRecalibrating;
+        } else if (drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_SECOND_CALIBRATION && !(drivers->refSerial.getRefSerialReceivingData() && drivers->refSerial.getGameData().gameStage>RefSerialData::Rx::GameStage::COUNTDOWN)) {
+            line1.setString("Done Recalibrating");
+            line2.setString("Good Luck");
+            line1.color = colorDoneRecalibrating;
+            line2.color = colorDoneRecalibrating;
+        } else {
+            line1.hide();
+            line2.hide();
         }
 
         if(!drivers->remote.keyPressed(Remote::Key::R))
@@ -75,11 +74,11 @@ private:
     static constexpr UISubsystem::Color colorUnscheduled = UISubsystem::Color::CYAN;
     static constexpr UISubsystem::Color colorScheduled = UISubsystem::Color::ORANGE;
     static constexpr UISubsystem::Color colorRecalibrating = UISubsystem::Color::PURPLISH_RED;
+    static constexpr UISubsystem::Color colorWaiting = UISubsystem::Color::YELLOW;
     static constexpr UISubsystem::Color colorDoneRecalibrating = UISubsystem::Color::GREEN;
 
     StringGraphic line1{UISubsystem::Color::CYAN, "l1", 80, 600, 20, 2};
     StringGraphic line2{UISubsystem::Color::CYAN, "l2", 80, 550, 20, 2};
 
     bool ignoreKeyPresses = false;
-    bool expectingRecalibration = false;
 };

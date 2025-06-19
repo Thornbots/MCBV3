@@ -51,6 +51,7 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->bmi088.initialize(500, 0.0f, 0.0f);
     drivers->bmi088.setCalibrationSamples(4000);
     drivers->bmi088.requestCalibration();
+    drivers->recal.setIsFirstCalibrating();
 
 
 }
@@ -84,10 +85,6 @@ int main() {
     tap::arch::MilliTimeout waitForRobotToStopMoving{};
     waitForRobotToStopMoving.stop();
 
-    bool imuIsReady = false;
-
-    int timesImuHasBeenReady = 0;
-
     while (1) {
         // do this as fast as you can
         updateIo(&drivers);
@@ -99,10 +96,20 @@ int main() {
             bool goingToRecalibrate = drivers.recal.isRequestingRecalibration() && drivers.refSerial.getRefSerialReceivingData() && drivers.refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::SETUP  && drivers.refSerial.getGameData().stageTimeRemaining < 20;
             if(goingToRecalibrate){
                 control.stopForImuRecal();
+                drivers.recal.setIsWaiting();
+                drivers.leds.set(tap::gpio::Leds::Blue, true);
+                drivers.leds.set(tap::gpio::Leds::Green, true);
+                waitForRobotToStopMoving.restart(6000);
+            }
+
+            if(waitForRobotToStopMoving.timeRemaining()<1000){
+                drivers.recal.setJustBeforeSecondCalibrating();
             }
 
             if(waitForRobotToStopMoving.isExpired()){
                 waitForRobotToStopMoving.stop();
+                drivers.recal.setIsSecondCalibrating();
+                drivers.leds.set(tap::gpio::Leds::Green, false);
                 drivers.bmi088.requestCalibration();
             }
 
@@ -111,15 +118,14 @@ int main() {
             drivers.bmi088.read();
 
             //only turn blue led off once in case someone elsewhere wants it on
-            if (!imuIsReady && waitForRobotToStopMoving.isStopped() && drivers.bmi088.getImuState()==tap::communication::sensors::imu::AbstractIMU::ImuState::IMU_CALIBRATED) { // do everything except things that do things if IMU isn't done
-                imuIsReady = true;
+            //if I think I am calibrating and it is done
+            if (drivers.recal.getIsCalibrating() && drivers.bmi088.getImuState()==tap::communication::sensors::imu::AbstractIMU::ImuState::IMU_CALIBRATED) { // do everything except things that do things if IMU isn't done
+                drivers.recal.setIsDoneCalibrating();
                 drivers.leds.set(tap::gpio::Leds::Blue, false);
-                drivers.recal.markAsDoneRecalibrating();
-                timesImuHasBeenReady++;
-                if(timesImuHasBeenReady>1)
-                    control.resumeAfterImuRecal();
+                if(drivers.recal.isAfterSecondCalibration())
+                    control.resumeAfterImuRecal(); //when it turned on, it flipped 180
             }
-            if(imuIsReady){
+            if(drivers.recal.getIsImuReady()){
                 drivers.commandScheduler.run();
                 control.update();
             }
@@ -127,14 +133,6 @@ int main() {
             drivers.djiMotorTxHandler.encodeAndSendCanData();
 
             // drivers.terminalSerial.update(); 
-
-            if(goingToRecalibrate){
-                imuIsReady = false;
-                drivers.recal.markAsRecalibrating();
-                drivers.leds.set(tap::gpio::Leds::Blue, true);
-                waitForRobotToStopMoving.restart(6000);
-            }
-                
         }
         // prevent looping too fast
         modm::delay_us(10);

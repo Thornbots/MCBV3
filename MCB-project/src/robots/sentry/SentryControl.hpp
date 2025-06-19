@@ -85,6 +85,7 @@ public:
 
     void resumeAfterImuRecal() override {
         isStopped = false;
+        gimbal.clearBuildup();
         update();
     }
 

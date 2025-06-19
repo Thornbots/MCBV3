@@ -88,10 +88,14 @@ void GimbalSubsystem::stopMotors() {
     // #endif
     targetYawAngleWorld = yawAngleRelativeWorld;
 
+    clearBuildup();
+}
+
+void GimbalSubsystem::clearBuildup() {
     pitchController.clearBuildup();
     yawController.clearBuildup();
 }
-
+    
 void GimbalSubsystem::reZeroYaw() {
     // TODO
 }
