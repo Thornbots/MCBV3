@@ -85,11 +85,7 @@ void setIsDoneCalibrating() {
 }
 
 bool getIsImuReady() {
-    return state==ImuRecalibrationState::SECOND_CALIBRATION_WAITING_TO_START || 
-            state==ImuRecalibrationState::SECOND_CALIBRATION_JUST_BEFORE_START || 
-            state==ImuRecalibrationState::AFTER_FIRST_CALIBRATION || 
-            state==ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED || 
-            state==ImuRecalibrationState::AFTER_SECOND_CALIBRATION;
+    return !getIsCalibrating();
 }
 
 bool isRequestingRecalibration() {
