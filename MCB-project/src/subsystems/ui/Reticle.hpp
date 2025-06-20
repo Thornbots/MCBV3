@@ -19,10 +19,10 @@ public:  // important constants and enums
     static constexpr float AVERAGE_HEIGHT_OFF_GROUND = 0.07;  // meters, center of panel to ground, for calculating where on screen reticle things should be
 
     // distances down range and colors to draw them
-    static constexpr int NUM_THINGS = 6;
-    static constexpr float DISTANCES[NUM_THINGS] = {0.5, 1, 2.5, 4, 6, 10};  // meters, y distances, measured from center of robot to center of panel
-    static constexpr UISubsystem::Color COLORS[NUM_THINGS] =
-        {UISubsystem::Color::PURPLISH_RED, UISubsystem::Color::PINK, UISubsystem::Color::ORANGE, UISubsystem::Color::YELLOW, UISubsystem::Color::GREEN, UISubsystem::Color::CYAN};
+    static constexpr int NUM_THINGS = 16;
+    static constexpr float DISTANCES[NUM_THINGS] = {0.5, 0.75, 1, 1.25, 1.75, 2.5, 3.25, 4, 5.5, 6.5, 7.25, 8, 9, 10, 11, 12};  // meters, y distances, measured from center of robot to center of panel
+    static constexpr int NUM_COLORS = 1;
+    static constexpr UISubsystem::Color COLORS[NUM_COLORS] = {UISubsystem::Color::GREEN};
 
     enum class ReticleDrawMode : uint8_t {
         RECTANGLES = 0,   // multiple rectangles of different colors, tops and bottoms of them are tops and bottoms of panels, midpoints of sides are edges of standard size panels
@@ -47,18 +47,18 @@ public:  // important constants and enums
     };
 
 private: // draw settings
-    ReticleDrawMode drawMode = ReticleDrawMode::TRAPEZOIDS;
+    ReticleDrawMode drawMode = ReticleDrawMode::VERT_LINES;
     ReticleSolveMode solveMode = ReticleSolveMode::FOR_PITCH;
-    ReticleSidedMode sidedMode = ReticleSidedMode::ALT;
-    bool drawVerticalLine = false;
+    ReticleSidedMode sidedMode = ReticleSidedMode::BOTH;
+    bool drawVerticalLine = true;
 
 public:
     Reticle(GimbalSubsystem* gimbal) : gimbal(gimbal) {
         for (int i = 0; i < NUM_THINGS; i++) {
-            rects[i].color = COLORS[i];
+            rects[i].color = COLORS[i%NUM_COLORS];
             rectsContainer.addGraphicsObject(rects + i);
             for (int j = 0; j < NUM_LINES; j++) {
-                lines[i][j].color = COLORS[i];
+                lines[i][j].color = COLORS[i%NUM_COLORS];
                 linesContainer.addGraphicsObject(&lines[i][j]);
             }
             forPitchLandingSpotsSolved[i] = false;
@@ -183,7 +183,7 @@ private:
     Line verticalLine;
 
     // for solving for pitch
-    static constexpr int MAX_NUM_ITERATIONS = 20;  // it is difficult to actually solve for pitch because initial launch positions depend on pitch
+    static constexpr int MAX_NUM_ITERATIONS = 10;  // it is difficult to actually solve for pitch because initial launch positions depend on pitch
     int forPitchLandingSpotsSolved[NUM_THINGS];    // so we do a binary search, guessing a pitch, calculating where it lands, and trying a higher or lower pitch accordingly
     Vector3d forPitchLandingSpots[NUM_THINGS];
     float forPitchPitches[NUM_THINGS];

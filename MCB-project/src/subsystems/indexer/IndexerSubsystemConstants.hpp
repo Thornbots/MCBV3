@@ -5,8 +5,8 @@ constexpr static int INDEXER_MOTOR_MAX_SPEED = 18000; //6177; // With the 2006, 
 
 
 //only hero has unjam code for now
-constexpr static float AUTO_UNJAM_BALLS_PER_SEC_THRESH = 0.2;  // balls/sec, if the motor gets stopped or slowed enough to be below this speed, the index will consider unjamming
-constexpr static float AUTO_UNJAM_TIME_UNDER_THRESH = 0.05;      // sec, if the motor gets stopped or slowed enough for this time, the index will start to unjam
+constexpr static float AUTO_UNJAM_BALLS_PER_SEC_THRESH = 0.1;  // balls/sec, if the motor gets stopped or slowed enough to be below this speed, the index will consider unjamming
+constexpr static float AUTO_UNJAM_TIME_UNDER_THRESH = 0.1;      // sec, if the motor gets stopped or slowed enough for this time, the index will start to unjam
 constexpr static float AUTO_UNJAM_TIME_UNJAMMING = 0.1;         // sec, once unjamming, it will continue unjamming for this long
 
 
