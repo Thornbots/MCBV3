@@ -151,7 +151,7 @@ constexpr float K_S = UK_MOTOR / KT;   // Static friction feedforward g
 constexpr float F_MAX = M * 9.81f * COF_WHEEL;    // maximum force allowed across all 4 wheels
 constexpr float F_MIN_T = 5 / (2 * TRACKWIDTH);  // minimum force per wheel in the torque direction that the traction limiter is allowed to throttle to
 
-const float M_EFFECTIVE = M + 4 * J_WHEEL * std::pow(GEAR_RATIO / R_WHEEL, 2.0f);
+const float M_EFFECTIVE = M + 2 * J_WHEEL * std::pow(GEAR_RATIO / R_WHEEL, 2.0f);
 const float J_EFFECTIVE = J + 4 * J_WHEEL * std::pow((TRACKWIDTH / 2.0f) * (GEAR_RATIO / R_WHEEL), 2.0f);
 const Pose2d KP_V{KP_V_XY, KP_V_XY, KP_V_ROT};
 const Vector2d MIN_FORCE{-IV_MAX, -IV_MAX}, MAX_FORCE{IV_MAX, IV_MAX};

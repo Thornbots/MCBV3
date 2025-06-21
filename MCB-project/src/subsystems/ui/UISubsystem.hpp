@@ -49,6 +49,9 @@ private:  // Private Variables
     //when get UIDrawCommand, it should set this
     GraphicsContainer* topLevelContainer = nullptr;
 
+    static constexpr int NUM_LAYERS = 10; //layers 0-9
+    bool layersAreCleared[NUM_LAYERS];
+
 public:  // Public Methods
     UISubsystem(tap::Drivers* driver);
     ~UISubsystem() {}  // Intentionally blank

@@ -42,10 +42,13 @@ public:  // Public Methods
 
     float imuAngle;
 
-    // For UI stuff
+    // For UI stuff, all of these set by DrivetrainDriveCommand
+    int linearVelocityMultiplierTimes100;
     bool isInControllerMode;
     bool isInKeyboardMode;
+    bool isBeyblading;
     bool isPeeking;
+    bool isPeekingLeft;
     // End UI stuff
 
     /*
@@ -67,8 +70,7 @@ public:  // Public Methods
 
     void setTargetPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity);
     /*
-     * Call this function to set all DriveTrain motors to 0 desired RPM. CALL setMotorSpeeds() FOR
-     * THIS TO WORK
+     * Call this function to set all DriveTrain motors to 0 desired RPM.
      */
     void stopMotors();
 

@@ -1,11 +1,15 @@
 #pragma once
 
-#include "subsystems/ui/UISubsystem.hpp"
-#include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
+#include "UISubsystem.hpp"
+#include "Projections.hpp"
 #include "util/ui/GraphicsContainer.hpp"
 #include "util/ui/SimpleGraphicsObjects.hpp"
-#include "util/ui/Projections.hpp"
 #include "util/Vector3d.hpp"
+
+#include "subsystems/gimbal/GimbalSubsystem.hpp"
+#include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
+
+#include "subsystems/drivetrain/DrivetrainSubsystemConstants.hpp"
 
 using namespace subsystems;
 
@@ -59,8 +63,8 @@ private:
     //outer edge of the rectangle, the one used to mark how far away from the wall the enemy can be
     //and still not be able to hit us. As a driver, the goal while peeking is to keep the enemy inside
     //of these bounds.
-    static constexpr float ANGLE1 = 74*PI/180; //zero would be directly to the right/left, 90 would be directly forward
-    static constexpr float ANGLE2 = 60*PI/180;
+    static constexpr float ANGLE1 = PI / 2 - PEEK_RIGHT_AMT; //zero would be directly to the right/left, 90 would be directly forward
+    static constexpr float ANGLE2 = ANGLE1 + 0.06;
     static constexpr float ANGLES[4] = {ANGLE1, ANGLE2, PI-ANGLE1, PI-ANGLE2};
     static constexpr float MAGNITUDE = 0.3; //need a magnitude to make a 3d point to project
 

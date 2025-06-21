@@ -42,26 +42,54 @@ public:
         gimbal.setDefaultCommand(&stopGimbal);
         flywheel.setDefaultCommand(&shooterStop);
         drivetrain.setDefaultCommand(&stopDriveCommand);
-        indexer.setDefaultCommand(&indexerStopCommand);
+        indexer.setDefaultCommand(&indexerStop);
         odo.setDefaultCommand(&odoStop);
 
-        shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz);
-        unjamButton.onTrue(&shooterStop)->whileTrue(&indexerUnjam);
+        
+        shootButton.onTrue(&shooterStart)->whileTrue(&indexerStart);
+        unjamButton.whileTrue(&indexerUnjam);
+        stopFlywheelTrigger.onTrue(&shooterStop);
 
-        autoFireTrigger.whileTrue(&autoFireCommand)->onFalse(&lookJoystick)->onFalse(&shooterStop);
-        autoDriveTrigger.whileTrue(&autoDriveCommand)->onTrue(&odoPointForwards);
+        autoFireTrigger.whileTrue(&autoFire)->onFalse(&lookJoystick);
+        autoDriveTrigger.whileTrue(&autoDrive)->onTrue(&odoPointForwards);
         // drive commands 
 
         joystickDrive0.onTrue(&lookJoystick);
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
+        
+        isStopped = false;
     }
 
     void update() override {
+        if(isStopped)
+            return;
+
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
+        
+        //if we don't have ref uart or we do and we aren't currently in game, we are able to stop flywheels by buttons
+        if(!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getGameData().gameStage!=RefSerialData::Rx::GameStage::IN_GAME){
+            stopFlywheelTrigger.update();
+        }
     }
+
+    void stopForImuRecal() override {
+        drivers->commandScheduler.addCommand(&stopGimbal);
+        drivers->commandScheduler.addCommand(&shooterStop);
+        drivers->commandScheduler.addCommand(&stopDriveCommand);
+        drivers->commandScheduler.addCommand(&indexerStop);
+        isStopped = true;
+    }
+
+    void resumeAfterImuRecal() override {
+        isStopped = false;
+        gimbal.clearBuildup();
+        update();
+    }
+
+    bool isStopped = true;
 
     src::Drivers* drivers;
     SentryHardware hardware;
@@ -77,23 +105,23 @@ public:
     // commands
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
-    commands::AutoDriveCommand autoDriveCommand{drivers, &drivetrain, &gimbal, &jetson};
-    commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &flywheel, &jetson, &autoDriveCommand};
+    commands::AutoDriveCommand autoDrive{drivers, &drivetrain, &gimbal, &jetson};
+    commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, &autoDrive};
 
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 10};
+    commands::IndexerNBallsCommand indexerStart{drivers, &indexer, -1, 10};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
 
-    commands::IndexerStopCommand indexerStopCommand{drivers, &indexer};
+    commands::IndexerStopCommand indexerStop{drivers, &indexer};
 
     commands::OdometryPointForwardsCommand odoPointForwards{drivers, &odo, &gimbal};
     commands::OdometryStopCommand odoStop{drivers, &odo};
 
     // CHANGE NUMBERS LATER
     commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::CONTROLLER};
-    commands::DrivetrainDriveCommand beybladeJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE2, commands::ControlMode::CONTROLLER};
+    commands::DrivetrainDriveCommand beybladeJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE, commands::ControlMode::CONTROLLER};
     commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
 
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
@@ -115,6 +143,7 @@ public:
     Trigger autoFireTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
     Trigger autoDriveTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};
 
+    Trigger stopFlywheelTrigger = unjamButton | !autoFireTrigger; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
     Trigger* triggers[7] = {&joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &autoFireTrigger, &autoDriveTrigger};  //, &indexSpinButton};
 };

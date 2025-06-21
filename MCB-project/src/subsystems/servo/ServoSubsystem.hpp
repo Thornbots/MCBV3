@@ -18,6 +18,7 @@ class ServoSubsystem : public tap::control::Subsystem
 protected:  // Private Variables
 src::Drivers* drivers;
 tap::motor::Servo* servo;
+bool targetIsClosed = true;
 
 public:  // Public Methods
 
@@ -32,7 +33,10 @@ void initialize();
 
 void refresh() override;
 
-virtual void setTargetPosition(float position);
+void setClosed();
+void setOpen();
+
+bool getTargetIsClosed();
 
 private:  // Private Methods
 };

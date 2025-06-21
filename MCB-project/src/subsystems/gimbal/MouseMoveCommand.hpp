@@ -40,8 +40,6 @@ private:
 protected:
     src::Drivers* drivers;
     GimbalSubsystem* gimbal;
-    float yaw = 0.0f, pitch = 0.0f;
-    float yawvel = 0.0f, pitchvel = 0.0f;
 
 };
 }  // namespace commands

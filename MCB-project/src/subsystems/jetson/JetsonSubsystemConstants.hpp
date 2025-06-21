@@ -1,5 +1,5 @@
-
 #pragma once
+
 #include "modm/math/geometry/vector.hpp"
 
 
@@ -10,7 +10,6 @@
 static constexpr float cameraXoffset = -.0325; //appears to be RGB offset, not depth offset
 static constexpr float cameraYoffset = .1279;
 static constexpr float cameraZoffset = .04505;
-
 
 static constexpr float initialShotVelocity = 24.0;           // Shot velocity
 

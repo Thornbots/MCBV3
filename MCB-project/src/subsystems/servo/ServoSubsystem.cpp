@@ -15,10 +15,18 @@ void ServoSubsystem::initialize() {
 
 void ServoSubsystem::refresh() {
     if(servoTimer.execute()) servo->updateSendPwmRamp();
+    if(servoSecondTimer.execute()) servo->setTargetPwm(targetIsClosed ? CLOSED_POSITION : OPEN_POSITION); 
 }
 
-void ServoSubsystem::setTargetPosition(float position) {
-    if(servoSecondTimer.execute()) servo->setTargetPwm(position); 
+void ServoSubsystem::setClosed() {
+    targetIsClosed = true;
+}
+void ServoSubsystem::setOpen() {
+    targetIsClosed = false;
+}
+
+bool ServoSubsystem::getTargetIsClosed() {
+    return targetIsClosed;
 }
 
 
