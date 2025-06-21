@@ -9,6 +9,7 @@
 #include "util/Pose2d.hpp"
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
+#include "subsystems/ui/HitRing.hpp"
 
 #include "drivers.hpp"
 
@@ -110,6 +111,7 @@ class JetsonSubsystem : public tap::control::Subsystem {
 private:  // Private Variables
     src::Drivers* drivers;
     GimbalSubsystem* gimbal;
+    HitRing hitRing{drivers, gimbal};
 
     static constexpr int TIME_FOR_REF_DATA = 100; //send at 10hz
     tap::arch::PeriodicMilliTimer refDataSendingTimeout{TIME_FOR_REF_DATA};

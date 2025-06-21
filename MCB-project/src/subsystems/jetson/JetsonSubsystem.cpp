@@ -31,6 +31,8 @@ void JetsonSubsystem::initialize() {
 void JetsonSubsystem::refresh() { 
     drivers->uart.updateSerial(); 
 
+    hitRing.update();
+
     //if we need to not lose a ref message, use needToSendRefData
     if(refDataSendingTimeout.execute() && drivers->refSerial.getRefSerialReceivingData()){
     //     needToSendRefData = true;
@@ -44,7 +46,8 @@ void JetsonSubsystem::refresh() {
             (uint16_t) gameData.stageTimeRemaining,
             (uint16_t) robotData.currentHp,
             (uint8_t) robotData.robotId % 100, //blue hero is 101, we want to send 1
-            12.34, //calculating this is not easy, jetson knows that if greater than pi or less than -pi that it is invalid
+            hitRing.getAngleToTurnForSentry(), 
+            // 12.34,
 
             drivers->refSerial.isBlueTeam(robotData.robotId) << 7 |
             (robotData.robotBuffStatus.recoveryBuff > 0) << 6 |
