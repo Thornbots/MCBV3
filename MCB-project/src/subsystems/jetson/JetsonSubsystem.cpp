@@ -82,11 +82,12 @@ void JetsonSubsystem::refresh() {
     
 }
 
-bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity) {
+bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d* jetsonExpectedPosition) {
     ROSData ros_msg;
     if(!getMsg(&ros_msg))
         return false;
-    *targetPosition = Vector2d(ros_msg.x, ros_msg.y);
+    *targetPosition = Vector2d(ros_msg.targetX, ros_msg.targetY);
+    *jetsonExpectedPosition = Vector2d(ros_msg.expectedX, ros_msg.expectedY);
     //todo make this work lmao
     *targetVelocity = Vector2d(0, 0);
     return true;
