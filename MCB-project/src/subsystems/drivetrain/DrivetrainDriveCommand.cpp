@@ -38,11 +38,16 @@ void DrivetrainDriveCommand::execute() {
     } else if (controlMode == ControlMode::CONTROLLER) {
         x = drivers->remote.getChannel(Remote::Channel::LEFT_HORIZONTAL);
         y = drivers->remote.getChannel(Remote::Channel::LEFT_VERTICAL);
+        x*=2.5;
+        y*=2.5;
     } else {
         drivetrain->stopMotors();
         return;
     }
     
+    // controller goes fast
+    if(drivetrain->linearVelocityMultiplierTimes100==0)
+        drivetrain->linearVelocityMultiplierTimes100 = MAX_LINEAR_VELOCITY_TIMES_100;
     //clamp
     if(drivetrain->linearVelocityMultiplierTimes100>MAX_LINEAR_VELOCITY_TIMES_100) 
         drivetrain->linearVelocityMultiplierTimes100 = MAX_LINEAR_VELOCITY_TIMES_100;

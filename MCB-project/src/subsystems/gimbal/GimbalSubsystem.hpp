@@ -12,6 +12,7 @@
 #include "controllers/PitchController.hpp"
 #include "controllers/YawController.hpp"
 #include "drivers.hpp"
+#include "GimbalSubsystemConstants.hpp"
 
 
 
@@ -40,6 +41,8 @@ private:  // Private Variables
     float desiredYawAngleWorld, desiredYawAngleWorld2, driveTrainEncoder = 0.0;
     float stickAccumulator = 0, targetYawAngleWorld = 0,
           targetDTVelocityWorld = 0;  
+
+    float positionHistory[LATENCY_Q_SIZE];
 
     // for sysid
     std::random_device rd;
@@ -80,6 +83,12 @@ public:  // Public Methods
      */
 
     void updateMotorsAndVelocity(float changeInTargetYaw, float targetPitch, float targetYawVel, float targetPitchVel);
+
+
+    void updateMotorsAndVelocityWithLatencyCompensation(float changeInTargetYaw, float targetPitch, float targetYawVel, float targetPitchVel);
+
+    void updatePositionHistory(float newPos);
+
     /*
      * Call this function to set all Turret motors to stop, calculate the voltage level in
      * which to achieve this quickly and packages this information for the motors TO BE SENT over

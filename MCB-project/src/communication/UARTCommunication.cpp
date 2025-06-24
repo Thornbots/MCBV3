@@ -10,38 +10,20 @@ namespace communication
         hasNewData(false)
     {
         // Good practice
-        memset(&lastCVData, 0, sizeof(lastCVData));
-        // memset(&lastROSData, 0, sizeof(lastROSData));
+        memset(&mostRecentMessage,0,sizeof(uartMsg));
         // Initial time
         lastReceivedTime = getCurrentTime();
     }
 
     void UARTCommunication::messageReceiveCallback(const ReceivedSerialMessage &completeMessage)
     {
-
-        size_t bytesToCopy = completeMessage.header.dataLength;
-        if (bytesToCopy > sizeof(CVData))
-        {
-            bytesToCopy = sizeof(CVData);
-        }
-
-        if (bytesToCopy > 0 && completeMessage.data != nullptr)
-        {
-            memcpy(&lastCVData, completeMessage.data, bytesToCopy);
-            // memcpy(&lastROSData, completeMessage.data, bytesToCopy);
-            if (bytesToCopy < sizeof(CVData))
-            {
-                // need to do this for pointer arithmetic
-                memset(reinterpret_cast<uint8_t*>(&lastROSData) + bytesToCopy, 0, sizeof(CVData) - bytesToCopy);
-            }
-            // lastCVData.timestamp = getCurrentTime();
-            hasNewData = true;
-            lastReceivedTime = getCurrentTime();
-        }
-        else
-        {
-            hasNewData = false;
-        }
+        if(completeMessage.header.dataLength <= 0 || completeMessage.data  == nullptr)
+            return;
+        mostRecentMessage.messageType = completeMessage.messageType;
+        mostRecentMessage.dataLength = completeMessage.header.dataLength;
+        memcpy((void*)mostRecentMessage.data, completeMessage.data, completeMessage.header.dataLength);
+        hasNewData = true;
+        lastReceivedTime = getCurrentTime();
     }
 
     // Will we constantly receive data in a stream?
@@ -55,25 +37,34 @@ namespace communication
         }
     }
 
-    const CVData* UARTCommunication::getLastCVData()
+    const UARTCommunication::uartMsg UARTCommunication::getLastMsg()
     {
-        return hasNewData ? &lastCVData : nullptr;
-    }
-    
-    const ROSData* UARTCommunication::getLastROSData()
-    {
-        return hasNewData ? &lastROSData : nullptr;
+        return mostRecentMessage;
     }
 
-    bool UARTCommunication::sendAutoAimOutput(AutoAimOutput &output)
+    bool UARTCommunication::sendMsg(uint8_t *dataToBeSent, uint16_t messageType, uint16_t dataLen)
     {
         // Flexible ports?
         tap::communication::serial::Uart::UartPort currentPort = port;
         // Update the timestamp before sending.
         // output.timestamp = getCurrentTime();
-        const uint8_t* msgData = reinterpret_cast<const uint8_t*>(&output);
-        int bytesWritten = drivers->uart.write(currentPort, msgData, sizeof(AutoAimOutput));
-        return (bytesWritten == sizeof(AutoAimOutput));
+        if (dataLen >= SERIAL_RX_BUFF_SIZE)
+        {
+            // RAISE_ERROR(drivers, "received message length longer than allowed max");
+            return false;
+        }
+
+
+        outgoingDataFrame msg_data(dataLen, messageType, dataToBeSent);
+        size_t numBytesToSend =
+            sizeof(msg_data.head)+ // head byte (0xA0)
+            sizeof(msg_data.dataLen) + // 2 bytes for data length
+            sizeof(msg_data.messageType) + // 2 bytes msg type 
+            dataLen + // dataToBeSent
+            sizeof(uint16_t); // crc
+
+        int bytesWritten = drivers->uart.write(currentPort, (uint8_t*)&msg_data, numBytesToSend);
+        return (bytesWritten == sizeof(outgoingDataFrame));
     }
 
     bool UARTCommunication::isConnected() const

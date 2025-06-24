@@ -26,6 +26,12 @@
 #include "communication/I2CCommunication.hpp"
 #include "communication/UARTCommunication.hpp"
 
+#define PRINT(msg_to_send ...) ({\
+    char str[BUFSIZ]; \
+    sprintf(str, msg_to_send); \
+    drivers->uart.sendMsg((uint8_t*)str, 2, strlen(str)); \
+})
+
 namespace src {
     
 class ImuRecalibration {

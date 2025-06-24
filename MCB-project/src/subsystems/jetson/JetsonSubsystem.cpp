@@ -19,8 +19,8 @@ float targetPitchTest;
 
 namespace subsystems {
 
-JetsonSubsystem::JetsonSubsystem(src::Drivers* drivers) :
-     tap::control::Subsystem(drivers), drivers(drivers) {}
+JetsonSubsystem::JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal) :
+     tap::control::Subsystem(drivers), drivers(drivers), gimbal(gimbal) {}
 
 
 void JetsonSubsystem::initialize() {
@@ -30,43 +30,76 @@ void JetsonSubsystem::initialize() {
 
 void JetsonSubsystem::refresh() { 
     drivers->uart.updateSerial(); 
-    AutoAimOutput a{0xA5, sizeof(float)*4, 
-        drivers->i2c.odom.getX(),
+
+    hitRing.update();
+
+    //if we need to not lose a ref message, use needToSendRefData
+    if(refDataSendingTimeout.execute() && drivers->refSerial.getRefSerialReceivingData()){
+    //     needToSendRefData = true;
+    // }
+
+    // if(needToSendRefData){
+        tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
+        tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
+        RefSysMsg r{
+            (uint8_t) gameData.gameStage,
+            (uint16_t) gameData.stageTimeRemaining,
+            (uint16_t) robotData.currentHp,
+            (uint8_t) robotData.robotId % 100, //blue hero is 101, we want to send 1
+            hitRing.getAngleToTurnForSentry(), 
+            // 12.34,
+
+            drivers->refSerial.isBlueTeam(robotData.robotId) << 7 |
+            (robotData.robotBuffStatus.recoveryBuff > 0) << 6 |
+            (robotData.rfidStatus.any(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE | tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE)) << 5 |
+            robotData.rfidStatus.any(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::CENTRAL_BUFF) << 4 |
+            gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_TEAM) << 3 |
+            gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_OPPONENT) << 2 |
+            robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::CHASSIS_HAS_POWER) << 1 |
+            robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::GIMBAL_HAS_POWER) 
+        };
+        //needToSendRefData = !
+        sendMsg(&r);
+    }
+
+    PoseData p{
+        drivers->i2c.odom.getX(), //OdometrySubsystem doesn't provide wrappers for these
         drivers->i2c.odom.getY(),
         drivers->i2c.odom.getXVel(),
         drivers->i2c.odom.getYVel(),
-         0x0A};
-    drivers->uart.sendAutoAimOutput(a);
+        gimbal->getPitchEncoderValue(), 
+        gimbal->getYawAngleRelativeWorld(),
+        // drivers->bmi088.getq0(),
+        // drivers->bmi088.getq1(),
+        // drivers->bmi088.getq2(),
+        // drivers->bmi088.getq3(),
+        // drivers->bmi088.getAx(),
+        // drivers->bmi088.getAy(),
+        // drivers->bmi088.getAz()
+    };
+    sendMsg(&p);
+
+    
 }
 
-void JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, int* action) {
-    const ROSData* rez = drivers->uart.getLastROSData();
-
-    if(rez == nullptr){
-
-        *action = -1;
-        return;
-    }
-
-    *targetPosition = Vector2d(rez->x, rez->y);
+bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity) {
+    ROSData ros_msg;
+    if(!getMsg(&ros_msg))
+        return false;
+    *targetPosition = Vector2d(ros_msg.x, ros_msg.y);
     //todo make this work lmao
     *targetVelocity = Vector2d(0, 0);
-
-    *action = 1;
-    drivers->uart.clearNewDataFlag();
-
-    // comm.updateROS(msg);
+    return true;
 }
+
 void JetsonSubsystem::update(float current_yaw, float current_pitch, float current_yaw_velo, float current_pitch_velo, float* yawOut, float* pitchOut, float* yawVelOut, float* pitchVelOut, int* action) {
-    const ROSData* rez = nullptr;//drivers->uart.getLastROSData();
-    const CVData* msg = drivers->uart.getLastCVData();
-    if(msg == nullptr){
+    *action = -1;
 
-        *action = -1;
+    CVData cv_msg;
+    if(!getMsg(&cv_msg))
         return;
-    }
+    CVData* msg = &cv_msg;
 
-    drivers->uart.clearNewDataFlag();
     // Add rotated offset vector of panel relative to RGB
     // if (msg->confidence <= 0.2f) return;
 
@@ -193,4 +226,3 @@ void JetsonSubsystem::update(float current_yaw, float current_pitch, float curre
 }
 
 };  // namespace subsystems
-    // namespace subsystems
