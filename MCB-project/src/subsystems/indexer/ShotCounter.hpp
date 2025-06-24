@@ -28,7 +28,7 @@ public:
     }
 
     float getAllowableIndexRate(float desiredBallsPerSecond){
-        getAllowableIndexRateOld(desiredBallsPerSecond);
+        return getAllowableIndexRateOld(desiredBallsPerSecond);
     }
 
     // Old overheating prevention
