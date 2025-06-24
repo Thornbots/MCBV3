@@ -34,13 +34,7 @@ void DrivetrainDriveCommand::execute() {
             
         if(drivers->remote.keyPressed(Remote::Key::C))
             drivetrain->linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100;
-
-        //clamp
-        if(drivetrain->linearVelocityMultiplierTimes100>MAX_LINEAR_VELOCITY_TIMES_100) 
-            drivetrain->linearVelocityMultiplierTimes100 = MAX_LINEAR_VELOCITY_TIMES_100;
-        else if(drivetrain->linearVelocityMultiplierTimes100<MIN_LINEAR_VELOCITY_TIMES_100) 
-            drivetrain->linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100;
-
+            
     } else if (controlMode == ControlMode::CONTROLLER) {
         x = drivers->remote.getChannel(Remote::Channel::LEFT_HORIZONTAL);
         y = drivers->remote.getChannel(Remote::Channel::LEFT_VERTICAL);
@@ -48,6 +42,12 @@ void DrivetrainDriveCommand::execute() {
         drivetrain->stopMotors();
         return;
     }
+    
+    //clamp
+    if(drivetrain->linearVelocityMultiplierTimes100>MAX_LINEAR_VELOCITY_TIMES_100) 
+        drivetrain->linearVelocityMultiplierTimes100 = MAX_LINEAR_VELOCITY_TIMES_100;
+    else if(drivetrain->linearVelocityMultiplierTimes100<MIN_LINEAR_VELOCITY_TIMES_100) 
+        drivetrain->linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100;
 
     if (driveMode == DriveMode::BEYBLADE) {
         r = 10.5f;
