@@ -40,7 +40,7 @@ public:
         addGraphicsObject(&orient);
         addGraphicsObject(&reticle);
         addGraphicsObject(&ring);
-        addGraphicsObject(&remain);
+        // addGraphicsObject(&remain);
         addGraphicsObject(&numbers);
         addGraphicsObject(&countdown);
         addGraphicsObject(&velo);
@@ -55,7 +55,7 @@ public:
         orient.update();
         reticle.update();
         ring.update();
-        remain.update();
+        // remain.update();
         numbers.update();
         countdown.update();
         velo.update();
@@ -83,7 +83,7 @@ private:
     ChassisOrientationIndicator orient{drivers, gimbal, drivetrain};
     Reticle reticle{gimbal};
     HitRing ring{drivers, gimbal};
-    PredictedRemainingShotsIndicator remain{drivers, indexer};
+    // PredictedRemainingShotsIndicator remain{drivers, indexer};
     AllRobotHealthNumbers numbers{drivers};
     Countdown countdown{drivers};
     LinearVelocityIndicator velo{drivetrain};

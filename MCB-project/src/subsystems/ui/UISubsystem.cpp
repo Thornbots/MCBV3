@@ -52,22 +52,54 @@ bool UISubsystem::run() {
     PT_WAIT_UNTIL(drivers->refSerial.getRefSerialReceivingData());
     
     // delete on all layers. we currently only use layer 0, but other teams could have put stuff on other layers we need to delete
-    for(graphicsIndex=0; graphicsIndex<NUM_LAYERS; graphicsIndex++){
-        if(layersAreCleared[graphicsIndex])
-            continue;
-
-        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, graphicsIndex));
-        
-        //need to wait for graphics to delete. This might wait longer than is required, but it allows things to draw.
+    PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 0));
+    delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+    PT_WAIT_UNTIL(delayTimeout.execute());
+    
+    if(isFirstTime){
+        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 1));
         delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
         PT_WAIT_UNTIL(delayTimeout.execute());
-        layersAreCleared[graphicsIndex] = true;
-    } 
+        
+        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 2));
+        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+        PT_WAIT_UNTIL(delayTimeout.execute());
+        
+        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 3));
+        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+        PT_WAIT_UNTIL(delayTimeout.execute());
+        
+        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 4));
+        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+        PT_WAIT_UNTIL(delayTimeout.execute());
+        
+        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 5));
+        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+        PT_WAIT_UNTIL(delayTimeout.execute());
+
+        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 6));
+        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+        PT_WAIT_UNTIL(delayTimeout.execute());
+        
+        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 7));
+        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+        PT_WAIT_UNTIL(delayTimeout.execute());
+        
+        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 8));
+        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+        PT_WAIT_UNTIL(delayTimeout.execute());
+        
+        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 9));
+        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+        PT_WAIT_UNTIL(delayTimeout.execute());
+    }
 
     if (topLevelContainer){
         topLevelContainer->hasBeenCleared();
         topLevelContainer->resetIteration();
     }
+
+    isFirstTime = false;
 
     graphicsIndex=0; //might start with one or two already in the array from last time, so set it once outside of the loop
     while (topLevelContainer && !needToRestart) {
