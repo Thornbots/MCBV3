@@ -67,9 +67,13 @@ public:
         stopBeybladeKey.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
         startBeybladeKey.onTrue(&beybladeKeyboard)->onTrue(&lookMouse);
  
-        joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
-        joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);
-        joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick);
+        joystickDrive0.onTrue(&noSpinDriveCommand);
+        joystickDrive1.onTrue(&drivetrainFollowJoystick);
+        joystickDrive2.onTrue(&beybladeJoystick);
+
+        joystickLook0.onTrue(&lookJoystick); //looks horizontal
+        joystickLook1.onTrue(&lookJoystick); //looks horizontal
+        joystickLook2.onTrue(&lookJoystickOffset); //looks downward to fit in sizing box
 
         isStopped = false;
     }
@@ -122,6 +126,7 @@ public:
     // commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
+    commands::JoystickMoveCommand lookJoystickOffset{drivers, &gimbal, true};
     commands::MouseMoveCommand lookMouse{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
 
@@ -170,6 +175,10 @@ public:
     Trigger joystickDrive1{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::MID};
     Trigger joystickDrive2{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
 
+    Trigger joystickLook0{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
+    Trigger joystickLook1{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::MID};
+    Trigger joystickLook2{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::DOWN};
+
 
     //keyboard driving
     // Trigger speedModeKey{drivers, Remote::Key::SHIFT}; //drivetrain drive command reads shift
@@ -180,7 +189,7 @@ public:
 
     Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
-    Trigger* triggers[17] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &unjamKey, &shootKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
+    Trigger* triggers[20] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &joystickLook0, &joystickLook1, &joystickLook2, &shootButton, &unjamButton, &unjamKey, &shootKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
 
 };
 
