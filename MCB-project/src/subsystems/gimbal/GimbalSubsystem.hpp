@@ -71,6 +71,8 @@ public:  // Public Methods
      */
     void updateMotors(float changeInTargetYaw, float targetPitch);
 
+    bool yawMotorOnline() const { return motorYaw->isMotorOnline(); }
+
     /*
      *   Straight up gives a full state for the controllers to target
      */
