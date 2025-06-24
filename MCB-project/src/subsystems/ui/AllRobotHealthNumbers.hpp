@@ -69,14 +69,14 @@ public:
                     numbers[i].color = UISubsystem::Color::RED_AND_BLUE;
                 
                 //highlight robots taking damage by turning the number white and doubling the size for one frame
-                if(numbers[i].integerChanged()){
-                    numbers[i].color = UISubsystem::Color::WHITE;
-                    numbers[i].y = Y_POSITION-LINE_HEIGHT;
-                    numbers[i].height = 2*LINE_HEIGHT;
-                } else {
-                    numbers[i].y = Y_POSITION;
-                    numbers[i].height = LINE_HEIGHT;
-                }
+                // if(numbers[i].integerChanged()){
+                //     numbers[i].color = UISubsystem::Color::WHITE;
+                //     numbers[i].y = Y_POSITION-LINE_HEIGHT;
+                //     numbers[i].height = 2*LINE_HEIGHT;
+                // } else {
+                //     numbers[i].y = Y_POSITION;
+                //     numbers[i].height = LINE_HEIGHT;
+                // }
                  
                 //calulate width and center the numbers
                 numbers[i].calculateNumbers();

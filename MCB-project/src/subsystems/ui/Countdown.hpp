@@ -48,7 +48,6 @@ private:
     static constexpr uint16_t X_POSITION = 1680; //pixels, all numbers at the same y level on screen
     static constexpr uint16_t Y_POSITION = 610; //pixels, all numbers at the same y level on screen
     static constexpr uint16_t LINE_HEIGHT = 200; //pixels, this is a large number
-    static constexpr uint16_t THICKENSS = 10; //pixels, this is a large number
 
     IntegerGraphic number{};
 };
