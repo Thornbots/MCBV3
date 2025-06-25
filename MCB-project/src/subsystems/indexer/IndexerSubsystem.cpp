@@ -72,6 +72,15 @@ bool IndexerSubsystem::doAutoUnjam(float inputBallsPerSecond) {
 float IndexerSubsystem::indexAtRate(float inputBallsPerSecond) {
     if(doAutoUnjam(inputBallsPerSecond)) return UNJAM_BALL_PER_SECOND;
 
+    // for new, untested
+    // if(inputBallsPerSecond<=0) counter.disable();
+    // else counter.enable();
+
+    // if(doAutoUnjam(inputBallsPerSecond)) {
+    //     counter.disable();
+    //     return UNJAM_BALL_PER_SECOND;
+    // }
+
     this->ballsPerSecond = counter.getAllowableIndexRate(inputBallsPerSecond);
     setTargetMotorRPM(this->ballsPerSecond * 60.0f * revPerBall);
     return this->ballsPerSecond;

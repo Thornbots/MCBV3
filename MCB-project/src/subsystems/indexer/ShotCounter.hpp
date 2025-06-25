@@ -43,21 +43,25 @@ public:
     }
 
     float getAllowableIndexRateNew(float desiredBallsPerSecond) {
-        //change the timer based on index encoder
-        timeUntilNoHeat.restart(timeUntilNoHeat.timeRemaining() + (getNumBallsShotByReference(previousPosition)) * 1000);
-        previousPosition = index->getPositionUnwrapped();
-
-        //if can't do anything, don't do anything
-        if(!enabled || !drivers->refSerial.getRefSerialReceivingData())
-            return desiredBallsPerSecond;
+        // if can't do anything, don't do anything
+        if (!enabled || !drivers->refSerial.getRefSerialReceivingData()) return desiredBallsPerSecond;
 
         tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refSerial.getRobotData().turret;
-        float estimatedHeat = timeUntilNoHeat.timeRemaining() / 1000 * turretData.coolingRate; //ms to s, mult by (heat/s) to get heat
-        
-        if(estimatedHeat + getHeatPerBall() >= turretData.heatLimit) {
+
+        float timeLeft = timeUntilNoHeat.timeRemaining() + 1000 * (getNumBallsShotByReference(previousPosition)) * getHeatPerBall() / turretData.coolingRate;
+        if (timeLeft > 0)
+            timeUntilNoHeat.restart(timeLeft);
+        else
+            timeUntilNoHeat.stop();
+        previousPosition = index->getPositionUnwrapped();
+
+        float estimatedHeat = timeUntilNoHeat.timeRemaining() / 1000 * turretData.coolingRate;  // ms to s, mult by (heat/s) to get heat
+
+        // buffer of 1 ball, will always try to be 1 full ball away from overheating so need room for 2 in heat buffer
+        if (estimatedHeat + 2 * getHeatPerBall() >= turretData.heatLimit) {
             return turretData.coolingRate / getHeatPerBall();
         }
-        
+
         return desiredBallsPerSecond;
     }
 
