@@ -44,24 +44,24 @@ void AutoDriveCommand::execute() {
 
     float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
 
+    // crude autodrive implemtation
+    // count++;
+
+    // if (count > 400) {
+    //     count = 0;
+    // } else if (count > 200) {
+    //     targetPosition = Pose2d(0.05, 0, 0);
+    // } else {
+    //     targetPosition = Pose2d(0, 0, 0);
+    // }
+
     int action = 0;
-    count++;
+    jetson->updateROS(&targetPosition, &targetVelocity, &action);
 
-    if (count > 400) {
-        count = 0;
-    } else if (count > 200) {
-        targetPosition = Pose2d(0.05, 0, 0);
-    } else {
-        targetPosition = Pose2d(0, 0, 0);
-    }
-
-    // jetson->updateROS(&targetPosition, &targetVelocity, &action);
-
-    Vector2d targetPositionAdjusted = targetPosition.vec() + startPosition;
     Pose2d currentPosition = Pose2d(drivers->i2c.odom.getX(), drivers->i2c.odom.getY(), referenceAngle);
 
-    float posX = targetPositionAdjusted.getX();
-    float posY = targetPositionAdjusted.getY();
+    float posX = targetPosition.getX();
+    float posY = targetPosition.getY();
     float velX = targetVelocity.getX();
     float velY = targetVelocity.getY();
     float velR = targetVelocity.getRotation();
@@ -74,10 +74,10 @@ void AutoDriveCommand::execute() {
     if(!allowSpinning){
         velR = 0;
     }
-    targetPositionAdjusted = Vector2d{posX, posY};
+    targetPosition = Vector2d{posX, posY};
     targetVelocity = Pose2d{velX, velY, velR};
 
-    drivetrain->setTargetPosition(targetPositionAdjusted, currentPosition, targetVelocity);
+    drivetrain->setTargetPosition(targetPosition, currentPosition, targetVelocity);
     // drivetrain->setTargetTranslation(drive, false);
 }
 
