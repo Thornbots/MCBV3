@@ -41,6 +41,7 @@ void AutoDriveCommand::execute() {
         }
 
     }
+    allowMoving = false;
 
     float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
 

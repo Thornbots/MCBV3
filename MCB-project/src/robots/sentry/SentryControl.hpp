@@ -17,6 +17,8 @@
 #include "subsystems/odometry/OdometryPointForwardsCommand.hpp"
 #include "subsystems/indexer/DoubleIndexerSubsystem.hpp"
 #include "util/trigger.hpp"
+#include "subsystems/drivetrain/MoveToPositionCommand.hpp"
+#include "tap/control/sequential_command.hpp"
 
 #include "subsystems/jetson/JetsonSubsystem.hpp"
 
@@ -51,17 +53,45 @@ public:
         stopFlywheelTrigger.onTrue(&shooterStop);
 
         autoFireTrigger.whileTrue(&autoFire)->onFalse(&lookJoystick);
-        autoDriveTrigger.whileTrue(&autoDrive)->onTrue(&odoPointForwards);
+        autoDriveTrigger.onTrue(&odoPointForwards)->onTrue(&autoDrive);
         // drive commands 
 
-        joystickDrive0.onTrue(&lookJoystick);
+        // joystickDrive0.onTrue(&initialMoveCommand);
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
         
         isStopped = false;
     }
 
+    
+    bool startAdvance = false;
+    bool startRetreat = false;
     void update() override {
+        
+        if (autoDriveTrigger.getAsBoolean() && drivers->refSerial.getRefSerialReceivingData() && 
+        (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
+        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
+            // allow both
+            if(!startAdvance && drivers->refSerial.getRobotData().currentHp > 200){
+                startAdvance = true;
+                startRetreat = false; // stop retreating
+                drivers->commandScheduler.addCommand(&initialMoveCommand);
+            }
+
+            if(!startRetreat && drivers->refSerial.getRobotData().currentHp <= 200){
+                startRetreat = true;
+                startAdvance = false; // stop advancing
+                drivers->commandScheduler.addCommand(&retreatMoveCommand);
+            }
+            // if(drivers->remote.getSwitch(Remote::Switch::RIGHT_SWITCH) == Remote::SwitchState::UP){
+            //     count = 10000;
+            //     // drivers->commandScheduler.addCommand(&initialMoveCommand);
+            // }
+        }
+    }
+
+
+        
         if(isStopped)
             return;
 
@@ -126,6 +156,16 @@ public:
 
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
 
+    commands::MoveToPositionCommand m0{drivers, &drivetrain, &gimbal, Pose2d(0.0f, 0.0f, 0.0f)};
+    commands::MoveToPositionCommand m1{drivers, &drivetrain, &gimbal, Pose2d(5.5f, -0.3f, 0.0f)};
+    commands::MoveToPositionCommand m2{drivers, &drivetrain, &gimbal, Pose2d(5.5f, 4.2f, 0.0f)};
+    commands::MoveToPositionCommand m3{drivers, &drivetrain, &gimbal, Pose2d(3.0f, 4.2f, 0.0f)};
+
+    std::array<Command*, 5> moveCommands1 = {&m0, &m1, &m2, &m3, &autoDrive};
+    SequentialCommand<5> initialMoveCommand{moveCommands1};
+
+    std::array<Command*, 5> moveCommands2 = {&m3, &m2, &m1, &m0, &autoDrive};
+    SequentialCommand<5> retreatMoveCommand{moveCommands2};
     // mappings 
 
     // shooting
