@@ -25,6 +25,7 @@
 
 #include "communication/I2CCommunication.hpp"
 #include "communication/UARTCommunication.hpp"
+#include "communication/RefSystemWrapper.hpp"
 
 #define PRINT(msg_to_send ...) ({\
     char str[BUFSIZ]; \
@@ -124,6 +125,7 @@ public:
     communication::I2CCommunication i2c;
     communication::UARTCommunication uart;
     ImuRecalibration recal;
+    communication::RefSystemWrapper refWrapper{this};
     
 
 

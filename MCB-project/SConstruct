@@ -29,10 +29,11 @@ args = parse_args.parse_args()
 #Grab robot type and modify src path
 robot_type = args["ROBOT_TYPE"]
 sysid = args["SYS_ID"]
+ref = args["REF"]
 
-print("Building for " + robot_type + " with sysid " + sysid)
+print("Building for " + robot_type + " with sysid " + sysid + " using ref "+ref)
 
-c_flags =[args["ROBOT_TYPE"], args["SYS_ID"]]
+c_flags =[robot_type, sysid, ref]
 
 #=========================================================================================================
 # Define project settings and build paths

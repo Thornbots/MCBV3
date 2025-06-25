@@ -44,9 +44,18 @@ ROBOT_TYPE_DEFINES                  = {"oldinfantry": "OLDINFANTRY",
                                        "HERO": "HERO",
                                        "sentry": "SENTRY",
                                        "SENTRY": "SENTRY"}
+
+REF_MESSAGES_FAKING_DEFINES         = {"none": "regular_ref",
+                                       "fake": "faked_ref",
+                                       "faked": "faked_ref",
+                                       "sim": "faked_ref",
+                                       "simulate": "faked_ref",
+                                       "simulated": "faked_ref",
+                                       "lie": "faked_ref",
+                                       "lying": "faked_ref"}
 #===================================================================
 
-USAGE = "Usage: scons <target> [profile=<debug|release|fast>] [robot=<ROBOT_TYPE>] [profiling=<true|false>] [sysid=<true|false>]\n\
+USAGE = "Usage: scons <target> [profile=<debug|release|fast>] [robot=<infantry|hero|sentry>] [profiling=<true|false>] [sysid=<none|dt|yaw|odo>] [ref=<none|fake>]\n\
     \"<target>\" is one of:\n\
         - \"build\": build all code for the hardware platform.\n\
         - \"run\": build all code for the hardware platform, and deploy it to the board via a connected ST-Link.\n\
@@ -58,7 +67,8 @@ USAGE = "Usage: scons <target> [profile=<debug|release|fast>] [robot=<ROBOT_TYPE
     \"robot=<ROBOT_TYPE>\" is an optional argument that can override whatever robot type has been specified in robot_type.hpp.\n\
         - <ROBOT_TYPE> has a few aliases but will be one of the following:\n\
             - OLDINFANTRY, INFANTRY, HERO, SENTRY.\n\
-        - \"sysid\" lets you run sysid stuff yay"
+        - \"sysid\" lets you run sysid stuff yay\n\
+        - \"ref\" if fake, then after a certain amount of time the match 'starts,' for simulating connecting to a server for sentry"
 
 
 def parse_args():
@@ -109,6 +119,17 @@ def parse_args():
     else: #nothing defined so do none
         args["SYS_ID"] = SYS_ID_DEFINES["none"]
 
+
+    ref = ARGUMENTS.get("ref")
+    if ref in REF_MESSAGES_FAKING_DEFINES:
+        args["REF"] = REF_MESSAGES_FAKING_DEFINES[ref]
+        print( "======================================================================================")
+        print(f"          !!!IMPORTANT!!!: Using ref system type {REF_MESSAGES_FAKING_DEFINES[ref]}")
+
+    elif ref != None:
+        raise Exception("You specified an invalid ref type.\n" + USAGE)
+    else: #chose incorrectly so use regular ref
+        args["REF"] = REF_MESSAGES_FAKING_DEFINES["none"]
 
     args["PROFILING"] = ARGUMENTS.get("profiling", "false")
     if args["PROFILING"] not in VALID_PROFILING_TYPES:
