@@ -11,34 +11,65 @@ class RefSystemWrapper {
 public:
     RefSystemWrapper(tap::Drivers *drivers) : drivers(drivers) {}
 
-    //temp not faked
+    // temp not faked
     auto getRobotData() { return drivers->refSerial.getRobotData(); }
     auto getGameData() { return drivers->refSerial.getGameData(); }
 
-#if defined(faked_ref)
+#if defined(SENTRY)  // faked_ref   SENTRY
     bool isConnected() { return true; }
 
-    auto getGameType() {return tap::communication::serial::RefSerial::Rx::GameType::ROBOMASTER_RMUL_3V3;}
+    auto getGameType() { return tap::communication::serial::RefSerial::Rx::GameType::ROBOMASTER_RMUL_3V3; }
 
-    auto getGameStage() { return tap::communication::serial::RefSerial::Rx::GameStage::PREMATCH;}
+    RefSerialData::Rx::GameStage getGameStage() {
+        if (secondTimer.execute()) {
+            numSecondsSinceStart++;
+            stageSeconds++;
+        }
 
-    auto getRemainingGameStageTime() {return 3;}
+        // prematch for 10 sec, then setup
+        if (stage == 0 && stageSeconds == 10) {
+            stage++;
+            stageSeconds = 0;
+        }
 
-    auto getCurrentHP() {return 600;}
+        // setup for 20 sec, then 15 sec
+        if (stage == 1 && stageSeconds == 20) {
+            stage++;
+            stageSeconds = 0;
+        }
+
+        // 15 sec for 15 sec, then 5 sec
+        if (stage == 2 && stageSeconds == 15) {
+            stage++;
+            stageSeconds = 0;
+        }
+
+        // 5 sec for 5 sec, then match 
+        if (stage == 3 && stageSeconds == 5) {
+            stage++;
+            stageSeconds = 0;
+        }
+
+        //match will last forever for now
+
+        return (RefSerialData::Rx::GameStage)stage;
+    }
+
+    auto getRemainingGameStageTime() { return stageSeconds; }
+
+    auto getCurrentHP() { return 600; }
 
     // same
     uint16_t getRobotId(bool use100ForBlueTeam) { return use100ForBlueTeam ? (uint16_t)getRobotData().robotId : (uint16_t)getRobotData().robotId % 100; }
 
-    bool isHealing() {return false;}
+    bool isHealing() { return false; }
 
-    bool isInReloadZone() {return false;}
-    bool isInCenterZone() {return false;}
-    bool doWeOccupyCenter() {return false;}
-    bool doTheyOccupyCenter() {return false;}
-
+    bool isInReloadZone() { return false; }
+    bool isInCenterZone() { return false; }
+    bool doWeOccupyCenter() { return false; }
+    bool doTheyOccupyCenter() { return false; }
 
 #else
-
 
     // returns if ref serial is receiving data, so connected to ref sys, not necessarily a server
     bool isConnected() { return drivers->refSerial.getRefSerialReceivingData(); }
@@ -90,6 +121,11 @@ public:
 
 private:
     tap::Drivers *drivers;
+
+    tap::arch::PeriodicMilliTimer secondTimer{1000};
+    int numSecondsSinceStart = 0;
+    int stageSeconds = 0;
+    int stage = 0;
 };
 
 };  // namespace communication
