@@ -96,7 +96,7 @@ public:
         }
 
         //if we don't have ref uart or we do and we aren't currently in game, we are able to stop flywheels by buttons
-        if(!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getGameData().gameStage!=RefSerialData::Rx::GameStage::IN_GAME){
+        if(!drivers->refWrapper.isConnected() || drivers->refWrapper.isInGame()){
             stopFlywheelTrigger.update();
         }
     }

@@ -49,17 +49,15 @@ void DrivetrainSubsystem::initialize() {
 
 // guaranteed to be called
 void DrivetrainSubsystem::refresh() {
-    // if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower & RefSerialData::Rx::RobotPower::CHASSIS_HAS_POWER) {
     // need to actually fix this yay
     imuAngle = (drivers->bmi088.getYaw() - 180) * PI / 180;
 
     uint16_t minLimit = 120;
-    if (drivers->refSerial.getRefSerialReceivingData() && 
-       (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3) &&
-       (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::INITIALIZATION || drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN)) {
+    if (drivers->refWrapper.isBefore15Sec()) {
         minLimit = INITIAL_POWER_LIMIT_3V3;
     }
-    powerLimit = std::min(minLimit, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
+    if(drivers->refWrapper.isConnected())
+        powerLimit = std::min(minLimit, drivers->refWrapper.getRobotData().chassis.powerConsumptionLimit);
 
     for (int i = 0; i < 4; i++) {
         motorVel[i] = motorArray[i]->getShaftRPM() * PI / 30.0f;  // in rad/s
@@ -83,8 +81,8 @@ void DrivetrainSubsystem::setTargetTranslation(Pose2d drive, bool shouldBoost) {
     for (int i = 0; i < 4; i++) motorCurrent[i] = 0;
 
 #else
-    boost = (shouldBoost && (drivers->refSerial.getRobotData().chassis.powerBuffer > 30)) ? 20.0f : 0.0f;
-    throttle = (drivers->refSerial.getRobotData().chassis.powerBuffer <= 15) ? 10.0f : 0.0f;
+    boost = getBoost(shouldBoost);
+    throttle = getThrottle();
     controller.calculate(lastDrive, powerLimit + boost - throttle, imuAngle, motorVel, motorCurrent);
 
 #endif
@@ -95,8 +93,16 @@ void DrivetrainSubsystem::setTargetTranslation(Pose2d drive, bool shouldBoost) {
     }
 }
 
+float DrivetrainSubsystem::getThrottle() {
+    return (drivers->refWrapper.isConnected() &&  drivers->refWrapper.getRobotData().chassis.powerBuffer <= 15) ? 10.0f : 0.0f;
+}
+
+float DrivetrainSubsystem::getBoost(bool shouldBoost) {
+    return (shouldBoost && (drivers->refWrapper.isConnected() && drivers->refWrapper.getRobotData().chassis.powerBuffer > 30)) ? 20.0f : 0.0f;
+}
+
 void DrivetrainSubsystem::setTargetPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity) {
-    throttle = (drivers->refSerial.getRobotData().chassis.powerBuffer <= 10) ? 10.0f : 0.0f;
+    throttle = getThrottle();
 
     controller.followPosition(targetPosition, currentPosition, inputVelocity, powerLimit - throttle, imuAngle, motorVel, motorCurrent);
 

@@ -78,6 +78,8 @@ public:  // Public Methods
 
 private:  // Private Methods
     
+    float getThrottle();
+    float getBoost(bool shouldBoost);
 
 };
 }  // namespace subsystems

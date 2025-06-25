@@ -16,7 +16,7 @@ public:
     }
 
     void update() {
-        if(drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_FIRST_CALIBRATION && isInPrematch()){
+        if(drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_FIRST_CALIBRATION && drivers->refWrapper.isBefore15Sec()){
             line1.setString("CTRL+R to schedule");
             line2.setString("imu recalibration");
             line1.color = colorUnscheduled;
@@ -27,7 +27,7 @@ public:
                 ignoreKeyPresses = true;
                 update();
             }
-        } else if(drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED && isInPrematch()){
+        } else if(drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED && drivers->refWrapper.isBefore15Sec()){
             line1.setString("Imu recal scheduled");
             line2.setString("R to cancel");
             line1.color = colorScheduled;
@@ -48,7 +48,7 @@ public:
             line2.setString("might move on startup!");
             line1.color = colorRecalibrating;
             line2.color = colorRecalibrating;
-        } else if (drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_SECOND_CALIBRATION && !(drivers->refSerial.getRefSerialReceivingData() && drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::COUNTDOWN)) {
+        } else if (drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_SECOND_CALIBRATION && !drivers->refWrapper.isIn15Sec()) {
             line1.setString("Done Recalibrating");
             line2.setString("Good Luck");
             line1.color = colorDoneRecalibrating;
@@ -59,7 +59,7 @@ public:
         }
 
         //when in a best of 3 (or best of 2) game, we allow third and fourth calibrations
-        if(isInPrematch()){
+        if(drivers->refWrapper.isBefore15Sec()){
             drivers->recal.allowAnotherRecalibration();
             line1.show();
             line2.show();
@@ -89,7 +89,4 @@ private:
 
     bool ignoreKeyPresses = false;
 
-    bool isInPrematch() {
-        return drivers->refSerial.getRefSerialReceivingData() && (drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::SETUP || drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::PREMATCH);
-    }
 };

@@ -25,7 +25,7 @@ void IndexerSubsystem::initialize() {
 }
 
 void IndexerSubsystem::refresh() {
-    if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower&RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER)
+    if (drivers->refWrapper.shooterHasPower())
     {
         motorIndexer->setDesiredOutput(indexerVoltage);
     }

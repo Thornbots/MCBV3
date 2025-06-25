@@ -23,19 +23,18 @@ void AutoDriveCommand::execute() {
     bool allowSpinning = true;
     bool allowMoving = true;
 
-    if (drivers->refSerial.getRefSerialReceivingData() && 
-       (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
+    if (drivers->refWrapper.isIn3v3()) {
 
         allowSpinning = false;
         allowMoving = false;
 
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
+        if (drivers->refWrapper.isInGame()) {
             // allow both
             allowSpinning = true;
             allowMoving = true;
         }
 
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
+        if (drivers->refWrapper.isIn15Sec()) {
             // countdown, only allow spinning
             allowSpinning = true;
         }

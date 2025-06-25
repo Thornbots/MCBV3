@@ -33,8 +33,8 @@ public:
 
     // Old overheating prevention
     float getAllowableIndexRateOld(float desiredBallsPerSecond) {
-        tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refSerial.getRobotData().turret;
-        if (enabled && drivers->refSerial.getRefSerialReceivingData() && 
+        tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refWrapper.getRobotData().turret;
+        if (enabled && drivers->refWrapper.isConnected() && 
            (getHeatPerBall() * desiredBallsPerSecond - turretData.coolingRate) * LATENCY > (turretData.heatLimit - getCurrentRefHeat(&turretData))) {
             return turretData.coolingRate / getHeatPerBall();
         }
@@ -48,10 +48,10 @@ public:
         previousPosition = index->getPositionUnwrapped();
 
         //if can't do anything, don't do anything
-        if(!enabled || !drivers->refSerial.getRefSerialReceivingData())
+        if(!enabled || !drivers->refWrapper.isConnected())
             return desiredBallsPerSecond;
 
-        tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refSerial.getRobotData().turret;
+        tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refWrapper.getRobotData().turret;
         float estimatedHeat = timeUntilNoHeat.timeRemaining() / 1000 * turretData.coolingRate; //ms to s, mult by (heat/s) to get heat
         
         if(estimatedHeat + getHeatPerBall() >= turretData.heatLimit) {

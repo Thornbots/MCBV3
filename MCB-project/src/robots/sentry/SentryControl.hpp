@@ -70,7 +70,7 @@ public:
         }
         
         //if we don't have ref uart or we do and we aren't currently in game, we are able to stop flywheels by buttons
-        if(!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getGameData().gameStage!=RefSerialData::Rx::GameStage::IN_GAME){
+        if(!drivers->refWrapper.isConnected() || drivers->refWrapper.isInGame()){
             stopFlywheelTrigger.update();
         }
     }
@@ -106,12 +106,12 @@ public:
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
     commands::AutoDriveCommand autoDrive{drivers, &drivetrain, &gimbal, &jetson};
-    commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, &autoDrive};
+    commands::AutoAimAndFireCommand autoFire{20, drivers, &gimbal, &indexer, &flywheel, &jetson, &autoDrive}; //in 3v3, shoot at 20 hz
 
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexerStart{drivers, &indexer, -1, 10};
+    commands::IndexerNBallsCommand indexerStart{drivers, &indexer, -1, 10}; //in inspection, shoot at 10 hz
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
 
     commands::IndexerStopCommand indexerStop{drivers, &indexer};
