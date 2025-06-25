@@ -43,10 +43,10 @@ void GimbalSubsystem::refresh() {
 }
 
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
-    // if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
-    //     encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
-    //     motorYaw->resetEncoderValue();
-    // }
+    if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
+        encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
+        motorYaw->resetEncoderValue();
+    }
     float pitchVel = getPitchVel();
     float pitch = getPitchEncoderValue();
     prevTargetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
