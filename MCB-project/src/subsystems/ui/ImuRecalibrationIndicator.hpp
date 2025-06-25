@@ -16,6 +16,13 @@ public:
     }
 
     void update() {
+        if(!ignoreKeyPresses && drivers->remote.keyPressed(Remote::Key::CTRL) && drivers->remote.keyPressed(Remote::Key::SHIFT) && drivers->remote.keyPressed(Remote::Key::R)){
+            drivers->recal.forceCalibration();
+            ignoreKeyPresses = true;
+            line1.setString("Forcing recal");
+            line2.setString("");
+        }
+
         if(drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_FIRST_CALIBRATION && isInPrematch()){
             line1.setString("CTRL+R to schedule");
             line2.setString("imu recalibration");

@@ -93,10 +93,11 @@ int main() {
 
         if (refreshTimer.execute()) {
             // tap::buzzer::playNote(&(drivers.pwm), 493);
-            bool goingToRecalibrate = drivers.recal.isRequestingRecalibration() && 
+            bool goingToRecalibrate = drivers.recal.isForcingRecalibration() ||
+                    (drivers.recal.isRequestingRecalibration() && 
                     drivers.refSerial.getRefSerialReceivingData() && 
                     drivers.refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::SETUP && 
-                    drivers.refSerial.getGameData().stageTimeRemaining < 10;
+                    drivers.refSerial.getGameData().stageTimeRemaining < 15);
             if(goingToRecalibrate){
                 control.stopForImuRecal();
                 drivers.recal.setIsWaiting();
