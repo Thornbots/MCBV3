@@ -47,7 +47,5 @@ private:
     bool isCalibrated = false;
 
     uint32_t lastSeenTime = 0;
-    float pitch = 0.0f;
-    float yawvel = 0.0f, pitchvel = 0.0f;
 };
 }  // namespace commands

@@ -44,8 +44,6 @@ void GimbalSubsystem::refresh() {
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
     float pitchVel = getPitchVel();
     float pitch = getPitchEncoderValue();
-    prevTargetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
-    
 #if defined(INFANTRY) or defined(HERO) // chicken mode, gets bad when imu drifts
     targetPitch -= gimbalPitchAngleRelativeWorld;
     pitchVel += gimbalPitchAngularVelocity;
@@ -63,21 +61,17 @@ void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
     // moved
 }
 
-float GimbalSubsystem::getPrevTargetPitch() {
-    return prevTargetPitch;
-}
-
 // alternate version of update motors to use with CV
 void GimbalSubsystem::updateMotorsAndVelocity(float changeInTargetYaw, float targetPitch, float targetYawVel, float targetPitchVel) {
     float pitch = getPitchEncoderValue();
 
-    prevTargetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
+    targetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
 
     driveTrainEncoder = getYawEncoderValue();
     yawEncoderCache = driveTrainEncoder;
     // THIS LINE BELOW WAS CAUSING ERROR
     targetYawAngleWorld += changeInTargetYaw;  // std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
-    pitchMotorVoltage = getPitchVoltage(prevTargetPitch, pitch, targetPitchVel, dt);
+    pitchMotorVoltage = getPitchVoltage(targetPitch, pitch, targetPitchVel, dt);
 
     yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, targetYawVel, dt);
 }

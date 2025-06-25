@@ -41,5 +41,11 @@ protected:
     src::Drivers* drivers;
     GimbalSubsystem* gimbal;
 
+    float pitch = 0;
+    float yaw = 0;
+
+    float pitchvel = 0;
+    float yawvel = 0;
+
 };
 }  // namespace commands
