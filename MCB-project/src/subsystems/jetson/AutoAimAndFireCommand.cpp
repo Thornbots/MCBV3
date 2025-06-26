@@ -46,7 +46,7 @@ void AutoAimAndFireCommand::execute() {
         dyaw = dyaw > PI ? dyaw - 2 * PI : dyaw < -PI ? dyaw + 2 * PI : dyaw;
         lastSeenTime = tap::arch::clock::getTimeMilliseconds();
 
-        float newPitch = (pitch - currentPitch) / 2.0f;
+        float newPitch = currentPitch + (pitch - currentPitch) / 2.0f;
         if (abs(dyaw) > .05) {
             dyaw /= 4.0f;}
         else dyaw /= 1.75;

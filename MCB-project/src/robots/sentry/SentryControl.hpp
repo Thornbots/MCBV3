@@ -53,7 +53,7 @@ public:
         stopFlywheelTrigger.onTrue(&shooterStop);
 
         autoFireTrigger.whileTrue(&autoFire)->onFalse(&lookJoystick);
-        autoDriveTrigger.onTrue(&odoPointForwards)->onTrue(&autoDrive);
+        autoDriveTrigger.onTrue(&odoPointForwards)->onTrue(&testMoveCommand);
         // drive commands 
 
         // joystickDrive0.onTrue(&initialMoveCommand);
@@ -161,16 +161,19 @@ public:
 
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
 
-    commands::MoveToPositionCommand m0{drivers, &drivetrain, &gimbal, Pose2d(0.0f, 0.0f, 0.0f)};
-    commands::MoveToPositionCommand m1{drivers, &drivetrain, &gimbal, Pose2d(5.5f, 0.0f, 0.0f)};
-    commands::MoveToPositionCommand m2{drivers, &drivetrain, &gimbal, Pose2d(5.5f, 4.2f, 0.0f)};
-    commands::MoveToPositionCommand m3{drivers, &drivetrain, &gimbal, Pose2d(2.2f, 4.7f, 0.0f)};//Pose2d(3.0f, 4.2f, 0.0f)};
+    commands::MoveToPositionCommand m0{drivers, &drivetrain, &gimbal, Pose2d(0.0f, 0.0f, 0.0f), 0.0f};
+    commands::MoveToPositionCommand m1{drivers, &drivetrain, &gimbal, Pose2d(5.5f, 0.0f, 0.0f), 0.5f};
+    commands::MoveToPositionCommand m2{drivers, &drivetrain, &gimbal, Pose2d(5.5f, 4.2f, 0.0f), 0.5f};
+    commands::MoveToPositionCommand m3{drivers, &drivetrain, &gimbal, Pose2d(2.2f, 4.7f, 0.0f), 0.0f};//Pose2d(3.0f, 4.2f, 0.0f)};
 
-    std::array<Command*, 5> moveCommands1 = {&m0, &m1, &m2, &m3, &autoDrive};
-    SequentialCommand<5> initialMoveCommand{moveCommands1};
+    std::array<Command*, 4> moveCommands1 = {&m1, &m2, &m3, &autoDrive};
+    SequentialCommand<4> initialMoveCommand{moveCommands1};
 
-    std::array<Command*, 5> moveCommands2 = {&m3, &m2, &m1, &m0, &autoDrive};
-    SequentialCommand<5> retreatMoveCommand{moveCommands2};
+    std::array<Command*, 4> moveCommands2 = {&m2, &m1, &m0, &autoDrive};
+    SequentialCommand<4> retreatMoveCommand{moveCommands2};
+
+    SequentialCommand<4> testMoveCommand{{&m1, &m2, &m1, &m0}};
+    
     // mappings 
 
     // shooting

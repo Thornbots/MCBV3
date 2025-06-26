@@ -25,7 +25,7 @@ constexpr float KDT = 0;      // unitless
 constexpr float KDT_REV = 0;  // unitless
 
 // Velocity feedback
-constexpr float KPV = .1; //%0.04;                       // A-s/rad
+constexpr float KPV = .15; //%0.04;                       // A-s/rad
 constexpr float KIV = 1;                      // A/rad
 constexpr float IV_MAX = 0/ KIV;              // units TBD
 constexpr float INT_THRESH = VOLT_MAX * 0.85;  // V
