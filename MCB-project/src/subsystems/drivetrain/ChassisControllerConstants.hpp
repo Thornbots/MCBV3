@@ -68,7 +68,7 @@ constexpr float KI_V = 0;  // integral gain for velocity
 
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
-constexpr float KP = 3;              // proportional gain for position control
+constexpr float KP = 2;              // proportional gain for position control
 constexpr float BEYBLADE_DELAY = .25 ;  // delay for beyblade mode/
 constexpr float BBterm1 = 9; //constant term
 constexpr float BBterm2 = -2.8647; //linear term
