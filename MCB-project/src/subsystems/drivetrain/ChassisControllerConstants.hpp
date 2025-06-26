@@ -11,7 +11,7 @@ constexpr float RA = 0.5592;        // ohm, armature resistance
 
 constexpr float VOLT_MAX = 24;      // V, maximum        
 
-constexpr float MAX_POS_VEL = 1;                                                                                 
+constexpr float MAX_POS_VEL = 1.5;                                                                                 
 
 #if defined(HERO)
 // START getters and setters
@@ -48,7 +48,7 @@ constexpr float maxTorqueZ = 30;
 #elif defined(SENTRY)
 // START getters and setters
 constexpr float TRACKWIDTH = 0.50038;      // in m
-constexpr float M = 18.186;                  // robot mass kg
+constexpr float M = 19;                  // robot mass kg
 constexpr float J = 0.44;                  // measured from sys id kg-m^2
 constexpr float R_WHEEL = 0.05;  // wheel radius m
 constexpr float J_WHEEL = 0.0009;          // wheel moment of inertia kg-m^2
@@ -61,14 +61,14 @@ constexpr float P_IDLE = 3;         // W, idle power
 constexpr float P_FOS = 0.65;       // unitless, power factor of safety
 
 // Tunable Parameters
-constexpr float KP_V_XY = 1000;  // proportional gain for velocity
+constexpr float KP_V_XY = 1500;  // proportional gain for velocity
 constexpr float KP_V_ROT = 30;   // proportional gain for rotational velocity
 
 constexpr float KI_V = 0;  // integral gain for velocity
 
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
-constexpr float KP = 3;              // proportional gain for position control
+constexpr float KP = 2;              // proportional gain for position control
 constexpr float BEYBLADE_DELAY = .25 ;  // delay for beyblade mode/
 constexpr float BBterm1 = 9; //constant term
 constexpr float BBterm2 = -2.8647; //linear term
@@ -88,7 +88,7 @@ constexpr float UK_MOTOR =  .25 *.02299;           // motor dry friction N-m
 constexpr float COF_WHEEL = 0.9;           // unitless COF
 
 constexpr float GEAR_RATIO = 3591.0f/187.0f;  // gear ratio
-constexpr float P_IDLE = 2.6;         // W, idle power
+constexpr float P_IDLE = 2.0;         // W, idle power
 constexpr float P_FOS = 0.65;       // unitless, power factor of safety
 
 // Tunable Parameters

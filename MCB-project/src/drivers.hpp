@@ -45,12 +45,17 @@ enum class ImuRecalibrationState : uint8_t {
     SECOND_CALIBRATION_WAITING_TO_START = 4, //when robot gets disabled and waiting for head to fall
     SECOND_CALIBRATION_JUST_BEFORE_START = 5, 
     SECOND_CALIBRATING = 6,
-    AFTER_SECOND_CALIBRATION = 7
+    AFTER_SECOND_CALIBRATION = 7,
+    FORCE_CALIBRATION = 8
 };
 
 void requestRecalibration() {
     if(state==ImuRecalibrationState::AFTER_FIRST_CALIBRATION)
         state = ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED;
+}
+
+void forceCalibration() {
+    state=ImuRecalibrationState::FORCE_CALIBRATION;
 }
 
 void cancelRequestRecalibration() {
@@ -59,7 +64,7 @@ void cancelRequestRecalibration() {
 }
 
 void setIsWaiting() {
-    if(state==ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED)
+    if(state==ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED || state==ImuRecalibrationState::FORCE_CALIBRATION)
         state = ImuRecalibrationState::SECOND_CALIBRATION_WAITING_TO_START;
 }
 
@@ -96,6 +101,10 @@ bool getIsImuReady() {
 
 bool isRequestingRecalibration() {
     return state==ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED;
+}
+
+bool isForcingRecalibration() {
+    return state==ImuRecalibrationState::FORCE_CALIBRATION;
 }
 
 bool isAfterSecondCalibration() {

@@ -5,10 +5,10 @@ constexpr float lat = .008;
 constexpr float DT = .002;
 constexpr int Q_SIZE = lat / DT;  // make this fancy later
 
-constexpr float C = 0.004;                                          // kg-s/m^2
+constexpr float C = 0.000;                                          // kg-s/m^2
 constexpr float J = 0.001;//259;                                        // kg-m^2
-constexpr float UK = 0.0003;                                          // N-m
-constexpr float KB = 0.62;                                       // V-rad/s
+constexpr float UK = -0.01;                                          // N-m
+constexpr float KB = 0.716;                                       // V-rad/s
 constexpr float KT = 0.741;                                       // N-m/A
 constexpr float RA = 8.705;                                       // ohm
 constexpr float RATIO = 1;                                         // unitless

@@ -9,6 +9,7 @@ void DrivetrainDriveCommand::initialize() {
     x = 0;
     y = 0;
     r = 0;
+    autoBoost = false;
     
     drivetrain->isInControllerMode = controlMode == ControlMode::CONTROLLER;
     drivetrain->isInKeyboardMode = controlMode == ControlMode::KEYBOARD;
@@ -34,13 +35,7 @@ void DrivetrainDriveCommand::execute() {
             
         if(drivers->remote.keyPressed(Remote::Key::C))
             drivetrain->linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100;
-
-        //clamp
-        if(drivetrain->linearVelocityMultiplierTimes100>MAX_LINEAR_VELOCITY_TIMES_100) 
-            drivetrain->linearVelocityMultiplierTimes100 = MAX_LINEAR_VELOCITY_TIMES_100;
-        else if(drivetrain->linearVelocityMultiplierTimes100<MIN_LINEAR_VELOCITY_TIMES_100) 
-            drivetrain->linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100;
-
+            
     } else if (controlMode == ControlMode::CONTROLLER) {
         x = drivers->remote.getChannel(Remote::Channel::LEFT_HORIZONTAL);
         y = drivers->remote.getChannel(Remote::Channel::LEFT_VERTICAL);
@@ -48,30 +43,44 @@ void DrivetrainDriveCommand::execute() {
         drivetrain->stopMotors();
         return;
     }
+    
+    // controller goes fast
+    if(drivetrain->linearVelocityMultiplierTimes100==0)
+        drivetrain->linearVelocityMultiplierTimes100 = MAX_LINEAR_VELOCITY_TIMES_100;
+    //clamp
+    if(drivetrain->linearVelocityMultiplierTimes100>MAX_LINEAR_VELOCITY_TIMES_100) 
+        drivetrain->linearVelocityMultiplierTimes100 = MAX_LINEAR_VELOCITY_TIMES_100;
+    else if(drivetrain->linearVelocityMultiplierTimes100<MIN_LINEAR_VELOCITY_TIMES_100) 
+        drivetrain->linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100;
 
     if (driveMode == DriveMode::BEYBLADE) {
-        r = 10.5f;
+        autoBoost = true;
+        r = 12.0f * SPIN_DIRECTION;
         x *= drivetrain->linearVelocityMultiplierTimes100 / 100.0f;
         y *= drivetrain->linearVelocityMultiplierTimes100 / 100.0f;
     } else if (driveMode == DriveMode::NO_SPIN) {
+        autoBoost = false;
         r = 0;
     } else {
+        autoBoost = false;
+        x *= MAX_LINEAR_SPEED;
+        y *= MAX_LINEAR_SPEED;
         float targetAngle = 0.0f;
         if (driveMode == DriveMode::PEEK_LEFT) {
             targetAngle = PEEK_LEFT_AMT;
-
         } else if (driveMode == DriveMode::PEEK_RIGHT) {
             targetAngle = PEEK_RIGHT_AMT;
-
-        } else {
-            x *= 2.5f;
-            y *= 2.5f;
-        }
+        } 
         r = drivetrain->calculateRotationPID(targetAngle + referenceAngle); 
     }
 
     Pose2d drive(x, y, r);
 
+
+    if (autoBoost == true && (drivetrain->angularVel < 6.0f || drivetrain->powerLimit >= 100.0f)){
+        boost = true;
+
+    }
     drivetrain->setTargetTranslation(drive.rotate(referenceAngle), boost);
 }
 

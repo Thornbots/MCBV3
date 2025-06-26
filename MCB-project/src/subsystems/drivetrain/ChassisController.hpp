@@ -25,11 +25,12 @@ private:
     }
 
         // states to store, current position, curent velocity, and also the lastForce
-    Pose2d estPosWorld{}, estVelWorld{}, lastForceLocal{};
+    
 
     Pose2d lastVelWorld{}, accumForceLocal{};
 
 public:
+    Pose2d estPosWorld{}, estVelWorld{}, lastForceLocal{};
     float *targetVelocityHistory;  // For storing target velocity magnitudes
     Pose2d *forceHistory;          // history of past chassis forces
     float *targetVelocityMagnitudeHistory; //used for beyblade gain calculations
@@ -37,7 +38,7 @@ public:
 
     ~ChassisController();
     //~YawController();
-    void calculate(Pose2d targetVelLocal, float powerLimit, float angle, float motorVelocity[4], float motorCurrent[4]);
+    void calculate(Pose2d targetVelLocal, float powerLimit, float angle, float motorVelocity[4], float motorCurrent[4], bool throttle);
 
     void followPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity, float powerLimit, float angle, float motorVelocity[4], float motorCurrent[4]);
         

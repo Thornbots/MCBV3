@@ -18,9 +18,12 @@ using namespace subsystems;
 // panels if there are 2 arcs, if there are 4 then they are all four panels
 class ChassisOrientationIndicator : public GraphicsContainer {
 public:
-    ChassisOrientationIndicator(tap::Drivers* drivers, GimbalSubsystem* gimbal, DrivetrainSubsystem* drivetrain) : drivers(drivers), gimbal(gimbal), drivetrain(drivetrain) {
+    ChassisOrientationIndicator(bool showPlsSpin, tap::Drivers* drivers, GimbalSubsystem* gimbal, DrivetrainSubsystem* drivetrain) : showPlsSpin(showPlsSpin), drivers(drivers), gimbal(gimbal), drivetrain(drivetrain) {
         addGraphicsObject(&front);
         addGraphicsObject(&side);
+        
+        if(showPlsSpin)
+            addGraphicsObject(&plsSpin);
     }
 
     void update() {
@@ -47,6 +50,9 @@ public:
         if (drivers->refSerial.getRefSerialReceivingData()) {
             side.color = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId) ? UISubsystem::Color::CYAN : UISubsystem::Color::PINK;
         }
+
+        if(showPlsSpin)
+            plsSpin.setHidden(!drivetrain->isPeeking || !drivetrain->isBeyblading);
     }
 
 
@@ -58,6 +64,7 @@ public:
     static constexpr float YAW_OFFSET = 2*360;     // degrees, 0 from the yaw might not be top on the screen, also needs to make sure it is positive because we are using uints
 
 private:
+    bool showPlsSpin;
     tap::Drivers* drivers;
     GimbalSubsystem* gimbal;
     DrivetrainSubsystem* drivetrain;
@@ -70,4 +77,12 @@ private:
 
     Arc front{UISubsystem::Color::RED_AND_BLUE, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, INNER_SIZE, INNER_SIZE, 0, 90, THICKNESS};
     Arc side{UISubsystem::Color::RED_AND_BLUE, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, INNER_SIZE, INNER_SIZE, 0, 90, THICKNESS};
+
+    static constexpr uint16_t TEXT_HEIGHT = 60;
+    static constexpr uint16_t TEXT_Y = 830;
+    static constexpr uint16_t TEXT_WIDTH = 400; //only for rectangle pls spin
+    static constexpr uint16_t TEXT_THICKNESS = 5;
+    // StringGraphic plsSpin{UISubsystem::Color::CYAN, "Pls spin", UISubsystem::HALF_SCREEN_WIDTH, TEXT_Y, TEXT_HEIGHT, TEXT_THICKNESS};
+    UnfilledRectangle plsSpin{UISubsystem::Color::PINK, UISubsystem::HALF_SCREEN_WIDTH - TEXT_WIDTH/2, TEXT_Y, TEXT_WIDTH, TEXT_HEIGHT, TEXT_THICKNESS};
+
 };

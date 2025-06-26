@@ -22,6 +22,14 @@ public:
         addSubsystemRequirement(gimbal);
     }
 
+    JoystickMoveCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, bool isOffset)
+        : drivers(drivers),
+          gimbal(gimbal),
+          isOffset(isOffset)
+    {
+        addSubsystemRequirement(gimbal);
+    }
+
     void initialize() override;
 
     void execute() override;
@@ -42,5 +50,6 @@ private:
 
     float yaw = 0.0f, pitch = 0.0f;
 
+    bool isOffset = false;
 };
 }  // namespace commands

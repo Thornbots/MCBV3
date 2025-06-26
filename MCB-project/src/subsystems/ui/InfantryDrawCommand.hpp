@@ -89,7 +89,7 @@ private:
     // add top level graphics objects here and in the constructor
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
-    ChassisOrientationIndicator orient{drivers, gimbal, drivetrain};
+    ChassisOrientationIndicator orient{false, drivers, gimbal, drivetrain};
     PeekingLines peek{drivetrain, gimbal};
     HopperLidIndicator lid{servo};
     Reticle reticle{gimbal};

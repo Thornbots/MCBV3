@@ -42,6 +42,7 @@ void AutoDriveCommand::execute() {
         }
 
     }
+    allowMoving = false;
 
     float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
 
@@ -70,8 +71,8 @@ void AutoDriveCommand::execute() {
         }
     }   
 
-    float posX = targetPositionAdjusted.getX();
-    float posY = targetPositionAdjusted.getY();
+    float posX = targetPosition.getX();
+    float posY = targetPosition.getY();
     float velX = targetVelocity.getX();
     float velY = targetVelocity.getY();
     float velR = targetVelocity.getRotation();
@@ -84,10 +85,10 @@ void AutoDriveCommand::execute() {
     if(!allowSpinning){
         velR = 0;
     }
-    targetPositionAdjusted = Vector2d{posX, posY};
+    targetPosition = Vector2d{posX, posY};
     targetVelocity = Pose2d{velX, velY, velR};
 
-    drivetrain->setTargetPosition(targetPositionAdjusted, currentPosition, targetVelocity);
+    drivetrain->setTargetPosition(targetPosition, currentPosition, targetVelocity);
     // drivetrain->setTargetTranslation(drive, false);
 }
 

@@ -46,7 +46,10 @@ void AutoAimAndFireCommand::execute() {
         dyaw = dyaw > PI ? dyaw - 2 * PI : dyaw < -PI ? dyaw + 2 * PI : dyaw;
         lastSeenTime = tap::arch::clock::getTimeMilliseconds();
 
-        dyaw = std::clamp(dyaw, -.2f, .2f);
+        float newPitch = (pitch - currentPitch) / 2.0f;
+        if (abs(dyaw) > .05) {
+            dyaw /= 4.0f;}
+        else dyaw /= 1.75;
         if (allowGimbal) gimbal->updateMotorsAndVelocityWithLatencyCompensation(dyaw/2.5f, pitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
         if (shoot == 1) isShooting = true;
     } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime < PERSISTANCE) {

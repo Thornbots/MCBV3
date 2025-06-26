@@ -56,7 +56,7 @@ public:
         drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerStop);
 
-        shootButton.onTrue(&shooterStart)->whileTrue(&indexerStart)->onTrue(&closeServo);
+        shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz)->onTrue(&closeServo);
         unjamButton.whileTrue(&indexerUnjam)->onTrue(&openServo);
 
         stopFlywheelTrigger.onTrue(&shooterStop);
@@ -64,7 +64,8 @@ public:
         // Mouse and Keyboard mappings
         unjamKey.whileTrue(&indexerUnjam)->onTrue(&openServo);
         onlyCloseLidKey.onTrue(&closeServo);
-        shootKey.whileTrue(&indexerStart)->onTrue(&shooterStart)->onTrue(&closeServo);
+        shootRegKey.whileTrue(&indexer10Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
+        shootFastKey.whileTrue(&indexer20Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
         autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart)->onTrue(&closeServo);
         // implement speed mode
 
@@ -144,7 +145,8 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexerStart{drivers, &indexer, -1, 10};
+    commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 10};
+    commands::IndexerNBallsCommand indexer20Hz{drivers, &indexer, -1, 20};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
 
     commands::IndexerStopCommand indexerStop{drivers, &indexer};
@@ -173,6 +175,8 @@ public:
     Trigger onlyCloseLidKey{drivers, Remote::Key::CTRL}; //blame peter
     Trigger autoAimKey{drivers, MouseButton::RIGHT};
     Trigger shootKey{drivers, MouseButton::LEFT};
+    Trigger shootFastKey = shootKey & !onlyCloseLidKey;
+    Trigger shootRegKey = shootKey & onlyCloseLidKey;
 
     Trigger scrollUp{drivers, MouseScrollDirection::UP};
     Trigger scrollDown{drivers, MouseScrollDirection::DOWN};
@@ -199,7 +203,7 @@ public:
 
     Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
-    Trigger* triggers[18] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &onlyCloseLidKey, &unjamKey, &shootKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
+    Trigger* triggers[20] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &onlyCloseLidKey, &unjamKey, &shootKey, &shootRegKey, &shootFastKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
 
 };
 

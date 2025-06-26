@@ -22,14 +22,39 @@ public:
     ShotCounter(src::Drivers* drivers, BarrelType barrel, tap::motor::DjiMotor* index) : drivers(drivers), barrel(barrel), index(index)  {
         //in case index doesn't start at 0
         initialPosition = index->getPositionUnwrapped();
-        resetRecentBallsCounter();
+        previousPosition = initialPosition;
+        recentPosition = initialPosition;
+        timeUntilNoHeat.stop();
     }
 
-    float getAllowableIndexRate(float desiredBallsPerSecond) {
-        // Old overheating prevention
+    float getAllowableIndexRate(float desiredBallsPerSecond){
+        return getAllowableIndexRateOld(desiredBallsPerSecond);
+    }
+
+    // Old overheating prevention
+    float getAllowableIndexRateOld(float desiredBallsPerSecond) {
         tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refSerial.getRobotData().turret;
         if (enabled && drivers->refSerial.getRefSerialReceivingData() && 
-           (getHeatPerBall() * desiredBallsPerSecond - turretData.coolingRate) * LATENCY > (turretData.heatLimit - getCurrentHeat(&turretData))) {
+           (getHeatPerBall() * desiredBallsPerSecond - turretData.coolingRate) * LATENCY > (turretData.heatLimit - getCurrentRefHeat(&turretData))) {
+            return turretData.coolingRate / getHeatPerBall();
+        }
+        
+        return desiredBallsPerSecond;
+    }
+
+    float getAllowableIndexRateNew(float desiredBallsPerSecond) {
+        //change the timer based on index encoder
+        timeUntilNoHeat.restart(timeUntilNoHeat.timeRemaining() + (getNumBallsShotByReference(previousPosition)) * 1000);
+        previousPosition = index->getPositionUnwrapped();
+
+        //if can't do anything, don't do anything
+        if(!enabled || !drivers->refSerial.getRefSerialReceivingData())
+            return desiredBallsPerSecond;
+
+        tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refSerial.getRobotData().turret;
+        float estimatedHeat = timeUntilNoHeat.timeRemaining() / 1000 * turretData.coolingRate; //ms to s, mult by (heat/s) to get heat
+        
+        if(estimatedHeat + getHeatPerBall() >= turretData.heatLimit) {
             return turretData.coolingRate / getHeatPerBall();
         }
         
@@ -64,15 +89,18 @@ private:
 
     bool enabled = true;
 
+    tap::arch::MilliTimeout timeUntilNoHeat;
     
     int64_t recentPosition = 0;
     int64_t initialPosition = 0;
+    int64_t previousPosition = 0;
 
     float getHeatPerBall() {
         return barrel==BarrelType::TURRET_42MM ? HEAT_PER_42 : HEAT_PER_17;
     }
 
-    uint16_t getCurrentHeat(tap::communication::serial::RefSerial::Rx::TurretData* turretData){
+    // getting from ref system has latency
+    uint16_t getCurrentRefHeat(tap::communication::serial::RefSerial::Rx::TurretData* turretData){
         return barrel==BarrelType::TURRET_42MM ? turretData->heat42 : 
               (barrel==BarrelType::TURRET_17MM_1 ? turretData->heat17ID1 : turretData->heat17ID2);
     }
@@ -85,7 +113,11 @@ private:
     static constexpr float HEAT_PER_17 = 10.0f;
     static constexpr float HEAT_PER_42 = 100.0f;
 
-    static constexpr float LATENCY = 0.6f; //expected ref system latency for barrel heat limiting
+    #if defined(HERO)
+    static constexpr float LATENCY = 0; //allow hero to shoot one shot at 20hz
+    #else
+    static constexpr float LATENCY = 0.6f; //expected ref system latency for (old) barrel heat limiting
+    #endif
 };
 
 } // namespace subsystems
