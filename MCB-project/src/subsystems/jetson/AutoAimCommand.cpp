@@ -17,10 +17,10 @@ void AutoAimCommand::execute() {
         dyaw = fmod(dyaw, 2*PI);
         //clamp between -Pi and PI to allow for dividing
         dyaw = dyaw > PI ? dyaw - 2*PI : dyaw < -PI ? dyaw + 2*PI : dyaw; 
-        float newPitch = (pitch - currentPitch) / 2.0f;
+        float newPitch = currentPitch + (pitch - currentPitch) / 2.0f;
         if (abs(dyaw) > .05) {
             dyaw /= 4.0f;}
-        else dyaw /= 1.75;
+        else dyaw /= 2.0f;
         gimbal->updateMotorsAndVelocityWithLatencyCompensation(dyaw, newPitch, yawvel, pitchvel); //division is to prevent overshoot from latency
         //gimbal->updateMotors(dyaw/3.0f, pitch);
     } else {
