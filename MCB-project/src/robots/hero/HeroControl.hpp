@@ -133,7 +133,7 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexerSemi{drivers, &indexer, 1, 2}; //semiauto, each click is one shot
+    commands::IndexerNBallsCommand indexerSemi{drivers, &indexer, 1, 20}; //semiauto, each click is one shot
     commands::IndexerNBallsCommand indexerAuto{drivers, &indexer, -1, 2};//full auto, holding the wheel it the forward position shoots as long as it is held
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
     commands::IndexerLoadCommand indexerLoad{drivers, &indexer};

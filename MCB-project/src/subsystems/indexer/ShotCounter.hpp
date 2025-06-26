@@ -113,7 +113,11 @@ private:
     static constexpr float HEAT_PER_17 = 10.0f;
     static constexpr float HEAT_PER_42 = 100.0f;
 
+    #if defined(HERO)
+    static constexpr float LATENCY = 0; //allow hero to shoot one shot at 20hz
+    #else
     static constexpr float LATENCY = 0.6f; //expected ref system latency for (old) barrel heat limiting
+    #endif
 };
 
 } // namespace subsystems
