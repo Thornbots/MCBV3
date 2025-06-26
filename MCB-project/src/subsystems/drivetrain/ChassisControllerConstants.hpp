@@ -48,7 +48,7 @@ constexpr float maxTorqueZ = 30;
 #elif defined(SENTRY)
 // START getters and setters
 constexpr float TRACKWIDTH = 0.50038;      // in m
-constexpr float M = 18.186;                  // robot mass kg
+constexpr float M = 19;                  // robot mass kg
 constexpr float J = 0.44;                  // measured from sys id kg-m^2
 constexpr float R_WHEEL = 0.05;  // wheel radius m
 constexpr float J_WHEEL = 0.0009;          // wheel moment of inertia kg-m^2
@@ -61,7 +61,7 @@ constexpr float P_IDLE = 3;         // W, idle power
 constexpr float P_FOS = 0.65;       // unitless, power factor of safety
 
 // Tunable Parameters
-constexpr float KP_V_XY = 1000;  // proportional gain for velocity
+constexpr float KP_V_XY = 1500;  // proportional gain for velocity
 constexpr float KP_V_ROT = 30;   // proportional gain for rotational velocity
 
 constexpr float KI_V = 0;  // integral gain for velocity
