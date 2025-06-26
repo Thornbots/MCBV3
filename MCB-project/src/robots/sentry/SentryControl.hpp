@@ -157,7 +157,7 @@ public:
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
 
     commands::MoveToPositionCommand m0{drivers, &drivetrain, &gimbal, Pose2d(0.0f, 0.0f, 0.0f)};
-    commands::MoveToPositionCommand m1{drivers, &drivetrain, &gimbal, Pose2d(5.5f, -0.3f, 0.0f)};
+    commands::MoveToPositionCommand m1{drivers, &drivetrain, &gimbal, Pose2d(5.5f, 0.0f, 0.0f)};
     commands::MoveToPositionCommand m2{drivers, &drivetrain, &gimbal, Pose2d(5.5f, 4.2f, 0.0f)};
     commands::MoveToPositionCommand m3{drivers, &drivetrain, &gimbal, Pose2d(3.0f, 4.2f, 0.0f)};
 
