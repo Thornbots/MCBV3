@@ -49,7 +49,7 @@ private:
     Pose2d targetVelocity;
     Pose2d currentPosition;
 
-    const float POS_ERROR_THRESHOLD = 0.1f;  // meters
+    const float POS_ERROR_THRESHOLD = 0.2f;  // meters
 
 };
 }  // namespace commands
