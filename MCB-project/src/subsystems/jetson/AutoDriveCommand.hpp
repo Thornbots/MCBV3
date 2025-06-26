@@ -42,6 +42,14 @@ public:
 
 
 private:
+    
+    //for relocalization
+    static constexpr float Y_DISTANCE_FROM_CENTER_THRESHOLD = 2.5; //meters, if jetson position is greater than this then allow relocalization
+    static constexpr float DISTANCE_THRESHOLD = 0.5; //meters, if jetson position minus odo position is greater than this, relocalize
+
+    float offsetX = 0;
+    float offsetY = 0;
+
     src::Drivers* drivers;
     JetsonSubsystem* jetson;
     DrivetrainSubsystem* drivetrain;

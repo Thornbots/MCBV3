@@ -20,6 +20,7 @@ void AutoDriveCommand::initialize() {
 
 void AutoDriveCommand::execute() {
     targetVelocity = Pose2d(0, 0, 9);
+    Vector2d jetsonExpectedPosition;
     bool allowSpinning = true;
     bool allowMoving = true;
 
@@ -45,7 +46,7 @@ void AutoDriveCommand::execute() {
 
     float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
 
-    // crude autodrive implemtation
+    // crude autodrive implementation
     // count++;
 
     // if (count > 400) {
@@ -56,9 +57,19 @@ void AutoDriveCommand::execute() {
     //     targetPosition = Pose2d(0, 0, 0);
     // }
 
-    bool result = jetson->updateROS(&targetPosition, &targetVelocity);
+    bool result = jetson->updateROS(&targetPosition, &targetVelocity, &jetsonExpectedPosition);
 
-    Pose2d currentPosition = Pose2d(drivers->i2c.odom.getX(), drivers->i2c.odom.getY(), referenceAngle);
+    Vector2d targetPositionAdjusted = targetPosition.vec() + startPosition;
+    Pose2d currentPosition = Pose2d(drivers->i2c.odom.getX() + offsetX, drivers->i2c.odom.getY() + offsetY, referenceAngle);
+    
+    //midpoint is chaos, walls get bumped into, don't trust that jetson knows where it is 
+    if(jetsonExpectedPosition.getY()>Y_DISTANCE_FROM_CENTER_THRESHOLD){
+        Vector2d deviance = jetsonExpectedPosition - currentPosition;
+        if(deviance.magnitude()>DISTANCE_THRESHOLD){
+            offsetX = deviance.getX();
+            offsetY = deviance.getY();
+        }
+    }   
 
     float posX = targetPosition.getX();
     float posY = targetPosition.getY();
