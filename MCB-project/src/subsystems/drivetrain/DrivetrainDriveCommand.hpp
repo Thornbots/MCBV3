@@ -54,6 +54,7 @@ private:
     ControlMode controlMode;
     float x, y, r;
     bool boost;
+    bool autoBoost;
 
     int oldScroll = 0;
     

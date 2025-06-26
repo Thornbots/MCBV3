@@ -53,7 +53,7 @@ void DrivetrainSubsystem::refresh() {
     // need to actually fix this yay
     imuAngle = (drivers->bmi088.getYaw() - 180) * PI / 180;
 
-    uint16_t minLimit = 120;
+    uint16_t minLimit = 240;
     if (drivers->refSerial.getRefSerialReceivingData() && 
        (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3) &&
        (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::INITIALIZATION || drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN)) {
@@ -64,6 +64,7 @@ void DrivetrainSubsystem::refresh() {
     for (int i = 0; i < 4; i++) {
         motorVel[i] = motorArray[i]->getShaftRPM() * PI / 30.0f;  // in rad/s
     }
+    angularVel = controller.estVelWorld.getRotation();
     // }
 }
 
@@ -85,7 +86,7 @@ void DrivetrainSubsystem::setTargetTranslation(Pose2d drive, bool shouldBoost) {
 #else
     boost = (shouldBoost && (drivers->refSerial.getRobotData().chassis.powerBuffer > 30)) ? 20.0f : 0.0f;
     throttle = (drivers->refSerial.getRobotData().chassis.powerBuffer <= 15) ? 10.0f : 0.0f;
-    controller.calculate(lastDrive, powerLimit + boost - throttle, imuAngle, motorVel, motorCurrent);
+    controller.calculate(lastDrive, powerLimit + boost - throttle, imuAngle, motorVel, motorCurrent, throttle);
 
 #endif
     for (int i = 0; i < 4; i++) {
