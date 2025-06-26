@@ -66,13 +66,14 @@ public:
     
     bool startAdvance = false;
     bool startRetreat = false;
+    int count = 0;
     void update() override {
         
         if (autoDriveTrigger.getAsBoolean() && drivers->refSerial.getRefSerialReceivingData() && 
         (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
+       if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
             // allow both
-            if(!startAdvance && drivers->refSerial.getRobotData().currentHp > 200){
+            if(!startAdvance && drivers->refSerial.getRobotData().currentHp > 390){
                 startAdvance = true;
                 startRetreat = false; // stop retreating
                 drivers->commandScheduler.addCommand(&initialMoveCommand);
@@ -86,9 +87,13 @@ public:
             // if(drivers->remote.getSwitch(Remote::Switch::RIGHT_SWITCH) == Remote::SwitchState::UP){
             //     count = 10000;
             //     // drivers->commandScheduler.addCommand(&initialMoveCommand);
-            // }
-        }
-    }
+            }
+       }
+    //  count--;
+    // }
+    // else {
+    //     count = 10000; // reset count if not in auto drive mode
+    // }
 
 
         
@@ -159,7 +164,7 @@ public:
     commands::MoveToPositionCommand m0{drivers, &drivetrain, &gimbal, Pose2d(0.0f, 0.0f, 0.0f)};
     commands::MoveToPositionCommand m1{drivers, &drivetrain, &gimbal, Pose2d(5.5f, 0.0f, 0.0f)};
     commands::MoveToPositionCommand m2{drivers, &drivetrain, &gimbal, Pose2d(5.5f, 4.2f, 0.0f)};
-    commands::MoveToPositionCommand m3{drivers, &drivetrain, &gimbal, Pose2d(3.0f, 4.2f, 0.0f)};
+    commands::MoveToPositionCommand m3{drivers, &drivetrain, &gimbal, Pose2d(2.2f, 4.7f, 0.0f)};//Pose2d(3.0f, 4.2f, 0.0f)};
 
     std::array<Command*, 5> moveCommands1 = {&m0, &m1, &m2, &m3, &autoDrive};
     SequentialCommand<5> initialMoveCommand{moveCommands1};

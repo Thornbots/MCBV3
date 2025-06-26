@@ -25,7 +25,7 @@ public:
           drivetrain(drive),
           gimbal(gimbal),
           targetPosition(targetPosition){
-        targetVelocity = Pose2d(0, 0, 5);
+        targetVelocity = Pose2d(0, 0, 9);
         addSubsystemRequirement(drive);
     }
 
