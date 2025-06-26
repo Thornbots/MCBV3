@@ -13,14 +13,14 @@ using namespace subsystems;
 class Reticle : public GraphicsContainer {
 public:  // important constants and enums
     // panel things
-    static constexpr float PANEL_WIDTH = 0.135;               // meters
+    static constexpr float PANEL_WIDTH = 0.135;               // meters, wider panel is 0.230
     static constexpr float PANEL_HEIGHT = 0.125;              // meters, height across the surface
     static constexpr float PANEL_ANGLE = 15 * PI / 180;       // radians, tilt of the panel, 0 would be panel is not tilted
-    static constexpr float AVERAGE_HEIGHT_OFF_GROUND = 0.07;  // meters, center of panel to ground, for calculating where on screen reticle things should be
+    static constexpr float AVERAGE_HEIGHT_OFF_GROUND = 0.18;  // meters, center of panel to ground, for calculating where on screen reticle things should be
 
     // distances down range and colors to draw them
-    static constexpr int NUM_THINGS = 16;
-    static constexpr float DISTANCES[NUM_THINGS] = {0.5, 0.75, 1, 1.25, 1.75, 2.5, 3.25, 4, 5.5, 6.5, 7.25, 8, 9, 10, 11, 12};  // meters, y distances, measured from center of robot to center of panel
+    static constexpr int NUM_THINGS = 9;
+    static constexpr float DISTANCES[NUM_THINGS] = {1, 2, 3, 5, 7, 9, 11, 12, 13};  // meters, y distances, measured from center of robot to center of panel
     static constexpr int NUM_COLORS = 1;
     static constexpr UISubsystem::Color COLORS[NUM_COLORS] = {UISubsystem::Color::GREEN};
 

@@ -80,7 +80,7 @@ private:
     // add top level graphics objects here and in the constructor
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
-    ChassisOrientationIndicator orient{drivers, gimbal, drivetrain};
+    ChassisOrientationIndicator orient{true, drivers, gimbal, drivetrain};
     Reticle reticle{gimbal};
     HitRing ring{drivers, gimbal};
     // PredictedRemainingShotsIndicator remain{drivers, indexer};
