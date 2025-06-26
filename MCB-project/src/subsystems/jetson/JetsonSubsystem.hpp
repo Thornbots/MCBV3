@@ -26,6 +26,9 @@ enum UartMessage : uint8_t{
     // outgoing
     POSE_MSG = 2,
     REF_SYS_MSG = 3,
+
+    // incoming
+    RELOCALIZE = 4,
 };
 
 // =================== Incoming message types =======================
@@ -34,6 +37,10 @@ struct ROSData
 {
     float targetX = 0; //where I want to go
     float targetY = 0;
+};
+
+struct Relocalize
+{
     float expectedX = 0; //where I think I am, by the lidar
     float expectedY = 0;
 };
@@ -100,6 +107,7 @@ template<> struct StructToMessageType<ROSData> { static constexpr UartMessage va
 template<> struct StructToMessageType<CVData> { static constexpr UartMessage value = CV_MSG; };
 template<> struct StructToMessageType<PoseData> { static constexpr UartMessage value = POSE_MSG; };
 template<> struct StructToMessageType<RefSysMsg> { static constexpr UartMessage value = REF_SYS_MSG; };
+template<> struct StructToMessageType<Relocalize> { static constexpr UartMessage value = RELOCALIZE; };
 
 
 struct PanelData {
