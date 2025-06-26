@@ -19,7 +19,7 @@ private:                                            // Private Variables
 
     tap::motor::DjiMotor* motorArray[4];
 
-    float powerLimit; //default value
+    
 
     Pose2d lastDrive;
 
@@ -36,6 +36,8 @@ private:                                            // Private Variables
    
 
 public:  // Public Methods
+    float powerLimit; //default value
+    float angularVel;
     DrivetrainSubsystem(src::Drivers* driver, tap::motor::DjiMotor* motorOne, tap::motor::DjiMotor* motorTwo, tap::motor::DjiMotor* motorThree, tap::motor::DjiMotor* motorFour);
     
     // ~DrivetrainSubsystem() override {}  // Intentionally blank

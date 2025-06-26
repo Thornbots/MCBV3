@@ -181,12 +181,12 @@ void ChassisController::followPosition(Vector2d targetPosition, Pose2d currentPo
     Pose2d targetVelocity = inputVelocity + controlEffort * (1/normMagnitude); // Normalize the control effort to get the target velocity
   
     // Calculate the target velocity in the local frame
-    calculate(targetVelocity.rotate(currentPosition.getRotation()), powerLimit, angle, motorVelocity, motorCurrent);
+    calculate(targetVelocity.rotate(currentPosition.getRotation()), powerLimit, angle, motorVelocity, motorCurrent, false);
 }
 float estVelArr[3], estMotorArr[4];
 
 
-void ChassisController::calculate(Pose2d targetVelLocal, float powerLimit, float angle, float motorVelocity[4], float motorCurrent[4]) {
+void ChassisController::calculate(Pose2d targetVelLocal, float powerLimit, float angle, float motorVelocity[4], float motorCurrent[4], bool throttle) {
     multiplyMatrices(3, 4, forwardKinematics, motorVelocity, estVelArr);
     // return;
     Pose2d estVelLocal(estVelArr);
@@ -232,10 +232,19 @@ void ChassisController::calculate(Pose2d targetVelLocal, float powerLimit, float
     lastForceLocal = Pose2d(multiplyMatrices(3, 4, forceKinematics, estMotorArr, forceArr));
 
     // set motor currents
+    
+    if (!throttle) {
     for (int i = 0; i < 4; i++) {
         
         motorCurrent[i] = estMotorArr[i] / KT + I_m_FF[i];
-    }
+    }}
+    else {
+        for (int i = 0; i < 4; i++) {
+        
+            motorCurrent[i] = estMotorArr[i] / KT;
+        
+    }}
+    
 }
 
 }  // namespace subsystems

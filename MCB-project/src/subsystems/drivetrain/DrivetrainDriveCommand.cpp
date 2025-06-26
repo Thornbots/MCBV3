@@ -9,6 +9,7 @@ void DrivetrainDriveCommand::initialize() {
     x = 0;
     y = 0;
     r = 0;
+    autoBoost = false;
     
     drivetrain->isInControllerMode = controlMode == ControlMode::CONTROLLER;
     drivetrain->isInKeyboardMode = controlMode == ControlMode::KEYBOARD;
@@ -53,12 +54,15 @@ void DrivetrainDriveCommand::execute() {
         drivetrain->linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100;
 
     if (driveMode == DriveMode::BEYBLADE) {
-        r = 10.5f * SPIN_DIRECTION;
+        autoBoost = true;
+        r = 12.0f * SPIN_DIRECTION;
         x *= drivetrain->linearVelocityMultiplierTimes100 / 100.0f;
         y *= drivetrain->linearVelocityMultiplierTimes100 / 100.0f;
     } else if (driveMode == DriveMode::NO_SPIN) {
+        autoBoost = false;
         r = 0;
     } else {
+        autoBoost = false;
         x *= MAX_LINEAR_SPEED;
         y *= MAX_LINEAR_SPEED;
         float targetAngle = 0.0f;
@@ -72,6 +76,11 @@ void DrivetrainDriveCommand::execute() {
 
     Pose2d drive(x, y, r);
 
+
+    if (autoBoost == true && (drivetrain->angularVel < 6.0f || drivetrain->powerLimit >= 100.0f)){
+        boost = true;
+
+    }
     drivetrain->setTargetTranslation(drive.rotate(referenceAngle), boost);
 }
 
