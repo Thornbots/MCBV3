@@ -18,7 +18,7 @@ public:
 
             //check if reloaded
             bool isReloaded = false;
-            if (robotData.rfidStatus.any(RefSerialData::Rx::RFIDActivationStatus::RESTORATION_ZONE | RefSerialData::Rx::RFIDActivationStatus::EXCHANGE_ZONE)) {
+            if (drivers->remote.keyPressed(Remote::Key::Z) && (robotData.rfidStatus.any(RefSerialData::Rx::RFIDActivationStatus::RESTORATION_ZONE | RefSerialData::Rx::RFIDActivationStatus::EXCHANGE_ZONE))) {
                 // not sure if it is the restoration or exchange zone that is what we use in 3v3, should be one of them
                 shotsAtLastReload = index->getTotalNumBallsShot();
                 isReloaded = true;

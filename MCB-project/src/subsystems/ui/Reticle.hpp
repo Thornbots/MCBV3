@@ -3,6 +3,7 @@
 #include "tap/algorithms/math_user_utils.hpp"
 
 #include "subsystems/jetson/JetsonSubsystemConstants.hpp"
+#include "subsystems/indexer/HeroIndexerSubsystem.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/ui/GraphicsContainer.hpp"
 #include "util/ui/SimpleGraphicsObjects.hpp"
@@ -53,7 +54,9 @@ private: // draw settings
     bool drawVerticalLine = true;
 
 public:
-    Reticle(GimbalSubsystem* gimbal) : gimbal(gimbal) {
+    Reticle(GimbalSubsystem* gimbal) : Reticle(gimbal, nullptr){}
+
+    Reticle(GimbalSubsystem* gimbal, HeroIndexerSubsystem* heroIndex) : gimbal(gimbal), heroIndex(heroIndex) {
         for (int i = 0; i < NUM_THINGS; i++) {
             rects[i].color = COLORS[i%NUM_COLORS];
             rectsContainer.addGraphicsObject(rects + i);
@@ -75,7 +78,11 @@ public:
         float pitch = gimbal->getPitchEncoderValue();
 
         ReticleSidedMode adjustedSidedMode = drawMode == ReticleDrawMode::TRAPEZOIDS ? ReticleSidedMode::BOTH : sidedMode;
-        verticalLine.setHidden(!drawVerticalLine);
+        if(heroIndex){
+            verticalLine.color = heroIndex->isProjectileAtBeam() ? UISubsystem::Color::WHITE : UISubsystem::Color::BLACK;
+        } else{
+            verticalLine.setHidden(!drawVerticalLine);
+        }
 
         solvedForPitchLandingSpotThisCycle = false;
         for (int i = 0; i < NUM_THINGS; i++) {
@@ -161,6 +168,7 @@ public:
 
 private:
     GimbalSubsystem* gimbal;
+    HeroIndexerSubsystem* heroIndex;
     
     Vector3d panelEdges[4] = {
         {PANEL_WIDTH / 2, 0, 0},                                                                     // right
