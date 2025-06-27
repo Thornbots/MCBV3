@@ -9,6 +9,7 @@
 
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
+#include "subsystems/jetson/AutoAimCommand.hpp"
 
 #include "subsystems/drivetrain/DrivetrainDriveCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainStopCommand.hpp"
@@ -39,6 +40,7 @@ public:
         indexer.initialize();
         drivetrain.initialize();
         ui.initialize();
+        jetson.initialize();
         
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
@@ -53,7 +55,7 @@ public:
         unjamButton.whileTrue(&indexerUnjam)->onFalse(&indexerLoad);
         shootButton.whileTrue(&indexerAuto)->onTrue(&shooterStart)->onFalse(&indexerLoad);
         stopFlywheelTrigger.onTrue(&shooterStop);
-        autoAimKey./*whileTrue(&autoCommand)->*/onFalse(&lookMouse)->onTrue(&shooterStart);
+        autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart);
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
@@ -119,10 +121,11 @@ public:
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::HeroIndexerSubsystem indexer{drivers, &hardware.indexTopMotor, &hardware.indexBottomMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
+    subsystems::JetsonSubsystem jetson{drivers, &gimbal};
     // //commands
 
     commands::HeroDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};
-    // commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
+    commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
     // commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
