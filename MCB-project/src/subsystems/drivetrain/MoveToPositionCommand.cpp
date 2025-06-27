@@ -24,12 +24,13 @@ void MoveToPositionCommand::execute() {
     // drivetrain->setTargetTranslation(drive, false);
 }
 
-bool MoveToPositionCommand::isFinished() const { return !drivers->remote.isConnected() || (targetPosition-currentPosition).magnitude() < POS_ERROR_THRESHOLD; }
+bool MoveToPositionCommand::isFinished() const { return !drivers->remote.isConnected() || (targetPosition-currentPosition).magnitude() < tolerance; }
 
 
 void MoveToPositionCommand::end(bool cancel) { 
     drivers->leds.set(tap::gpio::Leds::Blue, false);
-    drivetrain->setTargetTranslation(targetVelocity, false);
+   if(cancel)  
+        drivetrain->setTargetTranslation(targetVelocity, false);
 }
 
 }  // namespace commands

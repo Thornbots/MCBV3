@@ -53,11 +53,13 @@ public:
     }
     // i dont like this but it kinda works for old read. NEED TO CHANGE
     // float getAngle() { return 0.0000457891f * angle * angle - 0.0361289286f * angle + 3.4231706783f; }
-    float getX() { return odom_x; }  
-    float getY() { return odom_y; }  
+    float getX() { return odom_x + offsetX; }  
+    float getY() { return odom_y + offsetY; }  
     float getXVel() { return odom_x_vel; }  
     float getYVel() { return odom_y_vel; }  
     
+    float offsetX = 0;
+    float offsetY = 0;
 
 private:
     float odom_x = 0;

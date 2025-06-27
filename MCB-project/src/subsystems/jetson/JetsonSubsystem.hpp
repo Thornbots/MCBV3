@@ -26,16 +26,23 @@ enum UartMessage : uint8_t{
     // outgoing
     POSE_MSG = 2,
     REF_SYS_MSG = 3,
+
+    // incoming
+    RELOCALIZE = 4,
 };
 
 // =================== Incoming message types =======================
 
 struct ROSData
 {
-    float x = 0;
-    float y = 0;
-    float theta = 0;
-    float rho = 0;
+    float targetX = 0; //where I want to go
+    float targetY = 0;
+};
+
+struct Relocalize
+{
+    float expectedX = 0; //where I think I am, by the lidar
+    float expectedY = 0;
 };
 
 struct CVData 
@@ -100,6 +107,7 @@ template<> struct StructToMessageType<ROSData> { static constexpr UartMessage va
 template<> struct StructToMessageType<CVData> { static constexpr UartMessage value = CV_MSG; };
 template<> struct StructToMessageType<PoseData> { static constexpr UartMessage value = POSE_MSG; };
 template<> struct StructToMessageType<RefSysMsg> { static constexpr UartMessage value = REF_SYS_MSG; };
+template<> struct StructToMessageType<Relocalize> { static constexpr UartMessage value = RELOCALIZE; };
 
 
 struct PanelData {
@@ -113,8 +121,9 @@ private:  // Private Variables
     GimbalSubsystem* gimbal;
     HitRing hitRing{drivers, gimbal};
 
-    static constexpr int TIME_FOR_REF_DATA = 100; //send at 10hz
+    static constexpr int TIME_FOR_REF_DATA = 200; //send at 5hz
     tap::arch::PeriodicMilliTimer refDataSendingTimeout{TIME_FOR_REF_DATA};
+    tap::arch::PeriodicMilliTimer poseDataTimeout{10}; //for sending pose data at 100hz
     // bool needToSendRefData = false;
 
 
@@ -130,6 +139,8 @@ private:  // Private Variables
     float velXrel4, velYrel4, velZrel4;
     float posXrelPitch, posYrelPitch, posZrelPitch; //position of panel relative to frame 2 but offset up
     float velXrelPitch, velYrelPitch, velZrelPitch;
+
+    std::vector<PanelData> panelData;
 public:  // Public Methods
     JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal);
 
@@ -139,20 +150,13 @@ public:  // Public Methods
 
     void refresh() override;
 
-    bool updateROS(Vector2d* targetPosition, Vector2d* targetVelocity);
+    bool updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d* jetsonExpectedPosition);
     void update(float current_yaw, float current_pitch, float current_yaw_velo, float current_pitch_velo, float* yawOut, float* pitchOut, float* yawVelOut, float* pitchVelOut, int* action);
 
     
 
 
 private:  // Private Methods
-
-    // Constants
-    //const float g = 9.81;           // gravitational acceleration
- 
-        // Height rejection offset
-    std::vector<PanelData> panelData;
-
 
     template<class msg_type> 
     inline bool getMsg(msg_type* output){

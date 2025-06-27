@@ -24,7 +24,7 @@ static constexpr float PEEK_LEFT_AMT = -0.45;    // amount to peek left
 static constexpr float PEEK_RIGHT_AMT = 0.45;  // amount to peek right
 
 static constexpr float MAX_LINEAR_SPEED = 2.5;
-static constexpr int SPIN_DIRECTION = -1;
+static constexpr int SPIN_DIRECTION = 1;
 
 #elif defined(INFANTRY)
 static constexpr tap::algorithms::SmoothPidConfig drivetrainPIDConfig{8, 0, -0, 0, 10.0, 1.0f, 0.0f, 1.0f, 0.0f, 0.05};

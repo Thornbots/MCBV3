@@ -65,9 +65,9 @@ private:
 
     int numCyclesForBurst = 0;
     static constexpr int CYCLES_UNTIL_BURST = 190; //cycles
-    static constexpr float BURST_AMOUNT = 0.45; //rad/cycle
-    static constexpr float PATROL_SPEED = 0.002; //rad/cycle
-    static constexpr int PERSISTANCE = 500;
+    static constexpr float BURST_AMOUNT = 0.0; //rad/cycle
+    static constexpr float PATROL_SPEED = 0.008; //rad/cycle
+    static constexpr int PERSISTANCE = 100;
 
     float yaw = 0.0f, pitch = 0.0f;
     float yawvel = 0.0f, pitchvel = 0.0f;
