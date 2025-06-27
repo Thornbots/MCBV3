@@ -11,7 +11,7 @@ constexpr float RA = 0.5592;        // ohm, armature resistance
 
 constexpr float VOLT_MAX = 24;      // V, maximum        
 
-constexpr float MAX_POS_VEL = 1.0;                                                                                 
+constexpr float MAX_POS_VEL = 1.25;                                                                                 
 
 #if defined(HERO)
 // START getters and setters

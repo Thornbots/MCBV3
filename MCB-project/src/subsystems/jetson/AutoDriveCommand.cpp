@@ -7,22 +7,23 @@ namespace commands {
 using namespace tap::communication::serial;
 
 int count = 0;
-Vector2d startPosition = Vector2d(0, 0);
+// Vector2d startPosition = Vector2d(0, 0);
 void AutoDriveCommand::initialize() {
     isScheduled = true;
 
     count = 0;
-    targetPosition = Pose2d(0, 0, 0);
-    startPosition = Vector2d(drivers->i2c.odom.getX(), drivers->i2c.odom.getY());
+    
+    targetPosition = Vector2d(drivers->i2c.odom.getX(), drivers->i2c.odom.getY());
 
     drivers->leds.set(tap::gpio::Leds::Blue, true);
 }
 
 void AutoDriveCommand::execute() {
     targetVelocity = Pose2d(0, 0, 9);
-    Vector2d jetsonExpectedPosition;
+    Vector2d jetsonExpectedPosition = Vector2d(0, 0);
     bool allowSpinning = true;
     bool allowMoving = true;
+    bool allowRelocalize = false;
 
     if (drivers->refSerial.getRefSerialReceivingData() && 
        (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
@@ -34,6 +35,7 @@ void AutoDriveCommand::execute() {
             // allow both
             allowSpinning = true;
             allowMoving = true;
+            allowRelocalize = true;
         }
 
         if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
@@ -42,7 +44,7 @@ void AutoDriveCommand::execute() {
         }
 
     }
-    allowMoving = false;
+    // allowMoving = false;
 
     float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
 
@@ -59,16 +61,16 @@ void AutoDriveCommand::execute() {
 
     bool result = jetson->updateROS(&targetPosition, &targetVelocity, &jetsonExpectedPosition);
 
-    Vector2d targetPositionAdjusted = targetPosition.vec() + startPosition;
+
     Pose2d currentPosition = Pose2d(drivers->i2c.odom.getX() + offsetX, drivers->i2c.odom.getY() + offsetY, referenceAngle);
     
     //midpoint is chaos, walls get bumped into, don't trust that jetson knows where it is 
-    if(jetsonExpectedPosition.getY()>Y_DISTANCE_FROM_CENTER_THRESHOLD){
+    if(allowRelocalize && jetsonExpectedPosition != nullptr){
         Vector2d deviance = jetsonExpectedPosition - currentPosition;
-        if(deviance.magnitude()>DISTANCE_THRESHOLD){
-            offsetX = deviance.getX();
-            offsetY = deviance.getY();
-        }
+        // if(deviance.magnitude()>DISTANCE_THRESHOLD){
+            // drivers->i2c.odom.offsetX = deviance.getX();
+            // drivers->i2c.odom.offsetY = deviance.getY();
+        // }
     }   
 
     float posX = targetPosition.getX();

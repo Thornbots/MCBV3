@@ -121,8 +121,9 @@ private:  // Private Variables
     GimbalSubsystem* gimbal;
     HitRing hitRing{drivers, gimbal};
 
-    static constexpr int TIME_FOR_REF_DATA = 100; //send at 10hz
+    static constexpr int TIME_FOR_REF_DATA = 200; //send at 5hz
     tap::arch::PeriodicMilliTimer refDataSendingTimeout{TIME_FOR_REF_DATA};
+    tap::arch::PeriodicMilliTimer poseDataTimeout{10}; //for sending pose data at 100hz
     // bool needToSendRefData = false;
 
 
