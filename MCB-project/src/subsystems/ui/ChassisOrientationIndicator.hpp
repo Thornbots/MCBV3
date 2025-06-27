@@ -52,7 +52,7 @@ public:
         }
 
         if(showPlsSpin)
-            plsSpin.setHidden(!drivetrain->isPeeking || !drivetrain->isBeyblading);
+            plsSpin.setHidden(!drivetrain->isPeeking && !drivetrain->isBeyblading);
     }
 
 

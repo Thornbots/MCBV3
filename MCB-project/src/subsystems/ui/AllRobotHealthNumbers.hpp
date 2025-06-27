@@ -14,7 +14,7 @@ public:
         for(int i=0; i<6; i++){
             numbers[i].y = Y_POSITION;
             numbers[i].height = LINE_HEIGHT;
-
+            numbers[i].thickness = 3;
             this->addGraphicsObject(numbers + i);  // pointer math
         }
 
