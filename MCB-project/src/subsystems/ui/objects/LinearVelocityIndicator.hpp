@@ -3,7 +3,7 @@
 #include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/SimpleGraphicsObjects.hpp"
+#include "util/ui/AtomicGraphicsObjects.hpp"
 
 using namespace subsystems;
 

@@ -37,7 +37,7 @@ public:
      * so sending 7 means there is a seventh as much overhead per graphic than
      * sending 1 at a time.
      *
-     * Non containers (SimpleGraphicsObject's) are treated as containers
+     * Non containers (AtomicGraphicsObject's) are treated as containers
      * of 1 object (so getNext(0) returns the GraphicsObject itself,
      * then nullptr until resetIteration() is called). You can use the
      * result of this for an if statement, nullptr is falsey and an actual
@@ -46,8 +46,8 @@ public:
      * Example traversal: A has B and Q, and B has X, Y, and Z, and Q, X, Y,
      * and Z are not containers: A looks like [X, Y, Z, Q] when traversing.
      *
-     * This will only return SimpleGraphicsObject's, but making the return
-     * type that will lead to a problematic circle, with SimpleGraphicsObject
+     * This will only return AtomicGraphicsObject's, but making the return
+     * type that will lead to a problematic circle, with AtomicGraphicsObject
      * and GraphicsObject including eachother. Might be fixed with separate
      * cpp and hpp files.
      */
@@ -65,17 +65,18 @@ public:
     virtual int size() = 0;
 
     /*
-     * Containers do nothing, SimpleGraphicsObject's fill the graphic data
+     * Containers do nothing, AtomicGraphicsObject's fill the graphic data
      */
     virtual void configGraphicData(RefSerialData::Tx::GraphicData*) {}
     virtual void configCharacterData(RefSerialData::Tx::GraphicCharacterMessage*) {}
 
     /*
-     * For when everything gets cleared. This should make it so next
+     * For when a layer gets cleared. This should make it so next
      * time this object or all contained objects are told to draw,
-     * they use GRAPHIC_ADD and not GRAPHIC_MODIFY
+     * they use GRAPHIC_ADD and not GRAPHIC_MODIFY if they were on
+     * the layer cleared.
      */
-    virtual void hasBeenCleared() = 0;
+    virtual void layerHasBeenCleared(int8_t) = 0;
 
     /*
      * Graphics representing strings need to be sent as a CharacterMessage,

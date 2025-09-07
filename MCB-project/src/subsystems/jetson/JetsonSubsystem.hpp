@@ -9,7 +9,7 @@
 #include "util/Pose2d.hpp"
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
-#include "subsystems/ui/HitRing.hpp"
+#include "subsystems/ui/objects/HitRing.hpp"
 
 #include "drivers.hpp"
 

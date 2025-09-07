@@ -4,9 +4,13 @@
 
 #include "subsystems/jetson/JetsonSubsystemConstants.hpp"
 #include "subsystems/indexer/HeroIndexerSubsystem.hpp"
+#include "subsystems/gimbal/GimbalSubsystem.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
+#include "subsystems/ui/Projections.hpp"
 #include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/SimpleGraphicsObjects.hpp"
+#include "util/ui/AtomicGraphicsObjects.hpp"
+#include "util/Vector3d.hpp"
+#include "util/Vector2d.hpp"
 
 using namespace tap::communication::serial;
 using namespace subsystems;

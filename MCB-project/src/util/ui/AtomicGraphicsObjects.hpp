@@ -1,11 +1,11 @@
 #pragma once
 
-#include "util/ui/SimpleGraphicsObject.hpp"
+#include "util/ui/AtomicGraphicsObject.hpp"
 
-class Line : public SimpleGraphicsObject {
+class Line : public AtomicGraphicsObject {
 public:
     Line(RefSerialData::Tx::GraphicColor color, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t thickness)
-        : SimpleGraphicsObject(color),
+        : AtomicGraphicsObject(color),
           x1(x1),
           y1(y1),
           x2(x2),
@@ -37,10 +37,10 @@ private:
     RefSerialData::Tx::GraphicColor prevColor;
 };
 
-class UnfilledRectangle : public SimpleGraphicsObject {
+class UnfilledRectangle : public AtomicGraphicsObject {
 public:
     UnfilledRectangle(RefSerialData::Tx::GraphicColor color, uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t thickness)
-        : SimpleGraphicsObject(color),
+        : AtomicGraphicsObject(color),
           x(x),
           y(y),
           width(width),
@@ -72,9 +72,9 @@ private:
     RefSerialData::Tx::GraphicColor prevColor;
 };
 
-class UnfilledCircle : public SimpleGraphicsObject {
+class UnfilledCircle : public AtomicGraphicsObject {
 public:
-    UnfilledCircle(RefSerialData::Tx::GraphicColor color, uint16_t cx, uint16_t cy, uint16_t r, uint16_t thickness) : SimpleGraphicsObject(color), cx(cx), cy(cy), r(r), thickness(thickness) {}
+    UnfilledCircle(RefSerialData::Tx::GraphicColor color, uint16_t cx, uint16_t cy, uint16_t r, uint16_t thickness) : AtomicGraphicsObject(color), cx(cx), cy(cy), r(r), thickness(thickness) {}
 
     UnfilledCircle() : UnfilledCircle(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 1) {}
 
@@ -100,10 +100,10 @@ private:
     RefSerialData::Tx::GraphicColor prevColor;
 };
 
-class UnfilledEllipse : public SimpleGraphicsObject {
+class UnfilledEllipse : public AtomicGraphicsObject {
 public:
     UnfilledEllipse(RefSerialData::Tx::GraphicColor color, uint16_t cx, uint16_t cy, uint16_t width, uint16_t height, uint16_t thickness)
-        : SimpleGraphicsObject(color),
+        : AtomicGraphicsObject(color),
           cx(cx),
           cy(cy),
           width(width),
@@ -135,10 +135,10 @@ private:
     RefSerialData::Tx::GraphicColor prevColor;
 };
 
-class Arc : public SimpleGraphicsObject {
+class Arc : public AtomicGraphicsObject {
 public:
     Arc(RefSerialData::Tx::GraphicColor color, uint16_t cx, uint16_t cy, uint16_t width, uint16_t height, uint16_t startAngle, uint16_t endAngle, uint16_t thickness)
-        : SimpleGraphicsObject(color),
+        : AtomicGraphicsObject(color),
           startAngle(startAngle),
           endAngle(endAngle),
           cx(cx),
@@ -309,14 +309,14 @@ protected:
     }
 };
 
-class IntegerGraphic : public SimpleGraphicsObject, public TextSizer {
+class IntegerGraphic : public AtomicGraphicsObject, public TextSizer {
 public:
-    IntegerGraphic(int32_t newInteger, UnfilledRectangle* rect) : SimpleGraphicsObject(rect->color), TextSizer(intLen(newInteger)), thickness(rect->thickness), integer(newInteger) { inputRect(rect); }
+    IntegerGraphic(int32_t newInteger, UnfilledRectangle* rect) : AtomicGraphicsObject(rect->color), TextSizer(intLen(newInteger)), thickness(rect->thickness), integer(newInteger) { inputRect(rect); }
 
     IntegerGraphic() : IntegerGraphic(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 0, 1) {};
 
     IntegerGraphic(RefSerialData::Tx::GraphicColor color, int32_t newInteger, uint16_t x, uint16_t y, uint16_t height, uint16_t thickness)
-        : SimpleGraphicsObject(color),
+        : AtomicGraphicsObject(color),
           TextSizer(intLen(newInteger), x, y, height),
           thickness(thickness) {}
 
@@ -349,12 +349,12 @@ private:
     RefSerialData::Tx::GraphicColor prevColor;
 };
 
-class FloatGraphic : public SimpleGraphicsObject, public TextSizer {
+class FloatGraphic : public AtomicGraphicsObject, public TextSizer {
 public:
-    FloatGraphic(float newFloat, UnfilledRectangle* rect) : SimpleGraphicsObject(rect->color), TextSizer(floatLen(newFloat)), thickness(rect->thickness), _float(newFloat) { inputRect(rect); }
+    FloatGraphic(float newFloat, UnfilledRectangle* rect) : AtomicGraphicsObject(rect->color), TextSizer(floatLen(newFloat)), thickness(rect->thickness), _float(newFloat) { inputRect(rect); }
 
     FloatGraphic(RefSerialData::Tx::GraphicColor color, float newFloat, uint16_t x, uint16_t y, uint16_t height, uint16_t thickness)
-        : SimpleGraphicsObject(color),
+        : AtomicGraphicsObject(color),
           TextSizer(floatLen(newFloat), x, y, height),
           thickness(thickness) {}
 
@@ -386,18 +386,18 @@ private:
     RefSerialData::Tx::GraphicColor prevColor;
 };
 
-class StringGraphic : public SimpleGraphicsObject, public TextSizer {
+class StringGraphic : public AtomicGraphicsObject, public TextSizer {
 private:
     static constexpr int STRING_SIZE = 31;  // not sure if it should be 30 or 31
 
 public:
-    StringGraphic(const char* newString, UnfilledRectangle* rect) : SimpleGraphicsObject(rect->color), TextSizer(stringLen(newString)), thickness(rect->thickness) {
+    StringGraphic(const char* newString, UnfilledRectangle* rect) : AtomicGraphicsObject(rect->color), TextSizer(stringLen(newString)), thickness(rect->thickness) {
         inputRect(rect);
         setString(newString);
     }
 
     StringGraphic(RefSerialData::Tx::GraphicColor color, const char* newString, uint16_t x, uint16_t y, uint16_t height, uint16_t thickness)
-        : SimpleGraphicsObject(color),
+        : AtomicGraphicsObject(color),
           TextSizer(stringLen(newString), x, y, height),
           thickness(thickness) {
         setString(newString);

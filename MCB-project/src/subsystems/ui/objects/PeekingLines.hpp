@@ -1,9 +1,9 @@
 #pragma once
 
-#include "UISubsystem.hpp"
-#include "Projections.hpp"
+#include "subsystems/ui/UISubsystem.hpp"
+#include "subsystems/ui/Projections.hpp"
 #include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/SimpleGraphicsObjects.hpp"
+#include "util/ui/AtomicGraphicsObjects.hpp"
 #include "util/Vector3d.hpp"
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"

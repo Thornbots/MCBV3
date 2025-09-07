@@ -6,10 +6,9 @@
 using namespace tap::communication::serial;
 using namespace subsystems;
 
-/* Simple as in not containing anything else. Maybe AtomicGraphicsObject is a better name. */
-class SimpleGraphicsObject : public GraphicsObject {
+class AtomicGraphicsObject : public GraphicsObject {
 public:
-    SimpleGraphicsObject(RefSerialData::Tx::GraphicColor color) : color(color) { UISubsystem::formatGraphicName(graphicNameArray, UISubsystem::getUnusedGraphicName()); }
+    AtomicGraphicsObject(RefSerialData::Tx::GraphicColor color) : color(color) { UISubsystem::formatGraphicName(graphicNameArray, UISubsystem::getUnusedGraphicName()); }
 
     int countNeedRedrawn() final { return needsRedrawn(); }
 
@@ -20,7 +19,7 @@ public:
     virtual bool needsRedrawn() = 0;
 
     GraphicsObject* getNext() final {
-        if (countIndex == 0 && !markedToDraw && (isHidden!=wasHidden || needsRedrawn())) {
+        if (countIndex == 0 && !markedToDraw && (isHidden!=wasHidden || layer!=prevLayer || needsRedrawn())) {
             countIndex = 1;
             return this;
         }
@@ -38,7 +37,8 @@ public:
             graphicData,
             graphicNameArray,
             getNextOperation(),
-            0,
+            layer<0 ? 0 : layer, //UISubsystem::getUnusedLayer might return -1 when there aren't any unused layers, 
+            // if someone doesn't check if it did this protects trying to send -1 to the server
             color);
         wasHidden = isHidden;
         finishConfigGraphicData(graphicData);
@@ -46,8 +46,9 @@ public:
 
     void resetIteration() final { countIndex = 0; }
 
-    void hasBeenCleared() final { 
-        wasHidden = true; //was deleted, doesn't set if I want to be hidden or not
+    void layerHasBeenCleared(int8_t clearedLayer) final { 
+        if(clearedLayer==layer)
+            wasHidden = true; //was deleted, doesn't set if I want to be hidden or not
     }
 
     RefSerialData::Tx::GraphicColor color;  // can set this directly, will appear next time drawn
@@ -86,4 +87,8 @@ protected:
     bool markedToDraw = false;
 
     uint8_t graphicNameArray[3];
+    int8_t layer = 0;
+
+private:
+    int8_t prevLayer = -2;
 };

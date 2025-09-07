@@ -2,7 +2,7 @@
 
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/SimpleGraphicsObjects.hpp" 
+#include "util/ui/AtomicGraphicsObjects.hpp" 
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
 #include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
@@ -27,18 +27,18 @@ public:
     }
 
     void update() {
-        uint16_t heading = static_cast<uint16_t>(gimbal->getYawEncoderValue() * YAW_MULT + YAW_OFFSET);
+        uint16_t heading = static_cast<uint16_t>(gimbal->getYawEncoderValue() * 180 / PI + YAW_OFFSET);
         // if the gimbal compared to the drivetrain (from the encoder) is facing forward, heading would be 0, if facing right, heading would be 90
 
         //front arc is convex
         front.startAngle = heading - INNER_ARC_LEN / 2;
-        fixAngle(&front.startAngle);
+        UISubsystem::fixAngle(&front.startAngle);
         front.endAngle = front.startAngle + INNER_ARC_LEN;
 
         //side arc is concave, so angle is flipped
         side.setHidden(!drivetrain->isPeeking);
         side.startAngle = (drivetrain->isPeekingLeft ? 90 : 270) + heading - INNER_ARC_LEN / 2;
-        fixAngle(&side.startAngle);
+        UISubsystem::fixAngle(&side.startAngle);
         side.endAngle = side.startAngle + INNER_ARC_LEN;
 
         // and xy location isn't the center
@@ -56,11 +56,7 @@ public:
     }
 
 
-    static void fixAngle(uint16_t* a) {
-        *a %= 360;  // set a to the remainder after dividing by 360, so if it was 361 it would now be 1
-    }
-
-    static constexpr float YAW_MULT = 180 / PI;  // turns radians from gimbal's getYawEncoderValue into degrees, might need to be negative
+    
     static constexpr float YAW_OFFSET = 2*360;     // degrees, 0 from the yaw might not be top on the screen, also needs to make sure it is positive because we are using uints
 
 private:
