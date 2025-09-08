@@ -26,7 +26,7 @@ public:
           gimbal(gimbal),
           tolerance(tolerance),
           targetPosition(targetPosition){
-        targetVelocity = Pose2d(0, 0, 10.5);
+        targetVelocity = Pose2d(0, 0, 10.5f);
         addSubsystemRequirement(drive);
     }
 

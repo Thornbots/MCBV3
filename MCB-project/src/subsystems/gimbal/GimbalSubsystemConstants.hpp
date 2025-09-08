@@ -20,7 +20,7 @@ constexpr static int YAW_MOTOR_MAX_SPEED = 1000;  // TODO: Make this value relev
                                                   // //TODO: Check the datasheets
 
 static constexpr float MAX_PITCH_UP = PI_CONST / 180 * 55;
-static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 30;
+static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 30 *0;
 
 static constexpr float YAW_OFFSET =  0.75 * PI_CONST ;
 

@@ -21,6 +21,7 @@ void DrivetrainDriveCommand::execute() {
     float referenceAngle = gimbal->getYawEncoderValue();
 
     if (controlMode == ControlMode::KEYBOARD) {
+ 
         x = drivers->remote.keyPressed(Remote::Key::D) - drivers->remote.keyPressed(Remote::Key::A);
         y = drivers->remote.keyPressed(Remote::Key::W) - drivers->remote.keyPressed(Remote::Key::S);
         boost = drivers->remote.keyPressed(Remote::Key::SHIFT);
