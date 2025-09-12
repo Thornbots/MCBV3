@@ -8,14 +8,14 @@ namespace subsystems {
 using namespace tap::communication::serial;
 
 #if defined(drivetrain_sysid)
-const float SAT_SECONDS = 5.0f, MAX_CURRENT = 1.5f, RAMP_TIME = 90.0f;
+const float SAT_SECONDS = 5.0f, MAX_CURRENT = 0.4f, RAMP_TIME = 90.0f;
 float time, current;
 float motor1Vel, motor2Vel, motor3Vel, motor4Vel;
 float calculateCurrent(float time) {
     if (time < 0) {
         return 0.0;
     } else if (time < SAT_SECONDS) {
-        return MAX_CURRENT;
+        return MAX_CURRENT * 4;
     } else if (time < SAT_SECONDS + RAMP_TIME) {
         // Linearly decrease from MAX_CURRENT to 0
         float progress = (time - SAT_SECONDS) / RAMP_TIME;
@@ -23,7 +23,7 @@ float calculateCurrent(float time) {
     } else if (time < 2 * SAT_SECONDS + RAMP_TIME) {
         return 0.0;
     } else if (time < 3 * SAT_SECONDS + RAMP_TIME) {
-        return -MAX_CURRENT;
+        return -MAX_CURRENT * 4;
     } else if (time < 3 * SAT_SECONDS + 2 * RAMP_TIME) {
         // Linearly increase from -MAX_CURRENT to 0
         float progress = (time - (3 * SAT_SECONDS + RAMP_TIME)) / RAMP_TIME;

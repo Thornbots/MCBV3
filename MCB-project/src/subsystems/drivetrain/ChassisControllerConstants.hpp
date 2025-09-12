@@ -68,7 +68,7 @@ constexpr float KI_V = 0;  // integral gain for velocity
 
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
-constexpr float KP = 1;              // proportional gain for position control
+constexpr float KP = 1`;              // proportional gain for position control
 constexpr float BEYBLADE_DELAY = .25 ;  // delay for beyblade mode/
 constexpr float BBterm1 = 9; //constant term
 constexpr float BBterm2 = -2.8647; //linear term
@@ -80,16 +80,16 @@ constexpr float maxTorqueZ = 30 * 5/6;
 // START getters and setters
 constexpr float TRACKWIDTH = 0.504;      // in m. We need to measure
 constexpr float M = 14.8;                  // robot mass kg
-constexpr float J = 0.4223;                  // measured from sys id kg-m^2
+constexpr float J = 0.4237;                  // measured from sys id kg-m^2
 constexpr float R_WHEEL = 0.06;  // wheel radius m
 constexpr float J_WHEEL = 0.000048223;          // wheel moment of inertia kg-m^2
-constexpr float C_MOTOR = 3.5e-4 * .02299;          // motor damping kg-s/m^2`
-constexpr float UK_MOTOR =  .25 *.02299;           // motor dry friction N-m
+constexpr float C_MOTOR = 4e-4 * .02299;          // motor damping kg-s/m^2`x
+constexpr float UK_MOTOR =  .17 *.02299;           // motor dry friction N-m
 constexpr float COF_WHEEL = 0.9;           // unitless COF
 
 constexpr float GEAR_RATIO = 3591.0f/187.0f;  // gear ratio
-constexpr float P_IDLE = 2.0;         // W, idle power
-constexpr float P_FOS = 0.65;       // unitless, power factor of safety
+constexpr float P_IDLE = 2.7;         // W, idle power
+constexpr float P_FOS = .65;       // unitless, power factor of safety
 
 // Tunable Parameters
 constexpr float KP_V_XY = 1150;  // proportional gain for velocity
@@ -140,12 +140,13 @@ constexpr float maxTorqueZ = 30;
 
 // after the ifdefs
 
+constexpr float TREQSCALE = 0.5;
 constexpr float LATENCY = 0.008;  // latency s
 constexpr float DT = 0.002;       // DT in s
 
-//  Feedforward gains from fundamental system  constexprants
-constexpr float K_V = KB;              // Velocity feedforward gain (back EMF  constexprant)
-constexpr float K_VIS = C_MOTOR / KT;  // Viscous damping feedforward gain
+//  Inverse dynamics gains from fundamental system  constexprants
+constexpr float K_V = KB;              // Velocity gain (back EMF  constexprant)
+constexpr float K_VIS = C_MOTOR / KT;  // Viscous damping  gain
 constexpr float K_S = UK_MOTOR / KT;   // Static friction feedforward g
 
 constexpr float F_MAX = M * 9.81f * COF_WHEEL;    // maximum force allowed across all 4 wheels
