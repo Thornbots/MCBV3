@@ -22,8 +22,10 @@ public:
         addGraphicsObject(&front);
         addGraphicsObject(&side);
         
-        if(showPlsSpin)
-            addGraphicsObject(&plsSpin);
+        if(showPlsSpin){
+            addGraphicsObject(&plsSpinBox);
+            addGraphicsObject(&plsSpinText);
+        }
     }
 
     void update() {
@@ -35,8 +37,10 @@ public:
         UISubsystem::fixAngle(&front.startAngle);
         front.endAngle = front.startAngle + INNER_ARC_LEN;
 
-        //side arc is concave, so angle is flipped
+        
         side.setHidden(!drivetrain->isPeeking);
+#if defined(INFANTRY)
+        //side arc is concave (because flyswatters), so angle is flipped
         side.startAngle = (drivetrain->isPeekingLeft ? 90 : 270) + heading - INNER_ARC_LEN / 2;
         UISubsystem::fixAngle(&side.startAngle);
         side.endAngle = side.startAngle + INNER_ARC_LEN;
@@ -45,14 +49,26 @@ public:
         float angleRadians = (drivetrain->isPeekingLeft ? PI/2 : 3*PI/2) + gimbal->getYawEncoderValue();
         side.cx = front.cx - 2*side.width*sin(angleRadians);
         side.cy = front.cy - 2*side.width*cos(angleRadians);
+#else
+        // side arc is like the front one, convex
+        side.startAngle = (drivetrain->isPeekingLeft ? 270 : 90) + heading - INNER_ARC_LEN / 2;
+        UISubsystem::fixAngle(&side.startAngle);
+        side.endAngle = side.startAngle + INNER_ARC_LEN;
+#endif
+        
 
         //set side color to pink if on red team, cyan if on blue team
         if (drivers->refSerial.getRefSerialReceivingData()) {
             side.color = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId) ? UISubsystem::Color::CYAN : UISubsystem::Color::PINK;
         }
 
-        if(showPlsSpin)
-            plsSpin.setHidden(!drivetrain->isPeeking && !drivetrain->isBeyblading);
+        if(showPlsSpin){
+            plsSpinBox.setHidden(!drivetrain->isPeeking && !drivetrain->isBeyblading);
+
+            plsSpinText.x = UISubsystem::HALF_SCREEN_WIDTH - plsSpinText.width/2;
+            plsSpinBox.x1 = plsSpinText.x-TEXT_THICKNESS;
+            plsSpinBox.x2 = plsSpinText.x + plsSpinText.width+TEXT_THICKNESS*2;
+        }
     }
 
 
@@ -76,9 +92,8 @@ private:
 
     static constexpr uint16_t TEXT_HEIGHT = 60;
     static constexpr uint16_t TEXT_Y = 830;
-    static constexpr uint16_t TEXT_WIDTH = 400; //only for rectangle pls spin
     static constexpr uint16_t TEXT_THICKNESS = 5;
-    // StringGraphic plsSpin{UISubsystem::Color::CYAN, "Pls spin", UISubsystem::HALF_SCREEN_WIDTH, TEXT_Y, TEXT_HEIGHT, TEXT_THICKNESS};
-    UnfilledRectangle plsSpin{UISubsystem::Color::PINK, UISubsystem::HALF_SCREEN_WIDTH - TEXT_WIDTH/2, TEXT_Y, TEXT_WIDTH, TEXT_HEIGHT, TEXT_THICKNESS};
+    StringGraphic plsSpinText{UISubsystem::Color::PINK, "Pls spin", 0, TEXT_Y, TEXT_HEIGHT, TEXT_THICKNESS};
+    Line plsSpinBox{UISubsystem::Color::PINK, 0, TEXT_Y+TEXT_HEIGHT/2, 0, TEXT_Y+TEXT_HEIGHT/2, TEXT_HEIGHT+TEXT_THICKNESS*2};
 
 };

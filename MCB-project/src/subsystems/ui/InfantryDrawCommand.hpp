@@ -22,7 +22,6 @@
 #include "objects/Countdown.hpp"
 #include "objects/LinearVelocityIndicator.hpp"
 #include "objects/ImuRecalibrationIndicator.hpp"
-#include "objects/ThornbotsLogo.hpp"
 #include "drivers.hpp"
 
 namespace commands {
@@ -52,7 +51,6 @@ public:
         addGraphicsObject(&countdown);
         addGraphicsObject(&velo);
         addGraphicsObject(&recal);
-        addGraphicsObject(&logo);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -92,16 +90,15 @@ private:
     // add top level graphics objects here and in the constructor
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
-    ChassisOrientationIndicator orient{false, drivers, gimbal, drivetrain};
+    ChassisOrientationIndicator orient{true, drivers, gimbal, drivetrain};
     PeekingLines peek{drivetrain, gimbal};
     HopperLidIndicator lid{servo};
-    Reticle reticle{gimbal};
+    Reticle reticle{gimbal, indexer};
     HitRing ring{drivers, gimbal};
     PredictedRemainingShotsIndicator remain{drivers, indexer};
     AllRobotHealthNumbers numbers{drivers};
     Countdown countdown{drivers};
     LinearVelocityIndicator velo{drivetrain};
     ImuRecalibrationIndicator recal{drivers};
-    ThornbotsLogo logo{};
 };
 }  // namespace commands

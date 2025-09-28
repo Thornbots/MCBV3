@@ -60,26 +60,34 @@ bool UISubsystem::run() { //run has to do with prototheads
     // inside of a protothread, you aren't able to make new variables, errors with: 'jump to case label'
     // so make new variables in the hpp and set their values here
 
+
+    // drivers->leds.set(tap::gpio::Leds::Red, false);
+    // drivers->leds.set(tap::gpio::Leds::Green, false);
+
     PT_WAIT_UNTIL(drivers->refSerial.getRefSerialReceivingData());
     
     // clear any layers with state 2
     for (innerGraphicsIndex = 0; innerGraphicsIndex < NUM_LAYERS; innerGraphicsIndex++) {
-        if(layersState[innerGraphicsIndex]==2)
+        if(layersState[innerGraphicsIndex]==2){
             break; 
+        }
     } //loop ends when the layer at innerGraphicsIndex needs cleared, or all layers were checked and all were clear
 
     if(innerGraphicsIndex < NUM_LAYERS){
-        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 0));
-        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageDel));
+        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, innerGraphicsIndex));
+        delayTimeout.restart(2 * RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageDel));
         PT_WAIT_UNTIL(delayTimeout.execute());
         if (topLevelContainer){
             topLevelContainer->layerHasBeenCleared(innerGraphicsIndex);
         }
+        layersState[innerGraphicsIndex]=0;
 
         // maybe some object saved from the last iteration just got removed, we don't want to accidentally draw it
         // could check if the 1 or 2 saved objects were on a cleared layer, but it probably isn't worth it
         // clearing layers probably doesn't happen enough, those objects will be visited on the next iteration
         graphicsIndex=0; 
+
+
     } else {
         needToClearLayers = false;
     }
@@ -102,21 +110,16 @@ bool UISubsystem::run() { //run has to do with prototheads
             nextGraphicsObject->configCharacterData(&messageCharacter);
             if(layersState[messageCharacter.graphicData.layer]==0) layersState[messageCharacter.graphicData.layer]=1;
             PT_CALL(refSerialTransmitter.sendGraphic(&messageCharacter));
-            delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+            delayTimeout.restart(2 * RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
             PT_WAIT_UNTIL(delayTimeout.execute());
         } else {
             // if it isn't a string, add it to the array and see if it is full
+            nextGraphicsObject->markToDraw(); //mark the object as 'to draw' to prevent it from being gotten again from the container
             objectsToSend[graphicsIndex++] = nextGraphicsObject;
             if (graphicsIndex == TARGET_NUM_OBJECTS) break; //if full, stop trying to find more
-
-            //mark the object as 'to draw' to prevent it from being gotten again from the container
-            objectsToSend[0]->markToDraw();
         }
     }
     
-
-    // drivers->leds.set(tap::gpio::Leds::Red, graphicsIndex == 1);
-    // drivers->leds.set(tap::gpio::Leds::Green, graphicsIndex == 7);
 
     numToSend = graphicsIndex;
     if(numToSend==3 || numToSend==4){
@@ -129,31 +132,34 @@ bool UISubsystem::run() { //run has to do with prototheads
         numToSend=5;
     }
 
+    // drivers->leds.set(tap::gpio::Leds::Red, graphicsIndex == 1);
+    // drivers->leds.set(tap::gpio::Leds::Green, graphicsIndex == 7);
+
     // so we have up to 7 objects to update. Would do a switch case but might confict with protothread's switch case
     // might be able to do something silly with (void) pointers
     if (numToSend == 1) {
         objectsToSend[0]->configGraphicData(&message1.graphicData);
-        if(layersState[messageCharacter.graphicData.layer]==0) layersState[messageCharacter.graphicData.layer]=1;
+        if(layersState[message1.graphicData.layer]==0) layersState[message1.graphicData.layer]=1;
         PT_CALL(refSerialTransmitter.sendGraphic(&message1));
         delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message1));
     } else if (numToSend == 2) {
         for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) {
             objectsToSend[innerGraphicsIndex]->configGraphicData(&message2.graphicData[innerGraphicsIndex]);
-            if(layersState[messageCharacter.graphicData.layer]==0) layersState[messageCharacter.graphicData.layer]=1;
+            if(layersState[message2.graphicData[innerGraphicsIndex].layer]==0) layersState[message2.graphicData[innerGraphicsIndex].layer]=1;
         }
         PT_CALL(refSerialTransmitter.sendGraphic(&message2));
         delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message2));
     } else if (numToSend == 5) {
         for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) {
             objectsToSend[innerGraphicsIndex]->configGraphicData(&message5.graphicData[innerGraphicsIndex]);
-            if(layersState[messageCharacter.graphicData.layer]==0) layersState[messageCharacter.graphicData.layer]=1;
+            if(layersState[message5.graphicData[innerGraphicsIndex].layer]==0) layersState[message5.graphicData[innerGraphicsIndex].layer]=1;
         }
         PT_CALL(refSerialTransmitter.sendGraphic(&message5));
         delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message5));
     } else if (numToSend == 7) {
         for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) {
             objectsToSend[innerGraphicsIndex]->configGraphicData(&message7.graphicData[innerGraphicsIndex]);
-            if(layersState[messageCharacter.graphicData.layer]==0) layersState[messageCharacter.graphicData.layer]=1;
+            if(layersState[message7.graphicData[innerGraphicsIndex].layer]==0) layersState[message7.graphicData[innerGraphicsIndex].layer]=1;
         }
         PT_CALL(refSerialTransmitter.sendGraphic(&message7));
         delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message7));
@@ -169,6 +175,8 @@ bool UISubsystem::run() { //run has to do with prototheads
     } else { //don't save any
         graphicsIndex = 0;
     }
+
+    
 
     //if we sent something, wait for it so we don't lose packets
     if(numToSend>0)

@@ -403,7 +403,10 @@ public:
         setString(newString);
     }
 
-    void setString(const char* newString) { strncpy(string, newString, STRING_SIZE); }
+    void setString(const char* newString) { 
+        strncpy(string, newString, STRING_SIZE);
+        calculateNumbers();
+    }
 
     void configCharacterData(RefSerialData::Tx::GraphicCharacterMessage* characterData) final {
         setLen(stringLen(string));

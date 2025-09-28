@@ -29,7 +29,7 @@ public:
             int16_t shotsBought = robotData.turret.bulletsRemaining17;
             #endif
 
-            float shotsShot = index->getTotalNumBallsShot() + shotsAtLastReload + 0.2; //add 0.2 for wiggleroom from unjam
+            float shotsShot = index->getTotalNumBallsShot() - shotsAtLastReload + 0.2; //add 0.2 for wiggleroom from unjam
 
 
             float maxShots = FILLED_NUM_SHOTS;

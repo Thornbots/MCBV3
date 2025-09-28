@@ -41,6 +41,7 @@ public:
             // if someone doesn't check if it did this protects trying to send -1 to the server
             color);
         wasHidden = isHidden;
+        prevLayer = layer;
         finishConfigGraphicData(graphicData);
     }
 
