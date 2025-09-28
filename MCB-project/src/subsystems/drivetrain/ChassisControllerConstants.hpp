@@ -142,7 +142,7 @@ constexpr float maxTorqueZ = 30;
 
 constexpr float TREQSCALE = 0.5;
 constexpr float LATENCY = 0.008;  // latency s
-constexpr float DT = 0.002;       // DT in s
+constexpr float DT = 0.001;       // DT in s
 
 //  Inverse dynamics gains from fundamental system  constexprants
 constexpr float K_V = KB;              // Velocity gain (back EMF  constexprant)

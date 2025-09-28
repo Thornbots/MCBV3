@@ -48,7 +48,8 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->djiMotorTerminalSerialHandler.init();
     
     drivers->leds.set(tap::gpio::Leds::Red, false);
-    drivers->bmi088.initialize(500, 0.0f, 0.0f);
+    drivers->bmi088.initialize(1000, 0.0f, 0.000f);
+    drivers->bmi088.setTargetTemperature(35.0f);
     drivers->bmi088.setCalibrationSamples(4000);
     drivers->bmi088.requestCalibration();
     drivers->recal.setIsFirstCalibrating();
@@ -81,7 +82,7 @@ int main() {
 
     control.initialize();
 
-    tap::arch::PeriodicMilliTimer refreshTimer(2);
+    tap::arch::PeriodicMilliTimer refreshTimer(1);
     tap::arch::MilliTimeout waitForRobotToStopMoving{};
     waitForRobotToStopMoving.stop();
 
@@ -139,7 +140,7 @@ int main() {
             // drivers.terminalSerial.update(); 
         }
         // prevent looping too fast
-        modm::delay_us(10);
+        modm::delay_us(5);
     }
     
     return 0;

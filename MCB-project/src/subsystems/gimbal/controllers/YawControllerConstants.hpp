@@ -1,6 +1,6 @@
 constexpr float VOLT_MAX = 24;     // V
 constexpr float lat = .008;
-constexpr float DT = .002;
+constexpr float DT = .001;
 constexpr int Q_SIZE = lat / DT;  // make this fancy later
 
 #if defined(HERO)
