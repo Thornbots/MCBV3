@@ -19,7 +19,14 @@ void DoubleIndexerSubsystem::refresh() {
 }
 
 float DoubleIndexerSubsystem::indexAtRate(float ballsPerSecond){
-    return IndexerSubsystem::indexAtRate(ballsPerSecond/2) + other.indexAtRate(ballsPerSecond/2);
+    float motor1NumBallsShot = IndexerSubsystem::getTotalNumBallsShot();
+    float motor2NumBallsShot = other.getTotalNumBallsShot();
+    // error represents the shortest path to the desired phase shift
+    float error = fmod(motor1NumBallsShot - motor2NumBallsShot, 1.0) - 0.5;
+    // set correctionFactor to a multiple of error, or 0 if ballsPerSecond <= 0
+    float correctionFactor = ballsPerSecond == 0.0 ? 0.0 : 5.0 * error;
+
+    return IndexerSubsystem::indexAtRate(ballsPerSecond/2 - correctionFactor) + other.indexAtRate(ballsPerSecond/2 + correctionFactor);
 }
 
 void DoubleIndexerSubsystem::indexAtMaxRate(){
