@@ -6,6 +6,8 @@
 
 #include "drivers.hpp"
 
+float imuTemp = 0;
+
 // Place any sort of input/output initialization here. For example, place
 // serial init stuff here.
 static void initializeIo(src::Drivers *drivers) {
@@ -38,15 +40,15 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->refSerial.initialize();
 
     drivers->i2c.initialize();
-    //try waiting 9 clock pulses? 
+    //try waiting 9 clock pulses?
     drivers->i2c.refresh();
     drivers->uart.initialize();
 
 
-    // drivers->terminalSerial.initialize(); //interferes with jetson because uses the same uart port. Previously believed to be necessary for ui to work, turns out it isn't 
+    // drivers->terminalSerial.initialize(); //interferes with jetson because uses the same uart port. Previously believed to be necessary for ui to work, turns out it isn't
     drivers->schedulerTerminalHandler.init();
     drivers->djiMotorTerminalSerialHandler.init();
-    
+
     drivers->leds.set(tap::gpio::Leds::Red, false);
     drivers->bmi088.initialize(1000, 0.0f, 0.000f);
     drivers->bmi088.setTargetTemperature(35.0f);
@@ -54,7 +56,7 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->bmi088.requestCalibration();
     drivers->recal.setIsFirstCalibrating();
 
-
+    imuTemp = drivers->bmi088.getTemp();
 }
 
 // Anything that you would like to be called place here. It will be called
@@ -95,9 +97,9 @@ int main() {
         if (refreshTimer.execute()) {
             // tap::buzzer::playNote(&(drivers.pwm), 493);
             bool goingToRecalibrate = drivers.recal.isForcingRecalibration() ||
-                    (drivers.recal.isRequestingRecalibration() && 
-                    drivers.refSerial.getRefSerialReceivingData() && 
-                    drivers.refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::SETUP && 
+                    (drivers.recal.isRequestingRecalibration() &&
+                    drivers.refSerial.getRefSerialReceivingData() &&
+                    drivers.refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::SETUP &&
                     drivers.refSerial.getGameData().stageTimeRemaining < 15);
             if(goingToRecalibrate){
                 control.stopForImuRecal();
@@ -137,12 +139,12 @@ int main() {
 
             drivers.djiMotorTxHandler.encodeAndSendCanData();
 
-            // drivers.terminalSerial.update(); 
+            // drivers.terminalSerial.update();
         }
         // prevent looping too fast
         modm::delay_us(5);
     }
-    
+
     return 0;
 }
 
