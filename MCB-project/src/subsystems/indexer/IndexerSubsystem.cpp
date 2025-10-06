@@ -27,6 +27,7 @@ void IndexerSubsystem::initialize() {
 void IndexerSubsystem::refresh() {
     if (!motorIndexer->isMotorOnline()) {
         needsToBeHomed = true;
+        homeTimeoutCounter = 0;
     } else if (needsToBeHomed) {
         homeIndexer();
     } else if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower&RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER)
@@ -124,8 +125,9 @@ float IndexerSubsystem::getActualBallsPerSecond() {
 }
 
 void IndexerSubsystem::homeIndexer() {
-    motorIndexer->setDesiredOutput(-500);
-    if (abs(motorIndexer->getTorque()) > 800) {
+    homeTimeoutCounter += 1;
+    motorIndexer->setDesiredOutput(-2000);
+    if (abs(motorIndexer->getTorque()) > 2000 || homeTimeoutCounter >= HOME_TIMEOUT_MAX) {
         needsToBeHomed = false;
         motorIndexer->resetEncoderValue();
     };

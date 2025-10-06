@@ -35,6 +35,8 @@ bool isAutoUnjamming = false;
 
 private:
 bool needsToBeHomed = true;
+int homeTimeoutCounter = 0;
+const int HOME_TIMEOUT_MAX = 500;
 
 public:  // Public Methods
 
