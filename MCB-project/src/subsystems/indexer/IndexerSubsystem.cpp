@@ -119,4 +119,12 @@ float IndexerSubsystem::getActualBallsPerSecond() {
     return motorIndexer->getShaftRPM() / (60.0f * revPerBall);
 }
 
+bool IndexerSubsystem::isProjectileAtBeam() {
+    return true;
+}
+
+bool IndexerSubsystem::isIndexOnline() {
+    return motorIndexer->isMotorOnline();
+}
+
 } //namespace subsystems

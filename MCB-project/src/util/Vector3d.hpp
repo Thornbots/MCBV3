@@ -105,10 +105,4 @@ public:
         }
         return *this;
     }
-
-    /** vtm space is defined as: vtm at origin, positive x is to the right, positive y is forward, positive z is above 
-        these numbers are from aruw, projection_utils.hpp*/ 
-    Vector2d vtmSpaceToScreenSpace() const {
-        return Vector2d(923.4504870*x/y + 960, 951.2135278*z/y + 540);
-    }
 };

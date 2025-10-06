@@ -2,7 +2,7 @@
 
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/SimpleGraphicsObjects.hpp" 
+#include "util/ui/AtomicGraphicsObjects.hpp" 
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
 #include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
@@ -22,45 +22,57 @@ public:
         addGraphicsObject(&front);
         addGraphicsObject(&side);
         
-        if(showPlsSpin)
-            addGraphicsObject(&plsSpin);
+        if(showPlsSpin){
+            addGraphicsObject(&plsSpinBox);
+            addGraphicsObject(&plsSpinText);
+        }
     }
 
     void update() {
-        uint16_t heading = static_cast<uint16_t>(gimbal->getYawEncoderValue() * YAW_MULT + YAW_OFFSET);
+        uint16_t heading = static_cast<uint16_t>(gimbal->getYawEncoderValue() * 180 / PI + YAW_OFFSET);
         // if the gimbal compared to the drivetrain (from the encoder) is facing forward, heading would be 0, if facing right, heading would be 90
 
         //front arc is convex
         front.startAngle = heading - INNER_ARC_LEN / 2;
-        fixAngle(&front.startAngle);
+        UISubsystem::fixAngle(&front.startAngle);
         front.endAngle = front.startAngle + INNER_ARC_LEN;
 
-        //side arc is concave, so angle is flipped
+        
         side.setHidden(!drivetrain->isPeeking);
+#if defined(INFANTRY)
+        //side arc is concave (because flyswatters), so angle is flipped
         side.startAngle = (drivetrain->isPeekingLeft ? 90 : 270) + heading - INNER_ARC_LEN / 2;
-        fixAngle(&side.startAngle);
+        UISubsystem::fixAngle(&side.startAngle);
         side.endAngle = side.startAngle + INNER_ARC_LEN;
 
         // and xy location isn't the center
         float angleRadians = (drivetrain->isPeekingLeft ? PI/2 : 3*PI/2) + gimbal->getYawEncoderValue();
         side.cx = front.cx - 2*side.width*sin(angleRadians);
         side.cy = front.cy - 2*side.width*cos(angleRadians);
+#else
+        // side arc is like the front one, convex
+        side.startAngle = (drivetrain->isPeekingLeft ? 270 : 90) + heading - INNER_ARC_LEN / 2;
+        UISubsystem::fixAngle(&side.startAngle);
+        side.endAngle = side.startAngle + INNER_ARC_LEN;
+#endif
+        
 
         //set side color to pink if on red team, cyan if on blue team
         if (drivers->refSerial.getRefSerialReceivingData()) {
             side.color = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId) ? UISubsystem::Color::CYAN : UISubsystem::Color::PINK;
         }
 
-        if(showPlsSpin)
-            plsSpin.setHidden(!drivetrain->isPeeking && !drivetrain->isBeyblading);
+        if(showPlsSpin){
+            plsSpinBox.setHidden(!drivetrain->isPeeking && !drivetrain->isBeyblading);
+
+            plsSpinText.x = UISubsystem::HALF_SCREEN_WIDTH - plsSpinText.width/2;
+            plsSpinBox.x1 = plsSpinText.x-TEXT_THICKNESS;
+            plsSpinBox.x2 = plsSpinText.x + plsSpinText.width+TEXT_THICKNESS*2;
+        }
     }
 
 
-    static void fixAngle(uint16_t* a) {
-        *a %= 360;  // set a to the remainder after dividing by 360, so if it was 361 it would now be 1
-    }
-
-    static constexpr float YAW_MULT = 180 / PI;  // turns radians from gimbal's getYawEncoderValue into degrees, might need to be negative
+    
     static constexpr float YAW_OFFSET = 2*360;     // degrees, 0 from the yaw might not be top on the screen, also needs to make sure it is positive because we are using uints
 
 private:
@@ -80,9 +92,8 @@ private:
 
     static constexpr uint16_t TEXT_HEIGHT = 60;
     static constexpr uint16_t TEXT_Y = 830;
-    static constexpr uint16_t TEXT_WIDTH = 400; //only for rectangle pls spin
     static constexpr uint16_t TEXT_THICKNESS = 5;
-    // StringGraphic plsSpin{UISubsystem::Color::CYAN, "Pls spin", UISubsystem::HALF_SCREEN_WIDTH, TEXT_Y, TEXT_HEIGHT, TEXT_THICKNESS};
-    UnfilledRectangle plsSpin{UISubsystem::Color::PINK, UISubsystem::HALF_SCREEN_WIDTH - TEXT_WIDTH/2, TEXT_Y, TEXT_WIDTH, TEXT_HEIGHT, TEXT_THICKNESS};
+    StringGraphic plsSpinText{UISubsystem::Color::PINK, "Pls spin", 0, TEXT_Y, TEXT_HEIGHT, TEXT_THICKNESS};
+    Line plsSpinBox{UISubsystem::Color::PINK, 0, TEXT_Y+TEXT_HEIGHT/2, 0, TEXT_Y+TEXT_HEIGHT/2, TEXT_HEIGHT+TEXT_THICKNESS*2};
 
 };
