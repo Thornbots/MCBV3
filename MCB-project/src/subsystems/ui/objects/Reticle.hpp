@@ -100,7 +100,9 @@ public:
         verticalLine.x2 = UISubsystem::HALF_SCREEN_WIDTH;
         if(canShoot){
             verticalLine.color = UISubsystem::Color::WHITE;
+            verticalLine.thickness = 1;
         } else {
+            verticalLine.thickness = 10;
             verticalLine.x1+=DIAGONAL_OFFSET;
             verticalLine.x2-=DIAGONAL_OFFSET;
         }
@@ -192,7 +194,7 @@ public:
 private:
     GimbalSubsystem* gimbal;
     IndexerSubsystem* index;
-    
+
     Vector3d panelEdges[4] = {
         {PANEL_WIDTH / 2, 0, 0},                                                                     // right
         {-PANEL_WIDTH / 2, 0, 0},                                                                    // left
@@ -207,7 +209,7 @@ private:
 
     GraphicsContainer rectsContainer{};
     GraphicsContainer linesContainer{};
-    
+
     static constexpr int NUM_LINES = 4;  // enough to support trapezoids
     Line lines[NUM_THINGS][NUM_LINES];   // not all are used in every mode
     UnfilledRectangle rects[NUM_THINGS];

@@ -15,9 +15,13 @@ public:
             numbers[i].height = LINE_HEIGHT;
             numbers[i].thickness = 3;
             this->addGraphicsObject(numbers + i);  // pointer math
+
+            expirationTimeouts[i].stop();        // timers might be initialized started, we need them to be stopped until we get hit
+            canTakeDamage[i] = false;
         }
 
     }
+
 
     void update() {
 
@@ -34,6 +38,7 @@ public:
 
             //if in countdown, remove numbers because their robot icons disappear
             if(drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN){
+
                 uint16_t x_i = INITIAL_X_OFFSET;
                 uint16_t x_j = UISubsystem::SCREEN_WIDTH - INITIAL_X_OFFSET;
                 for(int i=0; i<3; i++){
@@ -49,9 +54,11 @@ public:
                     centerXs[j] = x_j;
                     if(!iIsHidden){
                         x_i+=SUBSEQUENT_X_OFFSET;
+                        canTakeDamage[i] = true;
                     }
                     if(!jIsHidden){
                         x_j-=SUBSEQUENT_X_OFFSET;
+                        canTakeDamage[j] = true;
                     }
                 }
             }
@@ -60,13 +67,13 @@ public:
             for(int i=0; i<3; i++){
                 numbers[i].color = UISubsystem::Color::PINK;
                 numbers[i+3].color = UISubsystem::Color::CYAN;
-            }            
+            }
 
             for(int i=0; i<6; i++){
                 //highlight own robot
                 if(drivers->refSerial.getRobotData().robotId == ids[i])
                     numbers[i].color = UISubsystem::Color::RED_AND_BLUE;
-                
+
                 //highlight robots taking damage by turning the number white and doubling the size for one frame
                 // if(numbers[i].integerChanged()){
                 //     numbers[i].color = UISubsystem::Color::WHITE;
@@ -76,10 +83,40 @@ public:
                 //     numbers[i].y = Y_POSITION;
                 //     numbers[i].height = LINE_HEIGHT;
                 // }
-                 
+
                 //calulate width and center the numbers
                 numbers[i].calculateNumbers();
                 numbers[i].x = centerXs[i] - numbers[i].width/2;
+
+
+                // make dead robots black, invinible robots green
+                if(numbers[i].integer==0 && canTakeDamage[i]){//if dead and don't know about it yet
+                    canTakeDamage[i] = false;
+                }
+
+
+
+                // done being invincible
+                if (expirationTimeouts[i].isExpired()) {
+                    expirationTimeouts[i].stop();
+                    canTakeDamage[i] = true;
+                }
+
+                if(!canTakeDamage[i]){
+                    if(numbers[i].integer==0){
+                        numbers[i].color = UISubsystem::Color::BLACK;
+                    } else {
+                        if(expirationTimeouts[i].isStopped()) {
+                            // start of invicibility
+                            expirationTimeouts[i].restart(INVINICIBLE_TIME);
+                        } else {
+                            // still invincible
+                            numbers[i].color = UISubsystem::Color::GREEN;
+                        }
+                    }
+                }
+
+
             }
         }
     }
@@ -93,7 +130,11 @@ private:
     static constexpr uint16_t INITIAL_X_OFFSET = 180; //pixels, distance from left or right edge to center of number
     static constexpr uint16_t SUBSEQUENT_X_OFFSET = 120; //pixels, distance between centers of numbers
 
+    static constexpr uint32_t INVINICIBLE_TIME = 10000; // then next it is invinicible for 10 seconds
+
     //red sentry, red standard3, red hero, blue hero, blue standard3, blue sentry
+    tap::arch::MilliTimeout expirationTimeouts[6];  // for knowing how long ago a robot died and when it will be able to be shot again
+    bool canTakeDamage[6]; //starts at 0
     RefSerialData::RobotId ids[6] = {RefSerialData::RobotId::RED_SENTINEL, RefSerialData::RobotId::RED_SOLDIER_1, RefSerialData::RobotId::RED_HERO, RefSerialData::RobotId::BLUE_HERO, RefSerialData::RobotId::BLUE_SOLDIER_1, RefSerialData::RobotId::BLUE_SENTINEL};
     IntegerGraphic numbers[6];
 
