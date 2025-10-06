@@ -33,6 +33,9 @@ int32_t indexerVoltage = 0;
 tap::arch::MilliTimeout timeout;
 bool isAutoUnjamming = false;
 
+private:
+bool needsToBeHomed = true;
+
 public:  // Public Methods
 
 IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index);
@@ -61,6 +64,8 @@ virtual float getBallsPerSecond();
 
 virtual float getActualBallsPerSecond();
 
+void homeIndexer();
+
 private:  // Private Methods
 
 void setTargetMotorRPM(int targetMotorRPM);
@@ -68,7 +73,6 @@ void setTargetMotorRPM(int targetMotorRPM);
 protected: 
 
 bool doAutoUnjam(float inputBallsPerSecond);
-
 
 
 };

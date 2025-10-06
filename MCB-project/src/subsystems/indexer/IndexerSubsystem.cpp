@@ -25,7 +25,11 @@ void IndexerSubsystem::initialize() {
 }
 
 void IndexerSubsystem::refresh() {
-    if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower&RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER)
+    if (!motorIndexer->isMotorOnline()) {
+        needsToBeHomed = true;
+    } else if (needsToBeHomed) {
+        homeIndexer();
+    } else if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower&RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER)
     {
         motorIndexer->setDesiredOutput(indexerVoltage);
     }
@@ -117,6 +121,14 @@ float IndexerSubsystem::getBallsPerSecond() {
 
 float IndexerSubsystem::getActualBallsPerSecond() {
     return motorIndexer->getShaftRPM() / (60.0f * revPerBall);
+}
+
+void IndexerSubsystem::homeIndexer() {
+    motorIndexer->setDesiredOutput(-500);
+    if (abs(motorIndexer->getTorque()) > 800) {
+        needsToBeHomed = false;
+        motorIndexer->resetEncoderValue();
+    };
 }
 
 } //namespace subsystems
