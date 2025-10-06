@@ -125,12 +125,17 @@ float IndexerSubsystem::getActualBallsPerSecond() {
 }
 
 void IndexerSubsystem::homeIndexer() {
+    //we only want this on sentry rn
+    #if defined(SENTRY)
     homeTimeoutCounter += 1;
     motorIndexer->setDesiredOutput(-2000);
     if (abs(motorIndexer->getTorque()) > 2000 || homeTimeoutCounter >= HOME_TIMEOUT_MAX) {
         needsToBeHomed = false;
         motorIndexer->resetEncoderValue();
     };
+    #else
+    needsToBeHomed = false;
+    #endif
 }
 
 } //namespace subsystems
