@@ -6,7 +6,7 @@
 
 #include "drivers.hpp"
 
-float imuTemp = 0;
+float imuTemp;
 
 // Place any sort of input/output initialization here. For example, place
 // serial init stuff here.
@@ -56,7 +56,7 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->bmi088.requestCalibration();
     drivers->recal.setIsFirstCalibrating();
 
-    imuTemp = drivers->bmi088.getTemp();
+    
 }
 
 // Anything that you would like to be called place here. It will be called
@@ -95,6 +95,7 @@ int main() {
         drivers.uart.updateSerial();
 
         if (refreshTimer.execute()) {
+            imuTemp = drivers.bmi088.getTemp();
             // tap::buzzer::playNote(&(drivers.pwm), 493);
             bool goingToRecalibrate = drivers.recal.isForcingRecalibration() ||
                     (drivers.recal.isRequestingRecalibration() &&

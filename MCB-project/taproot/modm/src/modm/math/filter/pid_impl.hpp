@@ -68,20 +68,33 @@ modm::Pid<T, ScaleFactor>::update(const T& input, bool externalLimitation)
 {
 	bool limitation = externalLimitation;
 
-	T tempErrorSum = errorSum + input;
-	if (tempErrorSum > this->parameter.maxErrorSum) {
-		tempErrorSum = this->parameter.maxErrorSum;
-	}
-	else if (tempErrorSum < -this->parameter.maxErrorSum) {
-		tempErrorSum = -this->parameter.maxErrorSum;
-	}
-
+	//calculate PID output without integrating
+	T tempErrorSum = errorSum;
 	WideType tmp = 0;
 	tmp += static_cast<WideType>(this->parameter.kp) * input;
 	tmp += static_cast<WideType>(this->parameter.ki) * (tempErrorSum);
 	tmp += static_cast<WideType>(this->parameter.kd) * (input - this->lastError);
 
-	tmp = tmp / ScaleFactor;
+	tmp = tmp / ScaleFactor; //output
+
+	//anti-windup. Skip integrating if output is saturatied and integration would saturate it more
+	//0.85 is just a safe number to disable integration at. Can be made into a tunable parameter
+	if(!(tmp >= 0.85 * this->parameter.maxOutput && input > 0) && !(tmp <= -0.85 * this->parameter.maxOutput && input < 0)) {
+		tempErrorSum += input;
+		if (tempErrorSum > this->parameter.maxErrorSum) {
+			tempErrorSum = this->parameter.maxErrorSum;
+		}
+		else if (tempErrorSum < -this->parameter.maxErrorSum) {
+			tempErrorSum = -this->parameter.maxErrorSum;
+		}
+
+		//recalculate after integrating
+		tmp = 0;
+		tmp += static_cast<WideType>(this->parameter.kp) * input;
+		tmp += static_cast<WideType>(this->parameter.ki) * (tempErrorSum);
+		tmp += static_cast<WideType>(this->parameter.kd) * (input - this->lastError);
+		tmp = tmp / ScaleFactor;
+	}
 
 	if (tmp > this->parameter.maxOutput) {
 		this->output = this->parameter.maxOutput;
