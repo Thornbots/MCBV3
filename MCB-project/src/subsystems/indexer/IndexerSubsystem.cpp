@@ -4,7 +4,7 @@ namespace subsystems {
 using namespace tap::communication::serial;
     
 IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index)
-    : IndexerSubsystem(drivers, index, ShotCounter::BarrelType::TURRET_17MM_1){}
+    : IndexerSubsystem(drivers, index, ShotCounter::BarrelType::TURRET_17MM_EITHER){}
 
 IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, ShotCounter::BarrelType barrel)
     : IndexerSubsystem(drivers, index, barrel, REV_PER_BALL) {}
@@ -117,6 +117,14 @@ float IndexerSubsystem::getBallsPerSecond() {
 
 float IndexerSubsystem::getActualBallsPerSecond() {
     return motorIndexer->getShaftRPM() / (60.0f * revPerBall);
+}
+
+bool IndexerSubsystem::isProjectileAtBeam() {
+    return true;
+}
+
+bool IndexerSubsystem::isIndexOnline() {
+    return motorIndexer->isMotorOnline();
 }
 
 } //namespace subsystems

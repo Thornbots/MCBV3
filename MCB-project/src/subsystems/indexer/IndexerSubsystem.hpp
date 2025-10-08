@@ -60,6 +60,12 @@ virtual void resetBallsCounter();
 virtual float getBallsPerSecond();
 
 virtual float getActualBallsPerSecond();
+    
+// non hero always returns true
+virtual bool isProjectileAtBeam();
+
+virtual bool isIndexOnline();
+
 
 private:  // Private Methods
 

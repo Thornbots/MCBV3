@@ -10,18 +10,18 @@
 #include "subsystems/servo/ServoSubsystem.hpp"
 
 #include "util/ui/GraphicsContainer.hpp"
-#include "ChassisOrientationIndicator.hpp"
-#include "LaneAssistLines.hpp"
-#include "Reticle.hpp"
-#include "SupercapChargeIndicator.hpp"
-#include "PeekingLines.hpp"
-#include "HopperLidIndicator.hpp"
-#include "HitRing.hpp"
-#include "PredictedRemainingShotsIndicator.hpp"
-#include "AllRobotHealthNumbers.hpp"
-#include "Countdown.hpp"
-#include "LinearVelocityIndicator.hpp"
-#include "ImuRecalibrationIndicator.hpp"
+#include "objects/ChassisOrientationIndicator.hpp"
+#include "objects/LaneAssistLines.hpp"
+#include "objects/Reticle.hpp"
+#include "objects/SupercapChargeIndicator.hpp"
+#include "objects/PeekingLines.hpp"
+#include "objects/HopperLidIndicator.hpp"
+#include "objects/HitRing.hpp"
+#include "objects/PredictedRemainingShotsIndicator.hpp"
+#include "objects/AllRobotHealthNumbers.hpp"
+#include "objects/Countdown.hpp"
+#include "objects/LinearVelocityIndicator.hpp"
+#include "objects/ImuRecalibrationIndicator.hpp"
 #include "drivers.hpp"
 
 namespace commands {
@@ -68,6 +68,7 @@ public:
         countdown.update();
         velo.update();
         recal.update();
+        // logo doesn't need updating
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -89,10 +90,10 @@ private:
     // add top level graphics objects here and in the constructor
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
-    ChassisOrientationIndicator orient{false, drivers, gimbal, drivetrain};
+    ChassisOrientationIndicator orient{true, drivers, gimbal, drivetrain};
     PeekingLines peek{drivetrain, gimbal};
     HopperLidIndicator lid{servo};
-    Reticle reticle{gimbal};
+    Reticle reticle{gimbal, indexer};
     HitRing ring{drivers, gimbal};
     PredictedRemainingShotsIndicator remain{drivers, indexer};
     AllRobotHealthNumbers numbers{drivers};

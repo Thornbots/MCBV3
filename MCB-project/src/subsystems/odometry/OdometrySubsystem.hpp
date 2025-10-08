@@ -11,6 +11,7 @@
 
 #include "controllers/OdoController.hpp"
 #include "drivers.hpp"
+#include "util/Vector2d.hpp"
 
 
 
@@ -36,6 +37,7 @@ private:  // Private Variables
     std::random_device rd;
     std::mt19937 gen;
     std::uniform_int_distribution<int> distOdo;
+    Vector2d odoOffset = Vector2d(0, 0);    
 
 public:  // Public Methods
     OdometrySubsystem(src::Drivers* drivers, tap::motor::DjiMotor* odo);
@@ -71,6 +73,8 @@ public:  // Public Methods
     float getOdoEncoderValue();
 
     float getOdoVel();
+
+    // void setOffset(Vector2d offset);
 
 private:  // Private Methods
     int getOdoVoltage(float driveTrainAngularVelocity, float odoAngleRelativeWorld, float odoAngularVelocity, float desiredAngleWorld, float inputVel, float dt);
