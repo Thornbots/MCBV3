@@ -13,9 +13,9 @@ constexpr float KT = 0.4414;                                       // N-m/A
 constexpr float RA = .5592;                                        // ohm
 constexpr float RATIO = 54.0 / 24.0;                               // unitless
                                                                    // Position controller  constexprants
-constexpr float KP = 20;                                           // 10.5;  // sec^-1
+constexpr float KP = 15;                                           // 10.5;  // sec^-1
 constexpr float THETA_DOT_BREAK = 10;                              // rad/s
-constexpr float A_DECEL = 0.6 * VOLT_MAX * KT * RATIO / (J * RA);  // experimental per Alex_Y
+constexpr float A_DECEL = 0.1 * VOLT_MAX * KT * RATIO / (J * RA);  // experimental per Alex_Y
 
 // Feedforward  constexprants
 constexpr float A_SCALE = 0.7;  // 0.8            // unitless

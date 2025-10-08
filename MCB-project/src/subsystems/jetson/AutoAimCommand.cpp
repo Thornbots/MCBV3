@@ -16,7 +16,7 @@ void AutoAimCommand::execute() {
 
         dyaw = fmod(dyaw, 2*PI);
         //clamp between -Pi and PI to allow for dividing
-        dyaw = dyaw > PI ? dyaw - 2*PI : dyaw < -PI ? dyaw + 2*PI : dyaw; 
+        dyaw = dyaw > PI ? dyaw - 2*PI : dyaw < -PI ? dyaw + 2*PI : dyaw;
         float newPitch = currentPitch + (pitch - currentPitch) / 2.0f;
         if (abs(dyaw) > .05) {
             dyaw /= (4.0f*2.5f);}
