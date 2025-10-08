@@ -68,7 +68,7 @@ modm::Pid<T, ScaleFactor>::update(const T& input, bool externalLimitation)
 {
 	bool limitation = externalLimitation;
 
-	//calculate first to implement anti-windup
+	//calculate PID output without integrating
 	T tempErrorSum = errorSum;
 	WideType tmp = 0;
 	tmp += static_cast<WideType>(this->parameter.kp) * input;
@@ -77,15 +77,9 @@ modm::Pid<T, ScaleFactor>::update(const T& input, bool externalLimitation)
 
 	tmp = tmp / ScaleFactor; //output
 
-	
-
 	//anti-windup. Skip integrating if output is saturatied and integration would saturate it more
 	//0.85 is just a safe number to disable integration at. Can be made into a tunable parameter
-	if(tmp >= 0.85 * this->parameter.maxOutput && input > 0  || tmp <= -0.85 * this->parameter.maxOutput && input < 0) {
-		//skip
-	}
-	else{
-
+	if(!(tmp >= 0.85 * this->parameter.maxOutput && input > 0) && !(tmp <= -0.85 * this->parameter.maxOutput && input < 0)) {
 		tempErrorSum += input;
 		if (tempErrorSum > this->parameter.maxErrorSum) {
 			tempErrorSum = this->parameter.maxErrorSum;
@@ -94,7 +88,7 @@ modm::Pid<T, ScaleFactor>::update(const T& input, bool externalLimitation)
 			tempErrorSum = -this->parameter.maxErrorSum;
 		}
 
-		//recalculate if we need to integrate
+		//recalculate after integrating
 		tmp = 0;
 		tmp += static_cast<WideType>(this->parameter.kp) * input;
 		tmp += static_cast<WideType>(this->parameter.ki) * (tempErrorSum);
