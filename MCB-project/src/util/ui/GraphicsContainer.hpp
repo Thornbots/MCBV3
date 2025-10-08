@@ -51,9 +51,9 @@ public:
     /* When adding, make sure you don't lose the object from leaving scope */
     void addGraphicsObject(GraphicsObject* obj) { objects.push_back(obj); }
 
-    void hasBeenCleared() final {
+    void layerHasBeenCleared(int8_t layer) final {
         for (GraphicsObject* p : objects) {
-            p->hasBeenCleared();
+            p->layerHasBeenCleared(layer);
         }
     }
 

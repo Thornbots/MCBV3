@@ -1,9 +1,9 @@
 #pragma once
 
-#include "UISubsystem.hpp"
-#include "Projections.hpp"
+#include "subsystems/ui/UISubsystem.hpp"
+#include "subsystems/ui/Projections.hpp"
 #include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/SimpleGraphicsObjects.hpp"
+#include "util/ui/AtomicGraphicsObjects.hpp"
 #include "util/Vector3d.hpp"
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
@@ -21,17 +21,14 @@ public:
     }
 
     void update() {
-        if(!drivetrain->isPeeking){
-            left.x = 0;
-            left.width = 0;
-            right.x = 0;
-            right.width = 0;
-        } else {
+        if(drivetrain->isPeeking){
+            
             Vector3d vs{MAGNITUDE, 0, 0};
             Vector3d temp;
             Vector3d temp2;
             Vector2d temp3;
             float xPositions[4];
+            int h[] = {0, 0};
             for(int i=0; i<4; i++){
                 //currently the point is to the right, needs rotated forward
                 temp = vs.rotateYaw(ANGLES[i] + gimbal->getYawEncoderValue()); 
@@ -41,14 +38,24 @@ public:
                 temp = Projections::pivotSpaceToVtmSpace(temp2);
                 //now get to screen space
                 temp3 = Projections::vtmSpaceToScreenSpace(temp);
-                xPositions[i] =  std::clamp(static_cast<uint16_t>(temp3.getX()), static_cast<uint16_t>(0), (UISubsystem::SCREEN_WIDTH));
+                xPositions[i] = temp3.getX();
+                if(temp3.getX()<0) 
+                    h[i/2]++;
+                if(temp3.getX()>UISubsystem::SCREEN_WIDTH) 
+                    h[i/2]++;
             }
             left.x = std::min(xPositions[0], xPositions[1]);
             left.width = xPositions[0]>xPositions[1] ? xPositions[0]-xPositions[1] : xPositions[1]-xPositions[0];
-            if(left.width == UISubsystem::SCREEN_WIDTH) left.width = 0;
+            // if(left.width == UISubsystem::SCREEN_WIDTH) left.width = 0;
             right.x = std::min(xPositions[2], xPositions[3]);
             right.width = xPositions[2]>xPositions[3] ? xPositions[2]-xPositions[3] : xPositions[3]-xPositions[2];
-            if(right.width == UISubsystem::SCREEN_WIDTH) right.width = 0;
+            // if(right.width == UISubsystem::SCREEN_WIDTH) right.width = 0;
+
+            left.setHidden(h[0]>0);
+            right.setHidden(h[1]>0);
+        } else {
+            left.hide();
+            right.hide();
         }
     }
 

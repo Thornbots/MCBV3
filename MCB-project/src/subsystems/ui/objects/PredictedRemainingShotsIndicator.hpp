@@ -3,7 +3,7 @@
 #include "subsystems/indexer/IndexerSubsystem.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/SimpleGraphicsObjects.hpp"
+#include "util/ui/AtomicGraphicsObjects.hpp"
 
 using namespace tap::communication::serial;
 using namespace subsystems;
@@ -16,22 +16,21 @@ public:
         if (drivers->refSerial.getRefSerialReceivingData()) {
             tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
 
-            //check if reloaded
-            bool isReloaded = false;
-            if (drivers->remote.keyPressed(Remote::Key::Z) && (robotData.rfidStatus.any(RefSerialData::Rx::RFIDActivationStatus::RESTORATION_ZONE | RefSerialData::Rx::RFIDActivationStatus::EXCHANGE_ZONE))) {
-                // not sure if it is the restoration or exchange zone that is what we use in 3v3, should be one of them
-                shotsAtLastReload = index->getTotalNumBallsShot();
-                isReloaded = true;
-            }
-
-            float shotsShot = index->getTotalNumBallsShot() + shotsAtLastReload + 0.2; //add 0.2 for wiggleroom from unjam
-
             // shots can be negative (ref system isn't able to cut off power in time to prevent shots), taproot should change the uint to int
             #if defined(HERO)
             int16_t shotsBought = robotData.turret.bulletsRemaining42;
             #else
+            // check if reloading: assume that the driver opens the hopper to reload
+            // checking the rfid is unreliable
+            if (drivers->remote.keyPressed(Remote::Key::Z)) {
+                arc.color = UISubsystem::Color::WHITE;
+                shotsAtLastReload = index->getTotalNumBallsShot();
+            }
             int16_t shotsBought = robotData.turret.bulletsRemaining17;
             #endif
+
+            float shotsShot = index->getTotalNumBallsShot() - shotsAtLastReload + 0.2; //add 0.2 for wiggleroom from unjam
+
 
             float maxShots = FILLED_NUM_SHOTS;
             if(drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_1V1){
@@ -52,13 +51,8 @@ public:
                 arc.color = UISubsystem::Color::GREEN;
             }
 
-            if(isReloaded){
-                arc.color = UISubsystem::Color::WHITE;
-            }
         }
 
-        // update arc
-        // (FILLED_NUM_SHOTS - index->getTotalNumBallsShot() + shotsAtLastReload)/FILLED_NUM_SHOTS)
     }
 
 private:
@@ -74,5 +68,5 @@ private:
     static constexpr int MAX_SHOTS_1v1 = 200;     // if in 1v1, then you are a standard, and you can shoot only 200
     float shotsAtLastReload = 0;                  // when we enter the reload zone, assume we fill completely
 
-    LargeCenteredArc arc{false, 0};  // arc on the right size in first lane
+    LargeCenteredArc arc{false, 0};  // arc on the right side in first lane
 };

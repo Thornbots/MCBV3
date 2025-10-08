@@ -2,7 +2,7 @@
 
 namespace subsystems {
 using namespace tap::communication::serial;
-    
+
 IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index)
     : IndexerSubsystem(drivers, index, ShotCounter::BarrelType::TURRET_17MM_EITHER){}
 
@@ -49,7 +49,7 @@ bool IndexerSubsystem::doAutoUnjam(float inputBallsPerSecond) {
             return true;
         }
     }
-    
+
     //if we are here, isAutoUnjamming is false or inputBallsPerSecond<=0
     //if we are slow and trying to go forward
     if(inputBallsPerSecond > 0 && getActualBallsPerSecond()<AUTO_UNJAM_BALLS_PER_SEC_THRESH){
@@ -122,6 +122,14 @@ float IndexerSubsystem::getBallsPerSecond() {
 
 float IndexerSubsystem::getActualBallsPerSecond() {
     return motorIndexer->getShaftRPM() / (60.0f * revPerBall);
+}
+
+bool IndexerSubsystem::isProjectileAtBeam() {
+    return true;
+}
+
+bool IndexerSubsystem::isIndexOnline() {
+    return motorIndexer->isMotorOnline();
 }
 
 void IndexerSubsystem::homeIndexer() {

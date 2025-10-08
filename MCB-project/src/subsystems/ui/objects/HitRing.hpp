@@ -1,10 +1,9 @@
 #pragma once
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
-#include "subsystems/ui/ChassisOrientationIndicator.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/SimpleGraphicsObjects.hpp"
+#include "util/ui/AtomicGraphicsObjects.hpp"
 
 using namespace subsystems;
 
@@ -31,7 +30,7 @@ public:
     }
 
     void update() {
-        float encoder = gimbal->getYawEncoderValue() * ChassisOrientationIndicator::YAW_MULT;
+        float encoder = gimbal->getYawEncoderValue() * 180 / PI;
         float imu = drivers->bmi088.getYaw();
         // if the gimbal compared to the drivetrain (from the encoder) is facing forward, heading would be 360, if facing right, heading would be 90
 
@@ -131,7 +130,7 @@ private:
     // we just need to know if the head moved in space (imu)
     void updateRing(int i, float imu) {
         rings[i].startAngle = static_cast<uint16_t>(3 * 360 + imu - hitOrientations[i] - ARC_LEN / 2);
-        ChassisOrientationIndicator::fixAngle(&rings[i].startAngle);
+        UISubsystem::fixAngle(&rings[i].startAngle);
         rings[i].endAngle = rings[i].startAngle + ARC_LEN;
     }
 };
