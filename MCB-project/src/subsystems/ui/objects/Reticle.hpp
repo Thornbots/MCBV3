@@ -3,10 +3,14 @@
 #include "tap/algorithms/math_user_utils.hpp"
 
 #include "subsystems/jetson/JetsonSubsystemConstants.hpp"
-#include "subsystems/indexer/HeroIndexerSubsystem.hpp"
+#include "subsystems/indexer/IndexerSubsystem.hpp"
+#include "subsystems/gimbal/GimbalSubsystem.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
+#include "subsystems/ui/Projections.hpp"
 #include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/SimpleGraphicsObjects.hpp"
+#include "util/ui/AtomicGraphicsObjects.hpp"
+#include "util/Vector3d.hpp"
+#include "util/Vector2d.hpp"
 
 using namespace tap::communication::serial;
 using namespace subsystems;
@@ -51,12 +55,12 @@ private: // draw settings
     ReticleDrawMode drawMode = ReticleDrawMode::VERT_LINES;
     ReticleSolveMode solveMode = ReticleSolveMode::FOR_PITCH;
     ReticleSidedMode sidedMode = ReticleSidedMode::BOTH;
-    bool drawVerticalLine = true;
+
+    static constexpr int DIAGONAL_OFFSET = 50; //when can't shoot, the vertical line becomes diagonal, by shifting x by this amount
 
 public:
-    Reticle(GimbalSubsystem* gimbal) : Reticle(gimbal, nullptr){}
 
-    Reticle(GimbalSubsystem* gimbal, HeroIndexerSubsystem* heroIndex) : gimbal(gimbal), heroIndex(heroIndex) {
+    Reticle(GimbalSubsystem* gimbal, IndexerSubsystem* index) : gimbal(gimbal), index(index) {
         for (int i = 0; i < NUM_THINGS; i++) {
             rects[i].color = COLORS[i%NUM_COLORS];
             rectsContainer.addGraphicsObject(rects + i);
@@ -78,11 +82,32 @@ public:
         float pitch = gimbal->getPitchEncoderValue();
 
         ReticleSidedMode adjustedSidedMode = drawMode == ReticleDrawMode::TRAPEZOIDS ? ReticleSidedMode::BOTH : sidedMode;
-        if(heroIndex){
-            verticalLine.color = heroIndex->isProjectileAtBeam() ? UISubsystem::Color::WHITE : UISubsystem::Color::BLACK;
-        } else{
-            verticalLine.setHidden(!drawVerticalLine);
+
+        bool canShoot = true;
+
+        if(!index->isIndexOnline()){
+            verticalLine.color = UISubsystem::Color::PINK;
+            canShoot=false;
         }
+
+        if(!index->isProjectileAtBeam()){
+            verticalLine.color = UISubsystem::Color::BLACK;
+            canShoot=false;
+        }
+
+
+        verticalLine.x1 = UISubsystem::HALF_SCREEN_WIDTH;
+        verticalLine.x2 = UISubsystem::HALF_SCREEN_WIDTH;
+        if(canShoot){
+            verticalLine.color = UISubsystem::Color::WHITE;
+            verticalLine.thickness = 1;
+        } else {
+            verticalLine.thickness = 10;
+            verticalLine.x1+=DIAGONAL_OFFSET;
+            verticalLine.x2-=DIAGONAL_OFFSET;
+        }
+
+
 
         solvedForPitchLandingSpotThisCycle = false;
         for (int i = 0; i < NUM_THINGS; i++) {
@@ -121,7 +146,7 @@ public:
                 lines[i][2].show();
             }
             bool drawVertLines = drawMode == ReticleDrawMode::VERT_LINES || drawMode == ReticleDrawMode::BOTH_LINES || drawMode == ReticleDrawMode::TRAPEZOIDS;
-            if (drawVerticalLine || drawVertLines) {
+            if (drawVertLines) {
                 // vert lines traces one edge of the panel, so they aren't always exactly vertical
 
                 lines[i][0].x1 = rt.getX();
@@ -168,8 +193,8 @@ public:
 
 private:
     GimbalSubsystem* gimbal;
-    HeroIndexerSubsystem* heroIndex;
-    
+    IndexerSubsystem* index;
+
     Vector3d panelEdges[4] = {
         {PANEL_WIDTH / 2, 0, 0},                                                                     // right
         {-PANEL_WIDTH / 2, 0, 0},                                                                    // left
@@ -184,7 +209,7 @@ private:
 
     GraphicsContainer rectsContainer{};
     GraphicsContainer linesContainer{};
-    
+
     static constexpr int NUM_LINES = 4;  // enough to support trapezoids
     Line lines[NUM_THINGS][NUM_LINES];   // not all are used in every mode
     UnfilledRectangle rects[NUM_THINGS];

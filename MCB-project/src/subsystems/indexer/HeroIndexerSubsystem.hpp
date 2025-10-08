@@ -24,7 +24,7 @@ public:
 
     //counter stuff doesn't change
 
-    bool isProjectileAtBeam();
+    virtual bool isProjectileAtBeam();
 
     virtual float getActualBallsPerSecond();
 private:
