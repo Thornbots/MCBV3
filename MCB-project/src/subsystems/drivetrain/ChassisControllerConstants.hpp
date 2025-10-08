@@ -3,15 +3,15 @@
 
 namespace subsystems {
 // REMEMBER THAT YOU USE NEGATIVE FOR INERTIAL TO LOCAL AND POSITIVE FOR LOCAL TO INERTIAL
-//these are for 3508 
+//these are for 3508
 constexpr float ROOT_2 = 1.414;            // sqrt 2
 constexpr float KB = 0.02361;       // V-s/rad backemf
 constexpr float KT = 0.02299;       // N-m/A torque  constexprant
 constexpr float RA = 0.5592;        // ohm, armature resistance
 
-constexpr float VOLT_MAX = 24;      // V, maximum        
+constexpr float VOLT_MAX = 24;      // V, maximum
 
-constexpr float MAX_POS_VEL = 1.25;                                                                                 
+constexpr float MAX_POS_VEL = 1.25;
 
 #if defined(HERO)
 // START getters and setters
@@ -68,7 +68,7 @@ constexpr float KI_V = 0;  // integral gain for velocity
 
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
-constexpr float KP = 1`;              // proportional gain for position control
+constexpr float KP = 1;              // proportional gain for position control
 constexpr float BEYBLADE_DELAY = .25 ;  // delay for beyblade mode/
 constexpr float BBterm1 = 9; //constant term
 constexpr float BBterm2 = -2.8647; //linear term
