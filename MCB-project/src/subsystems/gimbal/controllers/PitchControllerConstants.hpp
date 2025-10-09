@@ -24,13 +24,13 @@ constexpr float TAKEBACK = 0.01;                // unitless
 
 constexpr float RATIO = 2;         // unitless
 constexpr float VOLT_MAX = 24;   // V
-constexpr float ACCEL_MAX = 2400.0;  // rad/s^2
+constexpr float ACCEL_MAX = 3200.0;  // rad/s^2
 
 // Position controller constants
 constexpr float KP = 28;  // sec^-1
 
 // Feedforward constants
-constexpr float KSTATIC = 0.1;  // A
+constexpr float KSTATIC = 0.05;  // A
 constexpr float KF = 0.02;      //-0.001;                     // A
 
 // Velocity feedback

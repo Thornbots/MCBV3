@@ -158,6 +158,8 @@ float GimbalSubsystem::getPitchEncoderValue() { //more like get pitch relative t
     float temp = std::fmod(motorPitch->getPositionWrapped() / PITCH_RATIO - PITCH_OFFSET, 2 * PI);
     #if defined(HERO) //wraparound fix  
     return (temp > (1.3 * PI/PITCH_RATIO)) ? temp - 2 * PI/PITCH_RATIO : temp;
+    #elif defined(SENTRY) //wraparound fix  
+    return (temp > (1.3 * PI/PITCH_RATIO)) ? temp - 2 * PI/PITCH_RATIO : temp;
     #else
     return (temp > PI) ? temp - 2 * PI : temp;
     #endif
