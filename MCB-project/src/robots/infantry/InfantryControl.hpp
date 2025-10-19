@@ -47,7 +47,7 @@ public:
         ui.initialize();
         servo.initialize();
         jetson.initialize();
-        
+
         drivers->commandScheduler.addCommand(&closeServo); //close servo so I stop getting carbon splinters
 
         // Run startup commands
@@ -71,7 +71,7 @@ public:
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
         // drivers->commandScheduler.addCommand(&draw); //tries to draw immediately, doesn't always work well
-   
+
         // drive commands and also enable mouse looking
 
         peekLeftButton.onTrue(&peekLeft);//->onFalse(&beybladeKeyboard);
@@ -80,7 +80,7 @@ public:
 
         stopBeybladeKey.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
         startBeybladeKey.onTrue(&beybladeKeyboard)->onTrue(&lookMouse);
- 
+
         joystickDrive0.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick);
         joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick);
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick);
@@ -109,7 +109,7 @@ public:
         drivers->commandScheduler.addCommand(&indexerStop);
         isStopped = true;
     }
-    
+
     void resumeAfterImuRecal() override {
         isStopped = false;
         gimbal.clearBuildup();
@@ -128,7 +128,7 @@ public:
     subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
-    subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor};
+    subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor, false};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::ServoSubsystem servo{drivers, &hardware.servo};
     subsystems::JetsonSubsystem jetson{drivers, &gimbal};

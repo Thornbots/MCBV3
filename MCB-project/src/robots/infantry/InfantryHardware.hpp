@@ -23,12 +23,12 @@ public:
 
     //drivers
     src::Drivers* drivers;
-    Servo servo{drivers, tap::gpio::Pwm::C1, 
+    Servo servo{drivers, tap::gpio::Pwm::C1,
         0.3f, //open position, larger is counterclockwise
-        0.19f, //close position, smaller is clockwise
+        0.193f, //close position, smaller is clockwise
         0.01f};
 
-    //motors 
+    //motors
     DjiMotor flywheelMotor1{drivers, MotorId::MOTOR5, CanBus::CAN_BUS2, false, "Flywheel"};
     DjiMotor flywheelMotor2{drivers, MotorId::MOTOR8, CanBus::CAN_BUS2, true, "Flywheel 2"};
 
