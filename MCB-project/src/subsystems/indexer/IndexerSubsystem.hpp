@@ -15,8 +15,8 @@ namespace subsystems
 class IndexerSubsystem : public tap::control::Subsystem
 {
 
-    
-public: 
+
+public:
 ShotCounter counter;
 
 protected:  // Private Variables
@@ -30,19 +30,29 @@ static constexpr int MAX_INDEX_RPM = 17000;
 int32_t indexerVoltage = 0;
 
 
-tap::arch::MilliTimeout timeout;
+tap::arch::MilliTimeout timeoutUnjam;
 bool isAutoUnjamming = false;
 
+
+tap::arch::MilliTimeout timeoutHome;
+enum class HomingState : uint8_t {
+    DONT_HOME = 0,       // hero doesn't home, it has a beambreak. Standard might home. Sentry needs it
+    NEED_TO_HOME = 1,    // waiting until motor turns on (or imu to be done) to start homing
+    HOMING = 2,          // the timer is going, the motor is spinning
+    HOMED = 3,           // homed sucessfully, by motor being stalled
+    GAVE_UP_HOMING = 4   // timer ran out, we are out of physical shots (probably)
+};
+
 private:
-bool needsToBeHomed = true;
 int homeTimeoutCounter = 0;
-const int HOME_TIMEOUT_MAX = 500;
+
+HomingState homingState;
 
 public:  // Public Methods
 
-IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index);
-IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, ShotCounter::BarrelType barrel);
-IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, ShotCounter::BarrelType barrel, float revPerBall);
+IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming);
+IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, ShotCounter::BarrelType barrel);
+IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, ShotCounter::BarrelType barrel, float revPerBall);
 
 ~IndexerSubsystem() {}
 
@@ -65,7 +75,7 @@ virtual void resetBallsCounter();
 virtual float getBallsPerSecond();
 
 virtual float getActualBallsPerSecond();
-    
+
 // non hero always returns true
 virtual bool isProjectileAtBeam();
 
@@ -78,7 +88,7 @@ private:  // Private Methods
 
 void setTargetMotorRPM(int targetMotorRPM);
 
-protected: 
+protected:
 
 bool doAutoUnjam(float inputBallsPerSecond);
 

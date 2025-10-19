@@ -20,6 +20,8 @@ void IndexerNBallsCommand::end(bool) {
 }
 
 bool IndexerNBallsCommand::isFinished(void) const {
+    if(!drivers->remote.isConnected()) return true;
+
     if (numBalls < 0) {
         return false;
     }
