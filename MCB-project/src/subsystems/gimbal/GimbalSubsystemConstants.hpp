@@ -68,13 +68,13 @@ static constexpr float MAX_PITCH_UP = PI_CONST / 180 * 15;
 // looks up 20, 18 is safe
 static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 14;
 
-static constexpr float YAW_OFFSET = 2.8; 
+static constexpr float YAW_OFFSET = 2.8;
 
 static constexpr float PITCH_OFFSET = .99 * PI_CONST + 1.5 * 0.0174;  // to make gimbal horizontal when told to go to 0
 
 static constexpr float SECOND_PITCH_OFFSET = 0;  //unused, here for compiling
 
-static constexpr float YAW_TOTAL_RATIO = 54.0f/24.0f * 3591.0f / 187.0f;  // unitless, ratio of encoder to turret spin 
+static constexpr float YAW_TOTAL_RATIO = 54.0f/24.0f * 3591.0f / 187.0f;  // unitless, ratio of encoder to turret spin
 
 static constexpr int YAW_DIST_RANGE = 16384 / 4;  // 20/4 = 5 amps
 

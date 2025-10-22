@@ -47,29 +47,29 @@ public:
         indexer.setDefaultCommand(&indexerStop);
         odo.setDefaultCommand(&odoStop);
 
-        
+
         shootButton.onTrue(&shooterStart)->whileTrue(&indexerStart);
         unjamButton.whileTrue(&indexerUnjam);
         stopFlywheelTrigger.onTrue(&shooterStop);
 
         autoFireTrigger.whileTrue(&autoFire)->onFalse(&lookJoystick);
         autoDriveTrigger.onTrue(&odoPointForwards)->onTrue(&autoDrive);//->onTrue(&testMoveCommand);
-        // drive commands 
+        // drive commands
 
         // joystickDrive0.onTrue(&initialMoveCommand);
-        joystickDrive1.onTrue(&drivetrainFollowJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
+        joystickDrive1.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
-        
+
         isStopped = false;
     }
 
-    
+
     bool startAdvance = false;
     bool startRetreat = false;
     int count = 0;
     void update() override {
-        
-        if (autoDriveTrigger.getAsBoolean() && drivers->refSerial.getRefSerialReceivingData() && 
+
+        if (autoDriveTrigger.getAsBoolean() && drivers->refSerial.getRefSerialReceivingData() &&
         (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
             // allow both
@@ -96,16 +96,16 @@ public:
     // }
 
 
-        
+
         if(isStopped)
             return;
 
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
-        
-        //if we don't have ref uart or we do and we aren't currently in game, we are able to stop flywheels by buttons
-        if(!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getGameData().gameStage!=RefSerialData::Rx::GameStage::IN_GAME){
+
+        //if we don't have ref uart or we aren't in a match or we aren't currently in game, we are able to stop flywheels by buttons
+        if(!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getGameData().gameType!=RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3 || drivers->refSerial.getGameData().gameStage!=RefSerialData::Rx::GameStage::IN_GAME){
             stopFlywheelTrigger.update();
         }
     }
@@ -132,7 +132,7 @@ public:
     // subsystems
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
-    subsystems::DoubleIndexerSubsystem indexer{drivers, &hardware.indexMotor1, &hardware.indexMotor2};
+    subsystems::DoubleIndexerSubsystem indexer{drivers, &hardware.indexMotor1, &hardware.indexMotor2, true};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::OdometrySubsystem odo{drivers, &hardware.odoMotor};
     subsystems::JetsonSubsystem jetson{drivers, &gimbal};
@@ -173,8 +173,8 @@ public:
     SequentialCommand<4> retreatMoveCommand{moveCommands2};
 
     SequentialCommand<4> testMoveCommand{{&m1, &m2, &m1, &m0}};
-    
-    // mappings 
+
+    // mappings
 
     // shooting
     Trigger shootButton{drivers, Remote::Channel::WHEEL, -0.5};

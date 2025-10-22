@@ -4,9 +4,9 @@ namespace subsystems
 {
 
 HeroIndexerSubsystem::HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* indexTop, tap::motor::DjiMotor* indexBottom)
-    : IndexerSubsystem(drivers, indexTop, ShotCounter::BarrelType::TURRET_42MM), // Call base class constructor with the 42 barrel
-    bottom(drivers, indexBottom, ShotCounter::BarrelType::TURRET_42MM, REV_PER_BALL_BOTTOM)
-{timeout.stop();}
+    : IndexerSubsystem(drivers, indexTop, false, ShotCounter::BarrelType::TURRET_42MM), // Call base class constructor with the 42 barrel
+    bottom(drivers, indexBottom, false, ShotCounter::BarrelType::TURRET_42MM, REV_PER_BALL_BOTTOM)
+{}
 
 void HeroIndexerSubsystem::initialize() {
     // Initialize both motors
@@ -38,7 +38,7 @@ float HeroIndexerSubsystem::loadAtRate(float inputBallsPerSecond){
 
     // float top = IndexerSubsystem::indexAtRate(inputBallsPerSecond);
     // return isAutoUnjamming ? top : bottom.indexAtRate(inputBallsPerSecond);
-    
+
     IndexerSubsystem::indexAtRate(inputBallsPerSecond);
     return bottom.indexAtRate(inputBallsPerSecond);
 }

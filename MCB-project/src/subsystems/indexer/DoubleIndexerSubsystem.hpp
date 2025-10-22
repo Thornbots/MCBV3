@@ -9,7 +9,7 @@ class DoubleIndexerSubsystem : public IndexerSubsystem
 
 public:
 
-    DoubleIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index1, tap::motor::DjiMotor* index2);
+    DoubleIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index1, tap::motor::DjiMotor* index2, bool doHoming);
 
     ~DoubleIndexerSubsystem() {}
 

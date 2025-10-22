@@ -2,7 +2,7 @@
 
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/AtomicGraphicsObjects.hpp" 
+#include "util/ui/AtomicGraphicsObjects.hpp"
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
 #include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
@@ -14,16 +14,16 @@ using namespace subsystems;
 //   /
 //
 //      __/
-// at the center of the screen, the arcs represent the left and right inner 
+// at the center of the screen, the arcs represent the left and right inner
 // panels if there are 2 arcs, if there are 4 then they are all four panels
 class ChassisOrientationIndicator : public GraphicsContainer {
 public:
     ChassisOrientationIndicator(bool showPlsSpin, tap::Drivers* drivers, GimbalSubsystem* gimbal, DrivetrainSubsystem* drivetrain) : showPlsSpin(showPlsSpin), drivers(drivers), gimbal(gimbal), drivetrain(drivetrain) {
         addGraphicsObject(&front);
         addGraphicsObject(&side);
-        
+
         if(showPlsSpin){
-            addGraphicsObject(&plsSpinBox);
+            // addGraphicsObject(&plsSpinBox);
             addGraphicsObject(&plsSpinText);
         }
     }
@@ -37,7 +37,7 @@ public:
         UISubsystem::fixAngle(&front.startAngle);
         front.endAngle = front.startAngle + INNER_ARC_LEN;
 
-        
+
         side.setHidden(!drivetrain->isPeeking);
 #if defined(INFANTRY)
         //side arc is concave (because flyswatters), so angle is flipped
@@ -55,7 +55,7 @@ public:
         UISubsystem::fixAngle(&side.startAngle);
         side.endAngle = side.startAngle + INNER_ARC_LEN;
 #endif
-        
+
 
         //set side color to pink if on red team, cyan if on blue team
         if (drivers->refSerial.getRefSerialReceivingData()) {
@@ -63,16 +63,17 @@ public:
         }
 
         if(showPlsSpin){
-            plsSpinBox.setHidden(!drivetrain->isPeeking && !drivetrain->isBeyblading);
+            plsSpinText.setHidden(drivetrain->isPeeking || drivetrain->isBeyblading);
+            // plsSpinBox.setHidden(!drivetrain->isPeeking && !drivetrain->isBeyblading);
 
             plsSpinText.x = UISubsystem::HALF_SCREEN_WIDTH - plsSpinText.width/2;
-            plsSpinBox.x1 = plsSpinText.x-TEXT_THICKNESS;
-            plsSpinBox.x2 = plsSpinText.x + plsSpinText.width+TEXT_THICKNESS*2;
+            // plsSpinBox.x1 = plsSpinText.x-TEXT_THICKNESS;
+            // plsSpinBox.x2 = plsSpinText.x + plsSpinText.width+TEXT_THICKNESS*2;
         }
     }
 
 
-    
+
     static constexpr float YAW_OFFSET = 2*360;     // degrees, 0 from the yaw might not be top on the screen, also needs to make sure it is positive because we are using uints
 
 private:
@@ -94,6 +95,6 @@ private:
     static constexpr uint16_t TEXT_Y = 830;
     static constexpr uint16_t TEXT_THICKNESS = 5;
     StringGraphic plsSpinText{UISubsystem::Color::PINK, "Pls spin", 0, TEXT_Y, TEXT_HEIGHT, TEXT_THICKNESS};
-    Line plsSpinBox{UISubsystem::Color::PINK, 0, TEXT_Y+TEXT_HEIGHT/2, 0, TEXT_Y+TEXT_HEIGHT/2, TEXT_HEIGHT+TEXT_THICKNESS*2};
+    // Line plsSpinBox{UISubsystem::Color::PINK, 0, TEXT_Y+TEXT_HEIGHT/2, 0, TEXT_Y+TEXT_HEIGHT/2, TEXT_HEIGHT+TEXT_THICKNESS*2};
 
 };
