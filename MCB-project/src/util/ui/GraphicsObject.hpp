@@ -77,6 +77,7 @@ public:
      * the layer cleared.
      */
     virtual void layerHasBeenCleared(int8_t) = 0;
+    virtual void allLayersCleared() = 0;
 
     /*
      * Graphics representing strings need to be sent as a CharacterMessage,

@@ -25,7 +25,13 @@ public:  // important constants and enums
 
     // distances down range and colors to draw them
     static constexpr int NUM_THINGS = 9;
+
+#if defined(HERO)
     static constexpr float DISTANCES[NUM_THINGS] = {1, 2, 3, 5, 7, 9, 11, 12, 13};  // meters, y distances, measured from center of robot to center of panel
+#else
+    static constexpr float DISTANCES[NUM_THINGS] = {1, 2, 3, 5, 7, 9, 11, 12, 13};  // meters, y distances, measured from center of robot to center of panel
+#endif
+
     static constexpr int NUM_COLORS = 1;
     static constexpr UISubsystem::Color COLORS[NUM_COLORS] = {UISubsystem::Color::GREEN};
 

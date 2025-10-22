@@ -31,13 +31,14 @@ private:  // Private Variables
     static int8_t currLayer;
 
     // for protothread
-    bool needToClearLayers = true;
+    bool needToClearAllLayers = true;
     int8_t timesResetIteration = 0;
     static constexpr int TARGET_NUM_OBJECTS = 7;  // could change this to test, but don't make this larger than 7
     GraphicsObject* objectsToSend[TARGET_NUM_OBJECTS];
     int8_t graphicsIndex = 0;
     int8_t innerGraphicsIndex = 0;
     int8_t numToSend = 0;
+    int8_t layerToClear = 0;
     GraphicsObject* nextGraphicsObject = nullptr;
     RefSerialData::Tx::DeleteGraphicLayerMessage messageDel; //only for RefSerialData::Tx::getWaitTimeAfterGraphicSendMs
     RefSerialData::Tx::Graphic1Message message1;
