@@ -37,7 +37,7 @@ public:
             graphicData,
             graphicNameArray,
             getNextOperation(),
-            layer<0 ? 0 : layer, //UISubsystem::getUnusedLayer might return -1 when there aren't any unused layers, 
+            layer<0 ? 0 : layer, //UISubsystem::getUnusedLayer might return -1 when there aren't any unused layers,
             // if someone doesn't check if it did this protects trying to send -1 to the server
             color);
         wasHidden = isHidden;
@@ -47,9 +47,13 @@ public:
 
     void resetIteration() final { countIndex = 0; }
 
-    void layerHasBeenCleared(int8_t clearedLayer) final { 
+    void layerHasBeenCleared(int8_t clearedLayer) final {
         if(clearedLayer==layer)
             wasHidden = true; //was deleted, doesn't set if I want to be hidden or not
+    }
+
+    void allLayersCleared() final {
+        wasHidden = true; //was deleted, doesn't set if I want to be hidden or not
     }
 
     RefSerialData::Tx::GraphicColor color;  // can set this directly, will appear next time drawn

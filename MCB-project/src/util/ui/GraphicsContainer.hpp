@@ -41,8 +41,8 @@ public:
         return r;
     }
 
-    void resetIteration() final { 
-        countIndex = 0; 
+    void resetIteration() final {
+        countIndex = 0;
         for (GraphicsObject* p : objects) {
             p->resetIteration();
         }
@@ -54,6 +54,12 @@ public:
     void layerHasBeenCleared(int8_t layer) final {
         for (GraphicsObject* p : objects) {
             p->layerHasBeenCleared(layer);
+        }
+    }
+
+    void allLayersCleared() final {
+        for (GraphicsObject* p : objects) {
+            p->allLayersCleared();
         }
     }
 

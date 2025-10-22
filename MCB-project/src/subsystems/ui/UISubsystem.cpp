@@ -6,7 +6,7 @@ namespace subsystems {
 uint32_t UISubsystem::currGraphicName = 0;
 int8_t UISubsystem::currLayer = 1; //layer 0 is where most stuff is, so asking for a layer gets you 1 or higher (or -1 if there aren't any more layers)
 
-UISubsystem::UISubsystem(tap::Drivers* drivers) : tap::control::Subsystem(drivers), drivers(drivers), refSerialTransmitter(drivers) { 
+UISubsystem::UISubsystem(tap::Drivers* drivers) : tap::control::Subsystem(drivers), drivers(drivers), refSerialTransmitter(drivers) {
     // assume all layers had something on them from a previous team, so all need cleared
     for(int i=0; i<NUM_LAYERS; i++)
         layersState[i] = 2;
@@ -65,31 +65,45 @@ bool UISubsystem::run() { //run has to do with prototheads
     // drivers->leds.set(tap::gpio::Leds::Green, false);
 
     PT_WAIT_UNTIL(drivers->refSerial.getRefSerialReceivingData());
-    
+
+    needToClearAllLayers = true;
+    layerToClear = -1;
     // clear any layers with state 2
     for (innerGraphicsIndex = 0; innerGraphicsIndex < NUM_LAYERS; innerGraphicsIndex++) {
         if(layersState[innerGraphicsIndex]==2){
-            break; 
+            layerToClear = innerGraphicsIndex;
+        }
+        if(layersState[innerGraphicsIndex]==1){
+            needToClearAllLayers = false; //if all are 0(cleared) or 2(needs to be cleared), then we can clear all, otherwise we can't
         }
     } //loop ends when the layer at innerGraphicsIndex needs cleared, or all layers were checked and all were clear
 
-    if(innerGraphicsIndex < NUM_LAYERS){
-        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, innerGraphicsIndex));
-        delayTimeout.restart(2 * RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageDel));
-        PT_WAIT_UNTIL(delayTimeout.execute());
-        if (topLevelContainer){
-            topLevelContainer->layerHasBeenCleared(innerGraphicsIndex);
+    if(needToClearAllLayers){
+        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 0));
+        for (innerGraphicsIndex = 0; innerGraphicsIndex < NUM_LAYERS; innerGraphicsIndex++) {
+            layersState[innerGraphicsIndex]=0;
         }
-        layersState[innerGraphicsIndex]=0;
+        if (topLevelContainer){
+            topLevelContainer->allLayersCleared();
+        }
+    } else if(layerToClear!=-1){
+        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_GRAPHIC_LAYER, layerToClear));
+        layersState[layerToClear]=0;
+        if (topLevelContainer){
+            topLevelContainer->layerHasBeenCleared(layerToClear);
+        }
+        needToClearAllLayers = true;
+    }
+
+    // if any cleared, using the same variable
+    if(needToClearAllLayers){
+         delayTimeout.restart(2 * RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageDel));
+        PT_WAIT_UNTIL(delayTimeout.execute());
 
         // maybe some object saved from the last iteration just got removed, we don't want to accidentally draw it
         // could check if the 1 or 2 saved objects were on a cleared layer, but it probably isn't worth it
         // clearing layers probably doesn't happen enough, those objects will be visited on the next iteration
-        graphicsIndex=0; 
-
-
-    } else {
-        needToClearLayers = false;
+        graphicsIndex=0;
     }
 
     // what was in the while loop
@@ -119,7 +133,7 @@ bool UISubsystem::run() { //run has to do with prototheads
             if (graphicsIndex == TARGET_NUM_OBJECTS) break; //if full, stop trying to find more
         }
     }
-    
+
 
     numToSend = graphicsIndex;
     if(numToSend==3 || numToSend==4){
@@ -164,7 +178,7 @@ bool UISubsystem::run() { //run has to do with prototheads
         PT_CALL(refSerialTransmitter.sendGraphic(&message7));
         delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message7));
     }
-    
+
     if (graphicsIndex == 4) { //save 2
         objectsToSend[0] = objectsToSend[2]; //copy the third item into the first slot
         objectsToSend[1] = objectsToSend[3]; //copy the fourth item into the second slot
@@ -176,7 +190,7 @@ bool UISubsystem::run() { //run has to do with prototheads
         graphicsIndex = 0;
     }
 
-    
+
 
     //if we sent something, wait for it so we don't lose packets
     if(numToSend>0)
@@ -190,17 +204,16 @@ bool UISubsystem::run() { //run has to do with prototheads
 // This is required for the UISubsystem to have anything to draw.
 // Use with to nullptr to remove the top level container.
 void UISubsystem::setTopLevelContainer(GraphicsContainer* container) {
-    
+
     if (container) {
         topLevelContainer->resetIteration();
         // drivers->leds.set(tap::gpio::Leds::Blue, true);
     }
     topLevelContainer = container;
 
-    // layers with stuff on them need cleared
-    for(int i=0; i<NUM_LAYERS; i++)
-        if(layersState[i]==1)
-            layersState[i] = 2;
-    
+    // all layers need cleared
+    for (innerGraphicsIndex = 0; innerGraphicsIndex < NUM_LAYERS; innerGraphicsIndex++) {
+        layersState[innerGraphicsIndex]=2;
+    }
 }
 }  // namespace subsystems
