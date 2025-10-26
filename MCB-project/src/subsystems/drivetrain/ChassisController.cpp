@@ -150,9 +150,9 @@ void ChassisController::calculatePowerLimiting(float powerLimit, float V_m_FF[4]
     // // Get all the summations out of the way first
     float aSum = 0, bSumFirst = 0, bSumSecond = 0, cSumFirst = 0, cSumSecond = 0;
     for (int i = 0; i < 4; i++) {
-        aSum += T_req_m[i] * T_req_m[i];
-        bSumFirst += I_m_FF[i] * T_req_m[i];
-        bSumSecond += V_m_FF[i] * T_req_m[i];
+        aSum += TREQSCALE * TREQSCALE * T_req_m[i] * T_req_m[i];
+        bSumFirst += TREQSCALE * I_m_FF[i] * T_req_m[i];
+        bSumSecond += TREQSCALE * V_m_FF[i] * T_req_m[i];
         cSumFirst += I_m_FF[i] * I_m_FF[i];
         cSumSecond += I_m_FF[i] * V_m_FF[i];
     }
@@ -160,7 +160,7 @@ void ChassisController::calculatePowerLimiting(float powerLimit, float V_m_FF[4]
     // Then get a, b, c to calculate the scaling factor with
     float a = (RA / (KT * KT)) * aSum;                              // KT^-2 T^2
     float b = ((2 * RA) / KT) * bSumFirst + (1 / KT) * bSumSecond;  // KT^-1 T^1 IV^1
-    float c = RA * cSumFirst + cSumSecond - powerLimit*(P_FOS + (1 - P_FOS)*std::clamp((1 - thetaDotEst / 8.5f), 0.0f, 1.0f)) + P_IDLE;                  // IV^2
+    float c = RA * cSumFirst + cSumSecond - powerLimit*(P_FOS) + P_IDLE;//(1 - P_FOS)*std::clamp((1 - thetaDotEst / 8.5f), 0.0f, 1.0f)) + P_IDLE;                  // IV^2
 
     float s_scaling = 1.0f;
     if(a > 0 && b * b - 4 * a * c > 0) s_scaling =  clamp((-b + std::sqrt(b * b - 4 * a * c)) / (2 * a), 0.0f, 1.0f);

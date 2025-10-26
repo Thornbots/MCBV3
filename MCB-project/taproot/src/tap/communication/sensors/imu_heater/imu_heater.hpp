@@ -65,10 +65,10 @@ private:
     /**
      * PID constants for temperature control.
      */
-    static constexpr float TEMPERATURE_PID_P = 1.0f;
-    static constexpr float TEMPERATURE_PID_I = 0.0f;
-    static constexpr float TEMPERATURE_PID_D = 20.0f;
-    static constexpr float TEMPERATURE_PID_MAX_ERR_SUM = 0.0f;
+    static constexpr float TEMPERATURE_PID_P = 0.12f;
+    static constexpr float TEMPERATURE_PID_I = 0.005f;
+    static constexpr float TEMPERATURE_PID_D = 0.0f; //DONT ADD A ZERO TO A FIRST ORDER SYSTEM SMH SMH SMH
+    static constexpr float TEMPERATURE_PID_MAX_ERR_SUM = 0.12f / TEMPERATURE_PID_I; //Normalized to units of output. Requires some integral term
     static constexpr float TEMPERATURE_PID_MAX_OUT = 1.0f;
 
     /**

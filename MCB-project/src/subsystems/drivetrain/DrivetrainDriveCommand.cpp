@@ -61,6 +61,9 @@ void DrivetrainDriveCommand::execute() {
     } else if (driveMode == DriveMode::NO_SPIN) {
         autoBoost = false;
         r = 0;
+
+        x *= MAX_NOSPIN_LINEAR_VELOCITY_TIMES_100 / 100.0f;
+        y *= MAX_NOSPIN_LINEAR_VELOCITY_TIMES_100 / 100.0f;
     } else {
         autoBoost = false;
         x *= MAX_LINEAR_SPEED;

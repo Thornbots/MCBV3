@@ -69,8 +69,8 @@ public:
      */
     static constexpr float GYRO_RANGE_MAX_DS = 2000.0f;
 
-    static constexpr float BMI088_TEMP_FACTOR = 0.125f;
-    static constexpr float BMI088_TEMP_OFFSET = 35.0f;
+    static constexpr float BMI088_TEMP_FACTOR = 0.125f; //See spec sheet for the meaning of htis
+    static constexpr float BMI088_TEMP_OFFSET = 23.0f;
 
     /**
      * Used to convert raw gyro values to units of degrees / second. Ratio has units
@@ -129,8 +129,8 @@ private:
 
     imu_heater::ImuHeater imuHeater;
 
-    Acc::AccBandwidth accOversampling = Acc::AccBandwidth::NORMAL;
-    Acc::AccOutputRate accOutputRate = Acc::AccOutputRate::Hz800;
+    Acc::AccBandwidth accOversampling = Acc::AccBandwidth::OSR4_OVERSAMPLING;
+    Acc::AccOutputRate accOutputRate = Acc::AccOutputRate::Hz1600;
 
     void initializeAcc();
 

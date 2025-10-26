@@ -38,7 +38,7 @@ void AutoAimAndFireCommand::execute() {
     cv->update(currentYaw, currentPitch, yawvel, pitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
 
     if (shoot != -1) {
-        if(tap::arch::clock::getTimeMilliseconds() - lastSeenTime >  PERSISTANCE) flip = flip * -1;
+        //if(tap::arch::clock::getTimeMilliseconds() - lastSeenTime >  PERSISTANCE) flip = flip * -1;
         //Found a target, moving to it and maybe shooting at it
 
         dyaw = fmod(dyaw, 2 * PI);
@@ -65,10 +65,10 @@ void AutoAimAndFireCommand::execute() {
 
         if(allowGimbal) {
             if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
-                gimbal->updateMotors(flip * BURST_AMOUNT, pitch);
+                gimbal->updateMotors(BURST_AMOUNT, pitch);
                 numCyclesForBurst = 0;
             } else {
-                gimbal->updateMotors(flip * PATROL_SPEED, pitch);
+                gimbal->updateMotors(PATROL_SPEED, pitch);
             }
         }
     }

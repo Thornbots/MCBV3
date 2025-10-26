@@ -20,7 +20,6 @@
 namespace subsystems
 {
 
-static tap::arch::PeriodicMilliTimer turretControllerTimer(2);
 class GimbalSubsystem : public tap::control::Subsystem
 {
 
@@ -38,9 +37,9 @@ private:  // Private Variables
     float driveTrainAngularVelocity, yawAngularVelocity, yawAngleRelativeWorld = 0.0, imuOffset;
     float gimbalPitchAngleRelativeWorld, gimbalPitchAngularVelocity;
     float yawEncoderCache = 0;
-    float desiredYawAngleWorld, desiredYawAngleWorld2, driveTrainEncoder = 0.0;
+    float driveTrainEncoder = 0.0;
     float stickAccumulator = 0, targetYawAngleWorld = 0,
-          targetDTVelocityWorld = 0;  
+          targetDTVelocityWorld = 0;
 
     float positionHistory[LATENCY_Q_SIZE];
 

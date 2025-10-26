@@ -5,7 +5,7 @@ Constants file for all robots subsystem constants
 namespace odo{
 constexpr static float PI_CONST = 3.14159;
 constexpr static int ODO_MOTOR_MAX_VOLTAGE = 24000;  // Should be the voltage of the battery. Unless the motor maxes out below that.
-static constexpr float dt = 0.002f;
+static constexpr float dt = 0.001f;
 // for sysid
 
 

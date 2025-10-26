@@ -64,14 +64,14 @@ private:
     int shoot = 0;
 
     int numCyclesForBurst = 0;
-    static constexpr int CYCLES_UNTIL_BURST = 190; //cycles
+    static constexpr int CYCLES_UNTIL_BURST = 380; //cycles
     static constexpr float BURST_AMOUNT = 0.0; //rad/cycle
-    static constexpr float PATROL_SPEED = 0.008; //rad/cycle
-    static constexpr int PERSISTANCE = 100;
+    static constexpr float PATROL_SPEED = 0.004; //rad/cycle
+    static constexpr int PERSISTANCE = 200;
 
     float yaw = 0.0f, pitch = 0.0f;
     float yawvel = 0.0f, pitchvel = 0.0f;
-    int flip = -1;
+    //int flip = 1;
     uint32_t lastSeenTime = 0;
 };
 }  // namespace commands
