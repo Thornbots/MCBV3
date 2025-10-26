@@ -4,8 +4,8 @@ namespace subsystems
 {
 
 HeroIndexerSubsystem::HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* indexTop, tap::motor::DjiMotor* indexBottom)
-    : IndexerSubsystem(drivers, indexTop, false, ShotCounter::BarrelType::TURRET_42MM), // Call base class constructor with the 42 barrel
-    bottom(drivers, indexBottom, false, ShotCounter::BarrelType::TURRET_42MM, REV_PER_BALL_BOTTOM)
+    : IndexerSubsystem(drivers, indexTop, false, ShotCounter::BarrelType::TURRET_42MM, 0), // Call base class constructor with the 42 barrel
+    bottom(drivers, indexBottom, false, ShotCounter::BarrelType::TURRET_42MM, 0, REV_PER_BALL_BOTTOM)
 {}
 
 void HeroIndexerSubsystem::initialize() {

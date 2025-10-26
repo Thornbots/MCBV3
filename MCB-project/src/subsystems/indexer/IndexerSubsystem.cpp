@@ -4,19 +4,21 @@ namespace subsystems {
 using namespace tap::communication::serial;
 
 IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming)
-    : IndexerSubsystem(drivers, index, doHoming, ShotCounter::BarrelType::TURRET_17MM_EITHER){}
+    : IndexerSubsystem(drivers, index, doHoming, ShotCounter::BarrelType::TURRET_17MM_EITHER, INITIAL_HOMING_NUM_BALLS_1){}
 
-IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, ShotCounter::BarrelType barrel)
-    : IndexerSubsystem(drivers, index, doHoming, barrel, REV_PER_BALL) {}
+IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, ShotCounter::BarrelType barrel, float initialHomingNumBalls)
+    : IndexerSubsystem(drivers, index, doHoming, barrel, initialHomingNumBalls, REV_PER_BALL) {
+    }
 
-IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, ShotCounter::BarrelType barrel, float revPerBall)
+IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, ShotCounter::BarrelType barrel, float initialHomingNumBalls, float revPerBall)
     : tap::control::Subsystem(drivers),
     drivers(drivers),
     motorIndexer(index),
     indexPIDController(PID_CONF_INDEX),
     counter(drivers, barrel, index),
     revPerBall(revPerBall),
-    homingState(doHoming ? HomingState::NEED_TO_HOME : HomingState::DONT_HOME)
+    homingState(doHoming ? HomingState::NEED_TO_HOME : HomingState::DONT_HOME),
+    initialHomingNumBalls(initialHomingNumBalls)
     {}
 
 void IndexerSubsystem::initialize() {
@@ -26,12 +28,29 @@ void IndexerSubsystem::initialize() {
 }
 
 void IndexerSubsystem::refresh() {
+
     if(homingState>=HomingState::HOMED&&!motorIndexer->isMotorOnline()){ //homed or gave up homing and the motor is offline
         homingState = HomingState::NEED_TO_HOME;
     }
     if(homingState==HomingState::NEED_TO_HOME && motorIndexer->isMotorOnline() && drivers->recal.getIsImuReady()){
         homingState=HomingState::HOMING;
         timeoutHome.restart(1000*HOMING_TIMEOUT);
+    }
+    if (homingState==HomingState::WAITING_AFTER_HOMING) {
+        motorIndexer->resetEncoderValue(); //for getNumBallsShot below
+        stopIndex();
+        if(timeoutHome.isExpired()){
+            homingState=HomingState::MOVING_AFTER_HOMING;
+        }
+    }
+    if (homingState==HomingState::MOVING_AFTER_HOMING) {
+        if(getNumBallsShot()<initialHomingNumBalls){
+            indexAtRate(1);
+        } else {
+            stopIndex();
+            motorIndexer->resetEncoderValue();
+            homingState=HomingState::HOMED;
+        }
     }
     if (homingState==HomingState::HOMING) {
         homeIndexer();
@@ -144,9 +163,9 @@ bool IndexerSubsystem::isIndexOnline() {
 
 void IndexerSubsystem::homeIndexer() {
     indexerVoltage = -2000; //make this a constant probably
-    if (abs(motorIndexer->getTorque()) > 2000) { //same for this
-        homingState = HomingState::HOMED;
-        motorIndexer->resetEncoderValue();
+    if (abs(motorIndexer->getTorque()) > 4000) { //same for this
+        homingState = HomingState::WAITING_AFTER_HOMING;
+        timeoutHome.restart(1000*HOMING_TIMEOUT);
     };
     if(timeoutHome.isExpired()){
         homingState = HomingState::GAVE_UP_HOMING;

@@ -19,21 +19,29 @@ constexpr static float LOAD_BALL_PER_SECOND = 5.0f;
 constexpr static float UNJAM_BALL_PER_SECOND = -8.0f; // in unjam mode, spin backwards at 1 balls per second (this is a guess)
 constexpr static tap::algorithms::SmoothPidConfig PID_CONF_INDEX = {5, 0, 0, 0, 8000, 1, 0, 1, 0, 10, 0};
 constexpr static float INITIAL_BURST_NUM_BALLS = 0;
+constexpr static float INITIAL_HOMING_NUM_BALLS_1 = 0; //doesn't apply to hero: doesn't home
+constexpr static float INITIAL_HOMING_NUM_BALLS_2 = 0; //doesn't apply to non sentry: only 1 spindex
 #elif defined(SENTRY)
 constexpr static float REV_PER_BALL = 36.0f / 7.0f; // revolutions per ball = ratio / chambers
 constexpr static float UNJAM_BALL_PER_SECOND = -1.0f; // in unjam mode, spin backwards at 1 balls per second (this is a guess)
 constexpr static tap::algorithms::SmoothPidConfig PID_CONF_INDEX = {5, 0, 0, 0, 8000, 1, 0, 1, 0, 10, 0};
 constexpr static float INITIAL_BURST_NUM_BALLS = 0.9;
+constexpr static float INITIAL_HOMING_NUM_BALLS_1 = 0.5; //after homing, need to move this amount to have a shot close to firing
+constexpr static float INITIAL_HOMING_NUM_BALLS_2 = 0; //after homing, need to move this amount to have a shot close to firing
 #elif defined(INFANTRY)
 constexpr static float REV_PER_BALL = 36.0f / 8.0f; // revolutions per ball = ratio / chambers
 constexpr static float UNJAM_BALL_PER_SECOND = -1.0f; // in unjam mode, spin backwards at 1 balls per second (this is a guess)
 constexpr static tap::algorithms::SmoothPidConfig PID_CONF_INDEX = {5, 0, 0, 0, 8000, 1, 0, 1, 0, 10, 0};
-constexpr static float INITIAL_BURST_NUM_BALLS = 0.9;
+constexpr static float INITIAL_BURST_NUM_BALLS = 0.5;
+constexpr static float INITIAL_HOMING_NUM_BALLS_1 = 0.8; //after homing, need to move this amount to have a shot close to firing
+constexpr static float INITIAL_HOMING_NUM_BALLS_2 = 0; //doesn't apply to non sentry: only 1 spindex
 #else
 constexpr static float REV_PER_BALL = 36.0f / 7.0f; // revolutions per ball = ratio / chambers
 constexpr static float UNJAM_BALL_PER_SECOND = -1.0f; // in unjam mode, spin backwards at 1 balls per second (this is a guess)
 constexpr static tap::algorithms::SmoothPidConfig PID_CONF_INDEX = {5, 0, 0, 0, 8000, 1, 0, 1, 0, 10, 0};
 constexpr static float INITIAL_BURST_NUM_BALLS = 0.9;
+constexpr static float INITIAL_HOMING_NUM_BALLS_1 = 0; //doesn't apply to old standard: we don't know where it needs to be
+constexpr static float INITIAL_HOMING_NUM_BALLS_2 = 0; //doesn't apply to non sentry: only 1 spindex
 #endif
 
 #ifndef HERO

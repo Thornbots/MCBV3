@@ -4,8 +4,8 @@ namespace subsystems
 {
 
 DoubleIndexerSubsystem::DoubleIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index1, tap::motor::DjiMotor* index2, bool doHoming)
-    : IndexerSubsystem(drivers, index1, doHoming, ShotCounter::BarrelType::TURRET_17MM_1), // Call base class constructor
-    other(drivers, index2, doHoming, ShotCounter::BarrelType::TURRET_17MM_2)
+    : IndexerSubsystem(drivers, index1, doHoming, ShotCounter::BarrelType::TURRET_17MM_1, INITIAL_HOMING_NUM_BALLS_1), // Call base class constructor
+    other(drivers, index2, doHoming, ShotCounter::BarrelType::TURRET_17MM_2, INITIAL_HOMING_NUM_BALLS_2)
 {}
 
 void DoubleIndexerSubsystem::initialize() {
