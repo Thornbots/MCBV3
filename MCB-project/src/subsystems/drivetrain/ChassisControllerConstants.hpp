@@ -138,6 +138,13 @@ constexpr float maxTorqueZ = 30;
 #endif
 
 
+//Variable speed terms
+
+constexpr bool variablebb = true;
+constexpr float bbamp = 3;
+constexpr float bbperiod = .5; //s
+constexpr float bbslowperiod = .05; //s
+
 // after the ifdefs
 
 constexpr float TREQSCALE = 0.5;

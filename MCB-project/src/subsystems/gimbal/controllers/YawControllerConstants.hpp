@@ -25,7 +25,7 @@ constexpr float KDT = -0.1;      // unitless
 constexpr float KDT_REV = -0.1;  // unitless
 
 // Velocity feedback
-constexpr float KPV = .1;         // A-s/rad
+constexpr float KPV = 2.25;         // A-s/rad
 constexpr float KIV = 10;          // A/rad
 constexpr float IV_MAX = 0.8 / KIV;  //.2 / KIV;              // units TBD
 

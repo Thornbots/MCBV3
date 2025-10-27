@@ -53,9 +53,25 @@ float ChassisController::calculateBeybladeVelocity(float bb_freq, float bb_amp, 
         targetVelocityMagnitudeHistory[i] = (i < (BBQ_SIZE - 2)) ? targetVelocityMagnitudeHistory[i + 1] : TargetVelocity.magnitude();
         velmagMax = std::max(velmagMax, targetVelocityMagnitudeHistory[i]);  // Find max velocity magnitude in the last bb_delay seconds
     }
+
+    float offset = 0;
+    if(variablebb && TargetVelocity.getRotation() > 8.0f) {
+        time += DT;
+        if(time > bbperiod) time = 0;
+
+        if (time < bbslowperiod) {
+            offset = bbamp*(1 - time / bbslowperiod);
+        }
+        else {
+            offset = -bbamp*(1 - (time - bbslowperiod)/(bbperiod - bbslowperiod));
+        }
+    }
+
+
     if (TargetVelocity.getRotation() < BBterm1 - 2) return TargetVelocity.getRotation(); //prevent any actual changes if the thing is slow (aka a PID controller or something is controlling positoin)
     // If fixed-speed beyblade or variable-speed beyblade with velocity != 0
     // Variable-speed beyblade behavior when velmagMax == 0
+    
     // if (BEYBLADE_FIXED_SPEED || velmagMax != 0)
     //     dotThetaBeyblade -= velmagMax * dotThetaGain;
     // else if (!BEYBLADE_FIXED_SPEED && velmagMax == 0)
@@ -68,7 +84,7 @@ float ChassisController::calculateBeybladeVelocity(float bb_freq, float bb_amp, 
     // if (targetVelocityQueue.size() > BEYBLADE_DELAY / DT) {
     //     targetVelocityQueue.pop_front();
     // }
-    return std::min(std::clamp(BBterm1 + BBterm2 * velmagMax + BBterm3 * velmagMax * velmagMax, 0.0f, BBmax), TargetVelocity.getRotation());  // Return the required angular velocity (dot_theta_req)
+    return std::min(std::clamp(BBterm1 + BBterm2 * velmagMax + BBterm3 * velmagMax * velmagMax + offset, 0.0f, BBmax), TargetVelocity.getRotation());  // Return the required angular velocity (dot_theta_req)
 }
 
 // Function to estimate input errors in inertial frame
