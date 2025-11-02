@@ -29,33 +29,27 @@ public:
         //in case index doesn't start at 0
         initialPosition = index->getPositionUnwrapped();
         recentPosition = initialPosition;
-        timeUntilNoHeat.stop();
+        prevPosition = initialPosition;
+
+        prevMillis = tap::arch::clock::getTimeMilliseconds();
     }
 
     float getAllowableIndexRate(float desiredBallsPerSecond){
-        tap::communication::serial::RefSerial::Rx::TurretData turretData = drivers->refSerial.getRobotData().turret;
-        float numShot = getNumBallsShotByReference(timerPosition);
-        if(numShot>=1){
-            timerPosition = index->getPositionUnwrapped();
-            timeUntilNoHeat.restart(timeUntilNoHeat.timeRemaining()+numShot*getHeatPerBall()/turretData.coolingRate);
-        }
-        if(timeUntilNoHeat.isExpired()){
-            timeUntilNoHeat.stop();
-        }
+        applyCooling();
 
-        if (enabled && drivers->refSerial.getRefSerialReceivingData()){
-        //    (getHeatPerBall() * desiredBallsPerSecond - turretData.coolingRate) * LATENCY > (turretData.heatLimit - getCurrentRefHeat(&turretData))) {
-        //     return turretData.coolingRate / getHeatPerBall();
+        if(!enabled || !drivers->refSerial.getRefSerialReceivingData()) return desiredBallsPerSecond;
 
-            if(timeUntilNoHeat.timeRemaining()*turretData.coolingRate>(turretData.heatLimit-getHeatPerBall()*2)){
-                return 0;
-            } else {
-                return desiredBallsPerSecond;
-            }
-        }
+        applyHeat();
+
+        if(!canShootAgain()) return 0;
 
         return desiredBallsPerSecond;
     }
+
+    bool canShootAgain() {
+        return estHeat+getHeatPerBall()<=drivers->refSerial.getRobotData().turret.heatLimit;
+    }
+
 
     float getTotalNumBallsShot() {
         return getNumBallsShotByReference(initialPosition);
@@ -70,14 +64,20 @@ public:
     }
 
     void enable() {
+        if(!enabled)
+            prevPosition = index->getPositionUnwrapped();
         enabled = true;
     }
 
     void disable() {
+        if(enabled)
+            applyHeat();
         enabled = false;
     }
 
-
+    int32_t getEstHeat(){
+        return estHeat;
+    }
 private:
     src::Drivers* drivers;
     BarrelType barrel;
@@ -85,11 +85,13 @@ private:
 
     bool enabled = true;
 
-    tap::arch::MilliTimeout timeUntilNoHeat;
+    // tap::arch::MilliTimeout timeUntilNoHeat;
+    uint32_t prevMillis = 0; //for decrementing heat
+    int32_t estHeat = 0;
 
     int64_t recentPosition = 0;
     int64_t initialPosition = 0;
-    int64_t timerPosition = 0;
+    int64_t prevPosition = 0; //for incrementing heat
 
     float getHeatPerBall() {
         return barrel==BarrelType::TURRET_42MM ? HEAT_PER_42 : HEAT_PER_17;
@@ -106,6 +108,31 @@ private:
         return (index->getPositionUnwrapped() - reference) / (REV_PER_BALL * 2 * PI);
     }
 
+
+    void applyCooling() {
+        // delta time[ms] * cooling[heat/s] / 1000[ms to s]
+        int32_t heatDiff = (tap::arch::clock::getTimeMilliseconds()-prevMillis)*(drivers->refSerial.getRobotData().turret.coolingRate)/1000;
+        if(heatDiff>0){ //could be 0 if not enough time has passed
+            estHeat-=heatDiff;
+            if(estHeat<0) estHeat=0; //can't be negative heat
+
+            prevMillis = tap::arch::clock::getTimeMilliseconds();
+        }
+    }
+
+    void applyHeat() {
+        // incrementing heat
+        float newHeat = getNumBallsShotByReference(prevPosition)*getHeatPerBall();
+        if(newHeat>=0){ //if motor went forward
+            if(newHeat>=1){ //if we actually change heat
+                estHeat+=newHeat;
+                prevPosition = index->getPositionUnwrapped();
+            }
+        } else {
+            // if we went backwards, then reset position so we are ready for when we go forwards again
+            prevPosition = index->getPositionUnwrapped();
+        }
+    }
 
     static constexpr float HEAT_PER_17 = 10.0f;
     static constexpr float HEAT_PER_42 = 100.0f;

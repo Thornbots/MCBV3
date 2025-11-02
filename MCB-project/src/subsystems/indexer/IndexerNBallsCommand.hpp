@@ -37,5 +37,7 @@ private:
     IndexerSubsystem* indexer;
     int numBalls;
     float ballsPerSecond;
+
+    bool canStart;
 };
 }  // namespace commands

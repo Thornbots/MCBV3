@@ -81,6 +81,9 @@ virtual bool isProjectileAtBeam();
 
 virtual bool isIndexOnline();
 
+virtual int32_t getEstHeat();
+virtual bool heatAllowsShooting();
+
 
 void homeIndexer();
 

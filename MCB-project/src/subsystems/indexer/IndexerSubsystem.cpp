@@ -142,6 +142,13 @@ bool IndexerSubsystem::isIndexOnline() {
     return motorIndexer->isMotorOnline();
 }
 
+int32_t IndexerSubsystem::getEstHeat(){
+    return counter.getEstHeat();
+}
+bool IndexerSubsystem::heatAllowsShooting(){
+    return counter.canShootAgain();
+}
+
 void IndexerSubsystem::homeIndexer() {
     indexerVoltage = -2000; //make this a constant probably
     if (abs(motorIndexer->getTorque()) > 2000) { //same for this
