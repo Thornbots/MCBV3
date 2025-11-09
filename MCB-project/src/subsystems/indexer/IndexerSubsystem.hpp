@@ -7,6 +7,7 @@
 #include "tap/control/subsystem.hpp"
 
 #include "ShotCounter.hpp"
+#include "IndexerController.hpp"
 #include "drivers.hpp"
 
 namespace subsystems
@@ -34,6 +35,8 @@ tap::arch::MilliTimeout timeoutUnjam;
 bool isAutoUnjamming = false;
 
 int64_t targetIndexerPosition = 0;
+    
+IndexerController indexerController;
 
 
 tap::arch::MilliTimeout timeoutHome;
@@ -49,6 +52,8 @@ private:
 int homeTimeoutCounter = 0;
 
 HomingState homingState;
+
+int getIndexerVoltage(float driveTrainAngularVelocity, float yawAngleRelativeWorld, float yawAngularVelocity, float desiredAngleWorld, float inputVel, float dt);
 
 public:  // Public Methods
 

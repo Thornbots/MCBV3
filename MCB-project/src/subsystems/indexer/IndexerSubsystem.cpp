@@ -2,6 +2,7 @@
 
 namespace subsystems {
 using namespace tap::communication::serial;
+using namespace subsystems::indexer;
 
 IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming)
     : IndexerSubsystem(drivers, index, doHoming, ShotCounter::BarrelType::TURRET_17MM_EITHER){}
@@ -116,6 +117,18 @@ void IndexerSubsystem::setTargetMotorRPM(int targetMotorRPM) {
 // converts delta motor ticks to num balls shot using constants
 float IndexerSubsystem::getNumBallsShot() {
     return counter.getRecentNumBallsShot();
+}
+
+int IndexerSubsystem::getIndexerVoltage(float driveTrainAngularVelocity, float yawAngleRelativeWorld, float yawAngularVelocity, float desiredAngleWorld, float inputVel, float dt) {
+#if defined(yaw_sysid)
+    voltage = distYaw(gen);
+    velocity = yawAngularVelocity;
+    return voltage;
+#elif defined(drivetrain_sysid)
+    return 0;
+#else
+    return 1000 * indexerController.calculate(yawAngleRelativeWorld, yawAngularVelocity, driveTrainAngularVelocity, desiredAngleWorld, inputVel, dt);
+#endif
 }
 
 float IndexerSubsystem::getTotalNumBallsShot() {
