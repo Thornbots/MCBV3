@@ -9,6 +9,7 @@ void IndexerNBallsCommand::initialize() {
     // not sure how to do continuous firing with position control yet
     if(numBalls>=0){
         indexer->incrementTargetNumBalls(numBalls);
+        indexer->setBallsPerSecond(ballsPerSecond);
     }
 }
 void IndexerNBallsCommand::execute()
@@ -27,13 +28,15 @@ void IndexerNBallsCommand::end(bool) {
 }
 
 bool IndexerNBallsCommand::isFinished(void) const {
-    if(!drivers->remote.isConnected()) return true;
+    return !drivers->remote.isConnected();
+    
+    // if(!drivers->remote.isConnected()) return true;
 
-    if (numBalls < 0) {
-        return false;
-    }
+    // if (numBalls < 0) {
+    //     return false;
+    // }
 
-    // might need changed with position control
-    return indexer->getNumBallsShot() >= numBalls;
+    // // might need changed with position control
+    // return indexer->getNumBallsShot() >= numBalls;
 }
 }  // namespace commands

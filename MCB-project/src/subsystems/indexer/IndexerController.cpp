@@ -19,12 +19,13 @@ float IndexerController::calculate(float currentPosition, float currentVelocity,
     // float positionError = std::fmod(targetPosition - currentPosition + PI, 2 * PI) - PI;  // wrap to [-PI, PI]
     float positionError = targetPosition - currentPosition;  // wrap to [-PI, PI]
 
+    /*
     while(positionError > PI) {
         positionError -= 2 * PI;
     }
     while (positionError < -PI) {
         positionError += 2 * PI;
-    } 
+    } */
 
     float targetVelocity = decelProfile(positionError, currentVelocity, inputVelocity);
 

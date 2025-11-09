@@ -34,7 +34,7 @@ int32_t indexerVoltage = 0;
 tap::arch::MilliTimeout timeoutUnjam;
 bool isAutoUnjamming = false;
 
-int64_t targetIndexerPosition = 0;
+float targetIndexerPosition = 0;
     
 IndexerController indexerController;
 
@@ -53,7 +53,7 @@ int homeTimeoutCounter = 0;
 
 HomingState homingState;
 
-int getIndexerVoltage(float driveTrainAngularVelocity, float yawAngleRelativeWorld, float yawAngularVelocity, float desiredAngleWorld, float inputVel, float dt);
+int getIndexerVoltage(float currentPosition, float currentVelocity, float targetPosition, float inputVelocity, float deltaT);
 
 public:  // Public Methods
 
@@ -81,6 +81,7 @@ virtual void resetBallsCounter();
 virtual void incrementTargetNumBalls(int numBalls);
 
 virtual float getBallsPerSecond();
+virtual void setBallsPerSecond(float newBallsPerSecond);
 
 virtual float getActualBallsPerSecond();
 

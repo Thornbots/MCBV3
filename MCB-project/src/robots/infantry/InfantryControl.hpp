@@ -56,7 +56,7 @@ public:
         drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerStop);
 
-        shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz)->onTrue(&closeServo);
+        shootButton.onTrue(&shooterStart)->onTrue(&indexerSingle)->onTrue(&closeServo);
         unjamButton.whileTrue(&indexerUnjam)->onTrue(&openServo);
 
         stopFlywheelTrigger.onTrue(&shooterStop);
@@ -64,8 +64,8 @@ public:
         // Mouse and Keyboard mappings
         unjamKey.whileTrue(&indexerUnjam)->onTrue(&openServo);
         onlyCloseLidKey.onTrue(&closeServo);
-        shootRegKey.whileTrue(&indexer10Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
-        shootFastKey.whileTrue(&indexer20Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
+        shootRegKey.whileTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
+        shootFastKey.whileTrue(&indexer10Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
         autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart)->onTrue(&closeServo);
         // implement speed mode
 
@@ -146,6 +146,7 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
+    commands::IndexerNBallsCommand indexerSingle{drivers, &indexer, 1, 20};
     commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 10};
     commands::IndexerNBallsCommand indexer20Hz{drivers, &indexer, -1, 20};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};

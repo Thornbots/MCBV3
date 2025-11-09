@@ -38,67 +38,82 @@ void IndexerSubsystem::refresh() {
         homeIndexer();
     }
     // if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower&RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER)
-    motorIndexer->setDesiredOutput(indexerVoltage);
+    // if(ballsPerSecond==0){
+    //     motorIndexer->setDesiredOutput(0);
+    //     indexerController.clearBuildup();
+    // } else {
+        motorIndexer->setDesiredOutput(getIndexerVoltage(0, motorIndexer->getShaftRPM()*(PI/30)*GEAR_RATIO, 0, 0, DT));
+    // }
+    
 }
 
 
 bool IndexerSubsystem::doAutoUnjam(float inputBallsPerSecond) {
-    //if unjamming
-    if(isAutoUnjamming){
-        if(timeoutUnjam.isExpired()){
-            timeoutUnjam.stop();
-            isAutoUnjamming = false;
-        } else if (inputBallsPerSecond > 0) {
-            //prevent infinite recursion, unjam calls indexAtRate with a negative number
-            IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
-            return true;
-        }
-    }
-
-    //if we are here, isAutoUnjamming is false or inputBallsPerSecond<=0
-    //if we are slow and trying to go forward
-    if(inputBallsPerSecond > 0 && getActualBallsPerSecond()<AUTO_UNJAM_BALLS_PER_SEC_THRESH){
-        if(timeoutUnjam.isStopped()){
-            timeoutUnjam.restart(AUTO_UNJAM_TIME_UNDER_THRESH*1000);
-        }
-
-        if(timeoutUnjam.isExpired()){
-            isAutoUnjamming = true;
-            timeoutUnjam.restart(AUTO_UNJAM_TIME_UNJAMMING*1000);
-            IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
-            return true;
-        }
-    }
-
-    //for stopIndex
-    if(inputBallsPerSecond==0){
-        timeoutUnjam.stop();
-        isAutoUnjamming = false;
-    }
-
+    // figure out later
     return false;
+    
+    
+    // //if unjamming
+    // if(isAutoUnjamming){
+    //     if(timeoutUnjam.isExpired()){
+    //         timeoutUnjam.stop();
+    //         isAutoUnjamming = false;
+    //     } else if (inputBallsPerSecond > 0) {
+    //         //prevent infinite recursion, unjam calls indexAtRate with a negative number
+    //         IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
+    //         return true;
+    //     }
+    // }
+
+    // //if we are here, isAutoUnjamming is false or inputBallsPerSecond<=0
+    // //if we are slow and trying to go forward
+    // if(inputBallsPerSecond > 0 && getActualBallsPerSecond()<AUTO_UNJAM_BALLS_PER_SEC_THRESH){
+    //     if(timeoutUnjam.isStopped()){
+    //         timeoutUnjam.restart(AUTO_UNJAM_TIME_UNDER_THRESH*1000);
+    //     }
+
+    //     if(timeoutUnjam.isExpired()){
+    //         isAutoUnjamming = true;
+    //         timeoutUnjam.restart(AUTO_UNJAM_TIME_UNJAMMING*1000);
+    //         IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
+    //         return true;
+    //     }
+    // }
+
+    // //for stopIndex
+    // if(inputBallsPerSecond==0){
+    //     timeoutUnjam.stop();
+    //     isAutoUnjamming = false;
+    // }
+
+    // return false;
 }
 
 float IndexerSubsystem::indexAtRate(float inputBallsPerSecond) {
+    // figure out later
+    return 0;
+    
     // if(homingState==HomingState::HOMING) return 0; //ignore if we are homing
 
-    if(doAutoUnjam(inputBallsPerSecond)) return UNJAM_BALL_PER_SECOND;
+    // if(doAutoUnjam(inputBallsPerSecond)) return UNJAM_BALL_PER_SECOND;
 
-    this->ballsPerSecond = counter.getAllowableIndexRate(inputBallsPerSecond);
-    setTargetMotorRPM(this->ballsPerSecond * 60.0f * revPerBall);
-    return this->ballsPerSecond;
+    // this->ballsPerSecond = counter.getAllowableIndexRate(inputBallsPerSecond);
+    // setTargetMotorRPM(this->ballsPerSecond * 60.0f * revPerBall);
+    // return this->ballsPerSecond;
 }
 
 void IndexerSubsystem::indexAtMaxRate(){
+    // probably don't need anymore
+    
     // if(homingState==HomingState::HOMING) return; //ignore if we are homing
 
     setTargetMotorRPM(MAX_INDEX_RPM);
 }
 
 void IndexerSubsystem::stopIndex() {
-    // do we set homing state to give up?
+    // need to figure out soon
 
-    indexAtRate(0);
+    ballsPerSecond = 0;
 }
 
 void IndexerSubsystem::unjam(){
@@ -109,9 +124,9 @@ void IndexerSubsystem::unjam(){
 //so the first shot goes out asap
 
 void IndexerSubsystem::setTargetMotorRPM(int targetMotorRPM) {
-    indexPIDController.runControllerDerivateError(targetMotorRPM - motorIndexer->getShaftRPM(), 1);
+    //indexPIDController.runControllerDerivateError(targetMotorRPM - motorIndexer->getShaftRPM(), 1);
 
-    indexerVoltage = static_cast<int32_t>(indexPIDController.getOutput());
+    //indexerVoltage = static_cast<int32_t>(indexPIDController.getOutput());
 }
 
 // converts delta motor ticks to num balls shot using constants
@@ -119,16 +134,9 @@ float IndexerSubsystem::getNumBallsShot() {
     return counter.getRecentNumBallsShot();
 }
 
-int IndexerSubsystem::getIndexerVoltage(float driveTrainAngularVelocity, float yawAngleRelativeWorld, float yawAngularVelocity, float desiredAngleWorld, float inputVel, float dt) {
-#if defined(yaw_sysid)
-    voltage = distYaw(gen);
-    velocity = yawAngularVelocity;
-    return voltage;
-#elif defined(drivetrain_sysid)
-    return 0;
-#else
-    return 1000 * indexerController.calculate(yawAngleRelativeWorld, yawAngularVelocity, driveTrainAngularVelocity, desiredAngleWorld, inputVel, dt);
-#endif
+int IndexerSubsystem::getIndexerVoltage(float currentPosition, float currentVelocity, float targetPosition, float inputVelocity, float deltaT) {
+    // return 10000;
+    return 1000 * indexerController.calculate(0, 0, 0.1, 0, 0.001f); //currentPosition, currentVelocity, targetPosition, inputVelocity, deltaT);
 }
 
 float IndexerSubsystem::getTotalNumBallsShot() {
@@ -145,6 +153,10 @@ void IndexerSubsystem::incrementTargetNumBalls(int numBalls) {
 
 float IndexerSubsystem::getBallsPerSecond() {
     return ballsPerSecond;
+}
+
+void IndexerSubsystem::setBallsPerSecond(float newBallsPerSecond){
+    ballsPerSecond = newBallsPerSecond;
 }
 
 float IndexerSubsystem::getActualBallsPerSecond() {

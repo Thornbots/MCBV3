@@ -70,7 +70,7 @@ constexpr float CURRENT_MAX = 20;  // A
 #elif defined(INFANTRY)
 
 constexpr float C = 0.0;  // kg-s/m^2
-constexpr float J = 0.01;  // kg-m^2
+constexpr float J = 0.0001;  // kg-m^2
 constexpr float UK = 0.0;  // N-m
 
 constexpr float KB = 0.45837;                                       // V-rad/s
@@ -79,7 +79,7 @@ constexpr float RA = 2.1333;                                        // ohm
 constexpr float RATIO = 1.0;                               // unitless
                                                                    // Position controller  constexprants
 constexpr float KP = 1;                                           // 10.5;  // sec^-1
-constexpr float THETA_DOT_BREAK = 10;                              // rad/s
+constexpr float THETA_DOT_BREAK = 100000;                              // rad/s
 constexpr float A_DECEL = 0.3 * VOLT_MAX * KT * RATIO / (J * RA);  // experimental per Alex_Y
 
 // Feedforward  constexprants
@@ -88,7 +88,7 @@ constexpr float A_SCALE = 0.9;  // 0.8            // unitless
 // Gain scheduling
 
 // Velocity feedback
-constexpr float KPV = 5;         // A-s/rad
+constexpr float KPV = .1;         // A-s/rad
 constexpr float KIV = 0;          // A/rad
 constexpr float IV_MAX = 1; //3 / KIV;  //.2 / KIV;              // units TBD
 
