@@ -14,7 +14,7 @@ using namespace subsystems::indexer;
     
 IndexerController::IndexerController() {}
 
-float IndexerController::calculate(float currentPosition, float currentVelocity, float currentDrivetrainVelocity, float targetPosition, float deltaT) {
+float IndexerController::calculate(float currentPosition, float currentVelocity, float targetPosition, float inputVelocity, float deltaT) {
 
     // float positionError = std::fmod(targetPosition - currentPosition + PI, 2 * PI) - PI;  // wrap to [-PI, PI]
     float positionError = targetPosition - currentPosition;  // wrap to [-PI, PI]
@@ -26,13 +26,13 @@ float IndexerController::calculate(float currentPosition, float currentVelocity,
         positionError += 2 * PI;
     } 
 
-    float targetVelocity = decelProfile(positionError, currentVelocity, targetVelocity);
+    float targetVelocity = decelProfile(positionError, currentVelocity, inputVelocity);
 
     // experimental
 
     // model based motion profile
-    float frictionTorque = (C * (currentDrivetrainVelocity - currentVelocity) + UK * signum(currentDrivetrainVelocity - currentVelocity));
-    float backEMF = KB*RATIO * (currentDrivetrainVelocity - currentVelocity);
+    float frictionTorque = (- C *  currentVelocity + UK * signum(-currentVelocity));
+    float backEMF = -KB*RATIO * currentVelocity;
     float maxVelocity = std::min(VELO_MAX, 
         pastTargetVelocity + 1 / J * (frictionTorque 
             + std::min(std::max((backEMF + VOLT_MAX ) / RA, -CURRENT_MAX), CURRENT_MAX) //current from applied voltage, clamped to current max
@@ -45,7 +45,6 @@ float IndexerController::calculate(float currentPosition, float currentVelocity,
 
     // velocity controller
     float velocityError = targetVelocity - currentVelocity;
-    float targetRelativeVelocity = targetVelocity - currentDrivetrainVelocity;
     float targetAcceleration = (targetVelocity - pastTargetVelocity) / deltaT;
     pastTargetVelocity = targetVelocity;
 
@@ -58,9 +57,9 @@ float IndexerController::calculate(float currentPosition, float currentVelocity,
         buildup += velocityError * deltaT;  // integrate normally
     }   
     // calculation for setting target current aka velocity controller
-    float targetCurrent = std::clamp(KVISC * targetRelativeVelocity + UK * signum(targetRelativeVelocity) + KA * targetAcceleration + KPV * velocityError + KIV * buildup, -20.0f, 20.0f);
+    float targetCurrent = std::clamp(KVISC * targetVelocity + UK * signum(targetVelocity) + KA * targetAcceleration + KPV * velocityError + KIV * buildup, -20.0f, 20.0f);
 
-    pastOutput = RA * targetCurrent + KV * targetRelativeVelocity;
+    pastOutput = RA * targetCurrent + KV * targetVelocity;
 
     return targetCurrent;
 }
