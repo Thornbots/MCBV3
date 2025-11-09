@@ -62,6 +62,12 @@ public:
         enabled = false;
     }
     
+    // for shooting one ball, how far does the index need to move
+    int64_t getPositionIncrement() {
+        // inverse of getNumBallsShotByReference, but you don't need to subtract a reference
+        return (REV_PER_BALL * 2 * PI);
+    }
+    
 
 private:
     src::Drivers* drivers;

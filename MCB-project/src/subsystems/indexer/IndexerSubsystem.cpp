@@ -126,6 +126,10 @@ void IndexerSubsystem::resetBallsCounter() {
     counter.resetRecentBallsCounter();
 }
 
+void IndexerSubsystem::incrementTargetNumBalls(int numBalls) {
+    targetIndexerPosition+=counter.getPositionIncrement()*numBalls;
+}
+
 float IndexerSubsystem::getBallsPerSecond() {
     return ballsPerSecond;
 }

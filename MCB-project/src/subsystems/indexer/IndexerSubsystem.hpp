@@ -33,6 +33,8 @@ int32_t indexerVoltage = 0;
 tap::arch::MilliTimeout timeoutUnjam;
 bool isAutoUnjamming = false;
 
+int64_t targetIndexerPosition = 0;
+
 
 tap::arch::MilliTimeout timeoutHome;
 enum class HomingState : uint8_t {
@@ -71,6 +73,7 @@ virtual float getNumBallsShot();
 virtual float getTotalNumBallsShot();
 
 virtual void resetBallsCounter();
+virtual void incrementTargetNumBalls(int numBalls);
 
 virtual float getBallsPerSecond();
 
