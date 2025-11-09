@@ -14,11 +14,8 @@ using namespace subsystems::indexer;
     
 IndexerController::IndexerController() {}
 
-float IndexerController::calculate(float currentPosition, float currentVelocity, float currentDrivetrainVelocity, float targetPosition, float inputVelocity, float deltaT) {
+float IndexerController::calculate(float currentPosition, float currentVelocity, float currentDrivetrainVelocity, float targetPosition, float deltaT) {
 
-    estimateState(&currentPosition, &currentVelocity, pastTorque, currentDrivetrainVelocity);
-
-    estimatedPosition = currentPosition;
     // float positionError = std::fmod(targetPosition - currentPosition + PI, 2 * PI) - PI;  // wrap to [-PI, PI]
     float positionError = targetPosition - currentPosition;  // wrap to [-PI, PI]
 
@@ -29,10 +26,7 @@ float IndexerController::calculate(float currentPosition, float currentVelocity,
         positionError += 2 * PI;
     } 
 
-    //float choiceKDT = currentDrivetrainVelocity * positionError > 0 ? KDT : KDT_REV;  // check if turret is fighting drivetrain;
-    inputVelocity = std::clamp(inputVelocity, -VELO_MAX / 2, VELO_MAX / 2);
-    // float targetVelocity = (KP + signum(currentDrivetrainVelocity) * choiceKDT) * positionError + inputVelocity;
-    float targetVelocity = decelProfile(positionError, currentVelocity, inputVelocity, currentDrivetrainVelocity);
+    float targetVelocity = decelProfile(positionError, currentVelocity, targetVelocity);
 
     // experimental
 
@@ -67,32 +61,11 @@ float IndexerController::calculate(float currentPosition, float currentVelocity,
     float targetCurrent = std::clamp(KVISC * targetRelativeVelocity + UK * signum(targetRelativeVelocity) + KA * targetAcceleration + KPV * velocityError + KIV * buildup, -20.0f, 20.0f);
 
     pastOutput = RA * targetCurrent + KV * targetRelativeVelocity;
-    pastTorque = targetCurrent*KT;
 
-#if defined(OLDINFANTRY)
-    return std::clamp(pastOutput, -VOLT_MAX, VOLT_MAX);
-#else
-    return 0.8192f * targetCurrent;
-#endif
+    return targetCurrent;
 }
 
-void IndexerController::estimateState(float* theta, float* thetadot, float tLast, float drivetrainVelocity) {
-    // For each historical value of Fx, Fy, Tz, calculate the estimates
-    for (int i = Q_SIZE - 1; i >= 0; i--) {
-        // // Store the current values in the history
-        // load in new value if i is not > 0
-        // forcehistory[Q_SIZE-1] gets kicked out every method call
-        torqueHistory[i] = (i > 0) ? torqueHistory[i - 1] : tLast;
-
-        // Estimated angular velocity (theta_dot)
-        *thetadot += (torqueHistory[i] - C*(*thetadot - drivetrainVelocity) - signum(*thetadot - drivetrainVelocity)) * (DT/ J);
-
-        // Update velocity
-        *theta += *thetadot * DT;
-    }
-}
-
-float IndexerController::decelProfile(float poserror, float thetadot, float thetadotinput, float drivetrainVelocity) {
+float IndexerController::decelProfile(float poserror, float thetadot, float thetadotinput) {
     float o = 0, o2 = 0;  // offsets
     float t2 = thetadotinput * thetadotinput;
     float v1 = 0, v2 = 0, v3 = 0, v4 = 0;
@@ -109,7 +82,7 @@ float IndexerController::decelProfile(float poserror, float thetadot, float thet
         v4 = -std::sqrt(t2 - 2 * A_DECEL * (poserror + o2));  // Negative right
     }
     if (std::fabs(poserror) < THETA_DOT_BREAK / KP)  // std::fabs(thetadot - thetadotinput) < THETA_DOT_BREAK)
-        return (KP + (drivetrainVelocity * poserror > 0 ? KDT : KDT_REV)*drivetrainVelocity) * poserror + thetadotinput;
+        return KP * poserror + thetadotinput;
 
     if (v3 != 0 && poserror > 0 && thetadot <= 0)
         return v3;
