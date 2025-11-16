@@ -49,8 +49,8 @@ public:
 
         // and xy location isn't the center
         float angleRadians = (drivetrain->isPeekingLeft ? PI/2 : 3*PI/2) + gimbal->getYawEncoderValue();
-        side.cx = front.cx - 2*side.width*sin(angleRadians);
-        side.cy = front.cy - 2*side.width*cos(angleRadians);
+        side.cx = front.cx - 2*side.rx*sin(angleRadians);
+        side.cy = front.cy - 2*side.rx*cos(angleRadians);
 #else
         // side arc is like the front one, convex
         side.startAngle = (drivetrain->isPeekingLeft ? 270 : 90) + heading - INNER_ARC_LEN / 2;

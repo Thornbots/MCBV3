@@ -72,14 +72,113 @@ private:
     RefSerialData::Tx::GraphicColor prevColor;
 };
 
+
+class FilledRectangle : public AtomicGraphicsObject {
+public:
+    // thickness behaves as extra width and height
+    FilledRectangle(RefSerialData::Tx::GraphicColor color, uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t thickness)
+        : AtomicGraphicsObject(color),
+          x(x),
+          y(y),
+          width(width),
+          height(height),
+          thickness(thickness) {}
+
+    FilledRectangle() : FilledRectangle(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 0, 1) {}
+
+    virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
+        RefSerialTransmitter::configLine(height+thickness, x-thickness/2, height/2 + y, width + x + thickness/2, height/2 + y, graphicData);
+        setPrev();
+    }
+
+    bool needsRedrawn() final { return !(prevThickness == thickness && prevX == x && prevY == y && prevWidth == width && prevHeight == height && prevColor == color); }
+
+    uint16_t x, y, width, height, thickness;  // can set this directly, will appear next time drawn
+
+private:
+    void setPrev() {
+        prevThickness = thickness;
+        prevX = x;
+        prevY = y;
+        prevWidth = width;
+        prevHeight = height;
+        prevColor = color;
+    }
+
+    uint16_t prevThickness, prevX, prevY, prevWidth, prevHeight = 0;
+    RefSerialData::Tx::GraphicColor prevColor;
+};
+
+
+
+class Arc : public AtomicGraphicsObject {
+public:
+    Arc(RefSerialData::Tx::GraphicColor color, uint16_t cx, uint16_t cy, uint16_t rx, uint16_t ry, uint16_t startAngle, uint16_t endAngle, uint16_t thickness)
+        : AtomicGraphicsObject(color),
+          startAngle(startAngle),
+          endAngle(endAngle),
+          cx(cx),
+          cy(cy),
+          rx(rx),
+          ry(ry),
+          thickness(thickness) {}
+
+    Arc() : Arc(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 0, 0, 0, 1) {}
+
+    virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
+        if(reachesCenter){
+            if(rx>ry){
+                uint16_t thicknessAdjusted = ry+thickness/2;
+                RefSerialTransmitter::configArc(startAngle, endAngle, thicknessAdjusted, cx, cy, rx-ry/2+thickness/4, thicknessAdjusted/2, graphicData);
+            } else {
+                uint16_t thicknessAdjusted = rx+thickness/2;
+                RefSerialTransmitter::configArc(startAngle, endAngle, thicknessAdjusted, cx, cy, thicknessAdjusted/2, ry-rx/2+thickness/4, graphicData);
+            }
+        } else {
+            RefSerialTransmitter::configArc(startAngle, endAngle, thickness, cx, cy, rx, ry, graphicData);
+        }
+        setPrev();
+    }
+
+    bool needsRedrawn() {
+        return !(
+            prevThickness == thickness && prevReachesCenter == reachesCenter && prevCx == cx && prevCy == cy && prevRx == rx && prevRy == ry && prevColor == color && prevStartAngle == startAngle && prevEndAngle == endAngle);
+    }
+
+    uint16_t startAngle, endAngle;       // can set this directly, will appear next time drawn, 0 is up, positive is clockwise, in degrees
+    uint16_t cx, cy, rx, ry, thickness;  // can set this directly, will appear next time drawn
+    bool reachesCenter = false;          // can set this directly, will appear next time drawn: if true, this arc becomes a wedge
+    
+private:
+    void setPrev() {
+        prevThickness = thickness;
+        prevCx = cx;
+        prevCy = cy;
+        prevRx = rx;
+        prevRy = ry;
+        prevStartAngle = startAngle;
+        prevEndAngle = endAngle;
+        prevColor = color;
+        prevReachesCenter = reachesCenter;
+    }
+
+    uint16_t prevThickness, prevCx, prevCy, prevRx, prevRy, prevStartAngle, prevEndAngle = 0;
+    bool prevReachesCenter = false;
+    RefSerialData::Tx::GraphicColor prevColor;
+};
+
+
+// maybe at some point make it so circles and ellipses are arcs
+// the reason why they aren't now is because we don't want rx and ry in a circle
+// or start and end angle in either
 class UnfilledCircle : public AtomicGraphicsObject {
 public:
     UnfilledCircle(RefSerialData::Tx::GraphicColor color, uint16_t cx, uint16_t cy, uint16_t r, uint16_t thickness) : AtomicGraphicsObject(color), cx(cx), cy(cy), r(r), thickness(thickness) {}
 
     UnfilledCircle() : UnfilledCircle(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 1) {}
 
-    virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
-        RefSerialTransmitter::configCircle(thickness, cx, cy, r, graphicData);
+    virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) {
+        RefSerialTransmitter::configArc(1, 361, thickness, cx, cy, r, r, graphicData);
         setPrev();
     }
 
@@ -87,7 +186,7 @@ public:
 
     uint16_t cx, cy, r, thickness;  // can set this directly, will appear next time drawn
 
-private:
+protected:
     void setPrev() {
         prevThickness = thickness;
         prevCx = cx;
@@ -100,82 +199,75 @@ private:
     RefSerialData::Tx::GraphicColor prevColor;
 };
 
+class FilledCircle : public UnfilledCircle {
+public:
+    FilledCircle(RefSerialData::Tx::GraphicColor color, uint16_t cx, uint16_t cy, uint16_t r, uint16_t thickness)
+        : UnfilledCircle(color, cx, cy, r, thickness) {}
+
+    FilledCircle() : UnfilledCircle(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 1) {}
+
+    virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
+        uint16_t thicknessAdjusted = r+thickness/2;
+        RefSerialTransmitter::configArc(1, 361, thicknessAdjusted, cx, cy, thicknessAdjusted/2, thicknessAdjusted/2, graphicData);
+        setPrev();
+    }
+};
+
+
 class UnfilledEllipse : public AtomicGraphicsObject {
 public:
-    UnfilledEllipse(RefSerialData::Tx::GraphicColor color, uint16_t cx, uint16_t cy, uint16_t width, uint16_t height, uint16_t thickness)
+    UnfilledEllipse(RefSerialData::Tx::GraphicColor color, uint16_t cx, uint16_t cy, uint16_t rx, uint16_t ry, uint16_t thickness)
         : AtomicGraphicsObject(color),
           cx(cx),
           cy(cy),
-          width(width),
-          height(height),
+          rx(rx),
+          ry(ry),
           thickness(thickness) {}
 
     UnfilledEllipse() : UnfilledEllipse(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 0, 1) {}
 
-    virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
-        RefSerialTransmitter::configEllipse(thickness, cx, cy, width, height, graphicData);
+    virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData)  {
+        RefSerialTransmitter::configArc(1, 361, thickness, cx, cy, rx, ry, graphicData);
         setPrev();
     }
 
-    bool needsRedrawn() final { return !(prevThickness == thickness && prevCx == cx && prevCy == cy && prevWidth == width && prevHeight == height && prevColor == color); }
+    bool needsRedrawn() final { return !(prevThickness == thickness && prevCx == cx && prevCy == cy && prevRx == rx && prevRy == ry && prevColor == color); }
 
-    uint16_t cx, cy, width, height, thickness;  // can set this directly, will appear next time drawn
+    uint16_t cx, cy, rx, ry, thickness;  // can set this directly, will appear next time drawn
 
-private:
+protected:
     void setPrev() {
         prevThickness = thickness;
         prevCx = cx;
         prevCy = cy;
-        prevWidth = width;
-        prevHeight = height;
+        prevRx = rx;
+        prevRy = ry;
         prevColor = color;
     }
 
-    uint16_t prevThickness, prevCx, prevCy, prevWidth, prevHeight = 0;
+    uint16_t prevThickness, prevCx, prevCy, prevRx, prevRy = 0;
     RefSerialData::Tx::GraphicColor prevColor;
 };
 
-class Arc : public AtomicGraphicsObject {
-public:
-    Arc(RefSerialData::Tx::GraphicColor color, uint16_t cx, uint16_t cy, uint16_t width, uint16_t height, uint16_t startAngle, uint16_t endAngle, uint16_t thickness)
-        : AtomicGraphicsObject(color),
-          startAngle(startAngle),
-          endAngle(endAngle),
-          cx(cx),
-          cy(cy),
-          width(width),
-          height(height),
-          thickness(thickness) {}
 
-    Arc() : Arc(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 0, 0, 0, 1) {}
+
+class FilledEllipse : public UnfilledEllipse {
+public:
+    FilledEllipse(RefSerialData::Tx::GraphicColor color, uint16_t cx, uint16_t cy, uint16_t rx, uint16_t ry, uint16_t thickness)
+        : UnfilledEllipse(color, cx, cy, rx, ry, thickness) {}
+
+    FilledEllipse() : UnfilledEllipse(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 0, 1) {}
 
     virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
-        RefSerialTransmitter::configArc(startAngle, endAngle, thickness, cx, cy, width, height, graphicData);
+        if(rx>ry){
+            uint16_t thicknessAdjusted = ry+thickness/2;
+            RefSerialTransmitter::configArc(1, 361, thicknessAdjusted, cx, cy, rx-ry/2+thickness/4, thicknessAdjusted/2, graphicData);
+        } else {
+            uint16_t thicknessAdjusted = rx+thickness/2;
+            RefSerialTransmitter::configArc(1, 361, thicknessAdjusted, cx, cy, thicknessAdjusted/2, ry-rx/2+thickness/4, graphicData);
+        }
         setPrev();
     }
-
-    bool needsRedrawn() final {
-        return !(
-            prevThickness == thickness && prevCx == cx && prevCy == cy && prevWidth == width && prevHeight == height && prevColor == color && prevStartAngle == startAngle && prevEndAngle == endAngle);
-    }
-
-    uint16_t startAngle, endAngle;              // can set this directly, will appear next time drawn, 0 is up, positive is clockwise, in degrees
-    uint16_t cx, cy, width, height, thickness;  // can set this directly, will appear next time drawn
-
-private:
-    void setPrev() {
-        prevThickness = thickness;
-        prevCx = cx;
-        prevCy = cy;
-        prevWidth = width;
-        prevHeight = height;
-        prevStartAngle = startAngle;
-        prevEndAngle = endAngle;
-        prevColor = color;
-    }
-
-    uint16_t prevThickness, prevCx, prevCy, prevWidth, prevStartAngle, prevEndAngle, prevHeight = 0;
-    RefSerialData::Tx::GraphicColor prevColor;
 };
 
 
@@ -189,8 +281,8 @@ public:
         setLower(0);
         setHigher(1);
         thickness = THICKNESS;
-        width = SIZE0 - lane*THICKNESS;
-        height = SIZE0 - lane*THICKNESS;
+        rx = SIZE0 - lane*THICKNESS;
+        ry = SIZE0 - lane*THICKNESS;
     }
 
     void setLower(float r){

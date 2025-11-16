@@ -18,8 +18,8 @@ public:
     HitRing(tap::Drivers* drivers, GimbalSubsystem* gimbal) : drivers(drivers), gimbal(gimbal) {
         // initialize rings
         for (int i = 0; i < NUM_HISTORY; i++) {
-            rings[i].width = STARTING_SIZE + SIZE_INCREMENT * i;
-            rings[i].height = rings[i].width;
+            rings[i].rx = STARTING_SIZE + SIZE_INCREMENT * i;
+            rings[i].ry = rings[i].rx;
             rings[i].cx = UISubsystem::HALF_SCREEN_WIDTH;
             rings[i].cy = UISubsystem::HALF_SCREEN_HEIGHT;
             expirationTimeouts[i].stop();        // timers might be initialized started, we need them to be stopped until we get hit
