@@ -13,14 +13,16 @@ using namespace subsystems;
 //    __
 //   /
 //
-//      __/
-// at the center of the screen, the arcs represent the left and right inner
-// panels if there are 2 arcs, if there are 4 then they are all four panels
+//      
+// at the center of the screen, the arcs represent the front panel
+// Shows another arc when peeking
+// also shows pls spin
 class ChassisOrientationIndicator : public GraphicsContainer {
 public:
     ChassisOrientationIndicator(bool showPlsSpin, tap::Drivers* drivers, GimbalSubsystem* gimbal, DrivetrainSubsystem* drivetrain) : showPlsSpin(showPlsSpin), drivers(drivers), gimbal(gimbal), drivetrain(drivetrain) {
         addGraphicsObject(&front);
         addGraphicsObject(&side);
+        plsSpinText.alignment = 0; //center aligned
 
         if(showPlsSpin){
             // addGraphicsObject(&plsSpinBox);
@@ -66,7 +68,7 @@ public:
             plsSpinText.setHidden(drivetrain->isPeeking || drivetrain->isBeyblading);
             // plsSpinBox.setHidden(!drivetrain->isPeeking && !drivetrain->isBeyblading);
 
-            plsSpinText.x = UISubsystem::HALF_SCREEN_WIDTH - plsSpinText.width/2;
+            
             // plsSpinBox.x1 = plsSpinText.x-TEXT_THICKNESS;
             // plsSpinBox.x2 = plsSpinText.x + plsSpinText.width+TEXT_THICKNESS*2;
         }
@@ -94,7 +96,7 @@ private:
     static constexpr uint16_t TEXT_HEIGHT = 60;
     static constexpr uint16_t TEXT_Y = 830;
     static constexpr uint16_t TEXT_THICKNESS = 5;
-    StringGraphic plsSpinText{UISubsystem::Color::PINK, "Pls spin", 0, TEXT_Y, TEXT_HEIGHT, TEXT_THICKNESS};
+    StringGraphic plsSpinText{UISubsystem::Color::PINK, "Pls spin", UISubsystem::HALF_SCREEN_WIDTH, TEXT_Y, TEXT_HEIGHT, TEXT_THICKNESS};
     // Line plsSpinBox{UISubsystem::Color::PINK, 0, TEXT_Y+TEXT_HEIGHT/2, 0, TEXT_Y+TEXT_HEIGHT/2, TEXT_HEIGHT+TEXT_THICKNESS*2};
 
 };

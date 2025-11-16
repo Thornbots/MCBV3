@@ -241,8 +241,13 @@ private:
 
 class TextSizer {
 public:
-    uint16_t height, x, y = 0;  // can set this directly, will appear next time drawn
+    uint16_t height, x, y = 0;  // can set this directly, will appear next time drawn. When setting x, there is alignment (left/center/right)
     uint16_t width = 0;         // can read this, setting will be in vain, reset next time drawn
+    int8_t alignment = -1;      // -1 is left aligned, 0 is center aligned, 1 is right aligned: x location marks the right, center, and left ends of the text, respectively
+    
+    static constexpr int8_t LEFT_ALIGNED = -1;
+    static constexpr int8_t CENTER_ALIGNED = 0;
+    static constexpr int8_t RIGHT_ALIGNED = 1;
 
     TextSizer(uint16_t len) : len(len) {}
     TextSizer(uint16_t len, uint16_t x, uint16_t y, uint16_t height) : height(height), x(x), y(y), len(len) {}
@@ -267,13 +272,15 @@ public:
     /* call this if you set text and height and want an up to date width */
     void calculateNumbers() {
         fontSize = height;
-        textX = x;
-        textY = y + height;
         calculateWidth();
+        textX = x;
+        if(alignment == CENTER_ALIGNED) textX-=width/2;
+        if(alignment == RIGHT_ALIGNED) textX-=width;
+        textY = y + height;
     }
 
 private:
-    // need to test/tune, was from ui website
+    // empirically tested, ratio ends up being 0.404255319149
     static constexpr uint16_t WIDTH_OFFSET_MULT = 19;
     static constexpr uint16_t WIDTH_OFFSET_DIV = 47;
 
@@ -283,7 +290,7 @@ private:
 protected:
     uint16_t fontSize, textX, textY = 0;  // can read these, but don't set these, set with setTextNumbers
     uint16_t len = 0;                     // for sending integer 123 or text ABC, len would be 3. Not sure about floats yet, need to test
-
+    
     uint16_t intLen(int32_t n) {
         if (n == 0) return 1;
         if (n < 0) return 1 + intLen(-n);
