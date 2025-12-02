@@ -94,6 +94,8 @@ virtual bool isIndexOnline();
 
 void homeIndexer();
 
+void indexNearest(); //indexes to nearest shot position after finishing a position move
+
 private:  // Private Methods
 
 void setTargetMotorRPM(int targetMotorRPM);

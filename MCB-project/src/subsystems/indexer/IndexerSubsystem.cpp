@@ -1,4 +1,5 @@
 #include "IndexerSubsystem.hpp"
+#include <cmath>
 
 namespace subsystems {
 using namespace tap::communication::serial;
@@ -45,9 +46,9 @@ void IndexerSubsystem::refresh() {
     if(homingState >= HomingState::HOMED && drivers->remote.isConnected()) { //only run positoin control when homed bc it fights homing sequence
         motorIndexer->setDesiredOutput(getIndexerVoltage(motorIndexer->getPositionUnwrapped()/GEAR_RATIO, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, targetIndexerPosition, 0, DT));
     } else if (drivers->remote.isConnected()) {
-        motorIndexer->setDesiredOutput(getIndexerVoltage(0, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, 0, -2, DT)); //by giving it 0 target position and velo we effectively have a velo controller
+        motorIndexer->setDesiredOutput(getIndexerVoltage(0, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, 0, -1.75, DT)); //by giving it 0 target position and velo we effectively have a velo controller
     } else {
-        motorIndexer->setDesiredOutput(0);
+        motorIndexer->setDesiredOutput(0); //disable indexer when remote is off
     }
     // }
     
@@ -123,7 +124,7 @@ void IndexerSubsystem::stopIndex() {
 }
 
 void IndexerSubsystem::unjam(){
-    indexAtRate(UNJAM_BALL_PER_SECOND);
+    motorIndexer->setDesiredOutput(getIndexerVoltage(0, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, 0, -6, DT));
 }
 //first 1800 degrees until first shot
 //need to tell it to go max speed until we get to 1800 degrees from where we started
@@ -197,4 +198,14 @@ void IndexerSubsystem::homeIndexer() {
     }
 }
 
-} //namespace subsystems
+void IndexerSubsystem::indexNearest() {
+    float currentPos = motorIndexer->getPositionUnwrapped()/GEAR_RATIO;  //radians
+    //index to the nearest next shot. This ensures we always have a shot ready to shoot
+    targetIndexerPosition = (std::ceil((currentPos - counter.getPositionIncrement()*INITIAL_INDEX_OFFSET) //find number of shots we are at
+    /counter.getPositionIncrement())
+     + INITIAL_INDEX_OFFSET) //add the offset back
+      * counter.getPositionIncrement(); //convert to radians
+
+}
+
+} //namespace subsystems 

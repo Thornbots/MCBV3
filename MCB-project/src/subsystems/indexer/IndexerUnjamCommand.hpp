@@ -26,7 +26,7 @@ public:
 
     void execute() override { indexer->unjam();}
 
-    void end(bool) override {};
+    void end(bool) override { indexer->indexNearest();}
 
     bool isFinished() const override {return !drivers->remote.isConnected(); }
 
