@@ -32,6 +32,7 @@ int32_t flyWheel1Voltage = 0;
 int32_t flyWheel2Voltage = 0;
 
 int targetMotorRPM;
+int startupCounter; //used to disable the random shooting on startup
 
 bool robotDisabled = false;
 

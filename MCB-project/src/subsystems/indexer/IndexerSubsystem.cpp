@@ -30,7 +30,7 @@ void IndexerSubsystem::refresh() {
     if(homingState>=HomingState::HOMED&&!motorIndexer->isMotorOnline()){ //homed or gave up homing and the motor is offline
         homingState = HomingState::NEED_TO_HOME;
     }
-    if(homingState==HomingState::NEED_TO_HOME && motorIndexer->isMotorOnline() && drivers->recal.getIsImuReady()){
+    if(homingState==HomingState::NEED_TO_HOME && motorIndexer->isMotorOnline() && drivers->recal.getIsImuReady() && drivers->remote.isConnected()){
         homingState=HomingState::HOMING;
         timeoutHome.restart(1000*HOMING_TIMEOUT);
     }
@@ -42,7 +42,13 @@ void IndexerSubsystem::refresh() {
     //     motorIndexer->setDesiredOutput(0);
     //     indexerController.clearBuildup();
     // } else {
+    if(homingState >= HomingState::HOMED && drivers->remote.isConnected()) { //only run positoin control when homed bc it fights homing sequence
         motorIndexer->setDesiredOutput(getIndexerVoltage(motorIndexer->getPositionUnwrapped()/GEAR_RATIO, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, targetIndexerPosition, 0, DT));
+    } else if (drivers->remote.isConnected()) {
+        motorIndexer->setDesiredOutput(getIndexerVoltage(0, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, 0, -2, DT)); //by giving it 0 target position and velo we effectively have a velo controller
+    } else {
+        motorIndexer->setDesiredOutput(0);
+    }
     // }
     
 }
@@ -172,13 +178,22 @@ bool IndexerSubsystem::isIndexOnline() {
 }
 
 void IndexerSubsystem::homeIndexer() {
-    indexerVoltage = -2000; //make this a constant probably
     if (abs(motorIndexer->getTorque()) > 2000) { //same for this
+        homingCounter++;
+       
+
+    } else {
+        homingCounter = 0;
+    }
+    if (homingCounter >= 100) {
         homingState = HomingState::HOMED;
         motorIndexer->resetEncoderValue();
-    };
+        targetIndexerPosition = counter.getPositionIncrement()*INITIAL_INDEX_OFFSET;
+    }
     if(timeoutHome.isExpired()){
         homingState = HomingState::GAVE_UP_HOMING;
+        motorIndexer->resetEncoderValue();
+        targetIndexerPosition = 0;
     }
 }
 

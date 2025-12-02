@@ -50,6 +50,7 @@ enum class HomingState : uint8_t {
 
 private:
 int homeTimeoutCounter = 0;
+int homingCounter = 0;
 
 HomingState homingState;
 
