@@ -58,7 +58,7 @@ float IndexerController::calculate(float currentPosition, float currentVelocity,
         buildup += velocityError * deltaT;  // integrate normally
     }   
     // calculation for setting target current aka velocity controller
-    float targetCurrent = std::clamp(KVISC * targetVelocity + UK * signum(targetVelocity) + KA * targetAcceleration + KPV * velocityError + KIV * buildup, -20.0f, 20.0f);
+    float targetCurrent = std::clamp(KVISC * targetVelocity + UK * signum(targetVelocity) + KA * targetAcceleration + KPV * velocityError + KIV * buildup, -CURRENT_MAX, CURRENT_MAX);
 
     pastOutput = RA * targetCurrent + KV * targetVelocity;
 

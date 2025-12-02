@@ -42,7 +42,7 @@ void IndexerSubsystem::refresh() {
     //     motorIndexer->setDesiredOutput(0);
     //     indexerController.clearBuildup();
     // } else {
-        motorIndexer->setDesiredOutput(getIndexerVoltage(0, motorIndexer->getShaftRPM()*(PI/30)*GEAR_RATIO, 0, 0, DT));
+        motorIndexer->setDesiredOutput(getIndexerVoltage(motorIndexer->getPositionUnwrapped()/GEAR_RATIO, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, targetIndexerPosition, 0, DT));
     // }
     
 }
@@ -136,7 +136,7 @@ float IndexerSubsystem::getNumBallsShot() {
 
 int IndexerSubsystem::getIndexerVoltage(float currentPosition, float currentVelocity, float targetPosition, float inputVelocity, float deltaT) {
     // return 10000;
-    return 1000 * indexerController.calculate(0, 0, 0.1, 0, 0.001f); //currentPosition, currentVelocity, targetPosition, inputVelocity, deltaT);
+    return 1000 * indexerController.calculate(currentPosition, currentVelocity, targetPosition, inputVelocity, 0.001f); //currentPosition, currentVelocity, targetPosition, inputVelocity, deltaT);
 }
 
 float IndexerSubsystem::getTotalNumBallsShot() {
