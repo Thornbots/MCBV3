@@ -518,13 +518,20 @@ public:
     void configCharacterData(RefSerialData::Tx::GraphicCharacterMessage* characterData) final {
         setLen(stringLen(string));
         calculateNumbers();
-        configGraphicData(&characterData->graphicData);
+        configGraphicData(&characterData->graphicData); //will end up calling finishConfigGraphicData below, the struct can be set more than once before it gets sent
         RefSerialTransmitter::configCharacterMsg(fontSize, thickness, textX, textY, string, characterData);
         setPrev();
     }
 
     // StringGraphics fill the data differently. configGraphicGenerics still needs called, but finishConfigGraphicData shouldn't do anything extra
-    void finishConfigGraphicData(__attribute__((unused)) RefSerialData::Tx::GraphicData* graphicData) final {}
+    // void finishConfigGraphicData(__attribute__((unused)) RefSerialData::Tx::GraphicData* graphicData) final {}
+    
+    // when deleting, pretend to be a line, because the text data doesn't matter
+    // doesn't actually check if it is deleting
+    virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
+        RefSerialTransmitter::configLine(0, 0, 0, 0, 0, graphicData);
+        setPrev();
+    }
 
     bool needsRedrawn() final { return !(prevThickness == thickness && prevX == x && prevY == y && prevHeight == height && prevColor == color && !std::strncmp(string, oldString, STRING_SIZE)); }
 

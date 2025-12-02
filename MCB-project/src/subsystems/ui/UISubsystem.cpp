@@ -65,7 +65,10 @@ bool UISubsystem::run() { //run has to do with prototheads
     // drivers->leds.set(tap::gpio::Leds::Green, false);
 
     PT_WAIT_UNTIL(drivers->refSerial.getRefSerialReceivingData());
-
+    
+    // needs testing to see if this can be used instead of blindly waiting
+    // drivers->uart.isWriteFinished(bound_ports::REF_SERIAL_UART_PORT);
+    
     needToClearAllLayers = true;
     layerToClear = -1;
     // clear any layers with state 2
@@ -97,7 +100,7 @@ bool UISubsystem::run() { //run has to do with prototheads
 
     // if any cleared, using the same variable
     if(needToClearAllLayers){
-         delayTimeout.restart(2 * RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageDel));
+        delayTimeout.restart(2 * RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageDel));
         PT_WAIT_UNTIL(delayTimeout.execute());
 
         // maybe some object saved from the last iteration just got removed, we don't want to accidentally draw it

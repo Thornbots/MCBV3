@@ -10,8 +10,6 @@ class AtomicGraphicsObject : public GraphicsObject {
 public:
     AtomicGraphicsObject(RefSerialData::Tx::GraphicColor color) : color(color) { UISubsystem::formatGraphicName(graphicNameArray, UISubsystem::getUnusedGraphicName()); }
 
-    int countNeedRedrawn() final { return needsRedrawn(); }
-
     /*
      * Inheriting simple objects should keep track of what they drew
      * previously with, and compare that to what they want to be drawn with

@@ -7,16 +7,7 @@ using namespace tap::communication::serial;
 /* Both containers and non containers are a GraphicsObject. The UISubsystem deals with most things at a GraphicsObject level. */
 class GraphicsObject {
 public:
-    /*
-     * Simple objects return 0 or 1, for if they need redrawn.
-     * Container objects return a number, for how many things
-     * need redrawn. Container objects must also keep track of
-     * an index, explained in setCountIndex
-     */
-    virtual int countNeedRedrawn() = 0;  // a virtual method allows polymorphism
-    // a non virtual method that is overridden will use the definition of the method from the declared type
-    // setting the virtual method to 0 means it is 'pure virtual', and the existence of any
-    // pure virtual methods means the object can't be instantiated, like an abstract class in Java.
+    
 
     /*
      * Allows iteration of the tree-like structure of containers
@@ -52,7 +43,10 @@ public:
      * cpp and hpp files.
      */
     virtual GraphicsObject* getNext() = 0;
-
+    // a non virtual method that is overridden will use the definition of the method from the declared type
+    // setting the virtual method to 0 means it is 'pure virtual', and the existence of any
+    // pure virtual methods means the object can't be instantiated, like an abstract class in Java.
+    
     virtual void resetIteration() = 0;
 
     /*
@@ -95,6 +89,10 @@ public:
 
     virtual void resetDrawMarks() = 0;
     virtual void markToDraw() {}; //only applies to objects, marking a container to draw doesn't make sense
+    
+    virtual void swapWith(GraphicsObject* other) {}; //only applies to objects: one is adding, other is removing
+    virtual bool isAdding() {return false;} //only applies to objects
+    virtual bool isRemoving() {return false;} //only applies to objects
 
 protected:
     u_int16_t countIndex = 0;

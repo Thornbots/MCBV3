@@ -6,14 +6,6 @@
 
 class GraphicsContainer : public GraphicsObject {
 public:
-    int countNeedRedrawn() final {  // final here means no more overriding, if more overriding is wanted replace final with override
-        // sum all contained objects counts
-        int r = 0;
-        for (GraphicsObject* p : objects) {
-            r += p->countNeedRedrawn();
-        }
-        return r;
-    }
 
     GraphicsObject* getNext() final {
         GraphicsObject* r = nullptr;
