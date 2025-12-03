@@ -14,11 +14,7 @@ void IndexerNBallsCommand::initialize() {
 }
 void IndexerNBallsCommand::execute()
 {
-    // if (indexer->getNumBallsShot() < INITIAL_BURST_NUM_BALLS) { //make first shot fast, but don't make second fast
-    //     indexer->indexAtMaxRate();
-    // } else {
-    //     indexer->indexAtRate(ballsPerSecond);
-    // }
+    indexer->indexAtRate(ballsPerSecond); //counter 
     
     // incrementTargetNumBalls handled it in initialize
 }
@@ -28,15 +24,12 @@ void IndexerNBallsCommand::end(bool) {
 }
 
 bool IndexerNBallsCommand::isFinished(void) const {
-    return !drivers->remote.isConnected();
-    
-    // if(!drivers->remote.isConnected()) return true;
+    if(!drivers->remote.isConnected()) return true;
 
-    // if (numBalls < 0) {
-    //     return false;
-    // }
+    if (numBalls < 0) {
+        return false;
+    }
 
-    // // might need changed with position control
-    // return indexer->getNumBallsShot() >= numBalls;
+    return indexer->getNumBallsShot() >= numBalls;
 }
 }  // namespace commands

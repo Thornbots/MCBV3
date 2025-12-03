@@ -28,6 +28,12 @@ void IndexerSubsystem::initialize() {
 }
 
 void IndexerSubsystem::refresh() {
+    shotTimingCounter++;
+    heatTimingCounter++;
+    if (heatTimingCounter >= 100) {
+        heatCounter = std::max(0.0f, heatCounter - (float)drivers->refSerial.getRobotData().turret.coolingRate / 10.0f);
+        heatTimingCounter = 0;
+    }
     if(homingState>=HomingState::HOMED&&!motorIndexer->isMotorOnline()){ //homed or gave up homing and the motor is offline
         homingState = HomingState::NEED_TO_HOME;
     }
@@ -58,7 +64,7 @@ void IndexerSubsystem::refresh() {
 bool IndexerSubsystem::doAutoUnjam(float inputBallsPerSecond) {
     // figure out later
     return false;
-    
+
     
     // //if unjamming
     // if(isAutoUnjamming){
@@ -98,7 +104,11 @@ bool IndexerSubsystem::doAutoUnjam(float inputBallsPerSecond) {
 
 float IndexerSubsystem::indexAtRate(float inputBallsPerSecond) {
     // figure out later
-    return 0;
+    
+    this->ballsPerSecond = counter.getAllowableIndexRate(inputBallsPerSecond); //repeatedly increment if it can shoot
+    if (shotTimingCounter >= (int)1000/ballsPerSecond && heatCounter <= drivers->refSerial.getRobotData().turret.heatLimit - 10) {
+        incrementTargetNumBalls(1);
+    }
     
     // if(homingState==HomingState::HOMING) return 0; //ignore if we are homing
 
@@ -106,7 +116,7 @@ float IndexerSubsystem::indexAtRate(float inputBallsPerSecond) {
 
     // this->ballsPerSecond = counter.getAllowableIndexRate(inputBallsPerSecond);
     // setTargetMotorRPM(this->ballsPerSecond * 60.0f * revPerBall);
-    // return this->ballsPerSecond;
+    return this->ballsPerSecond;
 }
 
 void IndexerSubsystem::indexAtMaxRate(){
@@ -155,7 +165,11 @@ void IndexerSubsystem::resetBallsCounter() {
 }
 
 void IndexerSubsystem::incrementTargetNumBalls(int numBalls) {
-    targetIndexerPosition+=counter.getPositionIncrement()*numBalls;
+    if ( heatCounter <= drivers->refSerial.getRobotData().turret.heatLimit - 10) {
+    shotTimingCounter = 0; //we just shot
+    heatCounter += 10;
+    targetIndexerPosition+=counter.getPositionIncrement()*numBalls; 
+}
 }
 
 float IndexerSubsystem::getBallsPerSecond() {

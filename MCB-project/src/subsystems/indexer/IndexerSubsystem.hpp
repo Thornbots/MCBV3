@@ -51,6 +51,9 @@ enum class HomingState : uint8_t {
 private:
 int homeTimeoutCounter = 0;
 int homingCounter = 0;
+int shotTimingCounter = 0; //takes 600 hours to overflow
+int heatTimingCounter = 0;
+float heatCounter = 0;
 
 HomingState homingState;
 

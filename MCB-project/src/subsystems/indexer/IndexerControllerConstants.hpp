@@ -40,32 +40,31 @@ constexpr float TAKEBACK = 0.1;
 constexpr float CURRENT_MAX = 20;  // A
 
 #elif defined(SENTRY)
-constexpr float C = 0.12;                                          // kg-s/m^2
-constexpr float J = 0.04;//259;                                        // kg-m^2
-constexpr float UK = 0;                                          // N-m
-constexpr float KB = 0.4534;                                       // V-rad/s
-constexpr float KT = 0.4415;                                       // N-m/A
-constexpr float RA = 0.5592;                                       // ohm
-constexpr float RATIO = 54/27.0f;                                         // unitless
+constexpr float C = 0.0;  // kg-s/m^2
+constexpr float J = 0.0078;  // kg-m^2
+constexpr float UK = 0.0;  // N-m
+
+constexpr float KB = 0.4324;                                       // V-rad/s
+constexpr float KT = 0.3125;                                       // N-m/A
+constexpr float RA = 0.906;                                        // ohm
+constexpr float RATIO = 1.0;                               // unitless
                                                                    // Position controller  constexprants
-constexpr float KP = 20;                                            // 10.5;  // sec^-1
-constexpr float THETA_DOT_BREAK = 10;                              // rad/s
-constexpr float A_DECEL = 0.4 * VOLT_MAX * KT * RATIO / (J * RA);  // experimental per Alex_Y
+constexpr float KP = 45;                                           // 10.5;  // sec^-1
+constexpr float THETA_DOT_BREAK = .4;                              // rad/s
+constexpr float A_DECEL = 0.33 * VOLT_MAX * KT * RATIO / (J * RA);  // experimental per Alex_Y
 
 // Feedforward  constexprants
 constexpr float A_SCALE = 0.9;  // 0.8            // unitless
 
-// Gain scheduling
-constexpr float KDT = -0.2;      // unitless
-constexpr float KDT_REV = -0.2;  // unitless
-
 // Velocity feedback
-constexpr float KPV = 2.8;                       // A-s/rad
-constexpr float KIV = 0.02;                      // A/rad
-constexpr float IV_MAX = 0.1 / KIV;              // units TBD
+constexpr float KPV = 10;         // A-s/rad
+constexpr float KIV = 0;          // A/rad
+constexpr float IV_MAX = 1; //3 / KIV;  //.2 / KIV;              // units TBD
+
 constexpr float INT_THRESH = VOLT_MAX * 0.85;  // V
-constexpr float TAKEBACK = 0.1;               // unitless
-constexpr float CURRENT_MAX = 20;  // A
+constexpr float TAKEBACK = 0.1;
+constexpr float CURRENT_MAX = 10;  // A
+
 
 #elif defined(INFANTRY)
 
