@@ -62,7 +62,7 @@ float YawController::calculate(float currentPosition, float currentVelocity, flo
         buildup += velocityError * deltaT;  // integrate normally
     }   
     // calculation for setting target current aka velocity controller
-    float targetCurrent = std::clamp(KVISC * targetRelativeVelocity + UK * signum(targetRelativeVelocity) + KA * targetAcceleration + KPV * velocityError + KIV * buildup, -20.0f, 20.0f);
+    float targetCurrent = std::clamp(KVISC * targetRelativeVelocity + UK * signum(targetRelativeVelocity) + KA * targetAcceleration + KPV * velocityError + KIV * buildup, -CURRENT_MAX, CURRENT_MAX);
 
     pastOutput = RA * targetCurrent + KV * targetRelativeVelocity;
     pastTorque = targetCurrent*KT;

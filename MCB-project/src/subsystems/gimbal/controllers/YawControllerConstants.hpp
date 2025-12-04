@@ -59,7 +59,7 @@ constexpr float KIV = 0.02;                      // A/rad
 constexpr float IV_MAX = 0.1 / KIV;              // units TBD
 constexpr float INT_THRESH = VOLT_MAX * 0.85;  // V
 constexpr float TAKEBACK = 0.1;               // unitless
-constexpr float CURRENT_MAX = 20;  // A
+constexpr float CURRENT_MAX = 15;  // A
 
 #elif defined(INFANTRY)
 

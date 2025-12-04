@@ -79,7 +79,7 @@ public:
                 drivers->commandScheduler.addCommand(&initialMoveCommand);
             }
 
-            if(!startRetreat && drivers->refSerial.getRobotData().currentHp <= 200){
+            if(!startRetreat && drivers->refSerial.getRobotData().currentHp <= 221){
                 startRetreat = true;
                 startAdvance = false; // stop advancing
                 drivers->commandScheduler.addCommand(&retreatMoveCommand);
@@ -162,9 +162,9 @@ public:
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
 
     commands::MoveToPositionCommand m0{drivers, &drivetrain, &gimbal, Pose2d(-0.2f, 0.0f, 0.0f), 0.2f};
-    commands::MoveToPositionCommand m1{drivers, &drivetrain, &gimbal, Pose2d(5.2f, 0.0f, 0.0f), 0.5f};
-    commands::MoveToPositionCommand m2{drivers, &drivetrain, &gimbal, Pose2d(5.2f, 4.0f, 0.0f), 0.5f};
-    commands::MoveToPositionCommand m3{drivers, &drivetrain, &gimbal, Pose2d(2.2f, 4.5f, 0.0f), 0.0f};//Pose2d(3.0f, 4.2f, 0.0f)};
+    commands::MoveToPositionCommand m1{drivers, &drivetrain, &gimbal, Pose2d(-1.97f, 2.100f, 0.0f), 0.5f};
+    commands::MoveToPositionCommand m2{drivers, &drivetrain, &gimbal, Pose2d(-1.97f, 3.1f, 0.0f), 0.5f};
+    commands::MoveToPositionCommand m3{drivers, &drivetrain, &gimbal, Pose2d(-1.574f, 3.742f, 0.0f), 0.0f};//Pose2d(3.0f, 4.2f, 0.0f)};
 
     std::array<Command*, 3> moveCommands1 = {&m1, &m2, &m3};
     SequentialCommand<3> initialMoveCommand{moveCommands1};
