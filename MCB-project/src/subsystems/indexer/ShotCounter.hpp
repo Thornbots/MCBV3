@@ -29,9 +29,10 @@ public:
         //in case index doesn't start at 0
         initialPosition = index->getPositionUnwrapped();
         recentPosition = initialPosition;
-        prevPosition = initialPosition;
 
         prevMillis = tap::arch::clock::getTimeMilliseconds();
+        
+        coolingTimer.restart(); //not sure if it starts started or not
     }
 
     float getAllowableIndexRate(float desiredBallsPerSecond){
@@ -44,7 +45,7 @@ public:
     }
 
     bool canShootAgain() {
-        return estHeat+getHeatPerBall()<=drivers->refSerial.getRobotData().turret.heatLimit;
+        return estHeat+getHeatPerBall()+getHeatPerBall()/2 < drivers->refSerial.getRobotData().turret.heatLimit;
     }
 
 
@@ -61,14 +62,10 @@ public:
     }
 
     void enable() {
-        if(!enabled)
-            prevPosition = index->getPositionUnwrapped();
         enabled = true;
     }
 
     void disable() {
-        if(enabled)
-            applyHeat();
         enabled = false;
     }
 
@@ -87,8 +84,13 @@ public:
     }
     
     void update() {
-        applyCooling();
-        applyHeat();
+        if(coolingTimer.execute())
+            applyCooling();
+    }
+    
+    // applys the heat from this projectile instantly
+    void incrementTargetNumBalls(){
+        estHeat+=getHeatPerBall();
     }
     
 
@@ -96,6 +98,9 @@ private:
     src::Drivers* drivers;
     BarrelType barrel;
     tap::motor::DjiMotor* index;
+    
+    tap::arch::PeriodicMilliTimer coolingTimer{100}; //10hz, ref system cools at this rate
+    
 
     bool enabled = true;
 
@@ -105,7 +110,6 @@ private:
 
     int64_t recentPosition = 0;
     int64_t initialPosition = 0;
-    int64_t prevPosition = 0; //for incrementing heat
 
     float getHeatPerBall() {
         return barrel==BarrelType::TURRET_42MM ? HEAT_PER_42 : HEAT_PER_17;
@@ -130,23 +134,11 @@ private:
             estHeat-=heatDiff;
             if(estHeat<0) estHeat=0; //can't be negative heat
 
-            prevMillis = tap::arch::clock::getTimeMilliseconds();
+            // prevMillis = tap::arch::clock::getTimeMilliseconds();
+            prevMillis += heatDiff*1000/(drivers->refSerial.getRobotData().turret.coolingRate);
         }
     }
 
-    void applyHeat() {
-        // incrementing heat
-        float newHeat = getNumBallsShotByReference(prevPosition)*getHeatPerBall();
-        if(newHeat>=0){ //if motor went forward
-            if(newHeat>=1){ //if we actually change heat
-                estHeat+=newHeat;
-                prevPosition = index->getPositionUnwrapped();
-            }
-        } else {
-            // if we went backwards, then reset position so we are ready for when we go forwards again
-            prevPosition = index->getPositionUnwrapped();
-        }
-    }
     
     
 

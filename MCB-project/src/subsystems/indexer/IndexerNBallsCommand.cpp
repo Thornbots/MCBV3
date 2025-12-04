@@ -15,8 +15,10 @@ void IndexerNBallsCommand::initialize() {
     timer.restart(1000/ballsPerSecond);
     
     //for first shot
-    indexer->incrementTargetNumBalls(1); 
-    numBallsRemaining = numBalls-1; //may end up setting numBallsRemaining to -2, should be fine
+    if(indexer->canShoot()){
+        indexer->incrementTargetNumBalls(); 
+        numBallsRemaining = numBalls-1; //may end up setting numBallsRemaining to -2, should be fine
+    }
 }
 
 void IndexerNBallsCommand::execute()
@@ -24,8 +26,8 @@ void IndexerNBallsCommand::execute()
     // numBalls was either -1 at the start, or some positive number
     // each time we incrementTargetNumBalls, decrement numBalls, stop when it reaches 0
     if(numBallsRemaining!=0){
-        if(indexer->heatAllowsShooting() && timer.execute()){
-            indexer->incrementTargetNumBalls(1);
+        if(indexer->canShoot() && timer.execute()){
+            indexer->incrementTargetNumBalls();
             if(numBallsRemaining>0) numBallsRemaining--;
         }
     }

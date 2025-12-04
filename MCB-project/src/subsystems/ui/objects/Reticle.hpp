@@ -121,7 +121,7 @@ public:
 
         // currHeat.setLower(0);
         // currHeat.setHigher((1+index->getEstHeat())/320.0);
-        currHeat.startAngle = 360-((1+index->getEstHeat())*360)/320;
+        currHeat.startAngle = 360-((1+index->getEstHeat())*360)/drivers->refSerial.getRobotData().turret.heatLimit;
 
 
         solvedForPitchLandingSpotThisCycle = false;

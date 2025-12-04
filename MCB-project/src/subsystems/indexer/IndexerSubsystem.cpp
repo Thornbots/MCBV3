@@ -160,11 +160,12 @@ void IndexerSubsystem::resetBallsCounter() {
     counter.resetRecentBallsCounter();
 }
 
-void IndexerSubsystem::incrementTargetNumBalls(int numBalls) {
+void IndexerSubsystem::incrementTargetNumBalls() {
     // if ( heatCounter <= drivers->refSerial.getRobotData().turret.heatLimit - 10) {
     shotTimingCounter = 0; //we just shot
     // heatCounter += 10;
-    targetIndexerPosition+=counter.getPositionIncrement()*numBalls; 
+    targetIndexerPosition+=counter.getPositionIncrement(); 
+    counter.incrementTargetNumBalls();
 }
 
 
@@ -193,6 +194,10 @@ int32_t IndexerSubsystem::getEstHeat(){
 }
 bool IndexerSubsystem::heatAllowsShooting(){
     return counter.canShootAgain();
+}
+
+bool IndexerSubsystem::canShoot() {
+    return isIndexOnline() && heatAllowsShooting() && isProjectileAtBeam();
 }
 
 void IndexerSubsystem::homeIndexer() {

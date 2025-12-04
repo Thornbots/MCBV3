@@ -82,7 +82,7 @@ virtual float getNumBallsShot();
 virtual float getTotalNumBallsShot();
 
 virtual void resetBallsCounter();
-virtual void incrementTargetNumBalls(int numBalls);
+virtual void incrementTargetNumBalls();
 
 virtual float getBallsPerSecond();
 virtual void setBallsPerSecond(float newBallsPerSecond);
@@ -96,6 +96,7 @@ virtual bool isIndexOnline();
 
 virtual int32_t getEstHeat();
 virtual bool heatAllowsShooting();
+virtual bool canShoot();
 
 
 void homeIndexer();
