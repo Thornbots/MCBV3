@@ -1,4 +1,5 @@
 #include "AutoAimAndFireCommand.hpp"
+#include <cmath>
 
 namespace commands {
 using namespace tap::communication::serial;
@@ -59,8 +60,9 @@ void AutoAimAndFireCommand::execute() {
     } else {
         //Haven't found a target, patrol
 
+        cycle++;
         isShooting = false;
-        pitch = 0.05;  // pitch down to avoid looking into the sky
+        pitch = 0.2 + 0.15 * std::sin(cycle * 2 * PI / PITCH_CYCLES);  // pitch down to avoid looking into the sky
         numCyclesForBurst++;
 
         if(allowGimbal) {

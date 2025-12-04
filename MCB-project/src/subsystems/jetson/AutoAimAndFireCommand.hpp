@@ -62,12 +62,14 @@ private:
     bool isCalibrated = false;
     bool isShooting = false;
     int shoot = 0;
+    int cycle = 0;
 
     int numCyclesForBurst = 0;
     static constexpr int CYCLES_UNTIL_BURST = 380; //cycles
     static constexpr float BURST_AMOUNT = 0.0; //rad/cycle
     static constexpr float PATROL_SPEED = 0.004; //rad/cycle
     static constexpr int PERSISTANCE = 200;
+    static constexpr int PITCH_CYCLES = 300;
 
     float yaw = 0.0f, pitch = 0.0f;
     float yawvel = 0.0f, pitchvel = 0.0f;
