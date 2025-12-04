@@ -36,6 +36,9 @@ private:
     src::Drivers* drivers;
     IndexerSubsystem* indexer;
     int numBalls;
+    int numBallsRemaining;
     float ballsPerSecond;
+
+    tap::arch::PeriodicMilliTimer timer;
 };
 }  // namespace commands

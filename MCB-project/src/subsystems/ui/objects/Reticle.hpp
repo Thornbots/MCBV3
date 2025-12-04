@@ -66,7 +66,7 @@ private: // draw settings
 
 public:
 
-    Reticle(GimbalSubsystem* gimbal, IndexerSubsystem* index) : gimbal(gimbal), index(index) {
+    Reticle(tap::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* index) : drivers(drivers), gimbal(gimbal), index(index) {
         for (int i = 0; i < NUM_THINGS; i++) {
             rects[i].color = COLORS[i%NUM_COLORS];
             rectsContainer.addGraphicsObject(rects + i);
@@ -82,6 +82,7 @@ public:
         addGraphicsObject(&rectsContainer);
         addGraphicsObject(&linesContainer);
         addGraphicsObject(&verticalLine);
+        addGraphicsObject(&currHeat);
     }
 
     void update() {
@@ -101,11 +102,16 @@ public:
             canShoot=false;
         }
 
+        if(!index->heatAllowsShooting()) {
+            verticalLine.color = UISubsystem::Color::WHITE;
+            canShoot=false;
+        }
+
 
         verticalLine.x1 = UISubsystem::HALF_SCREEN_WIDTH;
         verticalLine.x2 = UISubsystem::HALF_SCREEN_WIDTH;
         if(canShoot){
-            verticalLine.color = UISubsystem::Color::WHITE;
+            verticalLine.color = drivers->refSerial.getRobotData().robotPower.all(tap::communication::serial::RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER) ? UISubsystem::Color::WHITE : UISubsystem::Color::PINK;
             verticalLine.thickness = 1;
         } else {
             verticalLine.thickness = 10;
@@ -113,6 +119,9 @@ public:
             verticalLine.x2-=DIAGONAL_OFFSET;
         }
 
+        // currHeat.setLower(0);
+        // currHeat.setHigher((1+index->getEstHeat())/320.0);
+        currHeat.startAngle = 360-((1+index->getEstHeat())*360)/320;
 
 
         solvedForPitchLandingSpotThisCycle = false;
@@ -198,6 +207,7 @@ public:
     }
 
 private:
+    tap::Drivers* drivers;
     GimbalSubsystem* gimbal;
     IndexerSubsystem* index;
 
@@ -220,6 +230,9 @@ private:
     Line lines[NUM_THINGS][NUM_LINES];   // not all are used in every mode
     UnfilledRectangle rects[NUM_THINGS];
     Line verticalLine;
+
+    // LargeCenteredArc currHeat{false, 0};
+    Arc currHeat{UISubsystem::Color::ORANGE, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, 90, 90, 0, 0, 10};
 
     // for solving for pitch
     static constexpr int MAX_NUM_ITERATIONS = 10;  // it is difficult to actually solve for pitch because initial launch positions depend on pitch

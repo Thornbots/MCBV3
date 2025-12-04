@@ -56,7 +56,7 @@ public:
         drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerStop);
 
-        shootButton.onTrue(&shooterStart)->onTrue(&indexerSingle)->onTrue(&closeServo);
+        shootButton.onTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
         unjamButton.whileTrue(&indexerUnjam)->onTrue(&openServo);
 
         stopFlywheelTrigger.onTrue(&shooterStop);
@@ -64,8 +64,8 @@ public:
         // Mouse and Keyboard mappings
         unjamKey.whileTrue(&indexerUnjam)->onTrue(&openServo);
         onlyCloseLidKey.onTrue(&closeServo);
-        shootRegKey.whileTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
-        shootFastKey.whileTrue(&indexer10Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
+        shootRegKey.onTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
+        shootFastKey.whileTrue(&indexer20Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
         autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart)->onTrue(&closeServo);
         // implement speed mode
 
@@ -177,8 +177,8 @@ public:
     Trigger onlyCloseLidKey{drivers, Remote::Key::CTRL}; //blame peter
     Trigger autoAimKey{drivers, MouseButton::RIGHT};
     Trigger shootKey{drivers, MouseButton::LEFT};
-    Trigger shootFastKey = shootKey & !onlyCloseLidKey;
-    Trigger shootRegKey = shootKey & onlyCloseLidKey;
+    Trigger shootFastKey = shootKey & onlyCloseLidKey;
+    Trigger shootRegKey = shootKey & !onlyCloseLidKey;
 
     Trigger scrollUp{drivers, MouseScrollDirection::UP};
     Trigger scrollDown{drivers, MouseScrollDirection::DOWN};

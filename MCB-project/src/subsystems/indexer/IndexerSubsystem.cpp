@@ -28,12 +28,7 @@ void IndexerSubsystem::initialize() {
 }
 
 void IndexerSubsystem::refresh() {
-    shotTimingCounter++;
-    heatTimingCounter++;
-    if (heatTimingCounter >= 100) {
-        heatCounter = std::max(0.0f, heatCounter - (float)drivers->refSerial.getRobotData().turret.coolingRate / 10.0f);
-        heatTimingCounter = 0;
-    }
+    // need timer execute for ballspersecond
     if(homingState>=HomingState::HOMED&&!motorIndexer->isMotorOnline()){ //homed or gave up homing and the motor is offline
         homingState = HomingState::NEED_TO_HOME;
     }
@@ -58,6 +53,7 @@ void IndexerSubsystem::refresh() {
     }
     // }
     
+    counter.update();
 }
 
 
@@ -106,9 +102,9 @@ float IndexerSubsystem::indexAtRate(float inputBallsPerSecond) {
     // figure out later
     
     this->ballsPerSecond = counter.getAllowableIndexRate(inputBallsPerSecond); //repeatedly increment if it can shoot
-    if (shotTimingCounter >= (int)1000/ballsPerSecond && heatCounter <= drivers->refSerial.getRobotData().turret.heatLimit - 10) {
-        incrementTargetNumBalls(1);
-    }
+    // if (heatAllowsShooting()) { // && shotTimingCounter >= (int)1000/ballsPerSecond
+    //     incrementTargetNumBalls(1);
+    // }
     
     // if(homingState==HomingState::HOMING) return 0; //ignore if we are homing
 
@@ -165,12 +161,12 @@ void IndexerSubsystem::resetBallsCounter() {
 }
 
 void IndexerSubsystem::incrementTargetNumBalls(int numBalls) {
-    if ( heatCounter <= drivers->refSerial.getRobotData().turret.heatLimit - 10) {
+    // if ( heatCounter <= drivers->refSerial.getRobotData().turret.heatLimit - 10) {
     shotTimingCounter = 0; //we just shot
-    heatCounter += 10;
+    // heatCounter += 10;
     targetIndexerPosition+=counter.getPositionIncrement()*numBalls; 
 }
-}
+
 
 float IndexerSubsystem::getBallsPerSecond() {
     return ballsPerSecond;
@@ -190,6 +186,13 @@ bool IndexerSubsystem::isProjectileAtBeam() {
 
 bool IndexerSubsystem::isIndexOnline() {
     return motorIndexer->isMotorOnline();
+}
+
+int32_t IndexerSubsystem::getEstHeat(){
+    return counter.getEstHeat();
+}
+bool IndexerSubsystem::heatAllowsShooting(){
+    return counter.canShootAgain();
 }
 
 void IndexerSubsystem::homeIndexer() {

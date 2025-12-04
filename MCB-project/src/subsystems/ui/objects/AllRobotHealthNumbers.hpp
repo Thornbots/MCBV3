@@ -19,7 +19,8 @@ public:
             expirationTimeouts[i].stop();        // timers might be initialized started, we need them to be stopped until we get hit
             canTakeDamage[i] = false;
         }
-
+        this->addGraphicsObject(&heat);
+        this->addGraphicsObject(&cooling);
     }
 
 
@@ -35,6 +36,10 @@ public:
             numbers[3].integer = data.blue.hero1;
             numbers[4].integer = data.blue.standard3;
             numbers[5].integer = data.blue.sentry7;
+
+
+            heat.integer = drivers->refSerial.getRobotData().turret.heatLimit;
+            cooling.integer = drivers->refSerial.getRobotData().turret.coolingRate;
 
             //if in countdown, remove numbers because their robot icons disappear
             if(drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN){
@@ -139,5 +144,10 @@ private:
     IntegerGraphic numbers[6];
 
     uint16_t centerXs[6];
+
+
+
+    IntegerGraphic heat{UISubsystem::Color::ORANGE, 5, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, 20, 5};
+    IntegerGraphic cooling{UISubsystem::Color::CYAN, 5, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT+30, 20, 5};
 
 };

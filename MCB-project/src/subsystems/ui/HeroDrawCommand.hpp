@@ -72,7 +72,7 @@ public:
 
 private:
     src::Drivers* drivers;
-    UISubsystem* ui; 
+    UISubsystem* ui;
     GimbalSubsystem* gimbal;
     FlywheelSubsystem* flywheel;
     HeroIndexerSubsystem* indexer;
@@ -82,7 +82,7 @@ private:
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
     ChassisOrientationIndicator orient{true, drivers, gimbal, drivetrain};
-    Reticle reticle{gimbal, indexer};
+    Reticle reticle{drivers, gimbal, indexer};
     HitRing ring{drivers, gimbal};
     // PredictedRemainingShotsIndicator remain{drivers, indexer};
     AllRobotHealthNumbers numbers{drivers};

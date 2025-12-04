@@ -1,6 +1,10 @@
 #include "robots/RobotControl.hpp"
 #include "robots/sentry/SentryHardware.hpp"
 
+
+#include "subsystems/ui/UISubsystem.hpp"
+#include "subsystems/ui/SentryDrawCommand.hpp"
+
 #include "subsystems/drivetrain/DrivetrainDriveCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainStopCommand.hpp"
 #include "subsystems/flywheel/ShooterStartCommand.hpp"
@@ -8,6 +12,7 @@
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
 #include "subsystems/gimbal/GimbalStopCommand.hpp"
+#include "subsystems/jetson/AutoAimCommand.hpp"
 #include "subsystems/jetson/AutoAimAndFireCommand.hpp"
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
@@ -38,6 +43,7 @@ public:
         flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
+        ui.initialize();
         odo.initialize();
 
         // Run startup commands
@@ -48,7 +54,7 @@ public:
         odo.setDefaultCommand(&odoStop);
 
 
-        shootButton.onTrue(&shooterStart)->whileTrue(&indexerStart);
+        shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz);
         unjamButton.whileTrue(&indexerUnjam);
         stopFlywheelTrigger.onTrue(&shooterStop);
 
@@ -61,6 +67,25 @@ public:
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
 
         isStopped = false;
+        
+        // Mouse and Keyboard mappings
+        unjamKey.whileTrue(&indexerUnjam);
+        shootRegKey.whileTrue(&indexerSingle)->onTrue(&shooterStart);
+        shootFastKey.whileTrue(&indexer10Hz)->onTrue(&shooterStart);
+        autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart);
+        // implement speed mode
+
+        toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
+        // drivers->commandScheduler.addCommand(&draw); //tries to draw immediately, doesn't always work well
+
+        // drive commands and also enable mouse looking
+
+        peekLeftButton.onTrue(&peekLeft);//->onFalse(&beybladeKeyboard);
+        peekRightButton.onTrue(&peekRight);//->onFalse(&beybladeKeyboard);
+        peekNoneButton.onTrue(&beybladeKeyboard); //makes it so that the driver can be sloppy when they swap peeking directions, they are allowed to press q and e at the same time
+
+        stopBeybladeKey.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
+        startBeybladeKey.onTrue(&beybladeKeyboard)->onTrue(&lookMouse);
     }
 
 
@@ -130,6 +155,7 @@ public:
     SentryHardware hardware;
 
     // subsystems
+    subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor1, true};
@@ -138,7 +164,11 @@ public:
     subsystems::JetsonSubsystem jetson{drivers, &gimbal};
 
     // commands
+    commands::SentryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};
+    commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
+    
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
+    commands::MouseMoveCommand lookMouse{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
     commands::AutoDriveCommand autoDrive{drivers, &drivetrain, &gimbal, &jetson};
     commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, &autoDrive};
@@ -146,7 +176,8 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexerStart{drivers, &indexer, -1, 20};
+    commands::IndexerNBallsCommand indexerSingle{drivers, &indexer, 1, 20};
+    commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 10};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
 
     commands::IndexerStopCommand indexerStop{drivers, &indexer};
@@ -155,8 +186,12 @@ public:
     commands::OdometryStopCommand odoStop{drivers, &odo};
 
     // CHANGE NUMBERS LATER
+    commands::DrivetrainDriveCommand peekRight{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_RIGHT, commands::ControlMode::KEYBOARD};
+    commands::DrivetrainDriveCommand peekLeft{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_LEFT, commands::ControlMode::KEYBOARD};
+    commands::DrivetrainDriveCommand drivetrainFollowKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::KEYBOARD};
     commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::CONTROLLER};
     commands::DrivetrainDriveCommand beybladeJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE, commands::ControlMode::CONTROLLER};
+    commands::DrivetrainDriveCommand beybladeKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE, commands::ControlMode::KEYBOARD};
     commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
 
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
@@ -179,6 +214,23 @@ public:
     // shooting
     Trigger shootButton{drivers, Remote::Channel::WHEEL, -0.5};
     Trigger unjamButton{drivers, Remote::Channel::WHEEL, 0.5};
+    Trigger unjamKey{drivers, Remote::Key::Z}; //or R if based
+    Trigger onlyCloseLidKey{drivers, Remote::Key::CTRL}; //blame peter
+    Trigger autoAimKey{drivers, MouseButton::RIGHT};
+    Trigger shootKey{drivers, MouseButton::LEFT};
+    Trigger shootFastKey = shootKey & !onlyCloseLidKey;
+    Trigger shootRegKey = shootKey & onlyCloseLidKey;
+
+    Trigger scrollUp{drivers, MouseScrollDirection::UP};
+    Trigger scrollDown{drivers, MouseScrollDirection::DOWN};
+    
+    //toggle UI
+    Trigger toggleUIKey{drivers, Remote::Key::G};
+    
+    //peeking
+    Trigger peekLeftButton{drivers, Remote::Key::Q};
+    Trigger peekRightButton{drivers, Remote::Key::E};
+    Trigger peekNoneButton = !(peekLeftButton|peekRightButton);
 
     // controller driving
     Trigger joystickDrive0{
@@ -191,8 +243,15 @@ public:
     Trigger autoFireTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
     Trigger autoDriveTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};
 
-    Trigger stopFlywheelTrigger = unjamButton | !autoFireTrigger; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
+    //keyboard driving
+    // Trigger speedModeKey{drivers, Remote::Key::SHIFT}; //drivetrain drive command reads shift
+    Trigger stopBeybladeKey{drivers, Remote::Key::X};
+    Trigger beybladeType1Key{drivers, Remote::Key::C}; //most beyblade, checked in DrivetrainDriveCommand
+    Trigger beybladeType2Key{drivers, Remote::Key::V}; //most translation, checked in DrivetrainDriveCommand
+    Trigger startBeybladeKey = beybladeType1Key | beybladeType2Key | scrollUp | scrollDown;
 
-    Trigger* triggers[7] = {&joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &autoFireTrigger, &autoDriveTrigger};  //, &indexSpinButton};
+    Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
+
+    Trigger* triggers[23] = {&joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &unjamKey, &autoFireTrigger, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &startBeybladeKey, &peekLeftButton, &peekRightButton, &peekNoneButton, &scrollUp, &scrollDown, &shootFastKey, &shootRegKey, &shootKey, &autoAimKey, &toggleUIKey, &onlyCloseLidKey, &autoDriveTrigger};  //, &indexSpinButton};
 };
 }  // namespace robots

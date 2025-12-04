@@ -41,17 +41,17 @@ public:
         drivetrain.initialize();
         ui.initialize();
         jetson.initialize();
-        
+
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
         flywheel.setDefaultCommand(&shooterStop);
         drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerLoad);
-        
+
 
         // Mouse and Keyboard mappings
         unjamKey.whileTrue(&indexerUnjam)->onFalse(&indexerLoad);
-        shootKey.onTrue(&indexerSemi)->onTrue(&shooterStart)->onFalse(&indexerLoad);
+        shootKey.onTrue(&indexerSemi)->onTrue(&shooterStart);
         unjamButton.whileTrue(&indexerUnjam)->onFalse(&indexerLoad);
         shootButton.whileTrue(&indexerAuto)->onTrue(&shooterStart)->onFalse(&indexerLoad);
         stopFlywheelTrigger.onTrue(&shooterStop);
@@ -60,7 +60,7 @@ public:
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
         // drivers->commandScheduler.addCommand(&draw);
-   
+
         // drive commands and also enable mouse looking
 
         peekLeftButton.onTrue(&peekLeft)->onFalse(&beybladeKeyboard);
@@ -68,7 +68,7 @@ public:
 
         stopBeybladeKey.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
         startBeybladeKey.onTrue(&beybladeKeyboard)->onTrue(&lookMouse);
- 
+
         joystickDrive0.onTrue(&noSpinDriveCommand);
         joystickDrive1.onTrue(&drivetrainFollowJoystick);
         joystickDrive2.onTrue(&beybladeJoystick);
@@ -87,7 +87,7 @@ public:
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
-        
+
         //if we don't have ref uart or we do and we aren't currently in game, we are able to stop flywheels by buttons
         if(!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getGameData().gameStage!=RefSerialData::Rx::GameStage::IN_GAME){
             stopFlywheelTrigger.update();
