@@ -5,19 +5,20 @@ namespace subsystems {
 using namespace tap::communication::serial;
 using namespace subsystems::indexer;
 
-IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming)
-    : IndexerSubsystem(drivers, index, doHoming, ShotCounter::BarrelType::TURRET_17MM_EITHER){}
+IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, bool doPositionControl)
+    : IndexerSubsystem(drivers, index, doHoming, doPositionControl, ShotCounter::BarrelType::TURRET_17MM_EITHER){}
 
-IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, ShotCounter::BarrelType barrel)
-    : IndexerSubsystem(drivers, index, doHoming, barrel, REV_PER_BALL) {}
+IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, bool doPositionControl, ShotCounter::BarrelType barrel)
+    : IndexerSubsystem(drivers, index, doHoming, doPositionControl, barrel, REV_PER_BALL) {}
 
-IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, ShotCounter::BarrelType barrel, float revPerBall)
+IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, bool doPositionControl, ShotCounter::BarrelType barrel, float revPerBall)
     : tap::control::Subsystem(drivers),
     drivers(drivers),
     motorIndexer(index),
     indexPIDController(PID_CONF_INDEX),
     counter(drivers, barrel, index),
     revPerBall(revPerBall),
+    doPositionControl(doPositionControl),
     homingState(doHoming ? HomingState::NEED_TO_HOME : HomingState::DONT_HOME)
     {}
 
@@ -44,8 +45,12 @@ void IndexerSubsystem::refresh() {
     //     motorIndexer->setDesiredOutput(0);
     //     indexerController.clearBuildup();
     // } else {
-    if(homingState >= HomingState::HOMED && drivers->remote.isConnected()) { //only run positoin control when homed bc it fights homing sequence
-        motorIndexer->setDesiredOutput(getIndexerVoltage(motorIndexer->getPositionUnwrapped()/GEAR_RATIO, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, targetIndexerPosition, 0, DT));
+    if((homingState >= HomingState::HOMED || homingState == HomingState::DONT_HOME) && drivers->remote.isConnected()) { //only run positoin control when homed bc it fights homing sequence
+        if(doPositionControl){
+            motorIndexer->setDesiredOutput(getIndexerVoltage(motorIndexer->getPositionUnwrapped()/GEAR_RATIO, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, targetIndexerPosition, 0, DT));
+        } else {
+            motorIndexer->setDesiredOutput(indexerVoltage);
+        }
     } else if (drivers->remote.isConnected()) {
         motorIndexer->setDesiredOutput(getIndexerVoltage(0, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, 0, -1.75, DT)); //by giving it 0 target position and velo we effectively have a velo controller
     } else {
@@ -58,60 +63,56 @@ void IndexerSubsystem::refresh() {
 
 
 bool IndexerSubsystem::doAutoUnjam(float inputBallsPerSecond) {
-    // figure out later
-    return false;
+    // figure out with position control later
 
+    if(doPositionControl) return false;
     
-    // //if unjamming
-    // if(isAutoUnjamming){
-    //     if(timeoutUnjam.isExpired()){
-    //         timeoutUnjam.stop();
-    //         isAutoUnjamming = false;
-    //     } else if (inputBallsPerSecond > 0) {
-    //         //prevent infinite recursion, unjam calls indexAtRate with a negative number
-    //         IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
-    //         return true;
-    //     }
-    // }
+    //if unjamming
+    if(isAutoUnjamming){
+        if(timeoutUnjam.isExpired()){
+            timeoutUnjam.stop();
+            isAutoUnjamming = false;
+        } else if (inputBallsPerSecond > 0) {
+            //prevent infinite recursion, unjam calls indexAtRate with a negative number
+            IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
+            return true;
+        }
+    }
 
-    // //if we are here, isAutoUnjamming is false or inputBallsPerSecond<=0
-    // //if we are slow and trying to go forward
-    // if(inputBallsPerSecond > 0 && getActualBallsPerSecond()<AUTO_UNJAM_BALLS_PER_SEC_THRESH){
-    //     if(timeoutUnjam.isStopped()){
-    //         timeoutUnjam.restart(AUTO_UNJAM_TIME_UNDER_THRESH*1000);
-    //     }
+    //if we are here, isAutoUnjamming is false or inputBallsPerSecond<=0
+    //if we are slow and trying to go forward
+    if(inputBallsPerSecond > 0 && getActualBallsPerSecond()<AUTO_UNJAM_BALLS_PER_SEC_THRESH){
+        if(timeoutUnjam.isStopped()){
+            timeoutUnjam.restart(AUTO_UNJAM_TIME_UNDER_THRESH*1000);
+        }
 
-    //     if(timeoutUnjam.isExpired()){
-    //         isAutoUnjamming = true;
-    //         timeoutUnjam.restart(AUTO_UNJAM_TIME_UNJAMMING*1000);
-    //         IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
-    //         return true;
-    //     }
-    // }
+        if(timeoutUnjam.isExpired()){
+            isAutoUnjamming = true;
+            timeoutUnjam.restart(AUTO_UNJAM_TIME_UNJAMMING*1000);
+            IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
+            return true;
+        }
+    }
 
-    // //for stopIndex
-    // if(inputBallsPerSecond==0){
-    //     timeoutUnjam.stop();
-    //     isAutoUnjamming = false;
-    // }
+    //for stopIndex
+    if(inputBallsPerSecond==0){
+        timeoutUnjam.stop();
+        isAutoUnjamming = false;
+    }
 
-    // return false;
+    return false;
 }
 
 float IndexerSubsystem::indexAtRate(float inputBallsPerSecond) {
-    // figure out later
+    if(!doPositionControl) {
+        if(doAutoUnjam(inputBallsPerSecond)) return UNJAM_BALL_PER_SECOND;
+    }
     
     this->ballsPerSecond = counter.getAllowableIndexRate(inputBallsPerSecond); //repeatedly increment if it can shoot
-    // if (heatAllowsShooting()) { // && shotTimingCounter >= (int)1000/ballsPerSecond
-    //     incrementTargetNumBalls(1);
-    // }
     
-    // if(homingState==HomingState::HOMING) return 0; //ignore if we are homing
-
-    // if(doAutoUnjam(inputBallsPerSecond)) return UNJAM_BALL_PER_SECOND;
-
-    // this->ballsPerSecond = counter.getAllowableIndexRate(inputBallsPerSecond);
-    // setTargetMotorRPM(this->ballsPerSecond * 60.0f * revPerBall);
+    if(!doPositionControl) {
+        setTargetMotorRPM(this->ballsPerSecond * 60.0f * revPerBall);
+    }
     return this->ballsPerSecond;
 }
 
@@ -126,20 +127,26 @@ void IndexerSubsystem::indexAtMaxRate(){
 void IndexerSubsystem::stopIndex() {
     // need to figure out soon
 
-    ballsPerSecond = 0;
+    if(doPositionControl){
+        ballsPerSecond = 0;
+    } else {
+        indexAtRate(0);
+    }
 }
 
 void IndexerSubsystem::unjam(){
-    motorIndexer->setDesiredOutput(getIndexerVoltage(0, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, 0, -6, DT));
+    if(doPositionControl){
+        motorIndexer->setDesiredOutput(getIndexerVoltage(0, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, 0, -6, DT));
+    } else {
+        indexAtRate(UNJAM_BALL_PER_SECOND);
+    }
 }
-//first 1800 degrees until first shot
-//need to tell it to go max speed until we get to 1800 degrees from where we started
-//so the first shot goes out asap
 
+// used for velo control (hero)
 void IndexerSubsystem::setTargetMotorRPM(int targetMotorRPM) {
-    //indexPIDController.runControllerDerivateError(targetMotorRPM - motorIndexer->getShaftRPM(), 1);
+    indexPIDController.runControllerDerivateError(targetMotorRPM - motorIndexer->getShaftRPM(), 1);
 
-    //indexerVoltage = static_cast<int32_t>(indexPIDController.getOutput());
+    indexerVoltage = static_cast<int32_t>(indexPIDController.getOutput());
 }
 
 // converts delta motor ticks to num balls shot using constants

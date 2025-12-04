@@ -36,6 +36,7 @@ public:
     }
 
     float getAllowableIndexRate(float desiredBallsPerSecond){
+        if(desiredBallsPerSecond<0) return desiredBallsPerSecond;
         
         if(!enabled || !drivers->refSerial.getRefSerialReceivingData()) return desiredBallsPerSecond;
         

@@ -5,7 +5,7 @@
 #include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 #include "subsystems/flywheel/FlywheelSubsystem.hpp"
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
-#include "subsystems/indexer/DoubleIndexerSubsystem.hpp"
+#include "subsystems/indexer/IndexerSubsystem.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
 
 #include "util/ui/GraphicsContainer.hpp"
@@ -28,7 +28,7 @@ using subsystems::UISubsystem;
 
 class SentryDrawCommand : public tap::control::Command, GraphicsContainer {
 public:
-    SentryDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, DoubleIndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain)
+    SentryDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain)
         : drivers(drivers),
           ui(ui),
           gimbal(gimbal),
@@ -79,7 +79,7 @@ private:
     UISubsystem* ui;
     GimbalSubsystem* gimbal;
     FlywheelSubsystem* flywheel;
-    DoubleIndexerSubsystem* indexer;
+    IndexerSubsystem* indexer;
     DrivetrainSubsystem* drivetrain;
 
     // add top level graphics objects here and in the constructor

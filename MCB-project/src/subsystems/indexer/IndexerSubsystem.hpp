@@ -55,15 +55,17 @@ int shotTimingCounter = 0; //takes 600 hours to overflow
 int heatTimingCounter = 0;
 float heatCounter = 0;
 
+bool doPositionControl;
+
 HomingState homingState;
 
 int getIndexerVoltage(float currentPosition, float currentVelocity, float targetPosition, float inputVelocity, float deltaT);
 
 public:  // Public Methods
 
-IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming);
-IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, ShotCounter::BarrelType barrel);
-IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, ShotCounter::BarrelType barrel, float revPerBall);
+IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, bool doPositionControl);
+IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, bool doPositionControl, ShotCounter::BarrelType barrel);
+IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, bool doPositionControl, ShotCounter::BarrelType barrel, float revPerBall);
 
 ~IndexerSubsystem() {}
 
