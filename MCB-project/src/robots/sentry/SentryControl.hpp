@@ -59,7 +59,7 @@ public:
         stopFlywheelTrigger.onTrue(&shooterStop);
 
         autoFireTrigger.whileTrue(&autoFire)->onFalse(&lookJoystick);
-        autoDriveTrigger.onTrue(&odoPointForwards)/*->onTrue(&autoDrive);*/->onTrue(&testMoveCommand);
+        autoDriveTrigger.onTrue(&odoPointForwards)->onTrue(&autoDrive);//->onTrue(&testMoveCommand);
         // drive commands
 
         // joystickDrive0.onTrue(&initialMoveCommand);
@@ -203,12 +203,12 @@ public:
 
     //for purdue scrimmage field for 2v2 competition
     commands::MoveToPositionCommand m02v2{drivers, &drivetrain, &gimbal, Pose2d(0.0f, 0.0f, 0.0f), 0.2f};
-    commands::MoveToPositionCommand m12v2{drivers, &drivetrain, &gimbal, Pose2d(-2.5f, 1.8f, 0.0f), 0.3f};
-    commands::MoveToPositionCommand m22v2{drivers, &drivetrain, &gimbal, Pose2d(-2.5f, 3.8f, 0.0f), 0.5f};
+    commands::MoveToPositionCommand m12v2{drivers, &drivetrain, &gimbal, Pose2d(-2.0f, 1.8f, 0.0f), 0.3f};
+    commands::MoveToPositionCommand m22v2{drivers, &drivetrain, &gimbal, Pose2d(-2.0f, 3.8f, 0.0f), 0.3f};
 
 
 
-    SequentialCommand<2> initialMoveCommand{{&m12v2, &m22v2}};//{&m1, &m2, &m3}};
+    SequentialCommand<3> initialMoveCommand{{&m12v2, &m22v2, &autoDrive}};//{&m1, &m2, &m3}};
 
     SequentialCommand<3> retreatMoveCommand{{&m12v2, &m02v2, &autoDrive}};//{&m2, &m1, &m0, &autoDrive}};
     
