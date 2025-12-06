@@ -208,9 +208,9 @@ public:
 
 
 
-    SequentialCommand<3> initialMoveCommand{{&m12v2, &m22v2}};//{&m1, &m2, &m3}};
+    SequentialCommand<2> initialMoveCommand{{&m12v2, &m22v2}};//{&m1, &m2, &m3}};
 
-    SequentialCommand<4> retreatMoveCommand{{&m12v2, &m02v2, &autoDrive}};//{&m2, &m1, &m0, &autoDrive}};
+    SequentialCommand<3> retreatMoveCommand{{&m12v2, &m02v2, &autoDrive}};//{&m2, &m1, &m0, &autoDrive}};
     
 
     SequentialCommand<4> testMoveCommand{{&m12v2, &m22v2, &m12v2, &m02v2}};//{&m1, &m2, &m1, &m0}};
