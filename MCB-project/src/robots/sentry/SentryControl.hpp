@@ -59,7 +59,7 @@ public:
         stopFlywheelTrigger.onTrue(&shooterStop);
 
         autoFireTrigger.whileTrue(&autoFire)->onFalse(&lookJoystick);
-        autoDriveTrigger.onTrue(&odoPointForwards)->onTrue(&autoDrive);//->onTrue(&testMoveCommand);
+        autoDriveTrigger.onTrue(&odoPointForwards)/*->onTrue(&autoDrive);*/->onTrue(&testMoveCommand);
         // drive commands
 
         // joystickDrive0.onTrue(&initialMoveCommand);
@@ -201,13 +201,21 @@ public:
     commands::MoveToPositionCommand m2{drivers, &drivetrain, &gimbal, Pose2d(5.2f, 4.0f, 0.0f), 0.5f};
     commands::MoveToPositionCommand m3{drivers, &drivetrain, &gimbal, Pose2d(2.2f, 4.5f, 0.0f), 0.0f};//Pose2d(3.0f, 4.2f, 0.0f)};
 
-    std::array<Command*, 3> moveCommands1 = {&m1, &m2, &m3};
-    SequentialCommand<3> initialMoveCommand{moveCommands1};
+    //for purdue scrimmage field for 2v2 competition
+    commands::MoveToPositionCommand m02v2{drivers, &drivetrain, &gimbal, Pose2d(0.0f, 0.0f, 0.0f), 0.2f};
+    commands::MoveToPositionCommand m12v2{drivers, &drivetrain, &gimbal, Pose2d(-2.5f, 1.8f, 0.0f), 0.3f};
+    commands::MoveToPositionCommand m22v2{drivers, &drivetrain, &gimbal, Pose2d(-2.5f, 3.8f, 0.0f), 0.5f};
 
-    std::array<Command*, 4> moveCommands2 = {&m2, &m1, &m0, &autoDrive};
-    SequentialCommand<4> retreatMoveCommand{moveCommands2};
 
-    SequentialCommand<4> testMoveCommand{{&m1, &m2, &m1, &m0}};
+
+    SequentialCommand<3> initialMoveCommand{{&m12v2, &m22v2}};//{&m1, &m2, &m3}};
+
+    SequentialCommand<4> retreatMoveCommand{{&m12v2, &m02v2, &autoDrive}};//{&m2, &m1, &m0, &autoDrive}};
+    
+
+    SequentialCommand<4> testMoveCommand{{&m12v2, &m22v2, &m12v2, &m02v2}};//{&m1, &m2, &m1, &m0}};
+
+
 
     // mappings
 
