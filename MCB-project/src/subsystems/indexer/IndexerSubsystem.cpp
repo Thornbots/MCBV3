@@ -17,7 +17,7 @@ IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* 
     motorIndexer(index),
     indexPIDController(PID_CONF_INDEX),
     counter(drivers, barrel, index),
-    revPerBall(revPerBall),
+    revPerBall(revPerBall/GEAR_RATIO),
     doPositionControl(doPositionControl),
     homingState(doHoming ? HomingState::NEED_TO_HOME : HomingState::DONT_HOME)
     {}
@@ -29,30 +29,34 @@ void IndexerSubsystem::initialize() {
 }
 
 void IndexerSubsystem::refresh() {
-    // need timer execute for ballspersecond
-    if(homingState>=HomingState::HOMED&&!motorIndexer->isMotorOnline()){ //homed or gave up homing and the motor is offline
+    // if was homed and went offline, need to home again
+    if(!(isIndexOnline() && refPoweringIndex()) && homingState>=HomingState::HOMED){ //homed or gave up homing and the motor is offline
         homingState = HomingState::NEED_TO_HOME;
     }
-    if(homingState==HomingState::NEED_TO_HOME && motorIndexer->isMotorOnline() && drivers->recal.getIsImuReady() && drivers->remote.isConnected()){
+    // if waiting to home, start it now if possible
+    if(isIndexOnline() && refPoweringIndex() && homingState==HomingState::NEED_TO_HOME && drivers->recal.getIsImuReady() && drivers->remote.isConnected()){
         homingState=HomingState::HOMING;
         timeoutHome.restart(1000*HOMING_TIMEOUT);
+        indexerController.clearBuildup();
     }
     if (homingState==HomingState::HOMING) {
         homeIndexer();
     }
+    
+    drivers->leds.set(tap::gpio::Leds::Green, true);
+    
     // if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower&RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER)
     // if(ballsPerSecond==0){
     //     motorIndexer->setDesiredOutput(0);
     //     indexerController.clearBuildup();
     // } else {
-    if((homingState >= HomingState::HOMED || homingState == HomingState::DONT_HOME) && drivers->remote.isConnected()) { //only run positoin control when homed bc it fights homing sequence
-        if(doPositionControl){
-            motorIndexer->setDesiredOutput(getIndexerVoltage(motorIndexer->getPositionUnwrapped()/GEAR_RATIO, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, targetIndexerPosition, 0, DT));
+    if(drivers->remote.isConnected()) {
+        // do velocity control when unjamming or homing (temporaryVelocityControl) or we want velocity control (!doPositionControl)
+        if(temporaryVelocityControl || !doPositionControl){
+            velocityControl();
         } else {
-            motorIndexer->setDesiredOutput(indexerVoltage);
+            positionControl();
         }
-    } else if (drivers->remote.isConnected()) {
-        motorIndexer->setDesiredOutput(getIndexerVoltage(0, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, 0, -1.75, DT)); //by giving it 0 target position and velo we effectively have a velo controller
     } else {
         motorIndexer->setDesiredOutput(0); //disable indexer when remote is off
     }
@@ -73,8 +77,6 @@ bool IndexerSubsystem::doAutoUnjam(float inputBallsPerSecond) {
             timeoutUnjam.stop();
             isAutoUnjamming = false;
         } else if (inputBallsPerSecond > 0) {
-            //prevent infinite recursion, unjam calls indexAtRate with a negative number
-            IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
             return true;
         }
     }
@@ -89,7 +91,6 @@ bool IndexerSubsystem::doAutoUnjam(float inputBallsPerSecond) {
         if(timeoutUnjam.isExpired()){
             isAutoUnjamming = true;
             timeoutUnjam.restart(AUTO_UNJAM_TIME_UNJAMMING*1000);
-            IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
             return true;
         }
     }
@@ -104,59 +105,39 @@ bool IndexerSubsystem::doAutoUnjam(float inputBallsPerSecond) {
 }
 
 float IndexerSubsystem::indexAtRate(float inputBallsPerSecond) {
-    if(!doPositionControl) {
-        if(doAutoUnjam(inputBallsPerSecond)) return UNJAM_BALL_PER_SECOND;
+    temporaryVelocityControl = false;
+    
+    if(doAutoUnjam(inputBallsPerSecond)) {
+        unjam();
+        return this->ballsPerSecond;
     }
     
-    this->ballsPerSecond = counter.getAllowableIndexRate(inputBallsPerSecond); //repeatedly increment if it can shoot
+    this->ballsPerSecond = counter.getAllowableIndexRate(inputBallsPerSecond);
     
-    if(!doPositionControl) {
-        setTargetMotorRPM(this->ballsPerSecond * 60.0f * revPerBall);
-    }
     return this->ballsPerSecond;
 }
 
-void IndexerSubsystem::indexAtMaxRate(){
-    // probably don't need anymore
-    
-    // if(homingState==HomingState::HOMING) return; //ignore if we are homing
-
-    setTargetMotorRPM(MAX_INDEX_RPM);
-}
 
 void IndexerSubsystem::stopIndex() {
-    // need to figure out soon
-
-    if(doPositionControl){
-        ballsPerSecond = 0;
-    } else {
-        indexAtRate(0);
-    }
+    ballsPerSecond = 0;
+    temporaryVelocityControl = false;
+    indexerController.clearBuildup();
 }
 
 void IndexerSubsystem::unjam(){
-    if(doPositionControl){
-        motorIndexer->setDesiredOutput(getIndexerVoltage(0, motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO, 0, -6, DT));
-    } else {
-        indexAtRate(UNJAM_BALL_PER_SECOND);
-    }
+    temporaryVelocityControl = true;
+    ballsPerSecond = UNJAM_BALL_PER_SECOND;
 }
 
-// used for velo control (hero)
-void IndexerSubsystem::setTargetMotorRPM(int targetMotorRPM) {
-    indexPIDController.runControllerDerivateError(targetMotorRPM - motorIndexer->getShaftRPM(), 1);
-
-    indexerVoltage = static_cast<int32_t>(indexPIDController.getOutput());
-}
 
 // converts delta motor ticks to num balls shot using constants
 float IndexerSubsystem::getNumBallsShot() {
     return counter.getRecentNumBallsShot();
 }
 
+// position and velo in radians of the output (where spindex is attached) shaft
 int IndexerSubsystem::getIndexerVoltage(float currentPosition, float currentVelocity, float targetPosition, float inputVelocity, float deltaT) {
-    // return 10000;
-    return 1000 * indexerController.calculate(currentPosition, currentVelocity, targetPosition, inputVelocity, 0.001f); //currentPosition, currentVelocity, targetPosition, inputVelocity, deltaT);
+    return 1000 * indexerController.calculate(currentPosition, currentVelocity, targetPosition, inputVelocity, deltaT); 
 }
 
 float IndexerSubsystem::getTotalNumBallsShot() {
@@ -168,10 +149,7 @@ void IndexerSubsystem::resetBallsCounter() {
 }
 
 void IndexerSubsystem::incrementTargetNumBalls() {
-    // if ( heatCounter <= drivers->refSerial.getRobotData().turret.heatLimit - 10) {
-    shotTimingCounter = 0; //we just shot
-    // heatCounter += 10;
-    targetIndexerPosition+=counter.getPositionIncrement(); 
+    targetIndexerPosition+=getPositionIncrement(); 
     counter.incrementTargetNumBalls();
 }
 
@@ -196,6 +174,10 @@ bool IndexerSubsystem::isIndexOnline() {
     return motorIndexer->isMotorOnline();
 }
 
+bool IndexerSubsystem::refPoweringIndex() {
+    return !drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower.any(RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER);
+}
+
 int32_t IndexerSubsystem::getEstHeat(){
     return counter.getEstHeat();
 }
@@ -204,37 +186,62 @@ bool IndexerSubsystem::heatAllowsShooting(){
 }
 
 bool IndexerSubsystem::canShoot() {
-    return isIndexOnline() && heatAllowsShooting() && isProjectileAtBeam();
+    return isIndexOnline() && refPoweringIndex() && heatAllowsShooting() && isProjectileAtBeam();
 }
 
 void IndexerSubsystem::homeIndexer() {
-    if (abs(motorIndexer->getTorque()) > 2000) { //same for this
+    temporaryVelocityControl = true;
+    ballsPerSecond = HOMING_BALLS_PER_SECOND; 
+    // needs to have a high torque for 100 consec cycles to be considered homed properly
+    if (abs(motorIndexer->getTorque()) > 2000) {
         homingCounter++;
-       
-
     } else {
         homingCounter = 0;
     }
+    bool done = false;
     if (homingCounter >= 100) {
+        done = true;
         homingState = HomingState::HOMED;
-        motorIndexer->resetEncoderValue();
-        targetIndexerPosition = counter.getPositionIncrement()*INITIAL_INDEX_OFFSET;
+        targetIndexerPosition = getPositionIncrement()*INITIAL_INDEX_OFFSET;
     }
     if(timeoutHome.isExpired()){
+        done = true;
         homingState = HomingState::GAVE_UP_HOMING;
-        motorIndexer->resetEncoderValue();
         targetIndexerPosition = 0;
+    }
+    if(done){
+        homingCounter = 0; //reset for next time
+        temporaryVelocityControl = false;
+        ballsPerSecond = 0;
+        indexNearest();
     }
 }
 
 void IndexerSubsystem::indexNearest() {
     float currentPos = motorIndexer->getPositionUnwrapped()/GEAR_RATIO;  //radians
     //index to the nearest next shot. This ensures we always have a shot ready to shoot
-    targetIndexerPosition = (std::ceil((currentPos - counter.getPositionIncrement()*INITIAL_INDEX_OFFSET) //find number of shots we are at
-    /counter.getPositionIncrement())
+    targetIndexerPosition = (std::ceil((currentPos - getPositionIncrement()*INITIAL_INDEX_OFFSET) //find number of shots we are at
+    /getPositionIncrement())
      + INITIAL_INDEX_OFFSET) //add the offset back
-      * counter.getPositionIncrement(); //convert to radians
+      * getPositionIncrement(); //convert to radians
 
 }
+
+float IndexerSubsystem::getCurrentOutputVelo() {
+    return motorIndexer->getShaftRPM()*(PI/30)/GEAR_RATIO;
+}
+
+void IndexerSubsystem::positionControl(){
+    motorIndexer->setDesiredOutput(getIndexerVoltage(motorIndexer->getPositionUnwrapped()/GEAR_RATIO, getCurrentOutputVelo(), targetIndexerPosition, 0, DT));
+}
+
+void IndexerSubsystem::velocityControl(){
+    motorIndexer->setDesiredOutput(getIndexerVoltage(0, getCurrentOutputVelo(), 0, ballsPerSecond/revPerBall, DT)); //by giving it 0 target position and velo we effectively have a velo controller
+}
+
+float IndexerSubsystem::getPositionIncrement(){
+    return 2*PI*revPerBall;
+}
+    
 
 } //namespace subsystems 

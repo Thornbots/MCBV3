@@ -31,11 +31,6 @@ float DoubleIndexerSubsystem::indexAtRate(float ballsPerSecond){
     // return IndexerSubsystem::indexAtRate(ballsPerSecond/2) + other.indexAtRate(ballsPerSecond/2);
 }
 
-void DoubleIndexerSubsystem::indexAtMaxRate(){
-    IndexerSubsystem::indexAtMaxRate();
-    other.indexAtMaxRate();
-}
-
 float DoubleIndexerSubsystem::getNumBallsShot(){
     return IndexerSubsystem::getNumBallsShot() + other.getNumBallsShot();
 }

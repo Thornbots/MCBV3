@@ -18,7 +18,6 @@ public:
     virtual void refresh() override;
 
     virtual float indexAtRate(float ballsPerSecond);
-    virtual void indexAtMaxRate();
 
     virtual float getNumBallsShot();
 

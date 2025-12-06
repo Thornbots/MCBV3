@@ -24,11 +24,12 @@ protected:  // Private Variables
 src::Drivers* drivers;
 tap::motor::DjiMotor* motorIndexer;
 tap::algorithms::SmoothPid indexPIDController;
+
+// revolutions of OUTPUT SHAFT per ball. Different than the ones per robot in IndexerSubsystemConstants, because those are motor shaft (before the gear box)
 float revPerBall;
 
 float ballsPerSecond = 0.0f;
 static constexpr int MAX_INDEX_RPM = 17000;
-int32_t indexerVoltage = 0;
 
 
 tap::arch::MilliTimeout timeoutUnjam;
@@ -41,7 +42,7 @@ IndexerController indexerController;
 
 tap::arch::MilliTimeout timeoutHome;
 enum class HomingState : uint8_t {
-    DONT_HOME = 0,       // hero doesn't home, it has a beambreak. Standard might home. Sentry needs it
+    DONT_HOME = 0,       // hero doesn't home, it has a beambreak. Standard and sentry do it for position control
     NEED_TO_HOME = 1,    // waiting until motor turns on (or imu to be done) to start homing
     HOMING = 2,          // the timer is going, the motor is spinning
     HOMED = 3,           // homed sucessfully, by motor being stalled
@@ -49,13 +50,13 @@ enum class HomingState : uint8_t {
 };
 
 private:
-int homeTimeoutCounter = 0;
 int homingCounter = 0;
-int shotTimingCounter = 0; //takes 600 hours to overflow
-int heatTimingCounter = 0;
-float heatCounter = 0;
 
+// hero doesn't want position control
 bool doPositionControl;
+
+// for something like unjamming on standard
+bool temporaryVelocityControl = false;
 
 HomingState homingState;
 
@@ -74,16 +75,17 @@ virtual void initialize();
 virtual void refresh() override;
 
 virtual float indexAtRate(float ballsPerSecond);
-virtual void indexAtMaxRate();
 
-void stopIndex();
+virtual void stopIndex();
 
-void unjam();
+virtual void unjam();
 
 virtual float getNumBallsShot();
 virtual float getTotalNumBallsShot();
 
 virtual void resetBallsCounter();
+
+// doesn't check heat. use heatAllowsShooting() to know if you should call this
 virtual void incrementTargetNumBalls();
 
 virtual float getBallsPerSecond();
@@ -94,6 +96,10 @@ virtual float getActualBallsPerSecond();
 // non hero always returns true
 virtual bool isProjectileAtBeam();
 
+// if the ref system thinks it's powering the motor. Either there is a delay until power is given or the motor takes time to turn on.
+virtual bool refPoweringIndex();
+
+// if the motor thinks it's online. There is a delay after the ref system thinks it is giving power
 virtual bool isIndexOnline();
 
 virtual int32_t getEstHeat();
@@ -105,14 +111,23 @@ void homeIndexer();
 
 void indexNearest(); //indexes to nearest shot position after finishing a position move
 
-private:  // Private Methods
 
-void setTargetMotorRPM(int targetMotorRPM);
 
 protected:
 
 bool doAutoUnjam(float inputBallsPerSecond);
 
+// used for getIndexerVoltage
+float getCurrentOutputVelo();
+
+// uses targetIndexerPosition to do position control
+void positionControl();
+
+// uses ballsPerSecond to do velocity control
+void velocityControl();
+
+// position increment of output shaft
+float getPositionIncrement();
 
 };
 } //namespace subsystems

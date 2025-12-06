@@ -14,6 +14,8 @@ using namespace subsystems::indexer;
     
 IndexerController::IndexerController() {}
 
+
+// units: index (output shaft), radians
 float IndexerController::calculate(float currentPosition, float currentVelocity, float targetPosition, float inputVelocity, float deltaT) {
 
     // float positionError = std::fmod(targetPosition - currentPosition + PI, 2 * PI) - PI;  // wrap to [-PI, PI]

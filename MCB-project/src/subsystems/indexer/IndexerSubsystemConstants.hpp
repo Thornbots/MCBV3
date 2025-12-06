@@ -8,12 +8,13 @@ constexpr static float AUTO_UNJAM_BALLS_PER_SEC_THRESH = 0.1;  // balls/sec, if 
 constexpr static float AUTO_UNJAM_TIME_UNDER_THRESH = 0.5;      // sec, if the motor gets stopped or slowed enough for this time, the index will start to unjam
 constexpr static float AUTO_UNJAM_TIME_UNJAMMING = 0.1;         // sec, once unjamming, it will continue unjamming for this long
 
-constexpr static float HOMING_TIMEOUT = 0.5;  // seconds, if we are spinning without finding a shot for this long, give up
+constexpr static float HOMING_TIMEOUT = 8;  // seconds, if we are spinning without finding a shot for this long, give up. If it takes this long, we probably don't have any projectiles and we wouldn't be shooting anyway
+constexpr static float HOMING_BALLS_PER_SECOND = -0.25;  // balls per second, needs to be negative
 
 
 #if defined(HERO)
 // motor ratio * ball rolling * diameter or spacing of balls / wheel circumference
-constexpr static int NUM_CHAMBERS = 0; //hero is weird, it indexes differently
+constexpr static int NUM_CHAMBERS = 8; //hero is weird, it indexes differently
 constexpr static float GEAR_RATIO = 36.0f; //need to check if it is 36 exactly or 36ish
 constexpr static float REV_PER_BALL = 42.0f / (50.0f * 3.1415926353f) * 2.0f * 36.0f; // GUESS, this value should be tuned since it isn't exactly known
 constexpr static float REV_PER_BALL_BOTTOM = GEAR_RATIO; // revolutions per ball = gearbox * external reduction / chambers

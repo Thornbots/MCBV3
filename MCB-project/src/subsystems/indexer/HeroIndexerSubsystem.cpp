@@ -25,27 +25,16 @@ float HeroIndexerSubsystem::indexAtRate(float inputBallsPerSecond){
     IndexerSubsystem::counter.enable();
     bottom.counter.enable();
 
-    // float top = IndexerSubsystem::indexAtRate(inputBallsPerSecond);
-    // return isAutoUnjamming ? top : bottom.indexAtRate(inputBallsPerSecond); //if top decides to unjam both, let it do so, else let bottom decide
-
-    IndexerSubsystem::indexAtRate(inputBallsPerSecond);
-    return bottom.indexAtRate(inputBallsPerSecond);
+    // bottom may be jammed, so top will react to that
+    return IndexerSubsystem::indexAtRate(bottom.indexAtRate(inputBallsPerSecond));
 }
 
 float HeroIndexerSubsystem::loadAtRate(float inputBallsPerSecond){
     IndexerSubsystem::counter.disable();
     bottom.counter.disable();
 
-    // float top = IndexerSubsystem::indexAtRate(inputBallsPerSecond);
-    // return isAutoUnjamming ? top : bottom.indexAtRate(inputBallsPerSecond);
-
-    IndexerSubsystem::indexAtRate(inputBallsPerSecond);
-    return bottom.indexAtRate(inputBallsPerSecond);
-}
-
-void HeroIndexerSubsystem::indexAtMaxRate(){
-    IndexerSubsystem::indexAtMaxRate();
-    bottom.indexAtMaxRate();
+    // bottom may be jammed, so top will react to that
+    return IndexerSubsystem::indexAtRate(bottom.indexAtRate(inputBallsPerSecond));
 }
 
 bool HeroIndexerSubsystem::isProjectileAtBeam(){

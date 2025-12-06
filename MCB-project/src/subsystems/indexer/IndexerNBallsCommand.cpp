@@ -7,11 +7,6 @@ void IndexerNBallsCommand::initialize() {
     // canStart = indexer->heatAllowsShooting() && indexer->isProjectileAtBeam();
     indexer->resetBallsCounter();
     
-    // not sure how to do continuous firing with position control yet
-    // if(numBalls>=0){
-    //     indexer->incrementTargetNumBalls(numBalls);
-    //     indexer->setBallsPerSecond(ballsPerSecond);
-    // }
     timer.restart(1000/ballsPerSecond);
     
     //for first shot
@@ -41,7 +36,7 @@ void IndexerNBallsCommand::end(bool) {
 }
 
 bool IndexerNBallsCommand::isFinished(void) const {
-    if(!drivers->remote.isConnected()) return true;
+    if(!drivers->remote.isConnected() || !indexer->refPoweringIndex()) return true;
 
     if (numBalls < 0) {
         return false;

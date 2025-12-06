@@ -20,7 +20,6 @@ public:
 
     virtual float indexAtRate(float inputBallsPerSecond);
     float loadAtRate(float inputBallsPerSecond);
-    virtual void indexAtMaxRate();
 
     //counter stuff doesn't change
 

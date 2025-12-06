@@ -4,7 +4,6 @@ namespace commands
 {
 
 void IndexerLoadCommand::initialize() {
-    indexer->resetBallsCounter();
 }
 
 void IndexerLoadCommand::execute()
@@ -18,6 +17,6 @@ void IndexerLoadCommand::end(bool) {
 
 bool IndexerLoadCommand::isFinished(void) const {
     // Check if the indexer has loaded the balls
-    return indexer->isProjectileAtBeam() || !drivers->remote.isConnected();
+    return indexer->isProjectileAtBeam() || !drivers->remote.isConnected() || !indexer->refPoweringIndex();
 }
 }  // namespace commands

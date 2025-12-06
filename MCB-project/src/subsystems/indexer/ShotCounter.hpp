@@ -26,13 +26,7 @@ public:
 
 
     ShotCounter(src::Drivers* drivers, BarrelType barrel, tap::motor::DjiMotor* index) : drivers(drivers), barrel(barrel), index(index)  {
-        //in case index doesn't start at 0
-        initialPosition = index->getPositionUnwrapped();
-        recentPosition = initialPosition;
-
-        prevMillis = tap::arch::clock::getTimeMilliseconds();
-        
-        coolingTimer.restart(); //not sure if it starts started or not
+        resetAll();
     }
 
     float getAllowableIndexRate(float desiredBallsPerSecond){
@@ -69,15 +63,26 @@ public:
     void disable() {
         enabled = false;
     }
+    
+    void resetAll() {
+        //in case index doesn't start at 0
+        initialPosition = index->getPositionUnwrapped();
+        recentPosition = initialPosition;
+
+        prevMillis = tap::arch::clock::getTimeMilliseconds();
+        
+        coolingTimer.restart(); //not sure if it starts started or not
+    }
 
     int32_t getEstHeat(){
         return estHeat;
     }
     
     // for shooting one ball, how far does the index (output shaft) need to move
-    float getPositionIncrement() {
-        return (2*PI/NUM_CHAMBERS);
-    }
+    // doesn't support different revperball that hero has
+    // float getPositionIncrement() {
+    //     return (2*PI/NUM_CHAMBERS);
+    // }
     
     // gets current index (output shaft) position
     float getCurrentPosition() {
