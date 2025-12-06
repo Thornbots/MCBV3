@@ -79,8 +79,8 @@ void AutoAimAndFireCommand::execute() {
             indexer->indexAtRate(20);
         } else {
             // if we haven't seen a panel for a bit
-            //  indexer->stopIndex();
-            indexer->unjam();
+             indexer->stopIndex();
+            // indexer->unjam();
         }
     } else {
         indexer->stopIndex();

@@ -54,7 +54,7 @@ public:
         odo.setDefaultCommand(&odoStop);
 
 
-        shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz);
+        shootButton.onTrue(&shooterStart)->whileTrue(&indexerSingle);
         unjamButton.whileTrue(&indexerUnjam);
         stopFlywheelTrigger.onTrue(&shooterStop);
 

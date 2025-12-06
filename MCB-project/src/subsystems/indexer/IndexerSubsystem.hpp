@@ -109,7 +109,8 @@ virtual bool heatAllowsShooting();
 virtual bool canShoot();
 
 
-void homeIndexer();
+virtual void doHomingTransitions(); //used to transition into the homing state when needed
+virtual void homeIndexer(); //called when in the homing state
 
 void indexNearest(); //indexes to nearest shot position after finishing a position move
 

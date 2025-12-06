@@ -29,16 +29,7 @@ void IndexerSubsystem::initialize() {
 }
 
 void IndexerSubsystem::refresh() {    
-    // if was homed and went offline, need to home again
-    if(!(isIndexOnline() && refPoweringIndex()) && homingState>=HomingState::HOMED){ //homed or gave up homing and the motor is offline
-        homingState = HomingState::NEED_TO_HOME;
-    }
-    // if waiting to home, start it now if possible
-    if(isIndexOnline() && refPoweringIndex() && homingState==HomingState::NEED_TO_HOME && drivers->recal.getIsImuReady() && drivers->remote.isConnected()){
-        homingState=HomingState::HOMING;
-        timeoutHome.restart(1000*HOMING_TIMEOUT);
-        indexerController.clearBuildup();
-    }
+    doHomingTransitions();
     if (homingState==HomingState::HOMING) {
         homeIndexer();
     }
@@ -186,6 +177,20 @@ bool IndexerSubsystem::canShoot() {
     return isIndexOnline() && refPoweringIndex() && heatAllowsShooting() && isProjectileAtBeam();
 }
 
+
+void IndexerSubsystem::doHomingTransitions(){
+    // if was homed and went offline, need to home again
+    if(!(isIndexOnline() && refPoweringIndex()) && homingState>=HomingState::HOMED){ //homed or gave up homing and the motor is offline
+        homingState = HomingState::NEED_TO_HOME;
+    }
+    // if waiting to home, start it now if possible
+    if(isIndexOnline() && refPoweringIndex() && homingState==HomingState::NEED_TO_HOME && drivers->recal.getIsImuReady() && drivers->remote.isConnected()){
+        homingState=HomingState::HOMING;
+        timeoutHome.restart(1000*HOMING_TIMEOUT);
+        indexerController.clearBuildup();
+    }
+}
+
 void IndexerSubsystem::homeIndexer() {
     temporaryVelocityControl = true;
     ballsPerSecond = HOMING_BALLS_PER_SECOND; 
@@ -204,7 +209,7 @@ void IndexerSubsystem::homeIndexer() {
     if(timeoutHome.isExpired()){
         done = true;
         homingState = HomingState::GAVE_UP_HOMING;
-        targetIndexerPosition = 0;
+        targetIndexerPosition = motorIndexer->getPositionUnwrapped()/GEAR_RATIO;
     }
     if(done){
         homingCounter = 0; //reset for next time
