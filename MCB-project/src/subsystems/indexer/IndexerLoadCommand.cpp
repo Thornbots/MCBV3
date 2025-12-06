@@ -8,11 +8,15 @@ void IndexerLoadCommand::initialize() {
 
 void IndexerLoadCommand::execute()
 {
+    drivers->leds.set(tap::gpio::Leds::Blue, true);
+    
     indexer->loadAtRate(LOAD_BALL_PER_SECOND); // Set the indexer to a not so low speed
 }
 
 void IndexerLoadCommand::end(bool) {
-    indexer->stopIndex();
+    drivers->leds.set(tap::gpio::Leds::Blue, false);
+    
+    indexer->loadAtRate(0);
 }
 
 bool IndexerLoadCommand::isFinished(void) const {

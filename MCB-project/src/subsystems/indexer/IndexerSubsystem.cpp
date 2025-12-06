@@ -28,7 +28,7 @@ void IndexerSubsystem::initialize() {
 
 }
 
-void IndexerSubsystem::refresh() {
+void IndexerSubsystem::refresh() {    
     // if was homed and went offline, need to home again
     if(!(isIndexOnline() && refPoweringIndex()) && homingState>=HomingState::HOMED){ //homed or gave up homing and the motor is offline
         homingState = HomingState::NEED_TO_HOME;
@@ -42,8 +42,6 @@ void IndexerSubsystem::refresh() {
     if (homingState==HomingState::HOMING) {
         homeIndexer();
     }
-    
-    drivers->leds.set(tap::gpio::Leds::Green, true);
     
     // if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower&RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER)
     // if(ballsPerSecond==0){
@@ -108,7 +106,7 @@ float IndexerSubsystem::indexAtRate(float inputBallsPerSecond) {
     temporaryVelocityControl = false;
     
     if(doAutoUnjam(inputBallsPerSecond)) {
-        unjam();
+        unjam(true);
         return this->ballsPerSecond;
     }
     
@@ -121,10 +119,9 @@ float IndexerSubsystem::indexAtRate(float inputBallsPerSecond) {
 void IndexerSubsystem::stopIndex() {
     ballsPerSecond = 0;
     temporaryVelocityControl = false;
-    indexerController.clearBuildup();
 }
 
-void IndexerSubsystem::unjam(){
+void IndexerSubsystem::unjam(bool){
     temporaryVelocityControl = true;
     ballsPerSecond = UNJAM_BALL_PER_SECOND;
 }
@@ -213,11 +210,15 @@ void IndexerSubsystem::homeIndexer() {
         homingCounter = 0; //reset for next time
         temporaryVelocityControl = false;
         ballsPerSecond = 0;
-        indexNearest();
+        // indexNearest();
     }
 }
 
 void IndexerSubsystem::indexNearest() {
+    //only applies to position control
+    if(!doPositionControl) return;
+    
+    temporaryVelocityControl = false;
     float currentPos = motorIndexer->getPositionUnwrapped()/GEAR_RATIO;  //radians
     //index to the nearest next shot. This ensures we always have a shot ready to shoot
     targetIndexerPosition = (std::ceil((currentPos - getPositionIncrement()*INITIAL_INDEX_OFFSET) //find number of shots we are at

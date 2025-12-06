@@ -78,7 +78,9 @@ virtual float indexAtRate(float ballsPerSecond);
 
 virtual void stopIndex();
 
-virtual void unjam();
+// be careful of looping here. 
+void unjam() {unjam(false);};
+virtual void unjam(bool isAuto);
 
 virtual float getNumBallsShot();
 virtual float getTotalNumBallsShot();

@@ -53,7 +53,7 @@ public:
         unjamKey.whileTrue(&indexerUnjam)->onFalse(&indexerLoad);
         shootKey.onTrue(&indexerSemi)->onTrue(&shooterStart);
         unjamButton.whileTrue(&indexerUnjam)->onFalse(&indexerLoad);
-        shootButton.whileTrue(&indexerAuto)->onTrue(&shooterStart)->onFalse(&indexerLoad);
+        shootButton.whileTrue(&indexerSemi)->onTrue(&shooterStart)->onFalse(&indexerLoad);
         stopFlywheelTrigger.onTrue(&shooterStop);
         autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart);
         // implement speed mode

@@ -14,22 +14,21 @@ constexpr static float HOMING_BALLS_PER_SECOND = -0.25;  // balls per second, ne
 
 #if defined(HERO)
 // motor ratio * ball rolling * diameter or spacing of balls / wheel circumference
-constexpr static int NUM_CHAMBERS = 8; //hero is weird, it indexes differently
+constexpr static int NUM_CHAMBERS = 1; //hero is weird, it indexes differently. Physically is 8.
 constexpr static float GEAR_RATIO = 36.0f; //need to check if it is 36 exactly or 36ish
-constexpr static float REV_PER_BALL = 42.0f / (50.0f * 3.1415926353f) * 2.0f * 36.0f; // GUESS, this value should be tuned since it isn't exactly known
-constexpr static float REV_PER_BALL_BOTTOM = GEAR_RATIO; // revolutions per ball = gearbox * external reduction / chambers
+constexpr static float REV_PER_BALL = 42.0f / (50.0f * 3.1415926353f) * 2.0f; // GUESS, this value should be tuned since it isn't exactly known
+constexpr static float REV_PER_BALL_BOTTOM = 1; // revolutions per ball = gearbox * external reduction / chambers
 constexpr static float LOAD_BALL_PER_SECOND = 5.0f;
 constexpr static float UNJAM_BALL_PER_SECOND = -8.0f; // in unjam mode, spin backwards at 1 balls per second (this is a guess)
 constexpr static tap::algorithms::SmoothPidConfig PID_CONF_INDEX = {5, 0, 0, 0, 8000, 1, 0, 1, 0, 10, 0};
-constexpr static float INITIAL_BURST_NUM_BALLS = 0;
 constexpr static float INITIAL_INDEX_OFFSET = 0; //doesn't apply to hero
+constexpr static float INDEXING_EXTRA_BALLS = 0.2; //balls, how long to keep shooting after the beam break says the ball has left
 #elif defined(SENTRY)
 constexpr static int NUM_CHAMBERS = 7;
 constexpr static float GEAR_RATIO = 36.0f; //need to check if it is 36 exactly or 36ish
 constexpr static float REV_PER_BALL = GEAR_RATIO / NUM_CHAMBERS; // revolutions per ball = ratio / chambers
 constexpr static float UNJAM_BALL_PER_SECOND = -1.0f; // in unjam mode, spin backwards at 1 balls per second (this is a guess)
 constexpr static tap::algorithms::SmoothPidConfig PID_CONF_INDEX = {5, 0, 0, 0, 8000, 1, 0, 1, 0, 10, 0};
-constexpr static float INITIAL_BURST_NUM_BALLS = 0.9;
 constexpr static float INITIAL_INDEX_OFFSET = 0.93f;
 #elif defined(INFANTRY)
 constexpr static int NUM_CHAMBERS = 8;
@@ -37,18 +36,17 @@ constexpr static float GEAR_RATIO = 36.0f; //need to check if it is 36 exactly o
 constexpr static float REV_PER_BALL = GEAR_RATIO / NUM_CHAMBERS; // revolutions per ball = ratio / chambers
 constexpr static float UNJAM_BALL_PER_SECOND = -1.0f; // in unjam mode, spin backwards at 1 balls per second (this is a guess)
 constexpr static tap::algorithms::SmoothPidConfig PID_CONF_INDEX = {5, 0, 0, 0, 8000, 1, 0, 1, 0, 10, 0};
-constexpr static float INITIAL_BURST_NUM_BALLS = 0.9;
-constexpr static float INITIAL_INDEX_OFFSET = 0.93f;
+constexpr static float INITIAL_INDEX_OFFSET = 0.49f; //0.5 is barely too much
 #else
 constexpr static int NUM_CHAMBERS = 7;
 constexpr static float GEAR_RATIO = 36.0f; //need to check if it is 36 exactly or 36ish
 constexpr static float REV_PER_BALL = GEAR_RATIO / NUM_CHAMBERS; // revolutions per ball = ratio / chambers
 constexpr static float UNJAM_BALL_PER_SECOND = -1.0f; // in unjam mode, spin backwards at 1 balls per second (this is a guess)
 constexpr static tap::algorithms::SmoothPidConfig PID_CONF_INDEX = {5, 0, 0, 0, 8000, 1, 0, 1, 0, 10, 0};
-constexpr static float INITIAL_BURST_NUM_BALLS = 0.9;
 #endif
 
 #ifndef HERO
 constexpr static float REV_PER_BALL_BOTTOM = 0; //doesn't apply to non heros
 constexpr static float LOAD_BALL_PER_SECOND = 0; //doesn't apply to non heros
+constexpr static float INDEXING_EXTRA_BALLS = 0;
 #endif
