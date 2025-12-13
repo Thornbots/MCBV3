@@ -51,8 +51,19 @@ private:  // Private Variables
     GraphicsContainer* topLevelContainer = nullptr;
 
     static constexpr int NUM_LAYERS = 10;  // layers 0-9
-    int layersState[NUM_LAYERS]; //0 is clear, 1 is not clear, 2 is needs cleared
+    
+    enum class LayerState : uint8_t {
+        CLEAR = 0,  
+        IN_USE = 1,         
+        NEEDS_CLEARED = 2
+    };
+    
+    LayerState layersState[NUM_LAYERS]; 
 
+    
+    
+    
+    
 public:  // Public Methods
     UISubsystem(tap::Drivers* driver);
     ~UISubsystem() {}  // Intentionally blank
@@ -88,5 +99,11 @@ public:  // Public Methods
 
 private:         // Private Methods
     bool run();  // for protothread
+    
+    //Make sure the message type and size agree, for example:
+    // if using a Graphic7Message, size needs to be 7
+    // if using a Graphic5Message, size needs to be 5
+    // and so on
+    void fillMessage(void* message, int8_t size);
 };
 }  // namespace subsystems

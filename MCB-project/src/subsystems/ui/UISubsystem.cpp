@@ -1,6 +1,21 @@
 #include "UISubsystem.hpp"
 
 namespace subsystems {
+    
+    
+//  Made referencing
+// https://en.cppreference.com/w/cpp/preprocessor/replace
+// and /taproot/modm/src/modm/processing/protothread/macros.hpp
+//  All instances of message##size gets replaced with message7 if size is 7, message5 if 5, ...
+//  Should only be called with 1, 2, 5, or 7
+//  If called with something else, for example 3, there will be a compile error that message3 doesn't exist
+#define CONDITIONAL_FILL_AND_SEND_MESSAGE(size)  \
+    ({ \
+        if (numToSend == size){ \
+            fillMessage(&message##size, size); \
+            PT_CALL(refSerialTransmitter.sendGraphic(&message##size)); \
+            delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message##size)); \
+    }})
 
 // define the static variable, if this isnt here things go wrong saying it is a undefined reference
 uint32_t UISubsystem::currGraphicName = 0;
@@ -9,7 +24,7 @@ int8_t UISubsystem::currLayer = 1; //layer 0 is where most stuff is, so asking f
 UISubsystem::UISubsystem(tap::Drivers* drivers) : tap::control::Subsystem(drivers), drivers(drivers), refSerialTransmitter(drivers) {
     // assume all layers had something on them from a previous team, so all need cleared
     for(int i=0; i<NUM_LAYERS; i++)
-        layersState[i] = 2;
+        layersState[i] = LayerState::NEEDS_CLEARED;
 
     graphicsIndex=0; //might start with one or two already in the array from last time, so set it once outside of run
 }
@@ -68,15 +83,34 @@ bool UISubsystem::run() { //run has to do with prototheads
     
     // needs testing to see if this can be used instead of blindly waiting
     // drivers->uart.isWriteFinished(bound_ports::REF_SERIAL_UART_PORT);
+    // but this communication might not be the slow part: it could be that
+    //  telling the ref system what to send is quick but the ref system
+    //  sending it to the server isn't quick
+    // also, there is blind waiting (a timer) inside of taproot
+    // so we shouldn't be doing it here?
+    // maybe the waiting isn't doing anything here: both timers start at the same time
+    //  and end at the same time
+    // or it is just unnecessarily waiting
+    // it seems that as soon sendGraphic returns the actual data starts sending
+    //  the time spend waiting in sendGraphic is waiting to be able to start sending
+    //  waits using acquireTransmissionSemaphore, has a timer in it
+    //  ends using releaseTransmissionSemaphore with the size of what was sent, restarts a timer depending on the size
+    // so if we want a smarter wait, could use: 
+    //  PT_WAIT_UNTIL(drivers->refSerial.acquireTransmissionSemaphore());
+    //  drivers->refSerial.releaseTransmissionSemaphore(0);
+    // to wait until we could send something, and pretend we sent nothing
+    // this shouldn't make sending slower because the semaphore is just a counter incrementing and decrementing
+    // and refSerial's timer gets restarted with 0, making acquireTransmissionSemaphore not wait any time in sendGraphic
+    
     
     needToClearAllLayers = true;
     layerToClear = -1;
     // clear any layers with state 2
     for (innerGraphicsIndex = 0; innerGraphicsIndex < NUM_LAYERS; innerGraphicsIndex++) {
-        if(layersState[innerGraphicsIndex]==2){
+        if(layersState[innerGraphicsIndex]==LayerState::NEEDS_CLEARED){
             layerToClear = innerGraphicsIndex;
         }
-        if(layersState[innerGraphicsIndex]==1){
+        if(layersState[innerGraphicsIndex]==LayerState::IN_USE){
             needToClearAllLayers = false; //if all are 0(cleared) or 2(needs to be cleared), then we can clear all, otherwise we can't
         }
     } //loop ends when the layer at innerGraphicsIndex needs cleared, or all layers were checked and all were clear
@@ -84,14 +118,14 @@ bool UISubsystem::run() { //run has to do with prototheads
     if(needToClearAllLayers){
         PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 0));
         for (innerGraphicsIndex = 0; innerGraphicsIndex < NUM_LAYERS; innerGraphicsIndex++) {
-            layersState[innerGraphicsIndex]=0;
+            layersState[innerGraphicsIndex]=LayerState::CLEAR;
         }
         if (topLevelContainer){
             topLevelContainer->allLayersCleared();
         }
     } else if(layerToClear!=-1){
         PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_GRAPHIC_LAYER, layerToClear));
-        layersState[layerToClear]=0;
+        layersState[layerToClear]=LayerState::CLEAR;
         if (topLevelContainer){
             topLevelContainer->layerHasBeenCleared(layerToClear);
         }
@@ -112,10 +146,10 @@ bool UISubsystem::run() { //run has to do with prototheads
     // what was in the while loop
     timesResetIteration = 0;
     topLevelContainer->resetDrawMarks();
-    while (timesResetIteration<2) {
+    while (timesResetIteration<2) { //might need to reset once if we started near the end, once we reset twice give up
         nextGraphicsObject = topLevelContainer->getNext();
 
-        //if we run out of objects, try looping around to the start
+        //if we run out of objects, try looping around to the start to find more
         if(!nextGraphicsObject){
             topLevelContainer->resetIteration();
             timesResetIteration++;
@@ -125,13 +159,14 @@ bool UISubsystem::run() { //run has to do with prototheads
         if (nextGraphicsObject->isStringGraphic()) {
             // if it is a string, keep the array as it is and send the string on its own
             nextGraphicsObject->configCharacterData(&messageCharacter);
-            if(layersState[messageCharacter.graphicData.layer]==0) layersState[messageCharacter.graphicData.layer]=1;
+            if(layersState[messageCharacter.graphicData.layer]==LayerState::CLEAR) 
+                layersState[messageCharacter.graphicData.layer]=LayerState::IN_USE;
             PT_CALL(refSerialTransmitter.sendGraphic(&messageCharacter));
             delayTimeout.restart(2 * RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
             PT_WAIT_UNTIL(delayTimeout.execute());
         } else {
             // if it isn't a string, add it to the array and see if it is full
-            nextGraphicsObject->markToDraw(); //mark the object as 'to draw' to prevent it from being gotten again from the container
+            nextGraphicsObject->markToDraw(); //mark the object as 'to draw' to prevent it from being gotten again from the topLevelContainer after resetIteration
             objectsToSend[graphicsIndex++] = nextGraphicsObject;
             if (graphicsIndex == TARGET_NUM_OBJECTS) break; //if full, stop trying to find more
         }
@@ -152,35 +187,14 @@ bool UISubsystem::run() { //run has to do with prototheads
     // drivers->leds.set(tap::gpio::Leds::Red, graphicsIndex == 1);
     // drivers->leds.set(tap::gpio::Leds::Green, graphicsIndex == 7);
 
-    // so we have up to 7 objects to update. Would do a switch case but might confict with protothread's switch case
-    // might be able to do something silly with (void) pointers
-    if (numToSend == 1) {
-        objectsToSend[0]->configGraphicData(&message1.graphicData);
-        if(layersState[message1.graphicData.layer]==0) layersState[message1.graphicData.layer]=1;
-        PT_CALL(refSerialTransmitter.sendGraphic(&message1));
-        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message1));
-    } else if (numToSend == 2) {
-        for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) {
-            objectsToSend[innerGraphicsIndex]->configGraphicData(&message2.graphicData[innerGraphicsIndex]);
-            if(layersState[message2.graphicData[innerGraphicsIndex].layer]==0) layersState[message2.graphicData[innerGraphicsIndex].layer]=1;
-        }
-        PT_CALL(refSerialTransmitter.sendGraphic(&message2));
-        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message2));
-    } else if (numToSend == 5) {
-        for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) {
-            objectsToSend[innerGraphicsIndex]->configGraphicData(&message5.graphicData[innerGraphicsIndex]);
-            if(layersState[message5.graphicData[innerGraphicsIndex].layer]==0) layersState[message5.graphicData[innerGraphicsIndex].layer]=1;
-        }
-        PT_CALL(refSerialTransmitter.sendGraphic(&message5));
-        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message5));
-    } else if (numToSend == 7) {
-        for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) {
-            objectsToSend[innerGraphicsIndex]->configGraphicData(&message7.graphicData[innerGraphicsIndex]);
-            if(layersState[message7.graphicData[innerGraphicsIndex].layer]==0) layersState[message7.graphicData[innerGraphicsIndex].layer]=1;
-        }
-        PT_CALL(refSerialTransmitter.sendGraphic(&message7));
-        delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message7));
-    }
+    // so we have up to 7 objects to update, with 4 different types of messages
+    //  Since I (really) want to reduce code duplication, I ventured into the land of macros and void pointers
+    //   macros (CONDITIONAL_FILL_AND_SEND_MESSAGE) to use different but similarly named variables (message1, message2, message5, and message7)
+    //   void pointers (fillMessage) so message1's singular GraphicData can be used as if it had an array of GraphicData, size 1
+    CONDITIONAL_FILL_AND_SEND_MESSAGE(1);
+    CONDITIONAL_FILL_AND_SEND_MESSAGE(2);
+    CONDITIONAL_FILL_AND_SEND_MESSAGE(5);
+    CONDITIONAL_FILL_AND_SEND_MESSAGE(7);
 
     if (graphicsIndex == 4) { //save 2
         objectsToSend[0] = objectsToSend[2]; //copy the third item into the first slot
@@ -201,7 +215,7 @@ bool UISubsystem::run() { //run has to do with prototheads
 
     // start the whole thing over
     PT_END();
-    restart();
+    restart(); //TODO: see if this is necessary
 }
 
 // This is required for the UISubsystem to have anything to draw.
@@ -216,7 +230,22 @@ void UISubsystem::setTopLevelContainer(GraphicsContainer* container) {
 
     // all layers need cleared
     for (innerGraphicsIndex = 0; innerGraphicsIndex < NUM_LAYERS; innerGraphicsIndex++) {
-        layersState[innerGraphicsIndex]=2;
+        layersState[innerGraphicsIndex]=LayerState::NEEDS_CLEARED;
     }
 }
+
+
+
+void UISubsystem::fillMessage(void* message, int8_t size) {
+    // each of the messages have an array of graphic data in them
+    //  besides message1, but you can pretend it has an array of size 1
+    // as long as you don't walk off the bounds of the array, you could think of any message as a Graphic7Message
+    RefSerialData::Tx::Graphic7Message* msg = (RefSerialData::Tx::Graphic7Message*) message;
+    for (int i = 0; i < size; i++) {
+        objectsToSend[i]->configGraphicData(&msg->graphicData[i]);
+        if (layersState[msg->graphicData[i].layer] == LayerState::CLEAR) 
+            layersState[msg->graphicData[i].layer] = LayerState::IN_USE;
+    }
+}
+
 }  // namespace subsystems
