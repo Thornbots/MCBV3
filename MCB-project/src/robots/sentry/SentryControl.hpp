@@ -61,6 +61,8 @@ public:
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
 
         isStopped = false;
+
+        drivers->recal.requestRecalibration();
     }
 
 

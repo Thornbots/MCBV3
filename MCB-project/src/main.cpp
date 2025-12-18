@@ -52,8 +52,6 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->bmi088.initialize(1000, 0.0f, 0.000f);
     drivers->bmi088.setTargetTemperature(35.0f);
     drivers->bmi088.setCalibrationSamples(4000);
-    drivers->bmi088.requestCalibration();
-    drivers->recal.setIsFirstCalibrating();
 
 
 }
@@ -95,11 +93,7 @@ int main() {
 
         if (refreshTimer.execute()) {
             // tap::buzzer::playNote(&(drivers.pwm), 493);
-            bool goingToRecalibrate = drivers.recal.isForcingRecalibration() ||
-                    (drivers.recal.isRequestingRecalibration() &&
-                    drivers.refSerial.getRefSerialReceivingData() &&
-                    drivers.refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::SETUP &&
-                    drivers.refSerial.getGameData().stageTimeRemaining < 15);
+            bool goingToRecalibrate = drivers.recal.isForcingRecalibration() || shouldExecuteScheduledRecalibration();
             if(goingToRecalibrate){
                 control.stopForImuRecal();
                 drivers.recal.setIsWaiting();
@@ -116,7 +110,7 @@ int main() {
                 waitForRobotToStopMoving.stop();
                 drivers.recal.setIsSecondCalibrating();
                 drivers.leds.set(tap::gpio::Leds::Green, false);
-                drivers.bmi088.requestCalibration();
+                drivers.executeCalibration();
             }
 
 
@@ -145,5 +139,13 @@ int main() {
     }
 
     return 0;
+}
+
+
+bool shouldExecuteScheduledRecalibration() {
+    return drivers.recal.isRequestingRecalibration() &&
+           drivers.refSerial.getRefSerialReceivingData() &&
+           ((drivers.refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::SETUP && drivers.refSerial.getGameData().stageTimeRemaining < 15) || 
+           drivers.refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::INITIALIZATION);
 }
 

@@ -134,8 +134,9 @@ public:
     communication::UARTCommunication uart;
     ImuRecalibration recal;
     
-
-
+    void executeCalibration() {
+        this->bmi088.requestCalibration();
+    }
 
 
 
