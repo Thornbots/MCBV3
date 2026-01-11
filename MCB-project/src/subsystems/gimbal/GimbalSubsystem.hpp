@@ -34,7 +34,7 @@ private:  // Private Variables
 
     float pitchMotorVoltage, yawMotorVoltage;
 
-    float driveTrainAngularVelocity, yawAngularVelocity, yawAngleRelativeWorld = 0.0, imuOffset;
+    float driveTrainAngularVelocity, yawAngularVelocity, yawAngleRelativeWorld = 0.0;
     float gimbalPitchAngleRelativeWorld, gimbalPitchAngularVelocity;
     float yawEncoderCache = 0;
     float driveTrainEncoder = 0.0;

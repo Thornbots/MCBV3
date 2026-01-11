@@ -124,6 +124,7 @@ public:
     void resumeAfterImuRecal() override {
         isStopped = false;
         gimbal.clearBuildup();
+        gimbal.reZeroYaw();
         drivers->commandScheduler.addCommand(&autoDrive);
         drivers->commandScheduler.addCommand(&autoFire);
         drivers->commandScheduler.addCommand(&odoPointForwards);
