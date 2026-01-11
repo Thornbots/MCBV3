@@ -4,23 +4,23 @@ namespace subsystems
 {
 
 HeroIndexerSubsystem::HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* indexTop, tap::motor::DjiMotor* indexBottom)
-    : IndexerSubsystem(drivers, indexTop, false, false, ShotCounter::BarrelType::TURRET_42MM), // Call base class constructor with the 42 barrel
-    bottom(drivers, indexBottom, false, false, ShotCounter::BarrelType::TURRET_42MM, REV_PER_BALL_BOTTOM)
+    : IndexerSubsystem(drivers, indexTop), //needs one motor to know disconnect, could be either
+    unitTop(drivers, indexTop, REV_PER_BALL/GEAR_RATIO, REV_PER_BALL),
+    unitBottom(drivers, indexTop, REV_PER_BALL_BOTTOM/GEAR_RATIO, REV_PER_BALL_BOTTOM),
+    counter(drivers, ShotCounter::BarrelType::TURRET_42MM, indexTop)
 {}
 
-void HeroIndexerSubsystem::initialize() {
-    // Initialize both motors
-    IndexerSubsystem::initialize();
-    bottom.initialize();
-
+void HeroIndexerSubsystem::finishInitialize() {
+    unitTop.initialize();
+    unitBottom.initialize();
     Board::DigitalInPinB12::configure(modm::platform::Gpio::InputType::Floating); //initialze beambreak
 }
 
-void HeroIndexerSubsystem::refresh() {
-    drivers->leds.set(tap::gpio::Leds::Green, isProjectileAtBeam());
+void HeroIndexerSubsystem::finishRefresh() {
+    // drivers->leds.set(tap::gpio::Leds::Green, isProjectileAtBeam());
     
-    IndexerSubsystem::refresh();
-    bottom.refresh();
+    // IndexerSubsystem::refresh();
+    // bottom.refresh();
 }
 
 // sometimes we'll ignore what the command wants
@@ -77,7 +77,7 @@ float HeroIndexerSubsystem::loadAtRate(float inputBallsPerSecond){
         // being told to load when we shouldn't
         if(state==HeroIndexerState::LOADING_THEN_DONE)
             loadAtRate(0);
-        // otherwise indexAtRateis calling us
+        // otherwise indexAtRate is calling us
     } else {
         if(state==HeroIndexerState::INDEXING) state = HeroIndexerState::LOADING_THEN_INDEX;
         if(state==HeroIndexerState::STOPPED) state = HeroIndexerState::LOADING_THEN_DONE;

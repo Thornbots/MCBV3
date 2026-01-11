@@ -4,44 +4,24 @@ namespace commands
 {
 
 void IndexerNBallsCommand::initialize() {
-    // canStart = indexer->heatAllowsShooting() && indexer->isProjectileAtBeam();
-    indexer->resetBallsCounter();
-    
-    timer.restart(1000/ballsPerSecond);
-    
-    //for first shot
-    if(indexer->canShoot()){
-        indexer->incrementTargetNumBalls(); 
-        numBallsRemaining = numBalls-1; //may end up setting numBallsRemaining to -2, should be fine
+    if(numBalls<0){
+        indexer->indexAtRate(ballsPerSecond);
+    } else {
+        indexer->indexNShotsAtRate(ballsPerSecond, numBalls);
     }
 }
 
 void IndexerNBallsCommand::execute()
 {
-    // numBalls was either -1 at the start, or some positive number
-    // each time we incrementTargetNumBalls, decrement numBalls, stop when it reaches 0
-    if(numBallsRemaining!=0){
-        if(indexer->canShoot() && timer.execute()){
-            indexer->incrementTargetNumBalls();
-            if(numBallsRemaining>0) numBallsRemaining--;
-        }
-    }
-    
-    indexer->indexAtRate(ballsPerSecond);
-    
 }
 
 void IndexerNBallsCommand::end(bool) {
-    indexer->stopIndex();
+    indexer->stopIndexingAtRate();
 }
 
 bool IndexerNBallsCommand::isFinished(void) const {
     if(!drivers->remote.isConnected() || !indexer->refPoweringIndex()) return true;
 
-    if (numBalls < 0) {
-        return false;
-    }
-
-    return indexer->getNumBallsShot() >= numBalls;
+    return indexer->isDoneIndexingAtRate();
 }
 }  // namespace commands

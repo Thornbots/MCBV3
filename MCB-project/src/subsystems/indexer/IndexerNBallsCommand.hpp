@@ -13,6 +13,7 @@ using subsystems::IndexerSubsystem;
 class IndexerNBallsCommand : public tap::control::Command
 {
 public:
+    // negative numBalls means shoot until end() is called
     IndexerNBallsCommand(src::Drivers* drivers, IndexerSubsystem* indexer, int numBalls, float ballsPerSecond)
         : drivers(drivers),
           indexer(indexer),
@@ -36,9 +37,7 @@ private:
     src::Drivers* drivers;
     IndexerSubsystem* indexer;
     int numBalls;
-    int numBallsRemaining;
     float ballsPerSecond;
 
-    tap::arch::PeriodicMilliTimer timer;
 };
 }  // namespace commands
