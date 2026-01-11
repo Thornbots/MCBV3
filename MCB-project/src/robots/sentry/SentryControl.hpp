@@ -52,7 +52,7 @@ public:
         unjamButton.whileTrue(&indexerUnjam);
         stopFlywheelTrigger.onTrue(&shooterStop);
 
-        autoFireTrigger.whileTrue(&autoFire)->onFalse(&lookJoystick);
+        autoFireTrigger.onTrue(&autoFire)->onFalse(&lookJoystick);
         autoDriveTrigger.onTrue(&odoPointForwards)->onTrue(&autoDrive);//->onTrue(&testMoveCommand);
         // drive commands
 
@@ -61,6 +61,8 @@ public:
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
 
         isStopped = false;
+
+        drivers->recal.requestRecalibration();
     }
 
 
@@ -71,24 +73,24 @@ public:
 
         if (autoDriveTrigger.getAsBoolean() && drivers->refSerial.getRefSerialReceivingData() &&
         (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
-       if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
-            // allow both
-            if(!startAdvance && drivers->refSerial.getRobotData().currentHp > 390){
-                startAdvance = true;
-                startRetreat = false; // stop retreating
-                drivers->commandScheduler.addCommand(&initialMoveCommand);
-            }
+            if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
+                // allow both
+                if(!startAdvance && drivers->refSerial.getRobotData().currentHp > 390){
+                    startAdvance = true;
+                    startRetreat = false; // stop retreating
+                    drivers->commandScheduler.addCommand(&initialMoveCommand);
+                }
 
-            if(!startRetreat && drivers->refSerial.getRobotData().currentHp <= 200){
-                startRetreat = true;
-                startAdvance = false; // stop advancing
-                drivers->commandScheduler.addCommand(&retreatMoveCommand);
+                if(!startRetreat && drivers->refSerial.getRobotData().currentHp <= 200){
+                    startRetreat = true;
+                    startAdvance = false; // stop advancing
+                    drivers->commandScheduler.addCommand(&retreatMoveCommand);
+                }
+                // if(drivers->remote.getSwitch(Remote::Switch::RIGHT_SWITCH) == Remote::SwitchState::UP){
+                //     count = 10000;
+                //     // drivers->commandScheduler.addCommand(&initialMoveCommand);
             }
-            // if(drivers->remote.getSwitch(Remote::Switch::RIGHT_SWITCH) == Remote::SwitchState::UP){
-            //     count = 10000;
-            //     // drivers->commandScheduler.addCommand(&initialMoveCommand);
-            }
-       }
+        }
     //  count--;
     // }
     // else {
@@ -115,12 +117,16 @@ public:
         drivers->commandScheduler.addCommand(&shooterStop);
         drivers->commandScheduler.addCommand(&stopDriveCommand);
         drivers->commandScheduler.addCommand(&indexerStop);
+        drivers->commandScheduler.addCommand(&odoStop);
         isStopped = true;
     }
 
     void resumeAfterImuRecal() override {
         isStopped = false;
         gimbal.clearBuildup();
+        drivers->commandScheduler.addCommand(&autoDrive);
+        drivers->commandScheduler.addCommand(&autoFire);
+        drivers->commandScheduler.addCommand(&odoPointForwards);
         update();
     }
 
