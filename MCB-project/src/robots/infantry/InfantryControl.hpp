@@ -113,6 +113,7 @@ public:
     void resumeAfterImuRecal() override {
         isStopped = false;
         gimbal.clearBuildup();
+        gimbal.reZeroYaw();
         drivers->commandScheduler.addCommand(&lookMouse);
         drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
         update();

@@ -35,7 +35,7 @@ void GimbalSubsystem::refresh() {
 #endif
 
     driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
-    yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw(); 
+    yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw();
     updatePositionHistory(yawAngleRelativeWorld);
     motorPitch->setDesiredOutput(pitchMotorVoltage);
     motorYaw->setDesiredOutput(yawMotorVoltage);
@@ -114,7 +114,8 @@ void GimbalSubsystem::clearBuildup() {
 }
     
 void GimbalSubsystem::reZeroYaw() {
-    // TODO
+    yawAngleRelativeWorld = 0.0;
+    targetYawAngleWorld = 0.0;
 }
 
 void GimbalSubsystem::updatePositionHistory(float newPos) {
