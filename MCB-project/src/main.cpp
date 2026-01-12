@@ -110,6 +110,7 @@ int main() {
                 drivers.recal.setIsWaiting();
                 drivers.leds.set(tap::gpio::Leds::Blue, true);
                 drivers.leds.set(tap::gpio::Leds::Green, true);
+                drivers.leds.set(tap::gpio::Leds::Red, false);
                 waitForRobotToStopMoving.restart(6000);
             }
 

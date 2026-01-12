@@ -50,8 +50,12 @@ enum class ImuRecalibrationState : uint8_t {
 };
 
 void requestRecalibration() {
-    if(state==ImuRecalibrationState::AFTER_FIRST_CALIBRATION)
+    if(state==ImuRecalibrationState::AFTER_FIRST_CALIBRATION) {
+        pendingScheduledRecalibration = false;
         state = ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED;
+    } else {
+        pendingScheduledRecalibration = true;
+    }
 }
 
 void forceCalibration() {
@@ -93,6 +97,9 @@ void setIsDoneCalibrating() {
 
     if(state==ImuRecalibrationState::SECOND_CALIBRATING)
         state = ImuRecalibrationState::AFTER_SECOND_CALIBRATION;
+        
+    if (pendingScheduledRecalibration)
+        requestRecalibration();
 }
 
 bool getIsImuReady() {
@@ -123,6 +130,7 @@ ImuRecalibrationState getState() {
 
 private:
 ImuRecalibrationState state = ImuRecalibrationState::BEFORE_FIRST_CALIBRATION;
+bool pendingScheduledRecalibration = false;
 
 }; //class ImuRecalibration
 
