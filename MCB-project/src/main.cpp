@@ -6,6 +6,20 @@
 
 #include "drivers.hpp"
 
+const int RECALIBRATION_THRESHOLD_TIME = 15; // when there are fewer than this many seconds remaining in the game stage, run scheduled recalibrations
+
+src::Drivers drivers;
+RobotControl control{&drivers};
+
+
+bool shouldExecuteScheduledRecalibration() {
+    RefSerialData::Rx::GameStage currentGameStage = drivers.refSerial.getGameData().gameStage;
+    return drivers.recal.isRequestingRecalibration() &&
+           drivers.refSerial.getRefSerialReceivingData() &&
+           (currentGameStage == RefSerial::Rx::GameStage::SETUP || currentGameStage == RefSerial::Rx::GameStage::INITIALIZATION) &&
+           drivers.refSerial.getGameData().stageTimeRemaining < RECALIBRATION_THRESHOLD_TIME;
+}
+
 
 // Place any sort of input/output initialization here. For example, place
 // serial init stuff here.
@@ -52,11 +66,10 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->bmi088.initialize(1000, 0.0f, 0.000f);
     drivers->bmi088.setTargetTemperature(35.0f);
     drivers->bmi088.setCalibrationSamples(4000);
-    drivers->bmi088.requestCalibration();
+    drivers->executeCalibration();
     drivers->recal.setIsFirstCalibrating();
-
-
 }
+
 
 // Anything that you would like to be called place here. It will be called
 // very frequently. Use PeriodicMilliTimers if you don't want something to be
@@ -71,10 +84,6 @@ static void updateIo(src::Drivers *drivers) {
 
     drivers->remote.read();
 }
-
-src::Drivers drivers;
-
-RobotControl control{&drivers};
 
 int main() {
     Board::initialize();
@@ -95,16 +104,13 @@ int main() {
 
         if (refreshTimer.execute()) {
             // tap::buzzer::playNote(&(drivers.pwm), 493);
-            bool goingToRecalibrate = drivers.recal.isForcingRecalibration() ||
-                    (drivers.recal.isRequestingRecalibration() &&
-                    drivers.refSerial.getRefSerialReceivingData() &&
-                    drivers.refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::SETUP &&
-                    drivers.refSerial.getGameData().stageTimeRemaining < 15);
+            bool goingToRecalibrate = drivers.recal.isForcingRecalibration() || shouldExecuteScheduledRecalibration();
             if(goingToRecalibrate){
                 control.stopForImuRecal();
                 drivers.recal.setIsWaiting();
                 drivers.leds.set(tap::gpio::Leds::Blue, true);
                 drivers.leds.set(tap::gpio::Leds::Green, true);
+                drivers.leds.set(tap::gpio::Leds::Red, false);
                 waitForRobotToStopMoving.restart(6000);
             }
 
@@ -116,7 +122,7 @@ int main() {
                 waitForRobotToStopMoving.stop();
                 drivers.recal.setIsSecondCalibrating();
                 drivers.leds.set(tap::gpio::Leds::Green, false);
-                drivers.bmi088.requestCalibration();
+                drivers.executeCalibration();
             }
 
 
@@ -146,4 +152,3 @@ int main() {
 
     return 0;
 }
-
