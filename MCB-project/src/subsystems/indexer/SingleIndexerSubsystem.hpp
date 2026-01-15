@@ -27,7 +27,7 @@ public:  // Public Methods
 
     virtual void finishRefresh();
 
-    virtual void stopIndex();
+    virtual void finishStopIndex();
 
     // be careful of looping here. 
     // void unjam() {unjam(false);};
@@ -43,7 +43,7 @@ public:  // Public Methods
     virtual int32_t getEstHeat();
     virtual float getEstHeatPercentage();
     virtual bool heatAllowsShooting();
-    virtual bool canShoot();
+    virtual float getTotalNumBallsShot();
 
 
     void indexNearest(); //indexes to nearest shot position after finishing a position move
@@ -57,14 +57,14 @@ protected:
 // bool doAutoUnjam(float inputBallsPerSecond);
 
 
-public:
-    ShotCounter counter;
-
 private:
+    ShotCounter counter; //was public
+
     IndexerUnit unit;
 
     tap::arch::MilliTimeout timeoutUnjam;
     bool isAutoUnjamming = false;
+    bool shouldIndexNearest = false;
 
     tap::arch::MilliTimeout timeoutHome;
     enum class HomingState : uint8_t {

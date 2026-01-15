@@ -68,6 +68,7 @@ public:
         targetIndexerPosition = index->getPositionUnwrapped()/GEAR_RATIO;
     }
     
+    // goes only forwards, so don't call repeatedly
     void indexNearest() {
         //only applies to position control
         // if(!doPositionControl) return;

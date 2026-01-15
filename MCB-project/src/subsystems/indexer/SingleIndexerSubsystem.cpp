@@ -35,7 +35,17 @@ void SingleIndexerSubsystem::finishRefresh() {
         //     positionControl();
         // }
         if(homingState>=HomingState::HOMED) { //if homed or gave up
-            unit.positionControl();
+            // allow unjam only if homed. Might be a bad idea.
+            if(isManualUnjamming){
+                shouldIndexNearest = true; //when we stop unjamming, index nearest
+                unit.velocityControl(UNJAM_BALL_PER_SECOND);
+            } else {
+                if(!isStopped&&shouldIndexNearest){
+                    unit.indexNearest();
+                    shouldIndexNearest = false; //index nearest only once
+                }
+                unit.positionControl();
+            }
         }
         // otherwise homeIndexer would have set velocity control
     } else {
@@ -99,9 +109,10 @@ void SingleIndexerSubsystem::finishRefresh() {
 // }
 
 
-void SingleIndexerSubsystem::stopIndex() {
+void SingleIndexerSubsystem::finishStopIndex() {
     // ballsPerSecond = 0;
     temporaryVelocityControl = false;
+    shouldIndexNearest = true;
 }
 
 // void SingleIndexerSubsystem::unjam(bool){
@@ -131,6 +142,7 @@ void SingleIndexerSubsystem::forceShootOnce() {
     // targetIndexerPosition+=getPositionIncrement(); 
     unit.shootOnce();
     counter.incrementTargetNumBalls();
+    justShot();
 }
 
 bool SingleIndexerSubsystem::tryShootOnce() {
@@ -176,8 +188,8 @@ bool SingleIndexerSubsystem::heatAllowsShooting(){
     return counter.canShootAgain();
 }
 
-bool SingleIndexerSubsystem::canShoot() {
-    return isIndexOnline() && refPoweringIndex() && heatAllowsShooting() && isProjectileAtBeam();
+float SingleIndexerSubsystem::getTotalNumBallsShot(){
+    return counter.getTotalNumBallsShot();
 }
 
 

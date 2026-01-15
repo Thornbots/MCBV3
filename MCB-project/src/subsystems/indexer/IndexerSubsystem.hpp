@@ -33,7 +33,11 @@ protected:
 src::Drivers* drivers;
 tap::motor::DjiMotor* motorIndexer; //for checking if it is online
 
+// single and hero should check this
 bool isManualUnjamming = false;
+
+// single and hero could check this
+bool isStopped = true;
 
 // revolutions of OUTPUT SHAFT per ball. Different than the ones per robot in IndexerSubsystemConstants, because those are motor shaft (before the gear box)
 // float revPerBall;
@@ -88,9 +92,17 @@ bool isDoneIndexingAtRate();
 // Stops indexAtRate and indexNShotsAtRate from shooting more shots.
 void stopIndex();
 
+
+virtual void finishStopIndex() = 0; 
+
+
+// stops indexAtRate and unjam, but allows the indexer to still move
+void idle();
+
 // Sets the index to spin backwards until stopped.
 // Stopped in the same way as indexAtRate().
 void manualUnjam();
+
 
 // these three functions were for IndexerNBallsCommand to shoot a specific number of shots.
 // Should probably be handled by Single or Hero instead of IndexerNBallsCommand so other places (like sentry autoaim)
@@ -132,6 +144,8 @@ virtual int32_t getEstHeat() = 0;
 
 // gives a number (ideally) between 0 and 1. 0 is no heat, 1 is full of heat. If forceShootOnce() is used then it could be above 1.
 virtual float getEstHeatPercentage() = 0;
+
+virtual float getTotalNumBallsShot() = 0;
 
 // If heat (kept track on the robot, not through the ref system) allows shooting another shot.
 virtual bool heatAllowsShooting() = 0;

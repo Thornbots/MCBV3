@@ -14,94 +14,99 @@ void HeroIndexerSubsystem::finishInitialize() {
     unitTop.initialize();
     unitBottom.initialize();
     Board::DigitalInPinB12::configure(modm::platform::Gpio::InputType::Floating); //initialze beambreak
+    
+    state = HeroIndexerState::LOADING_THEN_DONE;
 }
 
 void HeroIndexerSubsystem::finishRefresh() {
     // drivers->leds.set(tap::gpio::Leds::Green, isProjectileAtBeam());
     
-    // IndexerSubsystem::refresh();
-    // bottom.refresh();
-}
-
-// sometimes we'll ignore what the command wants
-// indexNBalls is calling this, but if a ball isn't at the beam load instead
-float HeroIndexerSubsystem::indexAtRate(float inputBallsPerSecond){
-    if(isProjectileAtBeam() || state >= HeroIndexerState::INDEXING_EXTRA){ //indexing extra or done
-        // if being told to go zero, that is being done
-        if(inputBallsPerSecond==0) state = HeroIndexerState::DONE;
-        
-        // done indexing extra
-        if(state==HeroIndexerState::INDEXING_EXTRA && counter.getTotalNumBallsShot() >= startingBalls+INDEXING_EXTRA_BALLS){
-            state = HeroIndexerState::LOADING_THEN_DONE; //not sure if this indexAtRate is continuous fire or not.
-            return loadAtRate(LOAD_BALL_PER_SECOND);
-        }
-        
-        // if were stopped or loading, now indexing
-        // don't switch away from INDEXING_EXTRA or DONE
-        if(state<HeroIndexerState::INDEXING_EXTRA) state = HeroIndexerState::INDEXING;
-        
-        IndexerSubsystem::counter.enable();
-        bottom.counter.enable();
-        
-        // bottom may be jammed, so top will react to that
-        return IndexerSubsystem::indexAtRate(bottom.indexAtRate(inputBallsPerSecond));
-    } else {
-        // being told to index when we should load, but do the extra
-        state=HeroIndexerState::INDEXING_EXTRA;
-        startingBalls = counter.getTotalNumBallsShot();
-        extraBallsPerSecond = inputBallsPerSecond;
+    // state transitions
+    if(state==HeroIndexerState::DONE && !isProjectileAtBeam()){
+        // we thought we were done, we shouldn't be
+        // maybe we manual unjammed
+        state = HeroIndexerState::LOADING_THEN_DONE;
     }
+    if(state == HeroIndexerState::INDEXING && !isProjectileAtBeam()){
+        // ball has left where we can see it
+        state = HeroIndexerState::INDEXING_EXTRA; //but not actually left the barrel yet
+        counter.resetRecentBallsCounter();
+    }
+    if(state == HeroIndexerState::INDEXING_EXTRA && counter.getRecentNumBallsShot()>=INDEXING_EXTRA_BALLS){
+        // done shooting, we need to load
+        state = HeroIndexerState::LOADING_THEN_DONE;
+    }
+    if(state == HeroIndexerState::LOADING_THEN_DONE && isProjectileAtBeam()){
+        // done loading
+        state = HeroIndexerState::DONE;
+    }
+    
+    
+    // motor movements
+    if(!drivers->remote.isConnected() || state==HeroIndexerState::DONE){
+        // stop both
+        unitTop.oldVelocityControl(0);
+        unitBottom.oldVelocityControl(0);
+    } else if(isManualUnjamming) {
+        //the user might want to remove the ball at the beambreak
+        state = HeroIndexerState::LOADING_THEN_DONE;
+        unitTop.oldVelocityControl(UNJAM_BALL_PER_SECOND); 
+        unitBottom.oldVelocityControl(UNJAM_BALL_PER_SECOND);
+    } else if(state==HeroIndexerState::INDEXING || state==HeroIndexerState::INDEXING_EXTRA) {
+        // what speed should this happen at? Old system would set this at 20Hz in HeroControl. Maybe make this a constant.
+        unitTop.oldVelocityControl(20);
+        unitBottom.oldVelocityControl(20);
+    } else if(state==HeroIndexerState::LOADING_THEN_DONE){
+        unitTop.oldVelocityControl(LOAD_BALL_PER_SECOND);
+        unitBottom.oldVelocityControl(LOAD_BALL_PER_SECOND);
+    }
+
+    counter.update();
 }
 
-void HeroIndexerSubsystem::stopIndex() {
+void HeroIndexerSubsystem::finishStopIndex() {
     state = HeroIndexerState::STOPPED;
-    
-    IndexerSubsystem::stopIndex();
-    bottom.stopIndex();
 }
 
-void HeroIndexerSubsystem::unjam(bool isAuto) {
-    // user is saying to unjam, that stops movement after we reload what they removed
-    if(!isAuto) state = HeroIndexerState::LOADING_THEN_DONE;
-    
-    IndexerSubsystem::unjam(isAuto);
-    bottom.unjam(isAuto);
-}
-
-float HeroIndexerSubsystem::loadAtRate(float inputBallsPerSecond){
-    if(inputBallsPerSecond==0) indexAtRate(0);
-    
-    if(state==HeroIndexerState::INDEXING_EXTRA) indexAtRate(extraBallsPerSecond);
-    
-    if(isProjectileAtBeam()){
-        // being told to load when we shouldn't
-        if(state==HeroIndexerState::LOADING_THEN_DONE)
-            loadAtRate(0);
-        // otherwise indexAtRate is calling us
-    } else {
-        if(state==HeroIndexerState::INDEXING) state = HeroIndexerState::LOADING_THEN_INDEX;
-        if(state==HeroIndexerState::STOPPED) state = HeroIndexerState::LOADING_THEN_DONE;
-        // if already either loading, don't change state
-        
-        
-        IndexerSubsystem::counter.disable();
-        bottom.counter.disable();
-        
-        // bottom may be jammed, so top will react to that
-        IndexerSubsystem::indexAtRate(inputBallsPerSecond);
-        bottom.indexAtRate(inputBallsPerSecond);
-        // return IndexerSubsystem::indexAtRate(bottom.indexAtRate(inputBallsPerSecond));
-    }
-    return 0;
-}
 
 bool HeroIndexerSubsystem::isProjectileAtBeam(){
     return !Board::DigitalInPinB12::read(); // Assuming PF0 is the break beam sensor
 }
 
-float HeroIndexerSubsystem::getActualBallsPerSecond() {
-    return std::min(IndexerSubsystem::getActualBallsPerSecond(), bottom.getActualBallsPerSecond());
+bool HeroIndexerSubsystem::tryShootOnce() { 
+    bool r = canShoot();
+    if(r) forceShootOnce();
+    return r;
 }
 
+void HeroIndexerSubsystem::forceShootOnce() {
+    if(state==HeroIndexerState::DONE || state==HeroIndexerState::STOPPED) {
+        if(isProjectileAtBeam()) {
+            state = HeroIndexerState::LOADING_THEN_DONE;
+        } else {
+            counter.resetRecentBallsCounter();
+            state = HeroIndexerState::INDEXING;
+            justShot();
+        }
+    }
+}
+
+
+
+int32_t HeroIndexerSubsystem::getEstHeat(){
+    return counter.getEstHeat();
+}
+float HeroIndexerSubsystem::getEstHeatPercentage(){
+    if(drivers->refSerial.getRefSerialReceivingData())
+        return counter.getEstHeat()/drivers->refSerial.getRobotData().turret.heatLimit;
+    return 0;
+}
+bool HeroIndexerSubsystem::heatAllowsShooting(){
+    return counter.canShootAgain();
+}
+
+float HeroIndexerSubsystem::getTotalNumBallsShot(){
+    return counter.getTotalNumBallsShot();
+}
 
 } // namespace subsystems

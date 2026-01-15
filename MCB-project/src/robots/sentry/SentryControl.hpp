@@ -14,13 +14,13 @@
 #include "subsystems/gimbal/GimbalStopCommand.hpp"
 #include "subsystems/jetson/AutoAimCommand.hpp"
 #include "subsystems/jetson/AutoAimAndFireCommand.hpp"
+#include "subsystems/indexer/SingleIndexerSubsystem.hpp"
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
 #include "subsystems/odometry/OdometryStopCommand.hpp"
 #include "subsystems/jetson/AutoDriveCommand.hpp"
 #include "subsystems/odometry/OdometryPointForwardsCommand.hpp"
-#include "subsystems/indexer/DoubleIndexerSubsystem.hpp"
 #include "util/trigger.hpp"
 #include "subsystems/drivetrain/MoveToPositionCommand.hpp"
 #include "tap/control/sequential_command.hpp"
@@ -158,7 +158,7 @@ public:
     subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
-    subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor1, true, true};
+    subsystems::SingleIndexerSubsystem indexer{drivers, &hardware.indexMotor1};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::OdometrySubsystem odo{drivers, &hardware.odoMotor};
     subsystems::JetsonSubsystem jetson{drivers, &gimbal};

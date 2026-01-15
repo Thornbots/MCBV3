@@ -34,7 +34,7 @@ public:
     float getAllowableIndexRate(float desiredBallsPerSecond){
         if(desiredBallsPerSecond<0) return desiredBallsPerSecond;
         
-        if(!enabled || !drivers->refSerial.getRefSerialReceivingData()) return desiredBallsPerSecond;
+        if(!drivers->refSerial.getRefSerialReceivingData()) return desiredBallsPerSecond;
         
         if(!canShootAgain()) return 0;
 
@@ -58,14 +58,6 @@ public:
         recentPosition = index->getPositionUnwrapped();
     }
 
-    void enable() {
-        enabled = true;
-    }
-
-    void disable() {
-        enabled = false;
-    }
-    
     void resetAll() {
         //in case index doesn't start at 0
         initialPosition = index->getPositionUnwrapped();
@@ -110,7 +102,6 @@ private:
     tap::arch::PeriodicMilliTimer coolingTimer{100}; //10hz, ref system cools at this rate
     
 
-    bool enabled = true;
 
     // tap::arch::MilliTimeout timeUntilNoHeat;
     uint32_t prevMillis = 0; //for decrementing heat

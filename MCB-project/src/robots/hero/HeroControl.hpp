@@ -21,7 +21,6 @@
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
-#include "subsystems/indexer/IndexerLoadCommand.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/trigger.hpp"
 
@@ -46,14 +45,14 @@ public:
         gimbal.setDefaultCommand(&stopGimbal);
         flywheel.setDefaultCommand(&shooterStop);
         drivetrain.setDefaultCommand(&stopDriveCommand);
-        indexer.setDefaultCommand(&indexerLoad);
+        indexer.setDefaultCommand(&indexerStop);
 
 
         // Mouse and Keyboard mappings
-        unjamKey.whileTrue(&indexerUnjam)->onFalse(&indexerLoad);
+        unjamKey.whileTrue(&indexerUnjam);
         shootKey.onTrue(&indexerSemi)->onTrue(&shooterStart);
-        unjamButton.whileTrue(&indexerUnjam)->onFalse(&indexerLoad);
-        shootButton.whileTrue(&indexerSemi)->onTrue(&shooterStart)->onFalse(&indexerLoad);
+        unjamButton.whileTrue(&indexerUnjam);
+        shootButton.whileTrue(&indexerSemi)->onTrue(&shooterStart);
         stopFlywheelTrigger.onTrue(&shooterStop);
         autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart);
         // implement speed mode
@@ -139,7 +138,6 @@ public:
     commands::IndexerNBallsCommand indexerSemi{drivers, &indexer, 1, 20}; //semiauto, each click is one shot
     commands::IndexerNBallsCommand indexerAuto{drivers, &indexer, -1, 2};//full auto, holding the wheel it the forward position shoots as long as it is held
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
-    commands::IndexerLoadCommand indexerLoad{drivers, &indexer};
 
     commands::IndexerStopCommand indexerStop{drivers, &indexer}; //stop is unused
 

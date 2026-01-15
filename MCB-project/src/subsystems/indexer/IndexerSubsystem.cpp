@@ -53,6 +53,7 @@ bool IndexerSubsystem::indexAtRate(float inputShotsPerSecond) {
     }
     
     isManualUnjamming = false;
+    isStopped = false;
     bool shootImmediately = isDoneIndexingAtRate();
     
     // just now indexing at rate, shoot once now
@@ -99,12 +100,20 @@ bool IndexerSubsystem::isDoneIndexingAtRate() {
 
 void IndexerSubsystem::stopIndex() {
     stopIndexingAtRate();
+    isStopped = true;
     // maybe something else too
+    finishStopIndex();
+}
+
+void IndexerSubsystem::idle() {
+    stopIndexingAtRate();
+    isStopped = false;
 }
 
 
 void IndexerSubsystem::manualUnjam() {
     stopIndexingAtRate();
+    isStopped = false;
     isManualUnjamming = true;
 }
 
@@ -166,6 +175,7 @@ bool IndexerSubsystem::refPoweringIndex() {
 // }
 
 bool IndexerSubsystem::canShoot() {
+    // return true;
     return isIndexOnline() && refPoweringIndex() && heatAllowsShooting() && isProjectileAtBeam() && tap::arch::clock::getTimeMilliseconds()-lastShotTime>MIN_SHOT_FREQ;
 }
 
