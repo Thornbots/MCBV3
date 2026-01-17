@@ -30,9 +30,9 @@ void HeroIndexerSubsystem::finishRefresh() {
     if(state == HeroIndexerState::INDEXING && !isProjectileAtBeam()){
         // ball has left where we can see it
         state = HeroIndexerState::INDEXING_EXTRA; //but not actually left the barrel yet
-        counter.resetRecentBallsCounter();
+        counter.resetRecentBallsByEncoderCounter();
     }
-    if(state == HeroIndexerState::INDEXING_EXTRA && counter.getRecentNumBallsShot()>=INDEXING_EXTRA_BALLS){
+    if(state == HeroIndexerState::INDEXING_EXTRA && counter.getRecentNumBallsShotByEncoder()>=INDEXING_EXTRA_BALLS){
         // done shooting, we need to load
         state = HeroIndexerState::LOADING_THEN_DONE;
     }
@@ -57,7 +57,7 @@ void HeroIndexerSubsystem::finishRefresh() {
         unitTop.oldVelocityControl(20);
         unitBottom.oldVelocityControl(20);
     } else if(state==HeroIndexerState::LOADING_THEN_DONE){
-        unitTop.oldVelocityControl(LOAD_BALL_PER_SECOND);
+        unitTop.oldVelocityControl(LOAD_BALL_PER_SECOND); //top needs to spin too when loading
         unitBottom.oldVelocityControl(LOAD_BALL_PER_SECOND);
     }
 
@@ -84,7 +84,7 @@ void HeroIndexerSubsystem::forceShootOnce() {
         if(isProjectileAtBeam()) {
             state = HeroIndexerState::LOADING_THEN_DONE;
         } else {
-            counter.resetRecentBallsCounter();
+            counter.resetRecentBallsByEncoderCounter();
             state = HeroIndexerState::INDEXING;
             justShot();
         }
@@ -93,20 +93,16 @@ void HeroIndexerSubsystem::forceShootOnce() {
 
 
 
-int32_t HeroIndexerSubsystem::getEstHeat(){
-    return counter.getEstHeat();
-}
-float HeroIndexerSubsystem::getEstHeatPercentage(){
-    if(drivers->refSerial.getRefSerialReceivingData())
-        return counter.getEstHeat()/drivers->refSerial.getRobotData().turret.heatLimit;
-    return 0;
+float HeroIndexerSubsystem::getEstHeatRatio(){
+    return counter.getEstHeatRatio();
 }
 bool HeroIndexerSubsystem::heatAllowsShooting(){
     return counter.canShootAgain();
 }
 
 float HeroIndexerSubsystem::getTotalNumBallsShot(){
-    return counter.getTotalNumBallsShot();
+    // return counter.getTotalNumBallsShotByEncoder(); //would include loading movement
+    return counter.getTimesIncremented();
 }
 
 } // namespace subsystems

@@ -104,13 +104,6 @@ void idle();
 void manualUnjam();
 
 
-// these three functions were for IndexerNBallsCommand to shoot a specific number of shots.
-// Should probably be handled by Single or Hero instead of IndexerNBallsCommand so other places (like sentry autoaim)
-// can use this funtionality. 
-// So this is what indexNShotsAtRate() is for.
-// virtual float getNumBallsShot();
-// virtual float getTotalNumBallsShot();
-// virtual void resetBallsCounter();
 
 // uses canShoot() to determine if shooting is possible. 
 // If it can shoot, shoots once, and returns true.
@@ -139,12 +132,10 @@ bool refPoweringIndex();
 // if the motor thinks it's online. There is a delay after the ref system thinks it is returning power, and there is a delay after the ref system thinks it took power.
 bool isIndexOnline();
 
-// the heat number doesn't make much sense without knowing the heat limit. Consider using getEstHeatPercentage()
-virtual int32_t getEstHeat() = 0;
-
 // gives a number (ideally) between 0 and 1. 0 is no heat, 1 is full of heat. If forceShootOnce() is used then it could be above 1.
-virtual float getEstHeatPercentage() = 0;
+virtual float getEstHeatRatio() = 0;
 
+// used by ui (PredictedRemainingShotsIndicator)
 virtual float getTotalNumBallsShot() = 0;
 
 // If heat (kept track on the robot, not through the ref system) allows shooting another shot.

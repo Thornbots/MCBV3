@@ -40,8 +40,7 @@ public:  // Public Methods
     virtual bool tryShootOnce();
     virtual void forceShootOnce();
 
-    virtual int32_t getEstHeat();
-    virtual float getEstHeatPercentage();
+    virtual float getEstHeatRatio();
     virtual bool heatAllowsShooting();
     virtual float getTotalNumBallsShot();
 

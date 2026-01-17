@@ -45,16 +45,21 @@ public:
         return estHeat+getHeatPerBall()+getHeatPerBall()/2 < drivers->refSerial.getRobotData().turret.heatLimit;
     }
 
-
-    float getTotalNumBallsShot() {
+    
+    uint32_t getTimesIncremented() {
+        return timesIncremented;
+    }
+    
+    
+    float getTotalNumBallsShotByEncoder() {
         return getNumBallsShotByReference(initialPosition);
     }
 
-    float getRecentNumBallsShot() {
+    float getRecentNumBallsShotByEncoder() {
         return getNumBallsShotByReference(recentPosition);
     }
 
-    void resetRecentBallsCounter() {
+    void resetRecentBallsByEncoderCounter() {
         recentPosition = index->getPositionUnwrapped();
     }
 
@@ -62,6 +67,7 @@ public:
         //in case index doesn't start at 0
         initialPosition = index->getPositionUnwrapped();
         recentPosition = initialPosition;
+        timesIncremented=0;
 
         prevMillis = tap::arch::clock::getTimeMilliseconds();
         
@@ -70,6 +76,12 @@ public:
 
     int32_t getEstHeat(){
         return estHeat;
+    }
+    
+    float getEstHeatRatio() {
+        if(drivers->refSerial.getRefSerialReceivingData())
+        return estHeat/drivers->refSerial.getRobotData().turret.heatLimit;
+        return 0;
     }
     
     // for shooting one ball, how far does the index (output shaft) need to move
@@ -106,6 +118,8 @@ private:
     // tap::arch::MilliTimeout timeUntilNoHeat;
     uint32_t prevMillis = 0; //for decrementing heat
     int32_t estHeat = 0;
+    
+    uint32_t timesIncremented = 0;
 
     int64_t recentPosition = 0;
     int64_t initialPosition = 0;

@@ -111,7 +111,7 @@ public:
         verticalLine.x1 = UISubsystem::HALF_SCREEN_WIDTH;
         verticalLine.x2 = UISubsystem::HALF_SCREEN_WIDTH;
         if(canShoot){
-            verticalLine.color = drivers->refSerial.getRobotData().robotPower.all(tap::communication::serial::RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER) ? UISubsystem::Color::WHITE : UISubsystem::Color::PINK;
+            verticalLine.color = index->refPoweringIndex() ? UISubsystem::Color::WHITE : UISubsystem::Color::PINK;
             verticalLine.thickness = 1;
         } else {
             verticalLine.thickness = 10;
@@ -120,8 +120,7 @@ public:
         }
 
         // currHeat.setLower(0);
-        // currHeat.setHigher((1+index->getEstHeat())/320.0);
-        currHeat.startAngle = 360-((1+index->getEstHeat())*360)/drivers->refSerial.getRobotData().turret.heatLimit;
+        currHeat.startAngle = (1-index->getEstHeatRatio())*360;
 
 
         solvedForPitchLandingSpotThisCycle = false;

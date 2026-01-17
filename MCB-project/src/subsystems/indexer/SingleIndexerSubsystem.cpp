@@ -176,20 +176,15 @@ bool SingleIndexerSubsystem::tryShootOnce() {
 //     return !drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower.any(RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER);
 // }
 
-int32_t SingleIndexerSubsystem::getEstHeat(){
-    return counter.getEstHeat();
-}
-float SingleIndexerSubsystem::getEstHeatPercentage(){
-    if(drivers->refSerial.getRefSerialReceivingData())
-        return counter.getEstHeat()/drivers->refSerial.getRobotData().turret.heatLimit;
-    return 0;
+float SingleIndexerSubsystem::getEstHeatRatio(){
+    return counter.getEstHeatRatio();
 }
 bool SingleIndexerSubsystem::heatAllowsShooting(){
     return counter.canShootAgain();
 }
 
 float SingleIndexerSubsystem::getTotalNumBallsShot(){
-    return counter.getTotalNumBallsShot();
+    return counter.getTimesIncremented();
 }
 
 

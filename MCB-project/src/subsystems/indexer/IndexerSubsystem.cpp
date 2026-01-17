@@ -167,9 +167,6 @@ bool IndexerSubsystem::refPoweringIndex() {
     return !drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower.any(RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER);
 }
 
-// int32_t IndexerSubsystem::getEstHeat(){
-//     return counter.getEstHeat();
-// }
 // bool IndexerSubsystem::heatAllowsShooting(){
 //     return counter.canShootAgain();
 // }
