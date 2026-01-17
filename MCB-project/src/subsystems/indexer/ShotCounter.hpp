@@ -80,7 +80,7 @@ public:
     
     float getEstHeatRatio() {
         if(drivers->refSerial.getRefSerialReceivingData())
-        return estHeat/drivers->refSerial.getRobotData().turret.heatLimit;
+            return ((float) estHeat)/drivers->refSerial.getRobotData().turret.heatLimit;
         return 0;
     }
     

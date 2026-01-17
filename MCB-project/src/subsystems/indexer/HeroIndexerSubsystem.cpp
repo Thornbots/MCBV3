@@ -5,8 +5,8 @@ namespace subsystems
 
 HeroIndexerSubsystem::HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* indexTop, tap::motor::DjiMotor* indexBottom)
     : IndexerSubsystem(drivers, indexTop), //needs one motor to know disconnect, could be either
-    unitTop(drivers, indexTop, REV_PER_BALL/GEAR_RATIO, REV_PER_BALL),
-    unitBottom(drivers, indexTop, REV_PER_BALL_BOTTOM/GEAR_RATIO, REV_PER_BALL_BOTTOM),
+    unitTop(   drivers, indexTop,    REV_PER_BALL/GEAR_RATIO,        REV_PER_BALL*GEAR_RATIO),
+    unitBottom(drivers, indexBottom, REV_PER_BALL_BOTTOM/GEAR_RATIO, REV_PER_BALL_BOTTOM*GEAR_RATIO),
     counter(drivers, ShotCounter::BarrelType::TURRET_42MM, indexTop)
 {}
 
@@ -43,7 +43,7 @@ void HeroIndexerSubsystem::finishRefresh() {
     
     
     // motor movements
-    if(!drivers->remote.isConnected() || state==HeroIndexerState::DONE){
+    if(!drivers->remote.isConnected() || state==HeroIndexerState::DONE || isStopped){
         // stop both
         unitTop.oldVelocityControl(0);
         unitBottom.oldVelocityControl(0);
@@ -65,7 +65,7 @@ void HeroIndexerSubsystem::finishRefresh() {
 }
 
 void HeroIndexerSubsystem::finishStopIndex() {
-    state = HeroIndexerState::STOPPED;
+    // state = HeroIndexerState::STOPPED;
 }
 
 
@@ -80,14 +80,31 @@ bool HeroIndexerSubsystem::tryShootOnce() {
 }
 
 void HeroIndexerSubsystem::forceShootOnce() {
-    if(state==HeroIndexerState::DONE || state==HeroIndexerState::STOPPED) {
+    if(state==HeroIndexerState::DONE) {
         if(isProjectileAtBeam()) {
-            state = HeroIndexerState::LOADING_THEN_DONE;
-        } else {
             counter.resetRecentBallsByEncoderCounter();
             state = HeroIndexerState::INDEXING;
             justShot();
+        } else {
+            state = HeroIndexerState::LOADING_THEN_DONE;
         }
+    }
+}
+
+
+const char* HeroIndexerSubsystem::getStateString(){
+    switch (state)
+    {
+    case HeroIndexerState::INDEXING:
+        return "indexing";
+    case HeroIndexerState::LOADING_THEN_DONE:
+        return "loading";
+    case HeroIndexerState::INDEXING_EXTRA:
+        return "indexing extra";
+    case HeroIndexerState::DONE:
+        return "done";
+    default:
+        return "default";
     }
 }
 

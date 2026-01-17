@@ -58,6 +58,8 @@ virtual void finishRefresh() = 0;
 
 public:
 
+virtual const char* getStateString() = 0;
+
 IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index);
 
 ~IndexerSubsystem() {}

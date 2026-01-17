@@ -11,6 +11,7 @@ class HeroIndexerSubsystem : public IndexerSubsystem
 {
 
 public:
+    const char* getStateString();
 
     // Additional Motor Constants (if necessary)
 
@@ -45,7 +46,7 @@ private:
     IndexerUnit unitBottom;
 
     enum class HeroIndexerState : uint8_t {
-        STOPPED = 0,  //not powering motor at all
+        // STOPPED = 0,  //not powering motor at all (Use indexersubsystem's isStopped)
         INDEXING = 1,  //running regular indexing behavior until says there isn't a ball, will go back to loading
         LOADING_THEN_DONE = 2,  //loads until beam says there is a ball, then goes to STOPPED
         // LOADING_THEN_INDEX = 3,   //loads until beam says there is a ball, then goes to INDEXING
@@ -53,7 +54,7 @@ private:
         DONE = 5,  //holding place, providing power but not trying to move anywhere
     };
 
-    HeroIndexerState state = HeroIndexerState::STOPPED; //autounjamming doesn't transition state
+    HeroIndexerState state = HeroIndexerState::DONE; //autounjamming doesn't transition state
 
     float startingBalls = 0; //for INDEXING_EXTRA. 
     // Maybe in the future make loading a lot like homing, 

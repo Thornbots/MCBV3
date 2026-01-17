@@ -19,6 +19,8 @@ class SingleIndexerSubsystem : public IndexerSubsystem
 
 public:  // Public Methods
 
+    const char* getStateString();
+
     SingleIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index);
 
     ~SingleIndexerSubsystem() {}

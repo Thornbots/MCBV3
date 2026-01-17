@@ -21,6 +21,7 @@
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
+#include "subsystems/indexer/IndexerIdleCommand.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
 #include "util/trigger.hpp"
 
@@ -45,7 +46,7 @@ public:
         gimbal.setDefaultCommand(&stopGimbal);
         flywheel.setDefaultCommand(&shooterStop);
         drivetrain.setDefaultCommand(&stopDriveCommand);
-        indexer.setDefaultCommand(&indexerStop);
+        indexer.setDefaultCommand(&indexerIdle);
 
 
         // Mouse and Keyboard mappings
@@ -106,6 +107,7 @@ public:
         gimbal.clearBuildup();
         drivers->commandScheduler.addCommand(&lookMouse);
         drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
+        drivers->commandScheduler.addCommand(&indexerIdle);
         update();
     }
 
@@ -139,7 +141,8 @@ public:
     commands::IndexerNBallsCommand indexerAuto{drivers, &indexer, -1, 2};//full auto, holding the wheel it the forward position shoots as long as it is held
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
 
-    commands::IndexerStopCommand indexerStop{drivers, &indexer}; //stop is unused
+    commands::IndexerStopCommand indexerStop{drivers, &indexer};
+    commands::IndexerIdleCommand indexerIdle{drivers, &indexer};
 
     //CHANGE NUMBERS LATER
     commands::DrivetrainDriveCommand peekRight{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_RIGHT, commands::ControlMode::KEYBOARD};

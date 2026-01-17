@@ -187,6 +187,10 @@ float SingleIndexerSubsystem::getTotalNumBallsShot(){
     return counter.getTimesIncremented();
 }
 
+const char* SingleIndexerSubsystem::getStateString(){
+    return "";
+}
+
 
 void SingleIndexerSubsystem::doHomingTransitions(){
     // if was homed and went offline, need to home again
