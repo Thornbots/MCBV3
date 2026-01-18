@@ -21,17 +21,25 @@ public:
     struct outgoingDataFrame {
         uint8_t head = SERIAL_HEAD_BYTE;
         uint16_t dataLen;
+        uint8_t seqNumber;
+        uint8_t crc8;
         uint16_t messageType;
         uint8_t data[SERIAL_RX_BUFF_SIZE];
         outgoingDataFrame(uint16_t dataLen, uint16_t messageType, uint8_t *dataToBeSent): dataLen(dataLen), messageType(messageType){
             memcpy(data, dataToBeSent, dataLen);
+            
+            seqNumber = 0;
 
             size_t raw_msg_len =
                 sizeof(head)+ // head byte (0xA0)
                 sizeof(dataLen) + // 2 bytes for data length
+                sizeof(seqNumber) +
+                sizeof(crc8) +
                 sizeof(messageType) + // 2 bytes msg type 
                 dataLen; // dataToBeSent
 
+            crc8=tap::algorithms::calculateCRC8(reinterpret_cast<uint8_t *>(this), sizeof(head)+sizeof(dataLen)+sizeof(seqNumber));
+                
             uint16_t crc = tap::algorithms::calculateCRC16(
                 reinterpret_cast<uint8_t *>(this),
                 raw_msg_len);

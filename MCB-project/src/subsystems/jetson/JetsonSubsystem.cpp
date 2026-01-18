@@ -36,12 +36,12 @@ void JetsonSubsystem::refresh() {
 
         if (messageCount < 10) {
             PoseData p{
-                44,  // OdometrySubsystem doesn't provide wrappers for these
-                55,
-                66,
-                77,
-                88,
-                99,
+                drivers->i2c.odom.getX(),  // OdometrySubsystem doesn't provide wrappers for these
+                drivers->i2c.odom.getY(),
+                drivers->i2c.odom.getXVel(),
+                drivers->i2c.odom.getYVel(),
+                gimbal->getPitchEncoderValue(),
+                gimbal->getYawAngleRelativeWorld(),
                 // drivers->bmi088.getq0(),
                 // drivers->bmi088.getq1(),
                 // drivers->bmi088.getq2(),
@@ -53,18 +53,26 @@ void JetsonSubsystem::refresh() {
             sendMsg(&p);
         } else {//if(drivers->refSerial.getRefSerialReceivingData()) {
     
-            // tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
-            // tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
+            tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
+            tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
            
             RefSysMsg r{
-                (uint8_t) 2,
-                (uint16_t) 3,
-                (uint16_t) 4,
-                (uint8_t) 5,  // blue hero is 101, we want to send 1
-                12.34,
+                (uint8_t)gameData.gameStage,
+                (uint16_t)gameData.stageTimeRemaining,
+                (uint16_t)robotData.currentHp,
+                (uint8_t)robotData.robotId % 100,  // blue hero is 101, we want to send 1
+                hitRing.getAngleToTurnForSentry(),
                 // 12.34,
 
-                6};
+                drivers->refSerial.isBlueTeam(robotData.robotId) << 7 | (robotData.robotBuffStatus.recoveryBuff > 0) << 6 |
+                    (robotData.rfidStatus.any(
+                        tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE | tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE))
+                        << 5 |
+                    robotData.rfidStatus.any(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::CENTRAL_BUFF) << 4 |
+                    gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_TEAM) << 3 |
+                    gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_OPPONENT) << 2 |
+                    robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::CHASSIS_HAS_POWER) << 1 |
+                    robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::GIMBAL_HAS_POWER)};
             // needToSendRefData = !
             sendMsg(&r);
             messageCount = 0;
