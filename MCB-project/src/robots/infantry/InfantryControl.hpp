@@ -8,6 +8,7 @@
 
 #include "subsystems/ui/UISubsystem.hpp"
 #include "subsystems/ui/InfantryDrawCommand.hpp"
+#include "subsystems/ui/SillyDrawCommand.hpp"
 
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
@@ -71,7 +72,7 @@ public:
         autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart)->onTrue(&closeServo);
         // implement speed mode
 
-        toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
+        toggleUIKey.onTrue(&draw2)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
         // drivers->commandScheduler.addCommand(&draw); //tries to draw immediately, doesn't always work well
 
         // drive commands and also enable mouse looking
@@ -139,6 +140,7 @@ public:
 
     // //commands
     commands::InfantryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &servo};
+    commands::SillyDrawCommand draw2{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &servo};
     commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
     // commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
 
