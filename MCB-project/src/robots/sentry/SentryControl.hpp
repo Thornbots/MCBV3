@@ -68,6 +68,11 @@ public:
     bool startRetreat = false;
     int count = 0;
     void update() override {
+        
+        Vector2d targetPosition{0,0};
+        Vector2d targetVelocity{0,0};
+        Vector2d jetsonExpectedPosition{0,0};
+        jetson.updateROS(&targetPosition, &targetVelocity, &jetsonExpectedPosition);
 
         if (autoDriveTrigger.getAsBoolean() && drivers->refSerial.getRefSerialReceivingData() &&
         (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {

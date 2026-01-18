@@ -82,8 +82,15 @@ void JetsonSubsystem::refresh() {
 
 bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d* jetsonExpectedPosition) {
     Relocalize relocalize_msg;
-    if (getMsg(&relocalize_msg)) *jetsonExpectedPosition = Vector2d(relocalize_msg.expectedX, relocalize_msg.expectedY);
+    if (getMsg(&relocalize_msg)) {
+        *jetsonExpectedPosition = Vector2d(relocalize_msg.expectedX, relocalize_msg.expectedY);
+        // x is 5, y is 3
+        if(relocalize_msg.expectedX>4) drivers->leds.set(tap::gpio::Leds::Blue, true);
+        if(relocalize_msg.expectedY>2) drivers->leds.set(tap::gpio::Leds::Green, true);
+    };
 
+    
+    
     ROSData ros_msg;
     if (!getMsg(&ros_msg)) return false;
     *targetPosition = Vector2d(ros_msg.targetX, ros_msg.targetY);

@@ -29,7 +29,7 @@ namespace communication
     // Will we constantly receive data in a stream?
     void UARTCommunication::update()
     {
-        // updateSerial();
+        updateSerial();
         
         if ((getCurrentTime() - lastReceivedTime) > CONNECTION_TIMEOUT)
         {
