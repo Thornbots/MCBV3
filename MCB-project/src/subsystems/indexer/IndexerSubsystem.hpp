@@ -29,6 +29,9 @@ float shotsPerSecond = 0; //is 0 if not continuously firing, is positive if inde
 tap::arch::PeriodicMilliTimer timer;
 
 
+bool autoUnjamTrigger(tap::motor::DjiMotor* unjamMotor);
+
+
 protected:  
 src::Drivers* drivers;
 tap::motor::DjiMotor* motorIndexer; //for checking if it is online
@@ -36,18 +39,8 @@ tap::motor::DjiMotor* motorIndexer; //for checking if it is online
 // single and hero should check this
 bool isManualUnjamming = false;
 
-// single and hero could check this
+// single and hero should check this
 bool isStopped = true;
-
-// revolutions of OUTPUT SHAFT per ball. Different than the ones per robot in IndexerSubsystemConstants, because those are motor shaft (before the gear box)
-// float revPerBall;
-// float targetIndexerPosition = 0;
-// IndexerController indexerController;
-
-
-// int getIndexerVoltage(float currentPosition, float currentVelocity, float targetPosition, float inputVelocity, float deltaT);
-
-
 
 // setting a virtual method equal to 0 is like an abstract method in java: it isn't implemented in this class, but it is in a subclass.
 
@@ -56,9 +49,11 @@ virtual void finishInitialize() = 0;
 // IndexerSubsystem does things in refresh, Single and Hero override this to update.
 virtual void finishRefresh() = 0;
 
-public:
+// single and hero can call this to know if they should unjam this motor
+void doAutoUnjam(tap::motor::DjiMotor* unjamMotor, tap::arch::MilliTimeout& timeoutUnjam, bool& isAutoUnjamming);
 
-virtual const char* getStateString() = 0;
+
+public:
 
 IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index);
 
@@ -120,10 +115,6 @@ virtual void forceShootOnce() = 0;
 // Would have been good in the past, killing yourself to kill the base.
 
 
-//indexes to nearest shot position after finishing a position move. Would only apply to Single for now. And Single would take care of this automatically.
-// void indexNearest(); 
-
-
 // If the beambreak sensor senses that there is a shot ready.
 // non heros always returns true, as far as they know there is always a shot ready.
 virtual bool isProjectileAtBeam();
@@ -147,6 +138,8 @@ virtual bool heatAllowsShooting() = 0;
 // Also has a 20Hz cooldown to prevent tryShootOnce() called too quickly from shooting too quickly.
 virtual bool canShoot();
 
+
+int getMeasurement();
 
 
 protected:

@@ -43,7 +43,7 @@ public:
     void initialize() override {
         // Initialize subsystems (registration is internal)
         gimbal.initialize();
-        flywheel.initialize();
+        // flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
         ui.initialize();
@@ -58,7 +58,7 @@ public:
         drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerIdle);
 
-        shootButton.whileTrue(&indexer20Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
+        shootButton.whileTrue(&indexer10Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
         unjamButton.whileTrue(&indexerUnjam)->onTrue(&openServo);
 
         stopFlywheelTrigger.onTrue(&shooterStop);
@@ -149,7 +149,7 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexerSingle{drivers, &indexer, 1, 20};
+    commands::IndexerNBallsCommand indexerSingle{drivers, &indexer, 1, 10};
     commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 10};
     commands::IndexerNBallsCommand indexer20Hz{drivers, &indexer, -1, 20};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};

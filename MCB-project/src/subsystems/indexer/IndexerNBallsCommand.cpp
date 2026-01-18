@@ -4,6 +4,7 @@ namespace commands
 {
 
 void IndexerNBallsCommand::initialize() {
+    target = indexer->getTotalNumBallsShot()+numBalls;
     if(numBalls<0){
         indexer->indexAtRate(ballsPerSecond);
     } else {
@@ -22,6 +23,6 @@ void IndexerNBallsCommand::end(bool) {
 bool IndexerNBallsCommand::isFinished(void) const {
     if(!drivers->remote.isConnected() || !indexer->refPoweringIndex()) return true;
 
-    return indexer->isDoneIndexingAtRate();
+    return target == indexer->getTotalNumBallsShot();
 }
 }  // namespace commands

@@ -31,42 +31,16 @@ public:
         resetAll();
     }
 
-    float getAllowableIndexRate(float desiredBallsPerSecond){
-        if(desiredBallsPerSecond<0) return desiredBallsPerSecond;
-        
-        if(!drivers->refSerial.getRefSerialReceivingData()) return desiredBallsPerSecond;
-        
-        if(!canShootAgain()) return 0;
-
-        return desiredBallsPerSecond;
-    }
-
     bool canShootAgain() {
         return estHeat+getHeatPerBall()+getHeatPerBall()/2 < drivers->refSerial.getRobotData().turret.heatLimit;
     }
 
-    
     uint32_t getTimesIncremented() {
         return timesIncremented;
-    }
-    
-    
-    float getTotalNumBallsShotByEncoder() {
-        return getNumBallsShotByReference(initialPosition);
-    }
-
-    float getRecentNumBallsShotByEncoder() {
-        return getNumBallsShotByReference(recentPosition);
-    }
-
-    void resetRecentBallsByEncoderCounter() {
-        recentPosition = index->getPositionUnwrapped();
     }
 
     void resetAll() {
         //in case index doesn't start at 0
-        initialPosition = index->getPositionUnwrapped();
-        recentPosition = initialPosition;
         timesIncremented=0;
 
         prevMillis = tap::arch::clock::getTimeMilliseconds();
@@ -84,23 +58,13 @@ public:
         return 0;
     }
     
-    // for shooting one ball, how far does the index (output shaft) need to move
-    // doesn't support different revperball that hero has
-    // float getPositionIncrement() {
-    //     return (2*PI/NUM_CHAMBERS);
-    // }
-    
-    // gets current index (output shaft) position
-    float getCurrentPosition() {
-        return index->getPositionUnwrapped()/8192.0f*2*PI/36;
-    }
     
     void update() {
         if(coolingTimer.execute())
             applyCooling();
     }
     
-    // applys the heat from this projectile instantly
+    // applies the heat from this projectile instantly
     void incrementTargetNumBalls(){
         estHeat+=getHeatPerBall();
     }
@@ -112,33 +76,15 @@ private:
     tap::motor::DjiMotor* index;
     
     tap::arch::PeriodicMilliTimer coolingTimer{100}; //10hz, ref system cools at this rate
-    
 
-
-    // tap::arch::MilliTimeout timeUntilNoHeat;
     uint32_t prevMillis = 0; //for decrementing heat
     int32_t estHeat = 0;
     
     uint32_t timesIncremented = 0;
 
-    int64_t recentPosition = 0;
-    int64_t initialPosition = 0;
-
     float getHeatPerBall() {
         return barrel==BarrelType::TURRET_42MM ? HEAT_PER_42 : HEAT_PER_17;
     }
-
-    // getting from ref system has latency
-    uint16_t getCurrentRefHeat(tap::communication::serial::RefSerial::Rx::TurretData* turretData){
-        return barrel==BarrelType::TURRET_42MM ? turretData->heat42 :
-              (barrel==BarrelType::TURRET_17MM_EITHER ? std::max(turretData->heat17ID1, turretData->heat17ID2) :
-              (barrel==BarrelType::TURRET_17MM_1 ? turretData->heat17ID1 : turretData->heat17ID2));
-    }
-
-    float getNumBallsShotByReference(int64_t reference) {
-        return (index->getPositionUnwrapped() - reference) / (REV_PER_BALL * 2 * PI);
-    }
-
 
     void applyCooling() {
         // delta time[ms] * cooling[heat/s] / 1000[ms to s]
@@ -147,22 +93,13 @@ private:
             estHeat-=heatDiff;
             if(estHeat<0) estHeat=0; //can't be negative heat
 
-            // prevMillis = tap::arch::clock::getTimeMilliseconds();
+            // change the time by the amount of cooling you applied
             prevMillis += heatDiff*1000/(drivers->refSerial.getRobotData().turret.coolingRate);
         }
     }
 
-    
-    
-
     static constexpr float HEAT_PER_17 = 10.0f;
     static constexpr float HEAT_PER_42 = 100.0f;
-
-    #if defined(HERO)
-    static constexpr float LATENCY = 0; //allow hero to shoot one shot at 20hz, up to driver to not overheat
-    #else
-    static constexpr float LATENCY = 0.6f; //expected ref system latency for (old) barrel heat limiting
-    #endif
 };
 
 } // namespace subsystems

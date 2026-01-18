@@ -4,7 +4,7 @@
 constexpr static int INDEXER_MOTOR_MAX_SPEED = 18000; //6177; // With the 2006, this should give
 
 
-constexpr static float AUTO_UNJAM_BALLS_PER_SEC_THRESH = 0.1;  // balls/sec, if the motor gets stopped or slowed enough to be below this speed, the index will consider unjamming
+constexpr static float AUTO_UNJAM_TORQUE_THRES = 4000;  //not sure what units. When over, starts autounjam
 constexpr static float AUTO_UNJAM_TIME_UNDER_THRESH = 0.5;      // sec, if the motor gets stopped or slowed enough for this time, the index will start to unjam
 constexpr static float AUTO_UNJAM_TIME_UNJAMMING = 0.1;         // sec, once unjamming, it will continue unjamming for this long
 
@@ -22,7 +22,7 @@ constexpr static float LOAD_BALL_PER_SECOND = 5.0f;
 constexpr static float UNJAM_BALL_PER_SECOND = -8.0f; // in unjam mode, spin backwards at 1 balls per second (this is a guess)
 constexpr static tap::algorithms::SmoothPidConfig PID_CONF_INDEX = {5, 0, 0, 0, 8000, 1, 0, 1, 0, 10, 0};
 constexpr static float INITIAL_INDEX_OFFSET = 0; //doesn't apply to hero
-constexpr static float INDEXING_EXTRA_BALLS = 0.2; //balls, how long to keep shooting after the beam break says the ball has left
+constexpr static float INDEXING_EXTRA_TIME = 0.1; //seconds, how long to keep shooting after the beam break says the ball has left
 #elif defined(SENTRY)
 constexpr static int NUM_CHAMBERS = 7;
 constexpr static float GEAR_RATIO = 36.0f; //need to check if it is 36 exactly or 36ish
@@ -48,5 +48,5 @@ constexpr static tap::algorithms::SmoothPidConfig PID_CONF_INDEX = {5, 0, 0, 0, 
 #ifndef HERO
 constexpr static float REV_PER_BALL_BOTTOM = 0; //doesn't apply to non heros
 constexpr static float LOAD_BALL_PER_SECOND = 0; //doesn't apply to non heros
-constexpr static float INDEXING_EXTRA_BALLS = 0;
+constexpr static float INDEXING_EXTRA_TIME = 0;
 #endif

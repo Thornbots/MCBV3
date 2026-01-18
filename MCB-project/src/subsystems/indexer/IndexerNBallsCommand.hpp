@@ -37,6 +37,7 @@ private:
     src::Drivers* drivers;
     IndexerSubsystem* indexer;
     int numBalls;
+    int target;
     float ballsPerSecond;
 
 };

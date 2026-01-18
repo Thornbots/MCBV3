@@ -11,8 +11,6 @@ class HeroIndexerSubsystem : public IndexerSubsystem
 {
 
 public:
-    const char* getStateString();
-
     // Additional Motor Constants (if necessary)
 
     HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* indexTop, tap::motor::DjiMotor* indexBottom);
@@ -44,6 +42,12 @@ private:
     
     IndexerUnit unitTop;
     IndexerUnit unitBottom;
+    
+    bool isAutoUnjamming;
+    tap::arch::MilliTimeout timeoutUnjam;
+    
+    tap::arch::MilliTimeout timeoutExtra;
+    
 
     enum class HeroIndexerState : uint8_t {
         // STOPPED = 0,  //not powering motor at all (Use indexersubsystem's isStopped)

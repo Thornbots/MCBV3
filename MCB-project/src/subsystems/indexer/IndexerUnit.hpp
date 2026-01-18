@@ -16,23 +16,18 @@
 // can also be told to do auto unjam using IndexerSubsystemConstants
 namespace subsystems{
 
-
 class IndexerUnit
 {
 
 public:
 
-
     IndexerUnit(src::Drivers* drivers, tap::motor::DjiMotor* index, float shaftRevPerBall, float motorRevPerBall) : drivers(drivers), index(index), shaftRevPerBall(shaftRevPerBall), motorRevPerBall(motorRevPerBall)  {
         
     }
 
-
-    
     void initialize() {
         index->initialize();
     }
-    
 
     // uses stored target position to do position control
     void positionControl(){
@@ -61,6 +56,7 @@ public:
     }
     
     void doAfterHomingOffset() {
+        index->resetEncoderValue();
         targetIndexerPosition = getPositionIncrement()*INITIAL_INDEX_OFFSET;
     }
     
@@ -69,11 +65,7 @@ public:
     }
     
     // goes only forwards, so don't call repeatedly
-    void indexNearest() {
-        //only applies to position control
-        // if(!doPositionControl) return;
-        // temporaryVelocityControl = false;
-        
+    void indexNearest() {        
         float currentPos = index->getPositionUnwrapped()/GEAR_RATIO;  //radians
         //index to the nearest next shot. This ensures we always have a shot ready to shoot
         targetIndexerPosition = (std::ceil((currentPos - getPositionIncrement()*INITIAL_INDEX_OFFSET) //find number of shots we are at
@@ -82,9 +74,10 @@ public:
         * getPositionIncrement(); //convert to radians
     }
 
+    tap::motor::DjiMotor* index;
+    
 private:
     src::Drivers* drivers;
-    tap::motor::DjiMotor* index;
     
     // revolutions of OUTPUT SHAFT per ball. Different than the ones per robot in IndexerSubsystemConstants, because those are motor shaft (before the gear box)
     float shaftRevPerBall;

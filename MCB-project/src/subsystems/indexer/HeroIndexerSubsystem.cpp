@@ -4,9 +4,9 @@ namespace subsystems
 {
 
 HeroIndexerSubsystem::HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* indexTop, tap::motor::DjiMotor* indexBottom)
-    : IndexerSubsystem(drivers, indexTop), //needs one motor to know disconnect, could be either
-    unitTop(   drivers, indexTop,    REV_PER_BALL/GEAR_RATIO,        REV_PER_BALL*GEAR_RATIO),
-    unitBottom(drivers, indexBottom, REV_PER_BALL_BOTTOM/GEAR_RATIO, REV_PER_BALL_BOTTOM*GEAR_RATIO),
+    : IndexerSubsystem(drivers, indexBottom), //needs one motor to know disconnect, could be either
+    unitTop(   drivers, indexTop,    REV_PER_BALL,        REV_PER_BALL*GEAR_RATIO),
+    unitBottom(drivers, indexBottom, REV_PER_BALL_BOTTOM, REV_PER_BALL_BOTTOM*GEAR_RATIO),
     counter(drivers, ShotCounter::BarrelType::TURRET_42MM, indexTop)
 {}
 
@@ -16,6 +16,7 @@ void HeroIndexerSubsystem::finishInitialize() {
     Board::DigitalInPinB12::configure(modm::platform::Gpio::InputType::Floating); //initialze beambreak
     
     state = HeroIndexerState::LOADING_THEN_DONE;
+    timeoutExtra.stop();
 }
 
 void HeroIndexerSubsystem::finishRefresh() {
@@ -30,16 +31,23 @@ void HeroIndexerSubsystem::finishRefresh() {
     if(state == HeroIndexerState::INDEXING && !isProjectileAtBeam()){
         // ball has left where we can see it
         state = HeroIndexerState::INDEXING_EXTRA; //but not actually left the barrel yet
-        counter.resetRecentBallsByEncoderCounter();
+        timeoutExtra.restart(1000*INDEXING_EXTRA_TIME);
     }
-    if(state == HeroIndexerState::INDEXING_EXTRA && counter.getRecentNumBallsShotByEncoder()>=INDEXING_EXTRA_BALLS){
+    if(state == HeroIndexerState::INDEXING_EXTRA && timeoutExtra.isExpired()){
         // done shooting, we need to load
         state = HeroIndexerState::LOADING_THEN_DONE;
+        timeoutExtra.stop();
     }
     if(state == HeroIndexerState::LOADING_THEN_DONE && isProjectileAtBeam()){
         // done loading
         state = HeroIndexerState::DONE;
     }
+    
+    // check if the bottom should unjam
+    // we don't expect the top to jam
+    doAutoUnjam(unitBottom.index, timeoutUnjam, isAutoUnjamming);
+    bool unjam = isManualUnjamming||isAutoUnjamming;
+    if(unjam) state = HeroIndexerState::LOADING_THEN_DONE; //without this it would be DONE and wouldn't unjam
     
     
     // motor movements
@@ -47,7 +55,7 @@ void HeroIndexerSubsystem::finishRefresh() {
         // stop both
         unitTop.oldVelocityControl(0);
         unitBottom.oldVelocityControl(0);
-    } else if(isManualUnjamming) {
+    } else if(unjam) {
         //the user might want to remove the ball at the beambreak
         state = HeroIndexerState::LOADING_THEN_DONE;
         unitTop.oldVelocityControl(UNJAM_BALL_PER_SECOND); 
@@ -55,7 +63,7 @@ void HeroIndexerSubsystem::finishRefresh() {
     } else if(state==HeroIndexerState::INDEXING || state==HeroIndexerState::INDEXING_EXTRA) {
         // what speed should this happen at? Old system would set this at 20Hz in HeroControl. Maybe make this a constant.
         unitTop.oldVelocityControl(20);
-        unitBottom.oldVelocityControl(20);
+        unitBottom.oldVelocityControl(0);
     } else if(state==HeroIndexerState::LOADING_THEN_DONE){
         unitTop.oldVelocityControl(LOAD_BALL_PER_SECOND); //top needs to spin too when loading
         unitBottom.oldVelocityControl(LOAD_BALL_PER_SECOND);
@@ -81,32 +89,28 @@ bool HeroIndexerSubsystem::tryShootOnce() {
 
 void HeroIndexerSubsystem::forceShootOnce() {
     if(state==HeroIndexerState::DONE) {
-        if(isProjectileAtBeam()) {
-            counter.resetRecentBallsByEncoderCounter();
-            state = HeroIndexerState::INDEXING;
-            justShot();
-        } else {
-            state = HeroIndexerState::LOADING_THEN_DONE;
-        }
+        state = HeroIndexerState::INDEXING_EXTRA;
+        timeoutExtra.restart(1000*INDEXING_EXTRA_TIME);
+        justShot();
     }
 }
 
 
-const char* HeroIndexerSubsystem::getStateString(){
-    switch (state)
-    {
-    case HeroIndexerState::INDEXING:
-        return "indexing";
-    case HeroIndexerState::LOADING_THEN_DONE:
-        return "loading";
-    case HeroIndexerState::INDEXING_EXTRA:
-        return "indexing extra";
-    case HeroIndexerState::DONE:
-        return "done";
-    default:
-        return "default";
-    }
-}
+// const char* HeroIndexerSubsystem::getStateString(){
+//     switch (state)
+//     {
+//     case HeroIndexerState::INDEXING:
+//         return "indexing";
+//     case HeroIndexerState::LOADING_THEN_DONE:
+//         return "loading";
+//     case HeroIndexerState::INDEXING_EXTRA:
+//         return "indexing extra";
+//     case HeroIndexerState::DONE:
+//         return "done";
+//     default:
+//         return "default";
+//     }
+// }
 
 
 

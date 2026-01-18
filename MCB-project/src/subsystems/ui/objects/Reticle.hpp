@@ -82,13 +82,9 @@ public:
         addGraphicsObject(&rectsContainer);
         addGraphicsObject(&linesContainer);
         addGraphicsObject(&verticalLine);
-        addGraphicsObject(&currHeat);
-        addGraphicsObject(&testString);
     }
 
     void update() {
-        testString.setString(index->getStateString());
-        
         
         float pitch = gimbal->getPitchEncoderValue();
 
@@ -122,10 +118,6 @@ public:
             verticalLine.x1+=DIAGONAL_OFFSET;
             verticalLine.x2-=DIAGONAL_OFFSET;
         }
-
-        // currHeat.setLower(0);
-        currHeat.startAngle = (index->getEstHeatRatio())*360;
-
 
         solvedForPitchLandingSpotThisCycle = false;
         for (int i = 0; i < NUM_THINGS; i++) {
@@ -234,9 +226,6 @@ private:
     UnfilledRectangle rects[NUM_THINGS];
     Line verticalLine;
 
-    // LargeCenteredArc currHeat{false, 0};
-    Arc currHeat{UISubsystem::Color::ORANGE, UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT, 90, 90, 0, 0, 10};
-    StringGraphic testString{UISubsystem::Color::CYAN, "", UISubsystem::HALF_SCREEN_WIDTH, UISubsystem::HALF_SCREEN_HEIGHT-100, 30, 4};
 
     // for solving for pitch
     static constexpr int MAX_NUM_ITERATIONS = 10;  // it is difficult to actually solve for pitch because initial launch positions depend on pitch
