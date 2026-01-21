@@ -59,6 +59,8 @@ namespace communication
         size_t numBytesToSend =
             sizeof(msg_data.head)+ // head byte (0xA0)
             sizeof(msg_data.dataLen) + // 2 bytes for data length
+            sizeof(msg_data.seqNumber) + // seq number
+            sizeof(msg_data.crc8) + // crc8
             sizeof(msg_data.messageType) + // 2 bytes msg type 
             dataLen + // dataToBeSent
             sizeof(uint16_t); // crc
