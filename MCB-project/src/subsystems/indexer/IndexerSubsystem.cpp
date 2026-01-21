@@ -66,6 +66,9 @@ bool IndexerSubsystem::indexNShotsAtRate(float inputShotsPerSecond, int numShots
     numShotsRemaining = numShots;
     if(shotImmediately) 
         numShotsRemaining--; //if shot one, count it
+        
+    // if they only wanted to shoot one singular shot and we shot it now
+    if(numShotsRemaining==0) stopIndexingAtRate();
             
     return shotImmediately;
 }
