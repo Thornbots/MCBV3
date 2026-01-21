@@ -45,7 +45,7 @@ bool UARTCommunication::sendMsg(uint8_t* dataToBeSent, uint16_t messageType, uin
     }
     outgoingDataFrame msg(dataLen, messageType, dataToBeSent);
 
-    const size_t frameLen = outgoingDataFrame::HEADER_SIZE +  // everything before
+    const size_t frameLen = outgoingDataFrame::HEADER_SIZE +  // everything before data
                             dataLen +                         // payload
                             sizeof(uint16_t);                 // CRC16
 
