@@ -27,6 +27,10 @@ public:
         uint8_t data[SERIAL_RX_BUFF_SIZE + 2];  // +2 for CRC16
         static constexpr size_t HEADER_SIZE = offsetof(outgoingDataFrame, data);
 
+        static constexpr size_t CRC8_COVERAGE = offsetof(outgoingDataFrame, crc8);
+
+        static constexpr size_t CRC16_TRAILER_SIZE = sizeof(uint16_t);
+
         outgoingDataFrame(uint16_t len, uint16_t msgType, const uint8_t* dataToBeSent) {
             head = SERIAL_HEAD_BYTE;
             dataLen = len;
@@ -36,7 +40,7 @@ public:
             std::memcpy(data, dataToBeSent, dataLen);
 
             // CRC8 covers fixed header fields only
-            crc8 = tap::algorithms::calculateCRC8(reinterpret_cast<uint8_t*>(this), offsetof(outgoingDataFrame, crc8));
+            crc8 = tap::algorithms::calculateCRC8(reinterpret_cast<uint8_t*>(this), CRC8_COVERAGE);
 
             // CRC16 covers header + payload
             const size_t crc16Coverage = HEADER_SIZE + dataLen;

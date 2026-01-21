@@ -45,9 +45,9 @@ bool UARTCommunication::sendMsg(uint8_t* dataToBeSent, uint16_t messageType, uin
     }
     outgoingDataFrame msg(dataLen, messageType, dataToBeSent);
 
-    const size_t frameLen = outgoingDataFrame::HEADER_SIZE +  // everything before data
-                            dataLen +                         // payload
-                            sizeof(uint16_t);                 // CRC16
+    const size_t frameLen = outgoingDataFrame::HEADER_SIZE +        // everything before data
+                            dataLen +                               // payload
+                            outgoingDataFrame::CRC16_TRAILER_SIZE;  // CRC16
 
     int bytesWritten = drivers->uart.write(port, reinterpret_cast<uint8_t*>(&msg), frameLen);
 
