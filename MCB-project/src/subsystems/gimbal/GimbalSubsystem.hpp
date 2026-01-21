@@ -50,6 +50,7 @@ private:  // Private Variables
     std::uniform_int_distribution<int> distPitch;
 
     float prevTargetPitch = 0;
+    bool wasYawMotorOffline = true;
 
 public:  // Public Methods
     GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* yaw, tap::motor::DjiMotor* pitch);
@@ -113,6 +114,8 @@ public:  // Public Methods
     float getYawAngleRelativeWorld();
 
     void clearBuildup();
+
+    bool isYawMotorOnline();
 
 private:  // Private Methods
     int getPitchVoltage(float targetAngle, float pitchAngleRelativeGimbal, float pitchAngularVelocity, float dt);
