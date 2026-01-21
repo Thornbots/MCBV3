@@ -25,32 +25,10 @@ public:
         uint8_t crc8;
         uint16_t messageType;
         uint8_t data[SERIAL_RX_BUFF_SIZE + 2];  // +2 for CRC16
-        static constexpr size_t HEADER_SIZE = offsetof(outgoingDataFrame, data);
-
-        static constexpr size_t CRC8_COVERAGE = offsetof(outgoingDataFrame, crc8);
-
-        static constexpr size_t CRC16_TRAILER_SIZE = sizeof(uint16_t);
-
-        outgoingDataFrame(uint16_t len, uint16_t msgType, const uint8_t* dataToBeSent) {
-            head = SERIAL_HEAD_BYTE;
-            dataLen = len;
-            messageType = msgType;
-            seqNumber = 0;
-
-            std::memcpy(data, dataToBeSent, dataLen);
-
-            // CRC8 covers fixed header fields only
-            crc8 = tap::algorithms::calculateCRC8(reinterpret_cast<uint8_t*>(this), CRC8_COVERAGE);
-
-            // CRC16 covers header + payload
-            const size_t crc16Coverage = HEADER_SIZE + dataLen;
-
-            uint16_t crc16 = tap::algorithms::calculateCRC16(reinterpret_cast<uint8_t*>(this), crc16Coverage);
-
-            data[dataLen] = crc16 & 0xFF;
-            data[dataLen + 1] = crc16 >> 8;
-        }
+        
+        outgoingDataFrame(uint16_t len, uint16_t msgType, const uint8_t* dataToBeSent);
     } modm_packed;
+    
 
     UARTCommunication(tap::Drivers* drivers, tap::communication::serial::Uart::UartPort port, bool isRxCRCEnforcementEnabled);
 
@@ -89,6 +67,11 @@ private:
     bool rxCRCEnforcementEnabled;
 
     static constexpr uint32_t CONNECTION_TIMEOUT = 1000;  // Timeout in ms
+    
+    // for outgoingDataFrame
+    static constexpr size_t HEADER_SIZE = offsetof(outgoingDataFrame, data);
+    static constexpr size_t CRC8_COVERAGE = offsetof(outgoingDataFrame, crc8);
+    static constexpr size_t CRC16_TRAILER_SIZE = sizeof(uint16_t);
 };
 
 }  // namespace communication

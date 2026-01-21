@@ -14,6 +14,26 @@ UARTCommunication::UARTCommunication(tap::Drivers* drivers, tap::communication::
     lastReceivedTime = getCurrentTime();
 }
 
+UARTCommunication::outgoingDataFrame::outgoingDataFrame(uint16_t len, uint16_t msgType, const uint8_t* dataToBeSent) {
+    head = SERIAL_HEAD_BYTE;
+    dataLen = len;
+    messageType = msgType;
+    seqNumber = 0;
+
+    std::memcpy(data, dataToBeSent, dataLen);
+
+    // CRC8 covers fixed header fields only
+    crc8 = tap::algorithms::calculateCRC8(reinterpret_cast<uint8_t*>(this), CRC8_COVERAGE);
+
+    // CRC16 covers header + payload
+    const size_t crc16Coverage = HEADER_SIZE + dataLen;
+
+    uint16_t crc16 = tap::algorithms::calculateCRC16(reinterpret_cast<uint8_t*>(this), crc16Coverage);
+
+    data[dataLen] = crc16 & 0xFF;
+    data[dataLen + 1] = crc16 >> 8;
+}
+
 void UARTCommunication::messageReceiveCallback(const ReceivedSerialMessage& completeMessage) {
     if (completeMessage.header.dataLength <= 0 || completeMessage.data == nullptr) return;
     mostRecentMessage.messageType = completeMessage.messageType;
@@ -45,9 +65,9 @@ bool UARTCommunication::sendMsg(uint8_t* dataToBeSent, uint16_t messageType, uin
     }
     outgoingDataFrame msg(dataLen, messageType, dataToBeSent);
 
-    const size_t frameLen = outgoingDataFrame::HEADER_SIZE +        // everything before data
-                            dataLen +                               // payload
-                            outgoingDataFrame::CRC16_TRAILER_SIZE;  // CRC16
+    const size_t frameLen = HEADER_SIZE +        // everything before data
+                            dataLen +            // payload
+                            CRC16_TRAILER_SIZE;  // CRC16
 
     int bytesWritten = drivers->uart.write(port, reinterpret_cast<uint8_t*>(&msg), frameLen);
 
