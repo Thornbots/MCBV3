@@ -21,9 +21,11 @@
 #include "subsystems/gimbal/GimbalStopCommand.hpp"
 #include "subsystems/jetson/AutoAimCommand.hpp"
 #include "subsystems/jetson/AutoAimAndFireCommand.hpp"
+#include "subsystems/indexer/SingleIndexerSubsystem.hpp"
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
+#include "subsystems/indexer/IndexerIdleCommand.hpp"
 #include "subsystems/servo/ServoSubsystem.hpp"
 #include "subsystems/servo/OpenServoCommand.hpp"
 #include "subsystems/servo/CloseServoCommand.hpp"
@@ -54,9 +56,9 @@ public:
         gimbal.setDefaultCommand(&stopGimbal);
         flywheel.setDefaultCommand(&shooterStop);
         drivetrain.setDefaultCommand(&stopDriveCommand);
-        indexer.setDefaultCommand(&indexerStop);
+        indexer.setDefaultCommand(&indexerIdle);
 
-        shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz)->onTrue(&closeServo);
+        shootButton.onTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
         unjamButton.whileTrue(&indexerUnjam)->onTrue(&openServo);
 
         stopFlywheelTrigger.onTrue(&shooterStop);
@@ -64,7 +66,7 @@ public:
         // Mouse and Keyboard mappings
         unjamKey.whileTrue(&indexerUnjam)->onTrue(&openServo);
         onlyCloseLidKey.onTrue(&closeServo);
-        shootRegKey.whileTrue(&indexer10Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
+        shootRegKey.onTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
         shootFastKey.whileTrue(&indexer20Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
         autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart)->onTrue(&closeServo);
         // implement speed mode
@@ -116,6 +118,7 @@ public:
         gimbal.reZeroYaw();
         drivers->commandScheduler.addCommand(&lookMouse);
         drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
+        drivers->commandScheduler.addCommand(&indexerIdle);
         update();
     }
 
@@ -129,7 +132,7 @@ public:
     subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
-    subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor, false};
+    subsystems::SingleIndexerSubsystem indexer{drivers, &hardware.indexMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::ServoSubsystem servo{drivers, &hardware.servo};
     subsystems::JetsonSubsystem jetson{drivers, &gimbal};
@@ -147,11 +150,13 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
+    commands::IndexerNBallsCommand indexerSingle{drivers, &indexer, 1, 20};
     commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 10};
     commands::IndexerNBallsCommand indexer20Hz{drivers, &indexer, -1, 20};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
 
     commands::IndexerStopCommand indexerStop{drivers, &indexer};
+    commands::IndexerIdleCommand indexerIdle{drivers, &indexer};
 
     //CHANGE NUMBERS LATER
     commands::DrivetrainDriveCommand peekRight{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_RIGHT, commands::ControlMode::KEYBOARD};
@@ -177,8 +182,8 @@ public:
     Trigger onlyCloseLidKey{drivers, Remote::Key::CTRL}; //blame peter
     Trigger autoAimKey{drivers, MouseButton::RIGHT};
     Trigger shootKey{drivers, MouseButton::LEFT};
-    Trigger shootFastKey = shootKey & !onlyCloseLidKey;
-    Trigger shootRegKey = shootKey & onlyCloseLidKey;
+    Trigger shootFastKey = shootKey & onlyCloseLidKey;
+    Trigger shootRegKey = shootKey & !onlyCloseLidKey;
 
     Trigger scrollUp{drivers, MouseScrollDirection::UP};
     Trigger scrollDown{drivers, MouseScrollDirection::DOWN};
