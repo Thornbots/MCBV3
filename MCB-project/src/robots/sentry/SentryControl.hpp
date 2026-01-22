@@ -57,8 +57,12 @@ public:
         // drive commands
 
         // joystickDrive0.onTrue(&initialMoveCommand);
-        joystickDrive1.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
-        joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);
+        joystickDrive1.onTrue(&noSpinDriveCommand)->onTrue(&odoPointForwards);
+        joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&odoPointForwards);
+
+        joystickLook0.onTrue(&lookJoystick); //looks horizontal
+        joystickLook1.onTrue(&lookJoystick); //looks horizontal
+        joystickLook2.onTrue(&lookJoystickOffset);
 
         isStopped = false;
 
@@ -113,6 +117,7 @@ public:
     }
 
     void stopForImuRecal() override {
+        wasControllerModeBeforeRecal = drivetrain.isInControllerMode;
         drivers->commandScheduler.addCommand(&stopGimbal);
         drivers->commandScheduler.addCommand(&shooterStop);
         drivers->commandScheduler.addCommand(&stopDriveCommand);
@@ -125,6 +130,9 @@ public:
         isStopped = false;
         gimbal.clearBuildup();
         gimbal.reZeroYaw();
+        if (wasControllerModeBeforeRecal) {
+            drivers->commandScheduler.addCommand(&lookJoystickOffset);
+        }
         drivers->commandScheduler.addCommand(&autoDrive);
         drivers->commandScheduler.addCommand(&autoFire);
         drivers->commandScheduler.addCommand(&odoPointForwards);
@@ -146,6 +154,7 @@ public:
 
     // commands
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
+    commands::JoystickMoveCommand lookJoystickOffset{drivers, &gimbal, true};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
     commands::AutoDriveCommand autoDrive{drivers, &drivetrain, &gimbal, &jetson};
     commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, &autoDrive};
@@ -195,11 +204,18 @@ public:
     Trigger joystickDrive1{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::MID};
     Trigger joystickDrive2{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
 
+    Trigger joystickLook0{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
+    Trigger joystickLook1{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::MID};
+    Trigger joystickLook2{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::DOWN};
+
     Trigger autoFireTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
     Trigger autoDriveTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};
 
     Trigger stopFlywheelTrigger = unjamButton | !autoFireTrigger; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
-    Trigger* triggers[7] = {&joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &autoFireTrigger, &autoDriveTrigger};  //, &indexSpinButton};
+    Trigger* triggers[10] = {&joystickLook0, &joystickLook1, &joystickLook2, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &autoFireTrigger, &autoDriveTrigger};  //, &indexSpinButton};
+
+private:
+    bool wasControllerModeBeforeRecal;
 };
 }  // namespace robots
