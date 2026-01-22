@@ -15,6 +15,9 @@ static constexpr float CONTROLLER_YAW_PROPORTIONAL = -0.02;
 
 static constexpr int LATENCY_Q_SIZE = 11; //12 cycles = 24ms
 
+static constexpr float PITCH_RECAL_THRESHOLD = -0.5;
+static constexpr float RECAL_HOLD_TIME = 3000; // milliseconds to hold controller combo until recalibration
+
 #if defined(HERO)
 constexpr static int YAW_MOTOR_MAX_SPEED = 1000;  // TODO: Make this value relevent
                                                   // //TODO: Check the datasheets
@@ -32,7 +35,7 @@ static constexpr float YAW_TOTAL_RATIO = 32319.0f / 748.0f;  // unitless, ratio 
 
 static constexpr int YAW_DIST_RANGE = 18000;
 
-static constexpr float CONTROLLER_PITCH_PROPORTIONAL = 0.3 * PI;
+static constexpr float CONTROLLER_PITCH_PROPORTIONAL = -0.3 * PI;
 
 
 static constexpr float PITCH_RATIO = 4.0f;

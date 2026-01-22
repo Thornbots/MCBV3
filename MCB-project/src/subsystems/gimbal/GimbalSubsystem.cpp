@@ -41,6 +41,10 @@ void GimbalSubsystem::refresh() {
     motorYaw->setDesiredOutput(yawMotorVoltage);
 }
 
+void GimbalSubsystem::setPrevTargetPitch(float value) {
+    prevTargetPitch = value;
+}
+
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
     if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
         encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;

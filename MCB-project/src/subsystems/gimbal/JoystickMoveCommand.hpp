@@ -47,6 +47,9 @@ private:
     GimbalSubsystem* gimbal;
 
     bool isCalibrated = false;
+    bool hasRecalibrated = false;
+    uint32_t recalStartedTime;
+    bool isRecalibrating = false;
 
     float yaw = 0.0f, pitch = 0.0f;
 

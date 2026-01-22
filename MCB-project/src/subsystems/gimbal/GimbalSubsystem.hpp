@@ -76,6 +76,7 @@ public:  // Public Methods
     void updateMotors(float changeInTargetYaw, float targetPitch);
 
     float getPrevTargetPitch();
+    void setPrevTargetPitch(float value);
 
     /*
      *   Straight up gives a full state for the controllers to target

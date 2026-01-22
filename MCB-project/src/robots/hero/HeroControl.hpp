@@ -95,18 +95,25 @@ public:
     }
 
     void stopForImuRecal() override {
-        drivers->commandScheduler.addCommand(&stopGimbal);
-        drivers->commandScheduler.addCommand(&shooterStop);
-        drivers->commandScheduler.addCommand(&stopDriveCommand);
-        drivers->commandScheduler.addCommand(&indexerStop);
-        isStopped = true;
+        if (!isStopped) {
+            wasControllerModeBeforeRecal = drivetrain.isInControllerMode;
+            drivers->commandScheduler.addCommand(&stopGimbal);
+            drivers->commandScheduler.addCommand(&shooterStop);
+            drivers->commandScheduler.addCommand(&stopDriveCommand);
+            drivers->commandScheduler.addCommand(&indexerStop);
+            isStopped = true;
+        }
     }
 
     void resumeAfterImuRecal() override {
         isStopped = false;
         gimbal.clearBuildup();
         gimbal.reZeroYaw();
-        drivers->commandScheduler.addCommand(&lookMouse);
+        if (wasControllerModeBeforeRecal) {
+            drivers->commandScheduler.addCommand(&lookJoystickOffset);
+        } else {
+            drivers->commandScheduler.addCommand(&lookMouse);
+        }
         drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
         update();
     }
@@ -194,7 +201,8 @@ public:
     Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
     Trigger* triggers[20] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &joystickLook0, &joystickLook1, &joystickLook2, &shootButton, &unjamButton, &unjamKey, &shootKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
-
+private:
+    bool wasControllerModeBeforeRecal;
 };
 
 }  // namespace robots
