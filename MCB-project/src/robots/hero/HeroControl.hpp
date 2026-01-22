@@ -95,14 +95,12 @@ public:
     }
 
     void stopForImuRecal() override {
-        if (!isStopped) {
-            wasControllerModeBeforeRecal = drivetrain.isInControllerMode;
-            drivers->commandScheduler.addCommand(&stopGimbal);
-            drivers->commandScheduler.addCommand(&shooterStop);
-            drivers->commandScheduler.addCommand(&stopDriveCommand);
-            drivers->commandScheduler.addCommand(&indexerStop);
-            isStopped = true;
-        }
+        wasControllerModeBeforeRecal = drivetrain.isInControllerMode;
+        drivers->commandScheduler.addCommand(&stopGimbal);
+        drivers->commandScheduler.addCommand(&shooterStop);
+        drivers->commandScheduler.addCommand(&stopDriveCommand);
+        drivers->commandScheduler.addCommand(&indexerStop);
+        isStopped = true;
     }
 
     void resumeAfterImuRecal() override {
