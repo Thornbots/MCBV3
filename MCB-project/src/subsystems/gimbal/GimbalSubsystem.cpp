@@ -167,4 +167,8 @@ float GimbalSubsystem::getPitchEncoderValue() { //more like get pitch relative t
 float GimbalSubsystem::getYawVel() { return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO; }
 float GimbalSubsystem::getPitchVel() { return motorPitch->getShaftRPM() * PI / 30; }
 float GimbalSubsystem::getYawAngleRelativeWorld() { return yawController.estimatedPosition; }
+
+bool GimbalSubsystem::isYawMotorOnline() {
+    return motorYaw->isMotorOnline();
+}
 }  // namespace subsystems  
