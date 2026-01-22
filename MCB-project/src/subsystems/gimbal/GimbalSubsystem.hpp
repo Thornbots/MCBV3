@@ -50,6 +50,7 @@ private:  // Private Variables
     std::uniform_int_distribution<int> distPitch;
 
     float prevTargetPitch = 0;
+    bool wasYawMotorOffline = true;
 
 public:  // Public Methods
     GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* yaw, tap::motor::DjiMotor* pitch);

@@ -23,6 +23,9 @@ void GimbalSubsystem::initialize() {
     drivers->commandScheduler.registerSubsystem(this);
 }
 void GimbalSubsystem::refresh() {
+    if (isYawMotorOnline() && wasYawMotorOffline) {
+        targetYawAngleWorld = yawAngleRelativeWorld;
+    }
 
     yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
 
@@ -39,6 +42,12 @@ void GimbalSubsystem::refresh() {
     updatePositionHistory(yawAngleRelativeWorld);
     motorPitch->setDesiredOutput(pitchMotorVoltage);
     motorYaw->setDesiredOutput(yawMotorVoltage);
+
+    if (isYawMotorOnline()) {
+        wasYawMotorOffline = false;
+    } else {
+        wasYawMotorOffline = true;
+    }
 }
 
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
