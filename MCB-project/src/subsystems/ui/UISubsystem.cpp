@@ -207,15 +207,12 @@ bool UISubsystem::run() { //run has to do with prototheads
         graphicsIndex = 0;
     }
 
-
-
     //if we sent something, wait for it so we don't lose packets
     if(numToSend>0)
         PT_WAIT_UNTIL(delayTimeout.execute());
 
     // start the whole thing over
     PT_END();
-    restart(); //TODO: see if this is necessary
 }
 
 // This is required for the UISubsystem to have anything to draw.
@@ -232,6 +229,9 @@ void UISubsystem::setTopLevelContainer(GraphicsContainer* container) {
     for (innerGraphicsIndex = 0; innerGraphicsIndex < NUM_LAYERS; innerGraphicsIndex++) {
         layersState[innerGraphicsIndex]=LayerState::NEEDS_CLEARED;
     }
+    
+    // prevent sending some, then clearing, and resending
+    restart();
 }
 
 

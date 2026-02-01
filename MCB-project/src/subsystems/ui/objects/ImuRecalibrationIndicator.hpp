@@ -20,10 +20,13 @@ public:
             drivers->recal.forceCalibration();
             ignoreKeyPresses = true;
             line1.setString("Forcing recal");
-            line2.setString("");
+            line1.show();
+            line2.hide();
         }
 
         if(drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_FIRST_CALIBRATION && isInPrematch()){
+            line1.show();
+            line2.show();
             line1.setString("CTRL+R to schedule");
             line2.setString("imu recalibration");
             line1.color = colorUnscheduled;
@@ -35,6 +38,8 @@ public:
                 update();
             }
         } else if(drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::SECOND_CALIBRATION_REQUESTED && isInPrematch()){
+            line1.show();
+            line2.show();
             line1.setString("Imu recal scheduled");
             line2.setString("R to cancel");
             line1.color = colorScheduled;
@@ -46,16 +51,20 @@ public:
                 update();
             }
         } else if (drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::SECOND_CALIBRATION_WAITING_TO_START) {
+            line1.show();
+            line2.show();
             line1.setString("Waiting for robot");
             line2.setString("to settle");
             line1.color = colorWaiting;
             line2.color = colorWaiting;
         } else if (drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::SECOND_CALIBRATION_JUST_BEFORE_START) {
-            line1.setString("Recalibrating. Robot");
-            line2.setString("might move on startup!");
+            line1.show();
+            line2.hide();
+            line1.setString("Recalibrating");
             line1.color = colorRecalibrating;
-            line2.color = colorRecalibrating;
         } else if (drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_SECOND_CALIBRATION && !(drivers->refSerial.getRefSerialReceivingData() && drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::COUNTDOWN)) {
+            line1.show();
+            line2.show();
             line1.setString("Done Recalibrating");
             line2.setString("Good Luck");
             line1.color = colorDoneRecalibrating;

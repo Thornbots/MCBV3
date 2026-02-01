@@ -8,7 +8,7 @@ using namespace subsystems;
 
 class AtomicGraphicsObject : public GraphicsObject {
 public:
-    AtomicGraphicsObject(RefSerialData::Tx::GraphicColor color) : color(color) { UISubsystem::formatGraphicName(graphicNameArray, UISubsystem::getUnusedGraphicName()); }
+    AtomicGraphicsObject(RefSerialData::Tx::GraphicColor color) : color(color), graphicName(UISubsystem::getUnusedGraphicName()) {}
 
     /*
      * Inheriting simple objects should keep track of what they drew
@@ -27,9 +27,10 @@ public:
     virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) = 0;
 
     void configGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
+        uint8_t graphicNameArray[3];
         RefSerialTransmitter::configGraphicGenerics(
             graphicData,
-            graphicNameArray,
+            UISubsystem::formatGraphicName(graphicNameArray, graphicName),
             getNextOperation(),
             layer<0 ? 0 : layer, //UISubsystem::getUnusedLayer might return -1 when there aren't any unused layers,
             // if someone doesn't check if it did this protects trying to send -1 to the server
@@ -67,7 +68,23 @@ public:
     void markToDraw() final {
         markedToDraw = true;
     }
-
+    
+    // assumes that one is removing, one is showing
+    void swapWith(GraphicsObject* o) final {
+        AtomicGraphicsObject* other = (AtomicGraphicsObject*) o;
+        
+        if((this->isHidden && !this->wasHidden && !other->isHidden && other->wasHidden)||// I'm removing, other is adding
+           (!this->isHidden && this->wasHidden && other->isHidden && !other->wasHidden)){// I'm adding, other is removing
+            std::swap(this->graphicName, other->graphicName); //swap id's
+            std::swap(this->wasHidden, other->wasHidden); //swap what we think we were
+            // so now the one who was removing thinks they are removed
+            // so now the one who was adding thinks they are added
+            
+            // uisubsystem already knows about both of these objects because it called swap
+            // so it should know who to send, and they will use GRAPHIC_MODIFY to update
+        }
+    }
+    
 private:
     RefSerialData::Tx::GraphicOperation getNextOperation() {
         if(isHidden){
@@ -85,7 +102,7 @@ protected:
     bool wasHidden = true;
     bool markedToDraw = false;
 
-    uint8_t graphicNameArray[3];
+    uint32_t graphicName;
     int8_t layer = 0;
 
 private:
