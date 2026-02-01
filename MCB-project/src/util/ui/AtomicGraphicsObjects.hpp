@@ -390,6 +390,7 @@ protected:
     }
 
     // assumes 1.2 will be shown 1.200; 4 as 4.000; and 1.11111 as 1.111, need to test
+    // screen recording showed 0.12 not 0.120
     uint16_t floatLen(float n) {
         if (n >= 0 && n < 1) return 5;
         if (n < 0) return 1 + floatLen(-n);

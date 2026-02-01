@@ -50,15 +50,6 @@ public:
     virtual void resetIteration() = 0;
 
     /*
-     * For facilitating flattening of containers of containers. Simple
-     * objects have a size of 1, and containers call size() on each
-     * of their objects.
-     *
-     * Might not be needed.
-     */
-    virtual int size() = 0;
-
-    /*
      * Containers do nothing, AtomicGraphicsObject's fill the graphic data
      */
     virtual void configGraphicData(RefSerialData::Tx::GraphicData*) {}

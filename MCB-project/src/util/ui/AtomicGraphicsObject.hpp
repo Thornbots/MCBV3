@@ -24,10 +24,6 @@ public:
         return nullptr;
     }
 
-    int size() final {
-        return 1;  // container of one object
-    }
-
     virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) = 0;
 
     void configGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {

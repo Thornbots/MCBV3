@@ -24,15 +24,6 @@ public:
         return r;
     }
 
-    // not just objects.size() because containers can contain other containers
-    int size() final {
-        int r = 0;
-        for (GraphicsObject* p : objects) {
-            r += p->size();
-        }
-        return r;
-    }
-
     void resetIteration() final {
         countIndex = 0;
         for (GraphicsObject* p : objects) {
