@@ -12,10 +12,10 @@ namespace commands
 using subsystems::IndexerSubsystem;
 using tap::communication::serial::Remote;
 
-class IndexerUnjamCommand : public tap::control::Command
+class IndexerIdleCommand : public tap::control::Command
 {
 public:
-    IndexerUnjamCommand(src::Drivers* drivers, IndexerSubsystem* indexer)
+    IndexerIdleCommand(src::Drivers* drivers, IndexerSubsystem* indexer)
         : drivers(drivers),
           indexer(indexer)
     {
@@ -24,15 +24,15 @@ public:
 
     void initialize() override {};
 
-    void execute() override { indexer->manualUnjam();}
-
-    void end(bool) override { 
-        // default command would tell this to stop
+    void execute() override {    
+        indexer->idle();
     }
 
-    bool isFinished() const override {return !drivers->remote.isConnected(); }
+    void end(bool) override {};
 
-    const char* getName() const override { return "indexer unjam command"; }
+    bool isFinished() const override {return false;}
+
+    const char* getName() const override { return "indexer idle command"; }
 
 private:
     src::Drivers* drivers;

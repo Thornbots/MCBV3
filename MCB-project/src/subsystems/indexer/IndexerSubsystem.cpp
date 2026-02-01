@@ -1,139 +1,112 @@
 #include "IndexerSubsystem.hpp"
+#include <cmath>
+#include "IndexerSubsystemConstants.hpp"
 
 namespace subsystems {
 using namespace tap::communication::serial;
 
-IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming)
-    : IndexerSubsystem(drivers, index, doHoming, ShotCounter::BarrelType::TURRET_17MM_EITHER){}
-
-IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, ShotCounter::BarrelType barrel)
-    : IndexerSubsystem(drivers, index, doHoming, barrel, REV_PER_BALL) {}
-
-IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, ShotCounter::BarrelType barrel, float revPerBall)
+IndexerSubsystem::IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index)
     : tap::control::Subsystem(drivers),
     drivers(drivers),
-    motorIndexer(index),
-    indexPIDController(PID_CONF_INDEX),
-    counter(drivers, barrel, index),
-    revPerBall(revPerBall),
-    homingState(doHoming ? HomingState::NEED_TO_HOME : HomingState::DONT_HOME)
+    motorIndexer(index)
     {}
 
 void IndexerSubsystem::initialize() {
-    motorIndexer->initialize();
     drivers->commandScheduler.registerSubsystem(this);
-
+    timer.stop();
+    
+    finishInitialize(); //initialize motors and any other things Single and Hero want to do
 }
 
 void IndexerSubsystem::refresh() {
-    if(homingState>=HomingState::HOMED&&!motorIndexer->isMotorOnline()){ //homed or gave up homing and the motor is offline
-        homingState = HomingState::NEED_TO_HOME;
+    
+    // check if indexAtRate or indexNShotsAtRate should call tryShootOnce
+    if(timer.execute()) {
+        tryShootOnce();                                //shoot
+        if(numShotsRemaining>0) numShotsRemaining--;   //count it if we should (if -1 then we don't count it)
+        if(numShotsRemaining==0) stopIndexingAtRate(); //if it is now zero, stop
     }
-    if(homingState==HomingState::NEED_TO_HOME && motorIndexer->isMotorOnline() && drivers->recal.getIsImuReady()){
-        homingState=HomingState::HOMING;
-        timeoutHome.restart(1000*HOMING_TIMEOUT);
-    }
-    if (homingState==HomingState::HOMING) {
-        homeIndexer();
-    }
-    // if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower&RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER)
-    motorIndexer->setDesiredOutput(indexerVoltage);
+    
+    finishRefresh();
 }
 
 
-bool IndexerSubsystem::doAutoUnjam(float inputBallsPerSecond) {
-    //if unjamming
-    if(isAutoUnjamming){
-        if(timeoutUnjam.isExpired()){
-            timeoutUnjam.stop();
-            isAutoUnjamming = false;
-        } else if (inputBallsPerSecond > 0) {
-            //prevent infinite recursion, unjam calls indexAtRate with a negative number
-            IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
-            return true;
-        }
+bool IndexerSubsystem::indexAtRate(float inputShotsPerSecond) {
+    if(inputShotsPerSecond<=0){
+        stopIndexingAtRate();
+        return false;
     }
-
-    //if we are here, isAutoUnjamming is false or inputBallsPerSecond<=0
-    //if we are slow and trying to go forward
-    if(inputBallsPerSecond > 0 && getActualBallsPerSecond()<AUTO_UNJAM_BALLS_PER_SEC_THRESH){
-        if(timeoutUnjam.isStopped()){
-            timeoutUnjam.restart(AUTO_UNJAM_TIME_UNDER_THRESH*1000);
-        }
-
-        if(timeoutUnjam.isExpired()){
-            isAutoUnjamming = true;
-            timeoutUnjam.restart(AUTO_UNJAM_TIME_UNJAMMING*1000);
-            IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
-            return true;
-        }
+    
+    isManualUnjamming = false;
+    isStopped = false;
+    bool shootImmediately = isDoneIndexingAtRate();
+    
+    // just now indexing at rate, shoot once now
+    if(shootImmediately){
+        tryShootOnce();
     }
-
-    //for stopIndex
-    if(inputBallsPerSecond==0){
-        timeoutUnjam.stop();
-        isAutoUnjamming = false;
+    
+    // maybe this gets called repeatedly while someone is trying index.
+    // so shouldn't do anything to the timer if there wasn't a change
+    if(shotsPerSecond!=inputShotsPerSecond) {
+        // set timer, shoot on execute
+        timer.restart(1000/inputShotsPerSecond);
     }
-
-    return false;
+    shotsPerSecond=inputShotsPerSecond;
+    numShotsRemaining = -1;
+    return shootImmediately;
 }
 
-float IndexerSubsystem::indexAtRate(float inputBallsPerSecond) {
-    // if(homingState==HomingState::HOMING) return 0; //ignore if we are homing
-
-    if(doAutoUnjam(inputBallsPerSecond)) return UNJAM_BALL_PER_SECOND;
-
-    this->ballsPerSecond = counter.getAllowableIndexRate(inputBallsPerSecond);
-    setTargetMotorRPM(this->ballsPerSecond * 60.0f * revPerBall);
-    return this->ballsPerSecond;
+bool IndexerSubsystem::indexNShotsAtRate(float inputShotsPerSecond, int numShots) {
+    if(numShots<=0){
+        stopIndexingAtRate();
+        return false;
+    } 
+    bool shotImmediately = indexAtRate(inputShotsPerSecond);
+    numShotsRemaining = numShots;
+    if(shotImmediately) 
+        numShotsRemaining--; //if shot one, count it
+        
+    // if they only wanted to shoot one singular shot and we shot it now
+    if(numShotsRemaining==0) stopIndexingAtRate();
+            
+    return shotImmediately;
 }
 
-void IndexerSubsystem::indexAtMaxRate(){
-    // if(homingState==HomingState::HOMING) return; //ignore if we are homing
 
-    setTargetMotorRPM(MAX_INDEX_RPM);
+void IndexerSubsystem::stopIndexingAtRate() {
+    shotsPerSecond = 0;
+    numShotsRemaining = 0;
+    timer.stop();
+    isManualUnjamming = false;
+}
+
+bool IndexerSubsystem::isDoneIndexingAtRate() {
+    return timer.isStopped();
 }
 
 void IndexerSubsystem::stopIndex() {
-    // do we set homing state to give up?
-
-    indexAtRate(0);
+    stopIndexingAtRate();
+    isStopped = true;
+    // maybe something else too
+    finishStopIndex();
 }
 
-void IndexerSubsystem::unjam(){
-    indexAtRate(UNJAM_BALL_PER_SECOND);
-}
-//first 1800 degrees until first shot
-//need to tell it to go max speed until we get to 1800 degrees from where we started
-//so the first shot goes out asap
-
-void IndexerSubsystem::setTargetMotorRPM(int targetMotorRPM) {
-    indexPIDController.runControllerDerivateError(targetMotorRPM - motorIndexer->getShaftRPM(), 1);
-
-    indexerVoltage = static_cast<int32_t>(indexPIDController.getOutput());
+void IndexerSubsystem::idle() {
+    stopIndexingAtRate();
+    isStopped = false;
 }
 
-// converts delta motor ticks to num balls shot using constants
-float IndexerSubsystem::getNumBallsShot() {
-    return counter.getRecentNumBallsShot();
+
+void IndexerSubsystem::manualUnjam() {
+    stopIndexingAtRate();
+    isStopped = false;
+    isManualUnjamming = true;
 }
 
-float IndexerSubsystem::getTotalNumBallsShot() {
-    return counter.getTotalNumBallsShot();
-}
 
-void IndexerSubsystem::resetBallsCounter() {
-    counter.resetRecentBallsCounter();
-}
 
-float IndexerSubsystem::getBallsPerSecond() {
-    return ballsPerSecond;
-}
-
-float IndexerSubsystem::getActualBallsPerSecond() {
-    return motorIndexer->getShaftRPM() / (60.0f * revPerBall);
-}
-
+// Hero overrides
 bool IndexerSubsystem::isProjectileAtBeam() {
     return true;
 }
@@ -142,15 +115,50 @@ bool IndexerSubsystem::isIndexOnline() {
     return motorIndexer->isMotorOnline();
 }
 
-void IndexerSubsystem::homeIndexer() {
-    indexerVoltage = -2000; //make this a constant probably
-    if (abs(motorIndexer->getTorque()) > 2000) { //same for this
-        homingState = HomingState::HOMED;
-        motorIndexer->resetEncoderValue();
-    };
-    if(timeoutHome.isExpired()){
-        homingState = HomingState::GAVE_UP_HOMING;
+bool IndexerSubsystem::refPoweringIndex() {
+    return !drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower.any(RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER);
+}
+
+
+bool IndexerSubsystem::canShoot() {
+    // return true;
+    return isIndexOnline() && refPoweringIndex() && heatAllowsShooting() && isProjectileAtBeam() && tap::arch::clock::getTimeMilliseconds()-lastShotTime>=MIN_SHOT_FREQ;
+}
+
+void IndexerSubsystem::justShot() {
+    lastShotTime = tap::arch::clock::getTimeMilliseconds();
+}
+    
+int IndexerSubsystem::getMeasurement() {
+    return motorIndexer->getTorque();
+}
+
+bool IndexerSubsystem::autoUnjamTrigger(tap::motor::DjiMotor* unjamMotor) {
+    return unjamMotor->getTorque()>AUTO_UNJAM_TORQUE_THRES;
+}
+
+void IndexerSubsystem::doAutoUnjam(tap::motor::DjiMotor* unjamMotor, tap::arch::MilliTimeout& timeoutUnjam, bool& isAutoUnjamming) {
+    //if unjamming
+    if(isAutoUnjamming){
+        if(timeoutUnjam.isExpired()){
+            timeoutUnjam.stop();
+            isAutoUnjamming = false;
+        }
+    }
+
+    //if we are here, isAutoUnjamming is false or inputBallsPerSecond<=0
+    //if we are slow and trying to go forward
+    if(autoUnjamTrigger(unjamMotor)){
+        if(timeoutUnjam.isStopped()){
+            timeoutUnjam.restart(AUTO_UNJAM_TIME_UNDER_THRESH*1000);
+        }
+
+        if(timeoutUnjam.isExpired()){
+            isAutoUnjamming = true;
+            timeoutUnjam.restart(AUTO_UNJAM_TIME_UNJAMMING*1000);
+            IndexerSubsystem::indexAtRate(UNJAM_BALL_PER_SECOND);
+        }
     }
 }
 
-} //namespace subsystems
+} //namespace subsystems 

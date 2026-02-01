@@ -53,17 +53,16 @@ void DrivetrainDriveCommand::execute() {
     else if(drivetrain->linearVelocityMultiplierTimes100<MIN_LINEAR_VELOCITY_TIMES_100) 
         drivetrain->linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100;
 
-    if (driveMode == DriveMode::BEYBLADE) {
+    if (driveMode == DriveMode::NO_SPIN || !gimbal->isYawMotorOnline()) {
+        autoBoost = false;
+        r = 0;
+        x *= MAX_NOSPIN_LINEAR_VELOCITY_TIMES_100 / 100.0f;
+        y *= MAX_NOSPIN_LINEAR_VELOCITY_TIMES_100 / 100.0f;
+    } else if (driveMode == DriveMode::BEYBLADE) {
         autoBoost = true;
         r = 12.0f * SPIN_DIRECTION;
         x *= drivetrain->linearVelocityMultiplierTimes100 / 100.0f;
         y *= drivetrain->linearVelocityMultiplierTimes100 / 100.0f;
-    } else if (driveMode == DriveMode::NO_SPIN) {
-        autoBoost = false;
-        r = 0;
-
-        x *= MAX_NOSPIN_LINEAR_VELOCITY_TIMES_100 / 100.0f;
-        y *= MAX_NOSPIN_LINEAR_VELOCITY_TIMES_100 / 100.0f;
     } else {
         autoBoost = false;
         x *= MAX_LINEAR_SPEED;

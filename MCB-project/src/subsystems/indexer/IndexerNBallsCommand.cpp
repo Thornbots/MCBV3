@@ -4,28 +4,25 @@ namespace commands
 {
 
 void IndexerNBallsCommand::initialize() {
-    indexer->resetBallsCounter();
+    target = indexer->getTotalNumBallsShot()+numBalls;
+    if(numBalls<0){
+        indexer->indexAtRate(ballsPerSecond);
+    } else {
+        indexer->indexNShotsAtRate(ballsPerSecond, numBalls);
+    }
 }
+
 void IndexerNBallsCommand::execute()
 {
-    if (indexer->getNumBallsShot() < INITIAL_BURST_NUM_BALLS) { //make first shot fast, but don't make second fast
-        indexer->indexAtMaxRate();
-    } else {
-        indexer->indexAtRate(ballsPerSecond);
-    }
 }
 
 void IndexerNBallsCommand::end(bool) {
-    indexer->stopIndex();
+    indexer->stopIndexingAtRate();
 }
 
 bool IndexerNBallsCommand::isFinished(void) const {
-    if(!drivers->remote.isConnected()) return true;
+    if(!drivers->remote.isConnected() || !indexer->refPoweringIndex()) return true;
 
-    if (numBalls < 0) {
-        return false;
-    }
-
-    return indexer->getNumBallsShot() >= numBalls;
+    return target == indexer->getTotalNumBallsShot();
 }
 }  // namespace commands

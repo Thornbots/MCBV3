@@ -66,7 +66,7 @@ private: // draw settings
 
 public:
 
-    Reticle(GimbalSubsystem* gimbal, IndexerSubsystem* index) : gimbal(gimbal), index(index) {
+    Reticle(tap::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* index) : drivers(drivers), gimbal(gimbal), index(index) {
         for (int i = 0; i < NUM_THINGS; i++) {
             rects[i].color = COLORS[i%NUM_COLORS];
             rectsContainer.addGraphicsObject(rects + i);
@@ -85,6 +85,7 @@ public:
     }
 
     void update() {
+        
         float pitch = gimbal->getPitchEncoderValue();
 
         ReticleSidedMode adjustedSidedMode = drawMode == ReticleDrawMode::TRAPEZOIDS ? ReticleSidedMode::BOTH : sidedMode;
@@ -101,19 +102,22 @@ public:
             canShoot=false;
         }
 
+        if(!index->heatAllowsShooting()) {
+            verticalLine.color = UISubsystem::Color::WHITE;
+            canShoot=false;
+        }
+
 
         verticalLine.x1 = UISubsystem::HALF_SCREEN_WIDTH;
         verticalLine.x2 = UISubsystem::HALF_SCREEN_WIDTH;
         if(canShoot){
-            verticalLine.color = UISubsystem::Color::WHITE;
+            verticalLine.color = index->refPoweringIndex() ? UISubsystem::Color::WHITE : UISubsystem::Color::PINK;
             verticalLine.thickness = 1;
         } else {
             verticalLine.thickness = 10;
             verticalLine.x1+=DIAGONAL_OFFSET;
             verticalLine.x2-=DIAGONAL_OFFSET;
         }
-
-
 
         solvedForPitchLandingSpotThisCycle = false;
         for (int i = 0; i < NUM_THINGS; i++) {
@@ -198,6 +202,7 @@ public:
     }
 
 private:
+    tap::Drivers* drivers;
     GimbalSubsystem* gimbal;
     IndexerSubsystem* index;
 
@@ -220,6 +225,7 @@ private:
     Line lines[NUM_THINGS][NUM_LINES];   // not all are used in every mode
     UnfilledRectangle rects[NUM_THINGS];
     Line verticalLine;
+
 
     // for solving for pitch
     static constexpr int MAX_NUM_ITERATIONS = 10;  // it is difficult to actually solve for pitch because initial launch positions depend on pitch

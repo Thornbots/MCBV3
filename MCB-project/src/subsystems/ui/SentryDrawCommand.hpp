@@ -7,7 +7,6 @@
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
 #include "subsystems/indexer/IndexerSubsystem.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
-#include "subsystems/servo/ServoSubsystem.hpp"
 
 #include "util/ui/GraphicsContainer.hpp"
 #include "objects/ChassisOrientationIndicator.hpp"
@@ -27,23 +26,21 @@
 namespace commands {
 using subsystems::UISubsystem;
 
-class InfantryDrawCommand : public tap::control::Command, GraphicsContainer {
+class SentryDrawCommand : public tap::control::Command, GraphicsContainer {
 public:
-    InfantryDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain, ServoSubsystem* servo)
+    SentryDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain)
         : drivers(drivers),
           ui(ui),
           gimbal(gimbal),
           flywheel(flywheel),
           indexer(indexer),
-          drivetrain(drivetrain),
-          servo(servo) {
+          drivetrain(drivetrain) {
         addSubsystemRequirement(ui);
 
         addGraphicsObject(&lane);
         addGraphicsObject(&supercap);
         addGraphicsObject(&orient);
         addGraphicsObject(&peek);
-        addGraphicsObject(&lid);
         addGraphicsObject(&reticle);
         addGraphicsObject(&ring);
         addGraphicsObject(&remain);
@@ -60,7 +57,6 @@ public:
         supercap.update();
         orient.update();
         peek.update();
-        lid.update();
         reticle.update();
         ring.update();
         remain.update();
@@ -76,7 +72,7 @@ public:
 
     bool isFinished() const override { return false; };  // never done drawing ui
 
-    const char* getName() const override { return "infantry ui draw command"; }
+    const char* getName() const override { return "sentry ui draw command"; }
 
 private:
     src::Drivers* drivers;
@@ -85,14 +81,12 @@ private:
     FlywheelSubsystem* flywheel;
     IndexerSubsystem* indexer;
     DrivetrainSubsystem* drivetrain;
-    ServoSubsystem* servo;
 
     // add top level graphics objects here and in the constructor
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
     ChassisOrientationIndicator orient{true, drivers, gimbal, drivetrain};
     PeekingLines peek{drivetrain, gimbal};
-    HopperLidIndicator lid{servo};
     Reticle reticle{drivers, gimbal, indexer};
     HitRing ring{drivers, gimbal};
     PredictedRemainingShotsIndicator remain{drivers, indexer};
