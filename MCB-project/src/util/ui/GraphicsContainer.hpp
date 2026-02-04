@@ -4,30 +4,42 @@
 
 #include "util/ui/GraphicsObject.hpp"
 
+
+// name is expected to be one of:
+// getNextBasic
+// getNextBasicRemove
+// getNextBasicAdd
+// getNextText
+// note that it is possible for the loop to not execute any times if countIndex==objects.size(), allowing the container above this one to check the container after this one
+#define GET_NEXT_GENERIC(name)  \
+        GraphicsObject* getNext##name() final { \
+            GraphicsObject* r = nullptr; \
+            for (; index_getNext##name < objects.size(); index_getNext##name ++) { \
+                if (r) break; \
+                r = objects.at(index_getNext##name)->getNext##name(); \
+                if(r) index_getNext##name--; \
+            } \
+            return r; \
+        }
+
 class GraphicsContainer : public GraphicsObject {
 public:
 
-    GraphicsObject* getNext() final {
-        GraphicsObject* r = nullptr;
+    GET_NEXT_GENERIC(Basic)
+    GET_NEXT_GENERIC(BasicRemove)
+    GET_NEXT_GENERIC(BasicAdd)
+    GET_NEXT_GENERIC(Text)
 
-        // note that it is possible to skip this loop entirely if countIndex==objects.size(),
-        // allowing the container above this one to check the container after this one
-        // no int i = something, so start with semicolon
-        for (; countIndex < objects.size(); countIndex++) {
-            if (r) break; //if we have something, don't ask for a new thing
-            r = objects.at(countIndex)->getNext();
-            if(r) countIndex--; //if the container returned something, it might return more
-        }
-
-        // we found something in the loop: return it
-        // we didn't find something in the loop: return nullptr, unchanged through the loop
-        return r;
-    }
-
-    void resetIteration() final {
-        countIndex = 0;
+    void resetTextIteration() final {
+        GraphicsObject::resetTextIteration();
         for (GraphicsObject* p : objects) {
-            p->resetIteration();
+            p->resetTextIteration();
+        }
+    }
+    void resetBasicIteration() final {
+        GraphicsObject::resetBasicIteration();
+        for (GraphicsObject* p : objects) {
+            p->resetBasicIteration();
         }
     }
 

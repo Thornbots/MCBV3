@@ -516,6 +516,7 @@ public:
         calculateNumbers();
     }
 
+    // when adding or updating, send as character message
     void configCharacterData(RefSerialData::Tx::GraphicCharacterMessage* characterData) final {
         setLen(stringLen(string));
         calculateNumbers();
@@ -539,7 +540,7 @@ public:
     uint16_t thickness = 0;
     char string[STRING_SIZE];
 
-    bool isStringGraphic() final { return true; }
+    bool needsSentAsString() final { return !isHidden; }
 
 private:
     void setPrev() {

@@ -40,6 +40,7 @@ private:  // Private Variables
     int8_t numToSend = 0;
     int8_t layerToClear = 0;
     GraphicsObject* nextGraphicsObject = nullptr;
+    GraphicsObject* otherGraphicsObject = nullptr; //for swapping (id reuse)
     RefSerialData::Tx::DeleteGraphicLayerMessage messageDel; //only for RefSerialData::Tx::getWaitTimeAfterGraphicSendMs
     RefSerialData::Tx::Graphic1Message message1;
     RefSerialData::Tx::Graphic2Message message2;

@@ -16,9 +16,34 @@ public:
      * */
     virtual bool needsRedrawn() = 0;
 
-    GraphicsObject* getNext() final {
-        if (countIndex == 0 && !markedToDraw && (isHidden!=wasHidden || layer!=prevLayer || needsRedrawn())) {
-            countIndex = 1;
+    GraphicsObject* getNextBasic() final {
+        if(needsSentAsString()) return nullptr;
+        if (index_getNextBasic == 0 && !markedToDraw && (isHidden!=wasHidden || layer!=prevLayer || needsRedrawn())) {
+            index_getNextBasic = 1;
+            return this;
+        }
+        return nullptr;
+    }
+    GraphicsObject* getNextBasicRemove() final {
+        if(needsSentAsString() || !isRemoving()) return nullptr;
+        if (index_getNextBasicRemove == 0 && !markedToDraw && (isHidden!=wasHidden || layer!=prevLayer || needsRedrawn())) {
+            index_getNextBasicRemove = 1;
+            return this;
+        }
+        return nullptr;
+    }
+    GraphicsObject* getNextBasicAdd() final {
+        if(needsSentAsString() || !isAdding()) return nullptr;
+        if (index_getNextBasicAdd == 0 && !markedToDraw && (isHidden!=wasHidden || layer!=prevLayer || needsRedrawn())) {
+            index_getNextBasicAdd = 1;
+            return this;
+        }
+        return nullptr;
+    }
+    GraphicsObject* getNextText() final {
+        if(!needsSentAsString()) return nullptr;
+        if (index_getNextText == 0 && !markedToDraw && (isHidden!=wasHidden || layer!=prevLayer || needsRedrawn())) {
+            index_getNextText = 1;
             return this;
         }
         return nullptr;
@@ -39,8 +64,6 @@ public:
         prevLayer = layer;
         finishConfigGraphicData(graphicData);
     }
-
-    void resetIteration() final { countIndex = 0; }
 
     void layerHasBeenCleared(int8_t clearedLayer) final {
         if(clearedLayer==layer)
@@ -69,12 +92,21 @@ public:
         markedToDraw = true;
     }
     
-    // assumes that one is removing, one is showing
+    bool isAdding() final {
+        return !this->isHidden && this->wasHidden; //set to shown but wasn't previously
+    }
+    bool isRemoving() final {
+        return this->isHidden && !this->wasHidden; //set to hide but wasn't previously
+    }
+    
     void swapWith(GraphicsObject* o) final {
-        AtomicGraphicsObject* other = (AtomicGraphicsObject*) o;
         
-        if((this->isHidden && !this->wasHidden && !other->isHidden && other->wasHidden)||// I'm removing, other is adding
-           (!this->isHidden && this->wasHidden && other->isHidden && !other->wasHidden)){// I'm adding, other is removing
+        if((this->isRemoving() && other->isAdding())||
+           (this->isAdding() && other->isRemoving())){
+            //only AtomicGraphicsObject would ever be removing or adding
+            // containers never remove or add, so we can cast here
+            AtomicGraphicsObject* other = (AtomicGraphicsObject*) o; 
+            
             std::swap(this->graphicName, other->graphicName); //swap id's
             std::swap(this->wasHidden, other->wasHidden); //swap what we think we were
             // so now the one who was removing thinks they are removed
@@ -107,4 +139,5 @@ protected:
 
 private:
     int8_t prevLayer = -2;
+    u_int16_t countIndex = 0;
 };
