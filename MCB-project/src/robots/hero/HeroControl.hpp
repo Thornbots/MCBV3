@@ -162,7 +162,6 @@ public:
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
 
     // mappings
-    Trigger isInControllerModeTrigger{drivers, [this]() {return drivetrain.isInControllerMode;}};
 
     //shooting
     Trigger shootButton{drivers, Remote::Channel::WHEEL, -0.5};
@@ -190,22 +189,16 @@ public:
     Trigger joystickLook1{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::MID};
     Trigger joystickLook2{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::DOWN};
 
-    Trigger keyX{drivers, Remote::Key::X};
-    Trigger keyC{drivers, Remote::Key::C};
-    Trigger keyV{drivers, Remote::Key::V};
-    Trigger keyG{drivers, Remote::Key::G};
-    Trigger keyQ{drivers, Remote::Key::Q};
-    Trigger keyE{drivers, Remote::Key::E};
-    Trigger keyZ{drivers, Remote::Key::Z};
-    Trigger keyA{drivers, Remote::Key::A};
-    Trigger keyW{drivers, Remote::Key::W};
-    Trigger keyR{drivers, Remote::Key::R};
-    Trigger keyS{drivers, Remote::Key::S};
-    Trigger keyD{drivers, Remote::Key::D};
-    Trigger keyF{drivers, Remote::Key::F};
-    Trigger keyB{drivers, Remote::Key::B};
-    Trigger anyKey = keyX | keyC | keyV | keyG | keyQ | keyE | keyZ | keyA | keyW | keyR | keyS | keyD | keyF | keyB;
-    Trigger keyboardTakeControl = anyKey & isInControllerModeTrigger;
+    bool keyPressed(Remote::Key key) {
+        return drivers->remote.keyPressed(key);
+    }
+
+    Trigger keyboardTakeControl = Trigger{drivers, [this]() {
+        return (keyPressed(Remote::Key::Q) || keyPressed(Remote::Key::W) || keyPressed(Remote::Key::E) || keyPressed(Remote::Key::R) ||
+                keyPressed(Remote::Key::A) || keyPressed(Remote::Key::S) || keyPressed(Remote::Key::D) || keyPressed(Remote::Key::F) ||
+                keyPressed(Remote::Key::G) || keyPressed(Remote::Key::Z) || keyPressed(Remote::Key::X) || keyPressed(Remote::Key::C) ||
+                keyPressed(Remote::Key::V) || keyPressed(Remote::Key::B) || drivers->remote.getMouseX() != 0 || drivers->remote.getMouseY() != 0) && drivetrain.isInControllerMode;
+    }};
 
     //keyboard driving
     // Trigger speedModeKey{drivers, Remote::Key::SHIFT}; //drivetrain drive command reads shift
