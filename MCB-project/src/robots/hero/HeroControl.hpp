@@ -59,6 +59,7 @@ public:
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
+        keyboardTakeControl.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
         // drivers->commandScheduler.addCommand(&draw);
    
         // drive commands and also enable mouse looking
@@ -161,6 +162,7 @@ public:
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
 
     // mappings
+    Trigger isInControllerModeTrigger{drivers, [this]() {return drivetrain.isInControllerMode;}};
 
     //shooting
     Trigger shootButton{drivers, Remote::Channel::WHEEL, -0.5};
@@ -188,6 +190,22 @@ public:
     Trigger joystickLook1{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::MID};
     Trigger joystickLook2{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::DOWN};
 
+    Trigger keyX{drivers, Remote::Key::X};
+    Trigger keyC{drivers, Remote::Key::C};
+    Trigger keyV{drivers, Remote::Key::V};
+    Trigger keyG{drivers, Remote::Key::G};
+    Trigger keyQ{drivers, Remote::Key::Q};
+    Trigger keyE{drivers, Remote::Key::E};
+    Trigger keyZ{drivers, Remote::Key::Z};
+    Trigger keyA{drivers, Remote::Key::A};
+    Trigger keyW{drivers, Remote::Key::W};
+    Trigger keyR{drivers, Remote::Key::R};
+    Trigger keyS{drivers, Remote::Key::S};
+    Trigger keyD{drivers, Remote::Key::D};
+    Trigger keyF{drivers, Remote::Key::F};
+    Trigger keyB{drivers, Remote::Key::B};
+    Trigger anyKey = keyX | keyC | keyV | keyG | keyQ | keyE | keyZ | keyA | keyW | keyR | keyS | keyD | keyF | keyB;
+    Trigger keyboardTakeControl = anyKey & isInControllerModeTrigger;
 
     //keyboard driving
     // Trigger speedModeKey{drivers, Remote::Key::SHIFT}; //drivetrain drive command reads shift
@@ -198,7 +216,7 @@ public:
 
     Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
-    Trigger* triggers[20] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &joystickLook0, &joystickLook1, &joystickLook2, &shootButton, &unjamButton, &unjamKey, &shootKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
+    Trigger* triggers[21] = {&keyboardTakeControl, &peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &joystickLook0, &joystickLook1, &joystickLook2, &shootButton, &unjamButton, &unjamKey, &shootKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
 private:
     bool wasControllerModeBeforeRecal;
 };

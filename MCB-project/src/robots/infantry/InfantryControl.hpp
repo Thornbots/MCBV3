@@ -87,7 +87,7 @@ public:
 
         joystickLook0.onTrue(&lookJoystick); //looks horizontal
         joystickLook1.onTrue(&lookJoystick); //looks horizontal
-        joystickLook2.onTrue(&lookJoystickOffset); //looks downward to fit in sizing box
+        joystickLook2.onTrue(&lookJoystickOffset);
 
         isStopped = false;
     }
