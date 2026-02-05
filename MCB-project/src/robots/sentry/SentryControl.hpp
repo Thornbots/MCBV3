@@ -18,6 +18,7 @@
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
+#include "subsystems/indexer/IndexerIdleCommand.hpp"
 #include "subsystems/odometry/OdometryStopCommand.hpp"
 #include "subsystems/jetson/AutoDriveCommand.hpp"
 #include "subsystems/odometry/OdometryPointForwardsCommand.hpp"
@@ -39,18 +40,18 @@ public:
         jetson.initialize();
 
         // Initialize subsystems
-        gimbal.initialize();
+        // gimbal.initialize();
         flywheel.initialize();
         indexer.initialize();
-        drivetrain.initialize();
+        // drivetrain.initialize();
         ui.initialize();
-        odo.initialize();
+        // odo.initialize();
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
         flywheel.setDefaultCommand(&shooterStop);
         drivetrain.setDefaultCommand(&stopDriveCommand);
-        indexer.setDefaultCommand(&indexerStop);
+        indexer.setDefaultCommand(&indexerIdle);
         odo.setDefaultCommand(&odoStop);
 
 
@@ -166,7 +167,7 @@ public:
     subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
-    subsystems::SingleIndexerSubsystem indexer{drivers, &hardware.indexMotor1};
+    subsystems::SingleIndexerSubsystem indexer{drivers, &hardware.indexMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::OdometrySubsystem odo{drivers, &hardware.odoMotor};
     subsystems::JetsonSubsystem jetson{drivers, &gimbal};
@@ -189,6 +190,7 @@ public:
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
 
     commands::IndexerStopCommand indexerStop{drivers, &indexer};
+    commands::IndexerIdleCommand indexerIdle{drivers, &indexer};
 
     commands::OdometryPointForwardsCommand odoPointForwards{drivers, &odo, &gimbal};
     commands::OdometryStopCommand odoStop{drivers, &odo};
