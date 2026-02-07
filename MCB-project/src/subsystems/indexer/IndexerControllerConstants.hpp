@@ -41,7 +41,7 @@ constexpr float CURRENT_MAX = 20;  // A
 
 #elif defined(SENTRY)
 constexpr float C = 0.0;  // kg-s/m^2
-constexpr float J = 0.0078;  // kg-m^2
+constexpr float J = 0.004;  // kg-m^2
 constexpr float UK = 0.0;  // N-m
 
 constexpr float KB = 0.4324;                                       // V-rad/s
@@ -49,15 +49,15 @@ constexpr float KT = 0.3125;                                       // N-m/A
 constexpr float RA = 0.906;                                        // ohm
 constexpr float RATIO = 1.0;                               // unitless
                                                                    // Position controller  constexprants
-constexpr float KP = 45;                                           // 10.5;  // sec^-1
-constexpr float THETA_DOT_BREAK = .4;                              // rad/s
-constexpr float A_DECEL = 0.33 * VOLT_MAX * KT * RATIO / (J * RA);  // experimental per Alex_Y
+constexpr float KP = 10;                                           // 10.5;  // sec^-1
+constexpr float THETA_DOT_BREAK = .1;                              // rad/s
+constexpr float A_DECEL = 0.2 * VOLT_MAX * KT * RATIO / (J * RA);  // experimental per Alex_Y
 
 // Feedforward  constexprants
-constexpr float A_SCALE = 0.9;  // 0.8            // unitless
+constexpr float A_SCALE = 1.0;  // 0.8            // unitless
 
 // Velocity feedback
-constexpr float KPV = 10;         // A-s/rad
+constexpr float KPV = 1000;         // A-s/rad
 constexpr float KIV = 0;          // A/rad
 constexpr float IV_MAX = 1; //3 / KIV;  //.2 / KIV;              // units TBD
 
