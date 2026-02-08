@@ -25,6 +25,7 @@
 #define TAPROOT_DRIVERS_HPP_
 
 #if defined(PLATFORM_HOSTED) && defined(ENV_UNIT_TESTS)
+#include "tap/architecture/profiler.hpp"
 #include "tap/mock/bmi088_mock.hpp"
 #include "tap/mock/can_mock.hpp"
 #include "tap/mock/can_rx_handler_mock.hpp"
@@ -38,6 +39,7 @@
 #include "tap/mock/uart_mock.hpp"
 #include "tap/mock/command_scheduler_mock.hpp"
 #else
+#include "tap/architecture/profiler.hpp"
 #include "tap/communication/can/can.hpp"
 #include "tap/communication/can/can_rx_handler.hpp"
 #include "tap/communication/gpio/digital.hpp"
@@ -64,7 +66,8 @@ public:
 protected:
 #endif
     Drivers()
-        : can(),
+        : profiler(this),
+          can(),
           canRxHandler(this),
           digital(),
           leds(),
@@ -83,6 +86,7 @@ protected:
           {}
 
 #if defined(PLATFORM_HOSTED) && defined(ENV_UNIT_TESTS)
+    arch::Profiler profiler;
     testing::NiceMock<mock::CanMock> can;
     testing::NiceMock<mock::CanRxHandlerMock> canRxHandler;
     testing::NiceMock<mock::DigitalMock> digital;
@@ -97,6 +101,7 @@ protected:
     testing::NiceMock<mock::CommandSchedulerMock> commandScheduler;
 #else
 public:
+    arch::Profiler profiler;
     can::Can can;
     can::CanRxHandler canRxHandler;
     gpio::Digital digital;
