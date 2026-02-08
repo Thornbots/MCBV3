@@ -101,8 +101,8 @@ public:
     
     void swapWith(GraphicsObject* o) final {
         
-        if((this->isRemoving() && other->isAdding())||
-           (this->isAdding() && other->isRemoving())){
+        if((this->isRemoving() && o->isAdding())||
+           (this->isAdding() && o->isRemoving())){
             //only AtomicGraphicsObject would ever be removing or adding
             // containers never remove or add, so we can cast here
             AtomicGraphicsObject* other = (AtomicGraphicsObject*) o; 

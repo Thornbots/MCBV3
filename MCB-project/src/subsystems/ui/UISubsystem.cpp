@@ -198,6 +198,39 @@ bool UISubsystem::run() { //run has to do with prototheads
             timesResetIteration++;
             continue;
         }
+        
+        // FIXME: makes things shakey. Not sure why.
+        // if(nextGraphicsObject->isAdding()){
+        //     otherGraphicsObject = topLevelContainer->getNextBasicRemove();
+        //     if(!otherGraphicsObject) {
+        //         topLevelContainer->resetBasicIteration();
+        //         timesResetIteration++;
+        //         otherGraphicsObject = topLevelContainer->getNextBasicRemove();
+        //         // could still be null
+        //     }
+            
+        //     if(otherGraphicsObject){
+        //         otherGraphicsObject->markToDraw();
+        //         nextGraphicsObject->swapWith(otherGraphicsObject);
+        //     }
+        // }
+        //  else 
+        // if(nextGraphicsObject->isRemoving()){
+        //     otherGraphicsObject = topLevelContainer->getNextBasicAdd();
+        //     if(!otherGraphicsObject) {
+        //         topLevelContainer->resetBasicIteration();
+        //         timesResetIteration++;
+        //         otherGraphicsObject = topLevelContainer->getNextBasicAdd();
+        //         // could still be null
+        //     }
+            
+        //     if(otherGraphicsObject){
+        //         nextGraphicsObject->swapWith(otherGraphicsObject);
+        //         nextGraphicsObject->markToDraw();
+        //         nextGraphicsObject = otherGraphicsObject;
+        //     }
+        //     // nextGraphicsObject now doesn't want to do anything, we need to use otherGraphicsObject
+        // }
 
         // because getNextBasic, it isn't a string, add it to the array and see if it is full
         nextGraphicsObject->markToDraw(); //mark the object as 'to draw' to prevent it from being gotten again from the topLevelContainer after resetIteration
@@ -207,6 +240,7 @@ bool UISubsystem::run() { //run has to do with prototheads
 
 
     numToSend = graphicsIndex;
+    // numToSend=0; //temp
     if(numToSend==3 || numToSend==4){
         //can't send 3, will send 2 and save 1 for later
         //can't send 4, will send 2 and save 2 for later

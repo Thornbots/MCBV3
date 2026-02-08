@@ -92,7 +92,7 @@ public:
     virtual void resetDrawMarks() = 0;
     virtual void markToDraw() {}; //only applies to objects, marking a container to draw doesn't make sense
     
-    virtual void swapWith(GraphicsObject* other) {}; //only applies to objects: one is adding, other is removing
+    virtual void swapWith(GraphicsObject*) {}; //only applies to objects: one is adding, other is removing
     virtual bool isAdding() {return false;} //only applies to objects
     virtual bool isRemoving() {return false;} //only applies to objects
 
