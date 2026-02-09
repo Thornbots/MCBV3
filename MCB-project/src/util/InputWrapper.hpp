@@ -2,10 +2,13 @@
 
 #include "tap/drivers.hpp"
 #include "tap/communication/serial/remote.hpp"
+#include "util/trigger.hpp"
 
 using tap::communication::serial::Remote;
 
 namespace input {
+
+#define TRIGGER(name, function) Trigger name{drivers, [this]() {return drivers->inputWrapper.function();}}
 
 class InputWrapper {
     private:

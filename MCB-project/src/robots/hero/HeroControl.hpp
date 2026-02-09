@@ -23,13 +23,12 @@
 #include "subsystems/indexer/IndexerStopCommand.hpp"
 #include "subsystems/indexer/IndexerLoadCommand.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
-#include "util/trigger.hpp"
 
 #include "drivers.hpp"
 
-namespace robots {
+using namespace input;
 
-#define TRIGGER(name, function) Trigger name{drivers, [this]() {return drivers->inputWrapper.function();}}
+namespace robots {
 
 class HeroControl : public ControlInterface {
 public:
