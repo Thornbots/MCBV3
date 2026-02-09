@@ -22,6 +22,7 @@
 #define DRIVERS_HPP_
 
 #include "tap/drivers.hpp"
+#include "util/InputWrapper.hpp"
 
 #include "communication/I2CCommunication.hpp"
 #include "communication/UARTCommunication.hpp"
@@ -136,11 +137,12 @@ bool pendingScheduledRecalibration = false;
 
 class Drivers : public tap::Drivers {
 public:
-    Drivers() : tap::Drivers(), uart(this, tap::communication::serial::Uart::Uart1, true) {}
+    Drivers() : tap::Drivers(), uart(this, tap::communication::serial::Uart::Uart1, true), inputWrapper(this) {}
 
     communication::I2CCommunication i2c;
     communication::UARTCommunication uart;
     ImuRecalibration recal;
+    InputWrapper inputWrapper;
     
     void executeCalibration() {
         this->bmi088.requestCalibration();
