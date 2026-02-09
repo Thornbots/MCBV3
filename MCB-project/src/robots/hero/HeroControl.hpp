@@ -28,6 +28,9 @@
 #include "drivers.hpp"
 
 namespace robots {
+
+#define TRIGGER(name, function) Trigger name{drivers, [this]() {return drivers->inputWrapper.function();}}
+
 class HeroControl : public ControlInterface {
 public:
     // pass drivers back to root robotcontrol to store
@@ -164,47 +167,41 @@ public:
     // mappings
 
     //shooting
-    Trigger shootButton{drivers, Remote::Channel::WHEEL, -0.5};
-    Trigger unjamButton{drivers, Remote::Channel::WHEEL, 0.5};
-    Trigger unjamKey{drivers, Remote::Key::Z}; //or R if based
-    Trigger autoAimKey{drivers, MouseButton::RIGHT};
-    Trigger shootKey{drivers, MouseButton::LEFT};
+    TRIGGER(shootButton, isShootPressed);
+    TRIGGER(unjamButton, isUnjamPressed);
+    TRIGGER(unjamKey, isUnjamKeyPressed);
 
-    Trigger scrollUp{drivers, MouseScrollDirection::UP};
-    Trigger scrollDown{drivers, MouseScrollDirection::DOWN};
+    TRIGGER(autoAimKey, isAutoAimKeyPressed);
+    TRIGGER(shootKey, isShootKeyPressed);
+
+    TRIGGER(scrollUp, isScrollUp);
+    TRIGGER(scrollDown, isScrollDown);
 
     //toggle UI
-    Trigger toggleUIKey{drivers, Remote::Key::G};
+    TRIGGER(toggleUIKey, isToggleUIPressed);
 
     //peeking
-    Trigger peekLeftButton{drivers, Remote::Key::Q};
-    Trigger peekRightButton{drivers, Remote::Key::E};
+    TRIGGER(peekLeftButton, isPeekLeftPressed);
+    TRIGGER(peekRightButton, isPeekRightPressed);
 
     //controller driving
-    Trigger joystickDrive0{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};// = (Trigger(drivers, Remote::Key::Q) & Trigger(drivers, Remote::Key::E)) | Trigger(drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP);
-    Trigger joystickDrive1{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::MID};
-    Trigger joystickDrive2{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
+    TRIGGER(joystickDrive0, isRightSwitchUp);
+    TRIGGER(joystickDrive1, isRightSwitchMid);
+    TRIGGER(joystickDrive2, isRightSwitchDown);
 
-    Trigger joystickLook0{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
-    Trigger joystickLook1{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::MID};
-    Trigger joystickLook2{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::DOWN};
-
-    bool keyPressed(Remote::Key key) {
-        return drivers->remote.keyPressed(key);
-    }
+    TRIGGER(joystickLook0, isLeftSwitchUp);
+    TRIGGER(joystickLook1, isLeftSwitchMid);
+    TRIGGER(joystickLook2, isLeftSwitchDown);
 
     Trigger keyboardTakeControl = Trigger{drivers, [this]() {
-        return (keyPressed(Remote::Key::Q) || keyPressed(Remote::Key::W) || keyPressed(Remote::Key::E) || keyPressed(Remote::Key::R) ||
-                keyPressed(Remote::Key::A) || keyPressed(Remote::Key::S) || keyPressed(Remote::Key::D) || keyPressed(Remote::Key::F) ||
-                keyPressed(Remote::Key::G) || keyPressed(Remote::Key::Z) || keyPressed(Remote::Key::X) || keyPressed(Remote::Key::C) ||
-                keyPressed(Remote::Key::V) || keyPressed(Remote::Key::B) || drivers->remote.getMouseX() != 0 || drivers->remote.getMouseY() != 0) && drivetrain.isInControllerMode;
+        return (drivers->inputWrapper.isAnyKeyPressed() || drivers->remote.getMouseX() != 0 || drivers->remote.getMouseY() != 0) && drivetrain.isInControllerMode;
     }};
 
     //keyboard driving
     // Trigger speedModeKey{drivers, Remote::Key::SHIFT}; //drivetrain drive command reads shift
-    Trigger stopBeybladeKey{drivers, Remote::Key::X};
-    Trigger beybladeType1Key{drivers, Remote::Key::C}; //most beyblade, checked in DrivetrainDriveCommand
-    Trigger beybladeType2Key{drivers, Remote::Key::V}; //most translation, checked in DrivetrainDriveCommand
+    TRIGGER(stopBeybladeKey, isStopBeybladePressed);
+    TRIGGER(beybladeType1Key, isBeybladeSpinPressed); //most beyblade, checked in DrivetrainDriveCommand
+    TRIGGER(beybladeType2Key, isBeybladeMovePressed); //most translation, checked in DrivetrainDriveCommand
     Trigger startBeybladeKey = beybladeType1Key | beybladeType2Key | scrollUp | scrollDown;
 
     Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
