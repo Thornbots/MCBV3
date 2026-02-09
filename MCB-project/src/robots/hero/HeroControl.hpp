@@ -33,7 +33,7 @@ namespace robots {
 class HeroControl : public ControlInterface {
 public:
     // pass drivers back to root robotcontrol to store
-    HeroControl(src::Drivers *drivers) : drivers(drivers), hardware(HeroHardware{drivers}) {}
+    HeroControl(src::Drivers *drivers) : hardware(HeroHardware{drivers}), ControlInterface(drivers) {}
     // functions we are using
     void initialize() override {
         // Initialize subsystems
@@ -121,7 +121,6 @@ public:
 
     bool isStopped = true;
 
-    src::Drivers *drivers;
     HeroHardware hardware;
 
     // Subsystems
@@ -164,46 +163,9 @@ public:
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
 
     // mappings
-
-    //shooting
-    TRIGGER(shootButton, isShootPressed);
-    TRIGGER(unjamButton, isUnjamPressed);
-    TRIGGER(unjamKey, isUnjamKeyPressed);
-
-    TRIGGER(autoAimKey, isAutoAimKeyPressed);
-    TRIGGER(shootKey, isShootKeyPressed);
-
-    TRIGGER(scrollUp, isScrollUp);
-    TRIGGER(scrollDown, isScrollDown);
-
-    //toggle UI
-    TRIGGER(toggleUIKey, isToggleUIPressed);
-
-    //peeking
-    TRIGGER(peekLeftButton, isPeekLeftPressed);
-    TRIGGER(peekRightButton, isPeekRightPressed);
-
-    //controller driving
-    TRIGGER(joystickDrive0, isRightSwitchUp);
-    TRIGGER(joystickDrive1, isRightSwitchMid);
-    TRIGGER(joystickDrive2, isRightSwitchDown);
-
-    TRIGGER(joystickLook0, isLeftSwitchUp);
-    TRIGGER(joystickLook1, isLeftSwitchMid);
-    TRIGGER(joystickLook2, isLeftSwitchDown);
-
     Trigger keyboardTakeControl = Trigger{drivers, [this]() {
         return (drivers->inputWrapper.isAnyKeyPressed() || drivers->remote.getMouseX() != 0 || drivers->remote.getMouseY() != 0) && drivetrain.isInControllerMode;
     }};
-
-    //keyboard driving
-    // Trigger speedModeKey{drivers, Remote::Key::SHIFT}; //drivetrain drive command reads shift
-    TRIGGER(stopBeybladeKey, isStopBeybladePressed);
-    TRIGGER(beybladeType1Key, isBeybladeSpinPressed); //most beyblade, checked in DrivetrainDriveCommand
-    TRIGGER(beybladeType2Key, isBeybladeMovePressed); //most translation, checked in DrivetrainDriveCommand
-    Trigger startBeybladeKey = beybladeType1Key | beybladeType2Key | scrollUp | scrollDown;
-
-    Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
     Trigger* triggers[21] = {&keyboardTakeControl, &peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &joystickLook0, &joystickLook1, &joystickLook2, &shootButton, &unjamButton, &unjamKey, &shootKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
 private:
