@@ -142,7 +142,7 @@ public:
     communication::I2CCommunication i2c;
     communication::UARTCommunication uart;
     ImuRecalibration recal;
-    InputWrapper inputWrapper;
+    input::InputWrapper inputWrapper;
     
     void executeCalibration() {
         this->bmi088.requestCalibration();

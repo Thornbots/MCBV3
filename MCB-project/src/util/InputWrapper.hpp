@@ -1,29 +1,17 @@
 #pragma once
 
-#include "drivers.hpp"
+#include "tap/drivers.hpp"
 #include "tap/communication/serial/remote.hpp"
 
 using tap::communication::serial::Remote;
 
-namespace InputMappings {
-    Remote::Key forward = Remote::Key::W;
-    Remote::Key reverse = Remote::Key::S;
-    Remote::Key left = Remote::Key::A;
-    Remote::Key right = Remote::Key::D;
-    Remote::Key boost = Remote::Key::SHIFT;
-    Remote::Key beybladeSpin = Remote::Key::C;
-    Remote::Key beybladeMove = Remote::Key::V;
-
-    Remote::Channel driveX = Remote::Channel::LEFT_HORIZONTAL;
-    Remote::Channel driveY = Remote::Channel::LEFT_VERTICAL;
-}
-
+namespace input {
 class InputWrapper {
     private:
-    src::Drivers* drivers;
+    tap::Drivers* drivers;
 
     public:
-    InputWrapper(src::Drivers* drivers) : drivers(drivers){};
+    InputWrapper(tap::Drivers* drivers) : drivers(drivers) {}
 
     bool isKeyPressed(Remote::Key key) {
         return drivers->remote.keyPressed(key);
@@ -50,42 +38,43 @@ class InputWrapper {
     }
 
     bool isDriveForwardPressed() {
-        return isKeyPressed(InputMappings::forward);
+        return isKeyPressed(Remote::Key::W);
     }
 
     bool isDriveReversePressed() {
-        return isKeyPressed(InputMappings::reverse);
+        return isKeyPressed(Remote::Key::S);
     }
 
     bool isStrafeLeftPressed() {
-        return isKeyPressed(InputMappings::left);
+        return isKeyPressed(Remote::Key::A);
     }
 
     bool isStrafeRightPressed() {
-        return isKeyPressed(InputMappings::right);
+        return isKeyPressed(Remote::Key::D);
     }
 
     float getDriveXAxis() {
-        return getChannel(InputMappings::driveX);
+        return getChannel(Remote::Channel::LEFT_HORIZONTAL);
     }
 
     float getDriveYAxis() {
-        return getChannel(InputMappings::driveY);
+        return getChannel(Remote::Channel::LEFT_VERTICAL);
     }
 
     bool isBoostPressed() {
-        return isKeyPressed(InputMappings::boost);
+        return isKeyPressed(Remote::Key::SHIFT);
     }
 
     bool isBeybladeMovePressed() {
-        return isKeyPressed(InputMappings::beybladeMove);
+        return isKeyPressed(Remote::Key::V);
     }
 
     bool isBeybladeSpinPressed() {
-        return isKeyPressed(InputMappings::beybladeSpin);
+        return isKeyPressed(Remote::Key::C);
     }
 
     int16_t getMouseZ() {
         return drivers->remote.getMouseZ();
     }
 };
+}

@@ -21,24 +21,24 @@ void DrivetrainDriveCommand::execute() {
     float referenceAngle = gimbal->getYawEncoderValue();
 
     if (controlMode == ControlMode::KEYBOARD) {
-        x = drivers->remote.keyPressed(Remote::Key::D) - drivers->remote.keyPressed(Remote::Key::A);
-        y = drivers->remote.keyPressed(Remote::Key::W) - drivers->remote.keyPressed(Remote::Key::S);
-        boost = drivers->remote.keyPressed(Remote::Key::SHIFT);
+        x = drivers->inputWrapper.isStrafeRightPressed() - drivers->inputWrapper.isStrafeLeftPressed();
+        y = drivers->inputWrapper.isDriveForwardPressed() - drivers->inputWrapper.isDriveReversePressed();
+        boost = drivers->inputWrapper.isBoostPressed();
 
-        int scroll = signum(drivers->remote.getMouseZ()); //mouse z is in increments of 10, making it -1, 0, or 1
+        int scroll = signum(drivers->inputWrapper.getMouseZ()); //mouse z is in increments of 10, making it -1, 0, or 1
         if(oldScroll!=scroll)
             drivetrain->linearVelocityMultiplierTimes100 += scroll * LINEAR_VELOCITY_INCREMENT_TIMES_100;
         oldScroll = scroll;
 
-        if(drivers->remote.keyPressed(Remote::Key::V))
+        if(drivers->inputWrapper.isBeybladeSpinPressed())
             drivetrain->linearVelocityMultiplierTimes100 = MAX_LINEAR_VELOCITY_TIMES_100;
             
-        if(drivers->remote.keyPressed(Remote::Key::C))
+        if(drivers->inputWrapper.isBeybladeMovePressed())
             drivetrain->linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100;
             
     } else if (controlMode == ControlMode::CONTROLLER) {
-        x = drivers->remote.getChannel(Remote::Channel::LEFT_HORIZONTAL);
-        y = drivers->remote.getChannel(Remote::Channel::LEFT_VERTICAL);
+        x = drivers->inputWrapper.getDriveXAxis();
+        y = drivers->inputWrapper.getDriveYAxis();
     } else {
         drivetrain->stopMotors();
         return;
