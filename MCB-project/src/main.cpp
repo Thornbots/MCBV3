@@ -27,7 +27,7 @@ static void initializeIo(src::Drivers *drivers) {
 
     //things we need to check controller
     drivers->remote.initialize();
-    drivers->analog.init();
+    // drivers->analog.init(); //not sure if necessary, need to see if the robots don't work
     drivers->digital.init();
     drivers->leds.init();
 
@@ -49,7 +49,7 @@ static void initializeIo(src::Drivers *drivers) {
 
     drivers->pwm.init();
     drivers->can.initialize();
-    drivers->errorController.init();
+    // drivers->errorController.init(); //not sure if necessary, need to see if the robots don't work
     drivers->refSerial.initialize();
 
     drivers->i2c.initialize();
@@ -59,8 +59,8 @@ static void initializeIo(src::Drivers *drivers) {
 
 
     // drivers->terminalSerial.initialize(); //interferes with jetson because uses the same uart port. Previously believed to be necessary for ui to work, turns out it isn't
-    drivers->schedulerTerminalHandler.init();
-    drivers->djiMotorTerminalSerialHandler.init();
+    // drivers->schedulerTerminalHandler.init(); //not sure if necessary, need to see if the robots don't work
+    // drivers->djiMotorTerminalSerialHandler.init(); //not sure if necessary, need to see if the robots don't work
 
     drivers->leds.set(tap::gpio::Leds::Red, false);
     drivers->bmi088.initialize(1000, 0.0f, 0.000f);
