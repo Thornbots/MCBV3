@@ -140,9 +140,9 @@ void JetsonSubsystem::update(
     currentYawTest = cvYaw;
     currentPitchTest = current_pitch;
     // express the body-fixed velocities in the correct convention
-    bodyXangVel = -drivers->bmi088.getGx() * PI / 180;
-    bodyYangVel = -drivers->bmi088.getGy() * PI / 180;
-    bodyZangVel = drivers->bmi088.getGz() * PI / 180;
+    bodyXangVel = -drivers->bmi088.getGx();
+    bodyYangVel = -drivers->bmi088.getGy();
+    bodyZangVel = drivers->bmi088.getGz();
 
     // convert body-fixed angular velocities into euler angle velocities
     // cvRollVel = sinf(cvYaw) * bodyYangVel + cosf(cvPitch) * cosf(cvYaw) * bodyXangVel;
