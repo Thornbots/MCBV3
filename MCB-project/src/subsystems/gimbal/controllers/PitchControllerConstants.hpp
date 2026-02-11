@@ -22,19 +22,19 @@ constexpr float INT_THRESH = VOLT_MAX * 0.85l;  // V
 constexpr float TAKEBACK = 0.01;                // unitless
 #elif defined(SENTRY)
 
-constexpr float RATIO = 2;         // unitless
+constexpr float RATIO = 3;         // unitless
 constexpr float VOLT_MAX = 24;   // V
 constexpr float ACCEL_MAX = 3200.0;  // rad/s^2
 
 // Position controller constants
-constexpr float KP = 28;  // sec^-1
+constexpr float KP = 1;  // sec^-1
 
 // Feedforward constants
 constexpr float KSTATIC = 0.05;  // A
 constexpr float KF = 0.02;      //-0.001;                     // A
 
 // Velocity feedback
-constexpr float KPV = 0.2;                      // 0.3                  // A-s/rad
+constexpr float KPV = 0.05;                      // 0.3                  // A-s/rad
 constexpr float KIV = 12;                        // 2                 // A/rad
 constexpr float IV_MAX = 1.5 / KIV;             // A
 constexpr float INT_THRESH = VOLT_MAX * 0.85l;  // V

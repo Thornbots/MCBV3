@@ -40,12 +40,12 @@ public:
         jetson.initialize();
 
         // Initialize subsystems
-        // gimbal.initialize();
+        gimbal.initialize();
         flywheel.initialize();
         indexer.initialize();
-        // drivetrain.initialize();
+        drivetrain.initialize();
         ui.initialize();
-        // odo.initialize();
+        //odo.initialize();
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
