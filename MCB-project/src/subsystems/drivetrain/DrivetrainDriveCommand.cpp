@@ -37,8 +37,8 @@ void DrivetrainDriveCommand::execute() {
             drivetrain->linearVelocityMultiplierTimes100 = MIN_LINEAR_VELOCITY_TIMES_100;
             
     } else if (controlMode == ControlMode::CONTROLLER) {
-        x = drivers->remote.getChannel(Remote::Channel::LEFT_HORIZONTAL);
-        y = drivers->remote.getChannel(Remote::Channel::LEFT_VERTICAL);
+        x = drivers->remote.getChannel(Remote::Channel::LEFT_HORIZONTAL) * 3;
+        y = drivers->remote.getChannel(Remote::Channel::LEFT_VERTICAL) * 3;
     } else {
         drivetrain->stopMotors();
         return;
@@ -60,7 +60,7 @@ void DrivetrainDriveCommand::execute() {
         y *= MAX_NOSPIN_LINEAR_VELOCITY_TIMES_100 / 100.0f;
     } else if (driveMode == DriveMode::BEYBLADE) {
         autoBoost = true;
-        r = 12.0f * SPIN_DIRECTION;
+        r = 19.5f * SPIN_DIRECTION;
         x *= drivetrain->linearVelocityMultiplierTimes100 / 100.0f;
         y *= drivetrain->linearVelocityMultiplierTimes100 / 100.0f;
     } else {
