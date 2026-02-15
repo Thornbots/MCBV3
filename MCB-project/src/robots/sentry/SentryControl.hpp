@@ -55,7 +55,7 @@ public:
         odo.setDefaultCommand(&odoStop);
 
 
-        shootButton.onTrue(&shooterStart)->whileTrue(&indexerSingle);
+        shootButton.onTrue(&shooterStart)->whileTrue(&indexer20Hz);
         unjamButton.whileTrue(&indexerUnjam);
         stopFlywheelTrigger.onTrue(&shooterStop);
 
@@ -187,6 +187,7 @@ public:
 
     commands::IndexerNBallsCommand indexerSingle{drivers, &indexer, 1, 20};
     commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 10};
+    commands::IndexerNBallsCommand indexer20Hz{drivers, &indexer, -1, 20};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
 
     commands::IndexerStopCommand indexerStop{drivers, &indexer};
