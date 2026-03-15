@@ -45,7 +45,7 @@ public:
         indexer.initialize();
         drivetrain.initialize();
         ui.initialize();
-        //odo.initialize();
+        odo.initialize();
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);

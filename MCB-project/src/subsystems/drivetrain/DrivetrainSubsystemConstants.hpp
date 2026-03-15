@@ -29,7 +29,7 @@ static constexpr float PEEK_LEFT_AMT = -0.45;    // amount to peek left
 static constexpr float PEEK_RIGHT_AMT = 0.45;  // amount to peek right
 
 static constexpr float MAX_LINEAR_SPEED = 2.5;
-static constexpr int SPIN_VELOCITY = -19.5f; //rad/s, negative so sentry spins the other way than standard and hero
+static constexpr int SPIN_VELOCITY = 15.0f; //rad/s, negative so sentry spins the other way than standard and hero
 
 static constexpr int MAX_LINEAR_VELOCITY_TIMES_100 = 525;
 static constexpr int MIN_LINEAR_VELOCITY_TIMES_100 = 225;
