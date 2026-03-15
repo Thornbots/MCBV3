@@ -34,6 +34,7 @@ public:
         // do movement
         MoveToPositionCommand::execute();
         
+        
         // set direction
         setDirection();
         
@@ -70,7 +71,7 @@ private:
     void setupMap() {
         switch (mode) {
         case TargetMode::TEST:
-            targets.push_back({0, 0.1});
+            targets.push_back({0, 0});
             return;
         case TargetMode::PURDUE2V2:
             targets.push_back({ 0.0f, 0.0f}); //starting point (reload/heal zone) is 0,0

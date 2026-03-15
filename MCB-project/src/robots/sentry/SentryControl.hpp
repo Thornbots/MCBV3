@@ -59,7 +59,7 @@ public:
         autoFireTrigger.onTrue(&autoFire)->onFalse(&lookJoystick);
         // drive commands
         
-        autoDriveTrigger./*onTrue(&simpleAutoDrive)->*/onTrue(&odoPointForwards);                          //right up
+        autoDriveTrigger.onTrue(&simpleAutoDrive)->onTrue(&odoPointForwards);                          //right up
         joystickDrive1.onTrue(&noSpinDriveCommand)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);  //right mid
         joystickDrive2.onTrue(&beybladeJoystick)->onTrue(&lookJoystick)->onTrue(&odoPointForwards);    //right down
 
