@@ -5,7 +5,6 @@
 
 #include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
-#include "subsystems/jetson/JetsonSubsystem.hpp"
 
 
 #include "drivers.hpp"
@@ -13,7 +12,6 @@
 namespace commands {
 using subsystems::DrivetrainSubsystem;
 using subsystems::GimbalSubsystem;
-using subsystems::JetsonSubsystem;
 
 using tap::communication::serial::Remote;
 
@@ -41,7 +39,7 @@ public:
     const char* getName() const override { return "move to position command"; }
 
 
-private:
+protected:
     src::Drivers* drivers;
     DrivetrainSubsystem* drivetrain;
     GimbalSubsystem* gimbal;

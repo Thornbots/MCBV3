@@ -53,8 +53,8 @@ public:
     }
     // i dont like this but it kinda works for old read. NEED TO CHANGE
     // float getAngle() { return 0.0000457891f * angle * angle - 0.0361289286f * angle + 3.4231706783f; }
-    float getX() { return odom_x + offsetX; }  
-    float getY() { return odom_y + offsetY; }  
+    float getX() { return (odom_x + offsetX)*48.0f/35.0f; }  //wheel diameter changed, need to update pi pico code
+    float getY() { return (odom_y + offsetY)*48.0f/35.0f; }  
     float getXVel() { return odom_x_vel; }  
     float getYVel() { return odom_y_vel; }  
     

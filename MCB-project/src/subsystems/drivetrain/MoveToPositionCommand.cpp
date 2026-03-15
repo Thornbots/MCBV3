@@ -28,8 +28,7 @@ bool MoveToPositionCommand::isFinished() const { return !drivers->remote.isConne
 
 
 void MoveToPositionCommand::end(bool cancel) { 
-    drivers->leds.set(tap::gpio::Leds::Blue, false);
-   if(cancel)  
+    if(cancel)
         drivetrain->setTargetTranslation(targetVelocity, false);
 }
 
