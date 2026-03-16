@@ -19,9 +19,9 @@ TwoWire wire(PICO_I2C_SDA, PICO_I2C_SCL);
 PicoEncoder encoder1;
 PicoEncoder encoder2;
 
-const float radius = .0175;
+const float radius = .024;
 const float cpr = 4096;
-const float scale = radius * 2 * 3.1415926f / (64 * cpr);
+const float scale = -radius * 2 * 3.1415926f / (64 * cpr);
 
 void setup() {
   // put your setup code here, to run once:
@@ -58,18 +58,17 @@ void loop() {
   //   microlast = micros(); 
   encoder1.update();
   encoder2.update();
-  //   Serial.print(" ======");
-  // Serial.print(encoder1.position * scale);
-  //   Serial.print(" ======");
-  // Serial.print(encoder2.position * scale);
-  //   Serial.print(" ======");
-  // Serial.print(encoder1.speed * scale);
-  //   Serial.print(" ======");
-  // Serial.print(encoder2.speed * scale);
-  //   Serial.print(" ======");
-  // Serial.println(turretvel);
-  // Serial.println(dt);
-  // Serial.println(microlast);
+     Serial.print("X: ");
+   Serial.print(encoder1.position * scale);
+     Serial.print("Y: ");
+   Serial.print(encoder2.position * scale);
+     Serial.print("Xvel: ");
+   Serial.print(encoder1.speed * scale);
+     Serial.print("Yvel: ");
+   Serial.print(encoder2.speed * scale);
+     Serial.print("");;
+   Serial.println(dt);
+   Serial.println(microlast);
   
   // }
 
