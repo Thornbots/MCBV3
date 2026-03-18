@@ -74,7 +74,7 @@ constexpr float BBterm1 = 19.534; //constant term
 constexpr float BBterm2 = -4.125; //linear term
 constexpr float BBterm3 = 0.0314; //quadratic term
 constexpr float BBmax = 19.5; //constant term
-constexpr float maxTorqueZ = 30 * 5/6;
+constexpr float maxTorqueZ = 15;
 
 #elif defined(INFANTRY)
 // START getters and setters

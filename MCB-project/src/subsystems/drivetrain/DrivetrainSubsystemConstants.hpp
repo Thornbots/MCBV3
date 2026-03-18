@@ -31,10 +31,10 @@ static constexpr float PEEK_RIGHT_AMT = 0.45;  // amount to peek right
 static constexpr float MAX_LINEAR_SPEED = 5.25;
 static constexpr int SPIN_VELOCITY = 12.0f; //rad/s, negative so sentry spins the other way than standard and hero
 
-static constexpr int MAX_LINEAR_VELOCITY_TIMES_100 = 525;
-static constexpr int MIN_LINEAR_VELOCITY_TIMES_100 = 225;
-static constexpr int LINEAR_VELOCITY_INCREMENT_TIMES_100 = 75;
-static constexpr int MAX_NOSPIN_LINEAR_VELOCITY_TIMES_100 = 1290;
+static constexpr int MAX_LINEAR_VELOCITY_TIMES_100 = 350;
+static constexpr int MIN_LINEAR_VELOCITY_TIMES_100 = 100;
+static constexpr int LINEAR_VELOCITY_INCREMENT_TIMES_100 = 50;
+static constexpr int MAX_NOSPIN_LINEAR_VELOCITY_TIMES_100 = 1200;
 
 #elif defined(INFANTRY)
 static constexpr tap::algorithms::SmoothPidConfig drivetrainPIDConfig{8, 0, -0, 0, 10.0, 1.0f, 0.0f, 1.0f, 0.0f, 0.05};
