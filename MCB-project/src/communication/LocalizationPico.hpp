@@ -29,7 +29,7 @@ public:
                 odom_x = buffer[0]; 
                 odom_y = buffer[1];
                 odom_x_vel = buffer[2];
-                odom_x_vel = buffer[3];
+                odom_y_vel = buffer[3];
                 // s.printf("odom: %f\n", this->getX());
                 
 

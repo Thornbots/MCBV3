@@ -12,7 +12,7 @@ static constexpr float dt = 0.001f;
 constexpr static int ODO_MOTOR_MAX_SPEED = 1000;  // TODO: Make this value relevent
                                                   // //TODO: Check the datasheets
 
-static constexpr float ODO_OFFSET = -0.25;//90*PI_CONST/180;
+static constexpr float ODO_OFFSET = -0.25 + PI_CONST/2;//90*PI_CONST/180;
 
 static constexpr int ODO_DIST_RANGE = 18000;
 
