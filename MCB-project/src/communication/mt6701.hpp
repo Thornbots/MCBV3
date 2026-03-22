@@ -1,6 +1,7 @@
 #pragma once
-
-#include "i2c/inc/stm32f4xx_hal.hpp"
+extern "C" {
+#include "i2c/inc/stm32f4xx_hal.h"
+}
 #include <cstdint>
 #include <cmath>
 
