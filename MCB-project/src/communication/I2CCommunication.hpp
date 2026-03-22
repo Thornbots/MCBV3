@@ -17,8 +17,8 @@ namespace communication {
 class I2CCommunication {
 public:
     inline void initialize() {
-        I2cMaster2::connect<Board::DigitalInPinPF0::Sda, Board::DigitalInPinPF1::Scl>(I2cMaster2::PullUps::Internal);
-        I2cMaster2::initialize<Board::SystemClock, 400'000>();
+        // I2cMaster2::connect<Board::DigitalInPinPF0::Sda, Board::DigitalInPinPF1::Scl>(I2cMaster2::PullUps::Internal);
+        // I2cMaster2::initialize<Board::SystemClock, 400'000>();
     }
 
     void refresh() { 
