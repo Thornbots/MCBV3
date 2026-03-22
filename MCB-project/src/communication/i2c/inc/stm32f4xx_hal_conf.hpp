@@ -72,6 +72,7 @@
 #ifdef HAL_PWR_MODULE_ENABLED
 #include "stm32f4xx_hal_pwr.hpp"
 #endif
+#include "stm32f4xx_hal_cortex.hpp"
 
 /* Exported macro for assert_param */
 #ifdef USE_FULL_ASSERT
