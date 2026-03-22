@@ -13,6 +13,8 @@
 #define HAL_DMA_MODULE_ENABLED   /* I2C often uses DMA */
 #define HAL_PWR_MODULE_ENABLED   /* Needed for low-power modes */
 #define HAL_FLASH_MODULE_ENABLED
+#define HAL_CORTEX_MODULE_ENABLED
+
 
 #define STM32F407xx //taproot seems to say the stm is f407
 
@@ -73,7 +75,9 @@
 #ifdef HAL_PWR_MODULE_ENABLED
 #include "stm32f4xx_hal_pwr.h"
 #endif
+#ifdef HAL_CORTEX_MODULE_ENABLED
 #include "stm32f4xx_hal_cortex.h"
+#endif
 #ifdef HAL_FLASH_MODULE_ENABLED
 #include "stm32f4xx_hal_flash.h"
 #include "stm32f4xx_hal_flash_ex.h"
