@@ -114,6 +114,7 @@ public:
 
 	static void
 	reset();
+	static volatile	bool needsReinit;
 	// end documentation inherited
 
 	static void

@@ -215,39 +215,59 @@ namespace
 	// ------------------ ISR-safe stuck bus recovery ------------------
 	void recoverStuckBus()
 	{
+		//disable and clear interrupts
+		NVIC_DisableIRQ(I2C2_EV_IRQn);
+		NVIC_DisableIRQ(I2C2_ER_IRQn);
+		NVIC_ClearPendingIRQ(I2C2_EV_IRQn);
+		NVIC_ClearPendingIRQ(I2C2_ER_IRQn);
+		//Check for pins
 		if (!modm::platform::I2cMaster2::sclSet_ || !modm::platform::I2cMaster2::sclReset_ || !modm::platform::I2cMaster2::sdaSet_ || !modm::platform::I2cMaster2::sdaReset_ || !modm::platform::I2cMaster2::readSda_) return;
 
 		// Clock out 9 pulses to free SDA
 		for (int i = 0; i < 9 && !modm::platform::I2cMaster2::readSda_(); ++i) {
 			modm::platform::I2cMaster2::sclSet_();
-			modm::delayMicroseconds(5);
+			modm::delayMicroseconds(10);
 			modm::platform::I2cMaster2::sclReset_();
-			modm::delayMicroseconds(5);
+			modm::delayMicroseconds(10);
 		}
 
-		// Send STOP condition
 		modm::platform::I2cMaster2::sdaReset_();
-		modm::delayMicroseconds(5);
+		modm::delayMicroseconds(10);
 		modm::platform::I2cMaster2::sclSet_();
-		modm::delayMicroseconds(5);
+		modm::delayMicroseconds(10);
 		modm::platform::I2cMaster2::sdaSet_();
-		modm::delayMicroseconds(5);
-		
-		if (I2C2->SR2 & I2C_SR2_BUSY) {
-            // Software reset of I2C2 to clear internal BUSY state
-            I2C2->CR1 &= ~I2C_CR1_PE;       // Disable peripheral
-            I2C2->CR1 |= I2C_CR1_SWRST;     // Software reset
-            I2C2->CR1 &= ~I2C_CR1_SWRST;    // Clear reset
-            I2C2->CR1 |= I2C_CR1_PE;        // Re-enable peripheral
-
-            // Optional: small delay for peripheral to stabilize
-            modm::delayMicroseconds(10);
-
-            // Clear the transaction state to avoid deadlocks
-            ::transaction = nullptr;
-            writing.length = 0;
-            reading.length = 0;
-        }
+		modm::delayMicroseconds(10);
+	
+		// ---------------- Software reset ----------------
+		// Disable peripheral
+		I2C2->CR1 &= ~I2C_CR1_PE;
+	
+		// Clear registers manually
+		I2C2->CR1 = 0;
+		I2C2->CR2 = 0;
+		I2C2->OAR1 = 0;
+		I2C2->OAR2 = 0;
+		I2C2->CCR = 0;
+		I2C2->TRISE = 0;
+		I2C2->SR1 = 0xFFFF;  // Clear all SR1 flags
+		I2C2->SR2 = 0;       // Clear SR2 flags
+	
+		// SW reset
+		I2C2->CR1 |= I2C_CR1_SWRST;
+		I2C2->CR1 &= ~I2C_CR1_SWRST;
+	
+		// Re-enable peripheral
+		I2C2->CR1 |= I2C_CR1_PE;
+	
+		// Optional: small stabilization delay
+		modm::delayMicroseconds(10);
+	
+		// ---------------- Clear driver state ----------------
+		::transaction = nullptr;
+		writing.length = 0;
+		reading.length = 0;
+		modm::platform::I2cMaster2::needsReinit = true;
+        
 	}
 	
 	// helper functions
@@ -656,6 +676,7 @@ MODM_ISR(I2C2_ER)
 void
 modm::platform::I2cMaster2::initializeWithPrescaler(uint8_t peripheralFrequency, uint8_t riseTime, uint16_t prescaler)
 {
+	needsReinit = false;
 	// no reset, since we want to keep the transaction attached!
 
 	Rcc::enable<Peripheral::I2c2>();
@@ -746,3 +767,4 @@ void (*modm::platform::I2cMaster2::sclReset_)() = nullptr;
 void (*modm::platform::I2cMaster2::sdaSet_)() = nullptr;
 void (*modm::platform::I2cMaster2::sdaReset_)() = nullptr;
 bool (*modm::platform::I2cMaster2::readSda_)() = nullptr;
+volatile bool modm::platform::I2cMaster2::needsReinit = false;
