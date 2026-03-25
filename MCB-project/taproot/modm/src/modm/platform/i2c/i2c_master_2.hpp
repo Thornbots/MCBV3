@@ -60,6 +60,12 @@ public:
 		Sda::setOutput(Gpio::OutputType::OpenDrain);
 		if (reset != ResetDevices::NoReset) resetDevices<Scl, uint32_t(reset)>();
 		Connector::connect();
+
+		sclSet_   = []() { Scl::set(); };
+		sclReset_ = []() { Scl::reset(); };
+		sdaSet_   = []() { Sda::set(); };
+		sdaReset_ = []() { Sda::reset(); };
+		readSda_  = []() -> bool { return Sda::read(); };
 	}
 
 	/**
@@ -109,6 +115,14 @@ public:
 	static void
 	reset();
 	// end documentation inherited
+
+	static void
+	recoverStuckBus();
+	static void (*sclSet_)();
+	static void (*sclReset_)();
+	static void (*sdaSet_)();
+	static void (*sdaReset_)();
+	static bool (*readSda_)();
 
 private:
 	static void

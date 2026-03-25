@@ -211,6 +211,45 @@ namespace
 	static modm::I2cTransaction::Writing writing(nullptr, 0, modm::I2c::OperationAfterWrite::Stop);
 	static modm::I2cTransaction::Reading reading(nullptr, 0, modm::I2c::OperationAfterRead::Stop);
 
+
+	// ------------------ ISR-safe stuck bus recovery ------------------
+	void recoverStuckBus()
+	{
+		if (!modm::platform::I2cMaster2::sclSet_ || !modm::platform::I2cMaster2::sclReset_ || !modm::platform::I2cMaster2::sdaSet_ || !modm::platform::I2cMaster2::sdaReset_ || !modm::platform::I2cMaster2::readSda_) return;
+
+		// Clock out 9 pulses to free SDA
+		for (int i = 0; i < 9 && !modm::platform::I2cMaster2::readSda_(); ++i) {
+			modm::platform::I2cMaster2::sclSet_();
+			modm::delayMicroseconds(5);
+			modm::platform::I2cMaster2::sclReset_();
+			modm::delayMicroseconds(5);
+		}
+
+		// Send STOP condition
+		modm::platform::I2cMaster2::sdaReset_();
+		modm::delayMicroseconds(5);
+		modm::platform::I2cMaster2::sclSet_();
+		modm::delayMicroseconds(5);
+		modm::platform::I2cMaster2::sdaSet_();
+		modm::delayMicroseconds(5);
+		
+		if (I2C2->SR2 & I2C_SR2_BUSY) {
+            // Software reset of I2C2 to clear internal BUSY state
+            I2C2->CR1 &= ~I2C_CR1_PE;       // Disable peripheral
+            I2C2->CR1 |= I2C_CR1_SWRST;     // Software reset
+            I2C2->CR1 &= ~I2C_CR1_SWRST;    // Clear reset
+            I2C2->CR1 |= I2C_CR1_PE;        // Re-enable peripheral
+
+            // Optional: small delay for peripheral to stabilize
+            modm::delayMicroseconds(10);
+
+            // Clear the transaction state to avoid deadlocks
+            ::transaction = nullptr;
+            writing.length = 0;
+            reading.length = 0;
+        }
+	}
+	
 	// helper functions
 	static inline void
 	callStarting()
@@ -218,6 +257,15 @@ namespace
 		uint_fast32_t deadlockPreventer = 100'000;
 		while ((I2C2->CR1 & I2C_CR1_STOP) and (deadlockPreventer-- > 0))
 			;
+		    ;
+		if (deadlockPreventer == 0)
+		{
+			DEBUG_STREAM("STOP condition timeout, trying recovery");
+			recoverStuckBus();
+			error = modm::I2cMaster::Error::BusBusy;
+			MODM_ISR_CALL(I2C2_ER);
+			return;
+		}
 
 		// If the bus is busy during a starting condition, we generate an error and detach the transaction
 		// Before a restart condition the clock line is pulled low, and this check would trigger falsely.
@@ -228,6 +276,8 @@ namespace
 			while ((I2C2->SR2 & I2C_SR2_BUSY) and (deadlockPreventer-- > 0))
 				;
 
+				DEBUG_STREAM("Bus stuck, trying recovery");
+				recoverStuckBus();
 			if (I2C2->SR2 & I2C_SR2_BUSY)
 			{
 				// either SDA or SCL is low, which leads to irrecoverable deadlock.
@@ -265,6 +315,14 @@ namespace
 			uint_fast32_t deadlockPreventer = 100'000;
 			while (I2C2->CR1 & I2C_CR1_STOP && deadlockPreventer-- > 0)
 				;
+			if (deadlockPreventer == 0)
+			{
+				DEBUG_STREAM("STOP condition timeout, trying recovery");
+				recoverStuckBus();
+				error = modm::I2cMaster::Error::BusBusy;
+				MODM_ISR_CALL(I2C2_ER);
+				return;
+			}
 
 			ConfiguredTransaction next = queue.get();
 			queue.pop();
@@ -381,6 +439,14 @@ MODM_ISR(I2C2_EV)
 			uint_fast32_t deadlockPreventer = 100'000;
 			while (I2C2->CR1 & I2C_CR1_STOP && deadlockPreventer-- > 0)
 				;
+			if (deadlockPreventer == 0)
+			{
+				DEBUG_STREAM("STOP condition timeout, trying recovery");
+				recoverStuckBus();
+				error = modm::I2cMaster::Error::BusBusy;
+				MODM_ISR_CALL(I2C2_ER);
+				return;
+			}
 
 			uint16_t dr = I2C2->DR;
 			*reading.buffer++ = dr & 0xff;
@@ -674,3 +740,9 @@ modm::platform::I2cMaster2::getErrorState()
 {
 	return error;
 }
+
+void (*modm::platform::I2cMaster2::sclSet_)() = nullptr;
+void (*modm::platform::I2cMaster2::sclReset_)() = nullptr;
+void (*modm::platform::I2cMaster2::sdaSet_)() = nullptr;
+void (*modm::platform::I2cMaster2::sdaReset_)() = nullptr;
+bool (*modm::platform::I2cMaster2::readSda_)() = nullptr;
