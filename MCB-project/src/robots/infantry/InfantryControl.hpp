@@ -1,3 +1,9 @@
+/*
+    Note to Self: Standard is totally nonfunctional. Hero works
+    fine. Why? No errors are signalled and InfantryControl should
+    be properly compatible with the new ControlInterface superclass.
+*/
+
 #include "robots/RobotControl.hpp"
 
 #if defined(INFANTRY)
@@ -121,10 +127,11 @@ public:
         gimbal.reZeroYaw();
         if (wasControllerModeBeforeRecal) {
             drivers->commandScheduler.addCommand(&lookJoystickOffset);
+            drivers->commandScheduler.addCommand(&drivetrainFollowJoystick);
         } else {
             drivers->commandScheduler.addCommand(&lookMouse);
+            drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
         }
-        drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
         update();
     }
 

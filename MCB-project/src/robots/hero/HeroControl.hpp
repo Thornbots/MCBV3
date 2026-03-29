@@ -112,10 +112,11 @@ public:
         gimbal.reZeroYaw();
         if (wasControllerModeBeforeRecal) {
             drivers->commandScheduler.addCommand(&lookJoystickOffset);
+            drivers->commandScheduler.addCommand(&drivetrainFollowJoystick);
         } else {
             drivers->commandScheduler.addCommand(&lookMouse);
+            drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
         }
-        drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
         update();
     }
 
