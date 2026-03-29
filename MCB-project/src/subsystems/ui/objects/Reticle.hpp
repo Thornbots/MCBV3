@@ -90,21 +90,20 @@ public:
 
         ReticleSidedMode adjustedSidedMode = drawMode == ReticleDrawMode::TRAPEZOIDS ? ReticleSidedMode::BOTH : sidedMode;
 
-        bool canShoot = true;
+        bool canShoot = index->canShoot();
 
-        if(!index->isIndexOnline()){
-            verticalLine.color = UISubsystem::Color::PINK;
-            canShoot=false;
-        }
+        if(!canShoot){
+            if(!index->isProjectileAtBeam()){
+                verticalLine.color = UISubsystem::Color::BLACK;
+            }
 
-        if(!index->isProjectileAtBeam()){
-            verticalLine.color = UISubsystem::Color::BLACK;
-            canShoot=false;
-        }
+            if(!index->isIndexOnline()){
+                verticalLine.color = UISubsystem::Color::PINK;
+            }
 
-        if(!index->heatAllowsShooting()) {
-            verticalLine.color = UISubsystem::Color::WHITE;
-            canShoot=false;
+            if(!index->heatAllowsShooting()) {
+                verticalLine.color = UISubsystem::Color::WHITE;
+            }
         }
 
 

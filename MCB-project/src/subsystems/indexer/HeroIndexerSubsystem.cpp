@@ -23,11 +23,11 @@ void HeroIndexerSubsystem::finishRefresh() {
     // drivers->leds.set(tap::gpio::Leds::Green, isProjectileAtBeam());
     
     // state transitions
-    if(state==HeroIndexerState::DONE && !isProjectileAtBeam()){
+    // if(state==HeroIndexerState::DONE && !isProjectileAtBeam()){ //beambreak sensor is terrible, sometimes just reads no shot when there is a shot there and triggers this
         // we thought we were done, we shouldn't be
         // maybe we manual unjammed
-        state = HeroIndexerState::LOADING_THEN_DONE;
-    }
+    //     state = HeroIndexerState::LOADING_THEN_DONE;
+    // }
     if(state == HeroIndexerState::INDEXING && !isProjectileAtBeam()){
         // ball has left where we can see it
         state = HeroIndexerState::INDEXING_EXTRA; //but not actually left the barrel yet
@@ -56,7 +56,7 @@ void HeroIndexerSubsystem::finishRefresh() {
         unitTop.oldVelocityControl(0);
         unitBottom.oldVelocityControl(0);
     } else if(unjam) {
-        //the user might want to remove the ball at the beambreak
+        //the robot driver might want to remove the ball at the beambreak
         state = HeroIndexerState::LOADING_THEN_DONE;
         unitTop.oldVelocityControl(UNJAM_BALL_PER_SECOND); 
         unitBottom.oldVelocityControl(UNJAM_BALL_PER_SECOND);
@@ -87,12 +87,16 @@ bool HeroIndexerSubsystem::tryShootOnce() {
     return r;
 }
 
+bool HeroIndexerSubsystem::canShoot() {
+    return IndexerSubsystem::canShoot() && state==HeroIndexerState::DONE;
+}
+
 void HeroIndexerSubsystem::forceShootOnce() {
-    if(state==HeroIndexerState::DONE) {
+    // if(state==HeroIndexerState::DONE) {
         state = HeroIndexerState::INDEXING_EXTRA;
         timeoutExtra.restart(1000*INDEXING_EXTRA_TIME);
         justShot();
-    }
+    // }
 }
 
 

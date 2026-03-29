@@ -18,7 +18,7 @@ constexpr static int NUM_CHAMBERS = 1; //hero is weird, it indexes differently. 
 constexpr static float GEAR_RATIO = 36.0f; //need to check if it is 36 exactly or 36ish
 constexpr static float REV_PER_BALL = 42.0f / (50.0f * 3.1415926353f) * 2.0f; // GUESS, this value should be tuned since it isn't exactly known
 constexpr static float REV_PER_BALL_BOTTOM = 1; // revolutions per ball = gearbox * external reduction / chambers
-constexpr static float LOAD_BALL_PER_SECOND = 5.0f;
+constexpr static float LOAD_BALL_PER_SECOND = 3.0f;
 constexpr static float UNJAM_BALL_PER_SECOND = -8.0f; // in unjam mode, spin backwards at 1 balls per second (this is a guess)
 constexpr static tap::algorithms::SmoothPidConfig PID_CONF_INDEX = {5, 0, 0, 0, 8000, 1, 0, 1, 0, 10, 0};
 constexpr static float INITIAL_INDEX_OFFSET = 0; //doesn't apply to hero

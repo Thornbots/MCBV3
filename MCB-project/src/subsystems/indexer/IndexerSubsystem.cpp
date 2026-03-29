@@ -122,7 +122,7 @@ bool IndexerSubsystem::refPoweringIndex() {
 
 bool IndexerSubsystem::canShoot() {
     // return true;
-    return isIndexOnline() && refPoweringIndex() && heatAllowsShooting() && isProjectileAtBeam() && tap::arch::clock::getTimeMilliseconds()-lastShotTime>=MIN_SHOT_FREQ;
+    return isIndexOnline() && refPoweringIndex() && heatAllowsShooting() && tap::arch::clock::getTimeMilliseconds()-lastShotTime>=MIN_SHOT_FREQ;
 }
 
 void IndexerSubsystem::justShot() {

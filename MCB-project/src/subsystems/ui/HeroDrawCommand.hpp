@@ -19,6 +19,7 @@
 #include "objects/Countdown.hpp"
 #include "objects/LinearVelocityIndicator.hpp"
 #include "objects/ImuRecalibrationIndicator.hpp"
+#include "objects/ReuseTest.hpp"
 #include "drivers.hpp"
 
 namespace commands {
@@ -45,6 +46,8 @@ public:
         addGraphicsObject(&countdown);
         addGraphicsObject(&velo);
         addGraphicsObject(&recal);
+        
+        // addGraphicsObject(&reuseTest);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -60,7 +63,8 @@ public:
         countdown.update();
         velo.update();
         recal.update();
-        // logo doesn't need updating
+        
+        // reuseTest.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -89,5 +93,6 @@ private:
     Countdown countdown{drivers};
     LinearVelocityIndicator velo{drivetrain};
     ImuRecalibrationIndicator recal{drivers};
+    // ReuseTest reuseTest{drivers};
 };
 }  // namespace commands

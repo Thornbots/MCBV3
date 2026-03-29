@@ -3,6 +3,11 @@
 namespace subsystems {
     
     
+         
+#define WAIT_UNTIL_READY() \
+        PT_WAIT_UNTIL(drivers->refSerial.acquireTransmissionSemaphore()); \
+        drivers->refSerial.releaseTransmissionSemaphore(0);
+
 //  Made referencing
 // https://en.cppreference.com/w/cpp/preprocessor/replace
 // and /taproot/modm/src/modm/processing/protothread/macros.hpp
@@ -15,7 +20,7 @@ namespace subsystems {
             PT_CALL(refSerialTransmitter.sendGraphic(&message##size)); \
             delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message##size)); \
         }
-
+   
 // define the static variable, if this isnt here things go wrong saying it is a undefined reference
 uint32_t UISubsystem::currGraphicName = 0;
 int8_t UISubsystem::currLayer = 1; //layer 0 is where most stuff is, so asking for a layer gets you 1 or higher (or -1 if there aren't any more layers)
@@ -115,6 +120,7 @@ bool UISubsystem::run() { //run has to do with prototheads
     } //loop ends when the layer at innerGraphicsIndex needs cleared, or all layers were checked and all were clear
 
     if(needToClearAllLayers){
+        WAIT_UNTIL_READY();
         PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 0));
         for (innerGraphicsIndex = 0; innerGraphicsIndex < NUM_LAYERS; innerGraphicsIndex++) {
             layersState[innerGraphicsIndex]=LayerState::CLEAR;
@@ -122,23 +128,14 @@ bool UISubsystem::run() { //run has to do with prototheads
         if (topLevelContainer){
             topLevelContainer->allLayersCleared();
         }
+        graphicsIndex=0;
     } else if(layerToClear!=-1){
+        WAIT_UNTIL_READY();
         PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_GRAPHIC_LAYER, layerToClear));
         layersState[layerToClear]=LayerState::CLEAR;
         if (topLevelContainer){
             topLevelContainer->layerHasBeenCleared(layerToClear);
         }
-        needToClearAllLayers = true;
-    }
-
-    // if any cleared, using the same variable
-    if(needToClearAllLayers){
-        delayTimeout.restart(2 * RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageDel));
-        PT_WAIT_UNTIL(delayTimeout.execute());
-
-        // maybe some object saved from the last iteration just got removed, we don't want to accidentally draw it
-        // could check if the 1 or 2 saved objects were on a cleared layer, but it probably isn't worth it
-        // clearing layers probably doesn't happen enough, those objects will be visited on the next iteration
         graphicsIndex=0;
     }
 
@@ -146,7 +143,8 @@ bool UISubsystem::run() { //run has to do with prototheads
     timesResetIteration = 0;
     addQueue={};
     removeQueue={};
-    topLevelContainer->prepare(addQueue, removeQueue);
+    topLevelContainer->resetDrawMarks();
+    // topLevelContainer->prepare(addQueue, removeQueue);
     while (timesResetIteration<2) { //might need to reset once if we started near the end, once we reset twice give up
         nextGraphicsObject = topLevelContainer->getNext();
 
@@ -162,9 +160,10 @@ bool UISubsystem::run() { //run has to do with prototheads
             nextGraphicsObject->configCharacterData(&messageCharacter);
             if(layersState[messageCharacter.graphicData.layer]==LayerState::CLEAR) 
                 layersState[messageCharacter.graphicData.layer]=LayerState::IN_USE;
+            WAIT_UNTIL_READY();
             PT_CALL(refSerialTransmitter.sendGraphic(&messageCharacter));
-            delayTimeout.restart(2 * RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
-            PT_WAIT_UNTIL(delayTimeout.execute());
+            // delayTimeout.restart(2 * RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+            // PT_WAIT_UNTIL(delayTimeout.execute());
         } else {
             // if it isn't a string, add it to the array and see if it is full
             nextGraphicsObject->markToDraw(); //mark the object as 'to draw' to prevent it from being gotten again from the topLevelContainer after resetIteration
@@ -192,6 +191,7 @@ bool UISubsystem::run() { //run has to do with prototheads
     //  Since I (really) want to reduce code duplication, I ventured into the land of macros and void pointers
     //   macros (CONDITIONAL_FILL_AND_SEND_MESSAGE) to use different but similarly named variables (message1, message2, message5, and message7)
     //   void pointers (fillMessage) so message1's singular GraphicData can be used as if it had an array of GraphicData, size 1
+    WAIT_UNTIL_READY();
     CONDITIONAL_FILL_AND_SEND_MESSAGE(1);
     CONDITIONAL_FILL_AND_SEND_MESSAGE(2);
     CONDITIONAL_FILL_AND_SEND_MESSAGE(5);
@@ -209,8 +209,8 @@ bool UISubsystem::run() { //run has to do with prototheads
     }
 
     //if we sent something, wait for it so we don't lose packets
-    if(numToSend>0)
-        PT_WAIT_UNTIL(delayTimeout.execute());
+    // if(numToSend>0)
+    //     PT_WAIT_UNTIL(delayTimeout.execute());
 
     // start the whole thing over
     PT_END();

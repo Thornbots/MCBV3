@@ -26,6 +26,7 @@ public:
     
     
     virtual bool tryShootOnce();
+    virtual bool canShoot();
     
     // sets to load if there isn't a shot ready
     virtual void forceShootOnce();
