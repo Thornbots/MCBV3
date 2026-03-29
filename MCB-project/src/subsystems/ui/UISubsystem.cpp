@@ -141,106 +141,40 @@ bool UISubsystem::run() { //run has to do with prototheads
         // clearing layers probably doesn't happen enough, those objects will be visited on the next iteration
         graphicsIndex=0;
     }
-    
-    
-    
-    
-    
-    // String pass: send 0 or 1 strings
+
+    // what was in the while loop
     timesResetIteration = 0;
-    topLevelContainer->resetDrawMarks();
+    addQueue={};
+    removeQueue={};
+    topLevelContainer->prepare(addQueue, removeQueue);
     while (timesResetIteration<2) { //might need to reset once if we started near the end, once we reset twice give up
-        nextGraphicsObject = topLevelContainer->getNextText(); 
+        nextGraphicsObject = topLevelContainer->getNext();
 
         //if we run out of objects, try looping around to the start to find more
         if(!nextGraphicsObject){
-            topLevelContainer->resetTextIteration();
+            topLevelContainer->resetIteration();
             timesResetIteration++;
             continue;
         }
-        //don't need to mark things to draw because we are about to draw them
 
-        // do id/name reuse: if I'm adding and someone else is removing, take their id/name and update myself, that someone else doesn't need to do anything else
-        if(nextGraphicsObject->isAdding()){
-            otherGraphicsObject = topLevelContainer->getNextBasicRemove();
-            if(!otherGraphicsObject) {
-                topLevelContainer->resetBasicIteration();
-                otherGraphicsObject = topLevelContainer->getNextBasicRemove();
-                // could still be null
-            }
-            
-            if(otherGraphicsObject){
-                nextGraphicsObject->swapWith(otherGraphicsObject);
-            }
+        if (nextGraphicsObject->needsSentAsString()) {
+            // if it is a string, keep the array as it is and send the string on its own
+            nextGraphicsObject->configCharacterData(&messageCharacter);
+            if(layersState[messageCharacter.graphicData.layer]==LayerState::CLEAR) 
+                layersState[messageCharacter.graphicData.layer]=LayerState::IN_USE;
+            PT_CALL(refSerialTransmitter.sendGraphic(&messageCharacter));
+            delayTimeout.restart(2 * RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
+            PT_WAIT_UNTIL(delayTimeout.execute());
+        } else {
+            // if it isn't a string, add it to the array and see if it is full
+            nextGraphicsObject->markToDraw(); //mark the object as 'to draw' to prevent it from being gotten again from the topLevelContainer after resetIteration
+            objectsToSend[graphicsIndex++] = nextGraphicsObject;
+            if (graphicsIndex == TARGET_NUM_OBJECTS) break; //if full, stop trying to find more
         }
-        
-        // could check needsSentAsString
-        nextGraphicsObject->configCharacterData(&messageCharacter);
-        if(layersState[messageCharacter.graphicData.layer]==LayerState::CLEAR) 
-            layersState[messageCharacter.graphicData.layer]=LayerState::IN_USE;
-        PT_CALL(refSerialTransmitter.sendGraphic(&messageCharacter));
-        delayTimeout.restart(2 * RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter)); //TODO: wait differently, the semaphore has built in waiting
-        PT_WAIT_UNTIL(delayTimeout.execute());
-        break; //only send one string, wait until next time to send another
-    }
-    
-    
-
-    // what was in the while loop. Basic (non string) pass: send up to 7 basic objects
-    timesResetIteration = 0;
-    topLevelContainer->resetDrawMarks();
-    while (timesResetIteration<2) { //might need to reset once if we started near the end, once we reset twice give up
-        nextGraphicsObject = topLevelContainer->getNextBasic();
-
-        //if we run out of objects, try looping around to the start to find more
-        if(!nextGraphicsObject){
-            topLevelContainer->resetBasicIteration();
-            timesResetIteration++;
-            continue;
-        }
-        
-        // FIXME: makes things shakey. Not sure why.
-        // if(nextGraphicsObject->isAdding()){
-        //     otherGraphicsObject = topLevelContainer->getNextBasicRemove();
-        //     if(!otherGraphicsObject) {
-        //         topLevelContainer->resetBasicIteration();
-        //         timesResetIteration++;
-        //         otherGraphicsObject = topLevelContainer->getNextBasicRemove();
-        //         // could still be null
-        //     }
-            
-        //     if(otherGraphicsObject){
-        //         otherGraphicsObject->markToDraw();
-        //         nextGraphicsObject->swapWith(otherGraphicsObject);
-        //     }
-        // }
-        //  else 
-        // if(nextGraphicsObject->isRemoving()){
-        //     otherGraphicsObject = topLevelContainer->getNextBasicAdd();
-        //     if(!otherGraphicsObject) {
-        //         topLevelContainer->resetBasicIteration();
-        //         timesResetIteration++;
-        //         otherGraphicsObject = topLevelContainer->getNextBasicAdd();
-        //         // could still be null
-        //     }
-            
-        //     if(otherGraphicsObject){
-        //         nextGraphicsObject->swapWith(otherGraphicsObject);
-        //         nextGraphicsObject->markToDraw();
-        //         nextGraphicsObject = otherGraphicsObject;
-        //     }
-        //     // nextGraphicsObject now doesn't want to do anything, we need to use otherGraphicsObject
-        // }
-
-        // because getNextBasic, it isn't a string, add it to the array and see if it is full
-        nextGraphicsObject->markToDraw(); //mark the object as 'to draw' to prevent it from being gotten again from the topLevelContainer after resetIteration
-        objectsToSend[graphicsIndex++] = nextGraphicsObject;
-        if (graphicsIndex == TARGET_NUM_OBJECTS) break; //if full, stop trying to find more
     }
 
 
     numToSend = graphicsIndex;
-    // numToSend=0; //temp
     if(numToSend==3 || numToSend==4){
         //can't send 3, will send 2 and save 1 for later
         //can't send 4, will send 2 and save 2 for later
@@ -286,13 +220,10 @@ bool UISubsystem::run() { //run has to do with prototheads
 // Use with to nullptr to remove the top level container.
 void UISubsystem::setTopLevelContainer(GraphicsContainer* container) {
 
-    // TODO: check if this is necessary
     if (container) {
-        topLevelContainer->resetBasicIteration();
-        topLevelContainer->resetTextIteration();
+        topLevelContainer->resetIteration();
         // drivers->leds.set(tap::gpio::Leds::Blue, true);
     }
-    
     topLevelContainer = container;
 
     // all layers need cleared

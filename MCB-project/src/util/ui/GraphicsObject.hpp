@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tap/communication/serial/ref_serial_transmitter.hpp"
+#include <queue>
 
 using namespace tap::communication::serial;
 
@@ -42,23 +43,15 @@ public:
      * and GraphicsObject including eachother. Might be fixed with separate
      * cpp and hpp files.
      */
-    virtual GraphicsObject* getNextBasic() = 0;
-    virtual GraphicsObject* getNextBasicRemove() = 0;
-    virtual GraphicsObject* getNextBasicAdd() = 0;
-    virtual GraphicsObject* getNextText() = 0;
+    virtual GraphicsObject* getNext() = 0;
     // a non virtual method that is overridden will use the definition of the method from the declared type
     // setting the virtual method to 0 means it is 'pure virtual', and the existence of any
     // pure virtual methods means the object can't be instantiated, like an abstract class in Java.
     
+    virtual void resetIteration() = 0;
     
-    virtual void resetTextIteration() {
-        index_getNextText = 0;
-    }
-    virtual void resetBasicIteration() {
-        index_getNextBasic = 0;
-        index_getNextBasicRemove = 0;
-        index_getNextBasicAdd = 0;
-    }
+    // replaces resetDrawMarks, also does id reuse
+    virtual void prepare(std::queue<GraphicsObject*>& addQueue, std::queue<GraphicsObject*>& removeQueue)=0;
     
     /*
      * Containers do nothing, AtomicGraphicsObject's fill the graphic data
@@ -97,10 +90,6 @@ public:
     virtual bool isRemoving() {return false;} //only applies to objects
 
 protected:
-    // GraphicsContainer's GET_NEXT_GENERIC macro depends on these names
-    u_int16_t index_getNextBasic = 0;
-    u_int16_t index_getNextBasicRemove = 0;
-    u_int16_t index_getNextBasicAdd = 0;
-    u_int16_t index_getNextText = 0;
+    u_int16_t countIndex = 0;
     
 };

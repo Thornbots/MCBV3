@@ -47,6 +47,9 @@ private:  // Private Variables
     RefSerialData::Tx::Graphic5Message message5;
     RefSerialData::Tx::Graphic7Message message7;
     RefSerialData::Tx::GraphicCharacterMessage messageCharacter;
+    
+    std::queue<GraphicsObject*> addQueue;
+    std::queue<GraphicsObject*> removeQueue;
 
     // when get UIDrawCommand, it should set this
     GraphicsContainer* topLevelContainer = nullptr;

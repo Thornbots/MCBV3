@@ -16,34 +16,9 @@ public:
      * */
     virtual bool needsRedrawn() = 0;
 
-    GraphicsObject* getNextBasic() final {
-        if(needsSentAsString()) return nullptr;
-        if (index_getNextBasic == 0 && !markedToDraw && (isHidden!=wasHidden || layer!=prevLayer || needsRedrawn())) {
-            index_getNextBasic = 1;
-            return this;
-        }
-        return nullptr;
-    }
-    GraphicsObject* getNextBasicRemove() final {
-        if(needsSentAsString() || !isRemoving()) return nullptr;
-        if (index_getNextBasicRemove == 0 && !markedToDraw && (isHidden!=wasHidden || layer!=prevLayer || needsRedrawn())) {
-            index_getNextBasicRemove = 1;
-            return this;
-        }
-        return nullptr;
-    }
-    GraphicsObject* getNextBasicAdd() final {
-        if(needsSentAsString() || !isAdding()) return nullptr;
-        if (index_getNextBasicAdd == 0 && !markedToDraw && (isHidden!=wasHidden || layer!=prevLayer || needsRedrawn())) {
-            index_getNextBasicAdd = 1;
-            return this;
-        }
-        return nullptr;
-    }
-    GraphicsObject* getNextText() final {
-        if(!needsSentAsString()) return nullptr;
-        if (index_getNextText == 0 && !markedToDraw && (isHidden!=wasHidden || layer!=prevLayer || needsRedrawn())) {
-            index_getNextText = 1;
+    GraphicsObject* getNext() final {
+        if (countIndex == 0 && !markedToDraw && (isHidden!=wasHidden || layer!=prevLayer || needsRedrawn())) {
+            countIndex = 1;
             return this;
         }
         return nullptr;
@@ -64,6 +39,8 @@ public:
         prevLayer = layer;
         finishConfigGraphicData(graphicData);
     }
+    
+    void resetIteration() final { countIndex = 0; }
 
     void layerHasBeenCleared(int8_t clearedLayer) final {
         if(clearedLayer==layer)
@@ -117,6 +94,26 @@ public:
         }
     }
     
+    virtual void prepare(std::queue<GraphicsObject*>& addQueue, std::queue<GraphicsObject*>& removeQueue) final {
+        markedToDraw = false;
+        if(isAdding()){
+            if(removeQueue.empty()){
+                addQueue.push(this);
+            } else {
+                // would do swapwith(pop) but pop returns void
+                swapWith(removeQueue.front());
+                removeQueue.pop();
+            }
+        } else if (isRemoving()){
+            if(addQueue.empty()){
+                removeQueue.push(this);
+            } else {
+                swapWith(addQueue.front());
+                addQueue.pop();
+            }
+        }
+    }
+    
 private:
     RefSerialData::Tx::GraphicOperation getNextOperation() {
         if(isHidden){
@@ -139,5 +136,4 @@ protected:
 
 private:
     int8_t prevLayer = -2;
-    u_int16_t countIndex = 0;
 };
