@@ -24,10 +24,11 @@ void AutoAimAndFireCommand::execute() {
             allowGimbal = true;
         }
 
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
-            // countdown, only allow gimbal
-            allowGimbal = true;
-        }
+        //don't spin before match
+        // if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
+        //     // countdown, only allow gimbal
+        //     allowGimbal = true;
+        // }
 
     }
 

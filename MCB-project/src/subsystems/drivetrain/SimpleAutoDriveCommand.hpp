@@ -12,7 +12,7 @@ using tap::communication::serial::Remote;
 using namespace tap::communication::serial;
 
 
-class SimpleAutoDriveCommand : public MoveToPositionCommand {
+class SimpleAutoDriveCommand : public tap::control::Command {
 public:
 
 
@@ -23,23 +23,26 @@ public:
     };
 
     SimpleAutoDriveCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, TargetMode mode)
-        : MoveToPositionCommand(drivers, drive, gimbal, {0, 0, 0}), mode(mode){
+        : mode(mode), drivers(drivers),
+        positionCommand(drivers, drive, gimbal, {0.0f, 0.0f, 0.0f}, 0.3f)
+        {
         
         setupMap();
+        addSubsystemRequirement(drive);
     }
     
-    
+    void initialize() {
+
+    }
     
     void execute() {
-        // do movement
-        MoveToPositionCommand::execute();
-        
-        
         // set direction
         setDirection();
         
         // if reached target, choose new target
-        if(MoveToPositionCommand::isFinished()){
+        if(positionCommand.isFinished()){
+        //if(positionCommand.isFinished()){
+            drivers->leds.set(tap::gpio::Leds::Red, true);
             bool allowAdvancing = true;
             int size = targets.size();
             
@@ -57,14 +60,25 @@ public:
                 targetIndex--;
             }
         }
+        else {
+            drivers->leds.set(tap::gpio::Leds::Red, false);
+        }
         
-        targetPosition = {targets[targetIndex].first, targets[targetIndex].second, 0};
+        positionCommand.targetPosition = {targets[targetIndex].first, targets[targetIndex].second, 0};
+
+        //do movement
+        positionCommand.execute();
     }
     
     
     bool isFinished() const override {
         return !drivers->remote.isConnected();
     }
+    
+    void end(bool cancel) override {
+        //might fix sentry not being able to move after leaving auto drive
+    }
+    const char* getName() const override { return "simple auto drive command"; }
     
 private:
 
@@ -74,9 +88,19 @@ private:
             targets.push_back({0, 0});
             return;
         case TargetMode::PURDUE2V2:
-            targets.push_back({ 0.0f, 0.0f}); //starting point (reload/heal zone) is 0,0
-            targets.push_back({-2.0f, 1.8f});
-            targets.push_back({-2.0f, 3.8f}); //should be at center
+            if(drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId))
+            {
+                targets.push_back({0.0f, 0.0f}); //starting point (reload/heal zone) is 0,0
+                targets.push_back({-1.5f, 0.0f});
+                targets.push_back({-1.5f, 1.5f}); //should be at center
+                targets.push_back({0.5f, 3.5f}); //should be at center
+            }
+            else {
+                targets.push_back({ 0.0f, 0.0f}); //starting point (reload/heal zone) is 0,0
+                targets.push_back({1.5f, 0.0f});
+                targets.push_back({1.5f, 1.5f}); //should be at center
+                targets.push_back({-0.5f, 3.5f}); //should be at center
+            }
             return;
         case TargetMode::ARCC:
             return;
@@ -95,10 +119,10 @@ private:
             }
             return;
         default:
-            if(drivers->refSerial.getRefSerialReceivingData()) {
+            if(drivers->refSerial.getRefSerialReceivingData()) { //221 hp gate
                 float ratio = drivers->refSerial.getRobotData().currentHp * 1.0 / drivers->refSerial.getRobotData().maxHp;
-                if(ratio>0.9) direction=1;
-                if(ratio<=0.5) direction=-1; //0.5 or equal to try to avoid hero 1-shot-kills. Could check if they have don't have a hero and use a different ratio
+                if(ratio>0.99) direction=1;
+                if(ratio<=0.5525) direction=-1; //0.5 or equal to try to avoid hero 1-shot-kills. Could check if they have don't have a hero and use a different ratio
             }
             return;
         }
@@ -108,6 +132,9 @@ private:
     int direction = 1; //either 1 or -1
     
     TargetMode mode;
+    src::Drivers* drivers;
+
+    MoveToPositionCommand positionCommand;
     
     std::vector<std::pair<float, float>> targets; //don't need the rotation of Pose2d here, only need x and y
 };

@@ -44,7 +44,7 @@ constexpr float BBterm2 = -3.3097; //linear term
 constexpr float BBterm3 = -.1586; //quadratic term
 constexpr float BBmax = 12; //constant term
 constexpr float maxTorqueZ = 30;
-
+constexpr float TREQSCALE = 0.05;
 #elif defined(SENTRY)
 // START getters and setters
 constexpr float TRACKWIDTH = 0.50038;      // in m
@@ -52,13 +52,13 @@ constexpr float M = 15.68;                  // robot mass kg
 constexpr float J = 0.474419;                  // measured from sys id kg-m^2
 constexpr float R_WHEEL = 0.094902;  // wheel radius m
 constexpr float J_WHEEL = 0.000048599;          // wheel moment of inertia kg-m^2
-constexpr float C_MOTOR = 5e-5 * .02299;          // motor damping kg-s/m^2`
-constexpr float UK_MOTOR = 0.02 * .02299;           // motor dry friction N-m
+constexpr float C_MOTOR = 4e-4 * .02299;          // motor damping kg-s/m^2`
+constexpr float UK_MOTOR = 0.17 * .02299;           // motor dry friction N-m
 constexpr float COF_WHEEL = 0.9;           // unitless COF
 
 constexpr float GEAR_RATIO = 3591/187.0f;  // gear ratio
 constexpr float P_IDLE = 3;         // W, idle power
-constexpr float P_FOS = 0.8;       // unitless, power factor of safety
+constexpr float P_FOS = 0.70;       // unitless, power factor of safety
 
 // Tunable Parameters
 constexpr float KP_V_XY = 575;  // proportional gain for velocity
@@ -68,14 +68,14 @@ constexpr float KI_V = 0;  // integral gain for velocity
 
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
-constexpr float KP = 1.5;              // proportional gain for position control
+constexpr float KP = 2.0f;              // proportional gain for position control
 constexpr float BEYBLADE_DELAY = .25;  // delay for beyblade mode/
 constexpr float BBterm1 = 19.534; //constant term
 constexpr float BBterm2 = -4.125; //linear term
 constexpr float BBterm3 = 0.0314; //quadratic term
 constexpr float BBmax = 19.5; //constant term
 constexpr float maxTorqueZ = 15;
-
+constexpr float TREQSCALE = 0.4;
 #elif defined(INFANTRY)
 // START getters and setters
 constexpr float TRACKWIDTH = 0.504;      // in m. We need to measure
@@ -106,6 +106,7 @@ constexpr float BBterm2 = -3.4249; //linear term
 constexpr float BBterm3 = -.1586; //quadratic term
 constexpr float BBmax = 12; //constant term
 constexpr float maxTorqueZ = 30;
+constexpr float TREQSCALE = 0.05;
 #else// START getters and setters
 constexpr float TRACKWIDTH = 0.49739;      // in m. We need to measure
 constexpr float M = 14.0;                  // robot mass kg
@@ -140,7 +141,7 @@ constexpr float maxTorqueZ = 30;
 
 // after the ifdefs
 
-constexpr float TREQSCALE = 0.05;
+
 constexpr float LATENCY = 0.008;  // latency s
 constexpr float DT = 0.001;       // DT in s
 

@@ -24,8 +24,7 @@ public:
           gimbal(gimbal),
           tolerance(tolerance),
           targetPosition(targetPosition){
-        targetVelocity = Pose2d(0, 0, 10.5);
-        addSubsystemRequirement(drive);
+        targetVelocity = Pose2d(0, 0, SPIN_VELO);
     }
 
     void initialize() override;
@@ -38,6 +37,7 @@ public:
 
     const char* getName() const override { return "move to position command"; }
 
+    Pose2d targetPosition;
 
 protected:
     src::Drivers* drivers;
@@ -45,9 +45,9 @@ protected:
     GimbalSubsystem* gimbal;
 
     float tolerance;
-    Pose2d targetPosition;
     Pose2d targetVelocity;
     Pose2d currentPosition;
 
+    static constexpr float SPIN_VELO = 12.0;
 };
 }  // namespace commands

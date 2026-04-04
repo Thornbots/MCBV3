@@ -12,6 +12,20 @@ void MoveToPositionCommand::initialize() {
 
 void MoveToPositionCommand::execute() {
 
+    if (drivers->refSerial.getRefSerialReceivingData() && 
+       (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
+
+        if(drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME)
+            targetVelocity = Pose2d(targetVelocity.getX(), targetVelocity.getY(), SPIN_VELO);
+        else if(drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN){
+            targetVelocity = Pose2d(0.0f, 0.0f, SPIN_VELO);
+        }
+
+        else
+            targetVelocity = Pose2d(targetVelocity.getX(), targetVelocity.getY(), 0);
+    }
+
+
     float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
 
 

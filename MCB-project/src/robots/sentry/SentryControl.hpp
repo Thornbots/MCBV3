@@ -42,7 +42,7 @@ public:
         flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
-        ui.initialize();
+        //ui.initialize();
         odo.initialize();
 
         // Run startup commands
@@ -72,7 +72,7 @@ public:
         autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart);
         // implement speed mode
 
-        toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);  // press g to start robot
+        toggleUIKey./*onTrue(&draw)->*/onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);  // press g to start robot
         // drivers->commandScheduler.addCommand(&draw); //tries to draw immediately, doesn't always work well
 
         // drive commands and also enable mouse looking
@@ -85,7 +85,7 @@ public:
         startBeybladeKey.onTrue(&beybladeKeyboard)->onTrue(&lookMouse);
 
         // recal when match is close to starting
-        drivers->recal.requestRecalibration();
+        //drivers->recal.requestRecalibration();
     }
 
     bool startAdvance = false;
@@ -140,14 +140,14 @@ public:
     subsystems::JetsonSubsystem jetson{drivers, &gimbal};
 
     // commands
-    commands::SentryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};
+    //commands::SentryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};
     commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::MouseMoveCommand lookMouse{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
     commands::AutoDriveCommand autoDrive{drivers, &drivetrain, &gimbal, &jetson};
-    commands::SimpleAutoDriveCommand simpleAutoDrive{drivers, &drivetrain, &gimbal, commands::SimpleAutoDriveCommand::TargetMode::TEST};
+    commands::SimpleAutoDriveCommand simpleAutoDrive{drivers, &drivetrain, &gimbal, commands::SimpleAutoDriveCommand::TargetMode::PURDUE2V2};
     commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, &autoDrive};
 
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
