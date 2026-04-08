@@ -128,6 +128,12 @@ ImuRecalibrationState getState() {
     return state;
 }
 
+uint16_t readPa6Adc() {
+    return modm::platform::Adc1::readChannel(
+        modm::platform::Adc1::Channel::Channel6
+    );
+}
+
 private:
 ImuRecalibrationState state = ImuRecalibrationState::BEFORE_FIRST_CALIBRATION;
 bool pendingScheduledRecalibration = false;

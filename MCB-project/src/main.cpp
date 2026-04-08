@@ -62,6 +62,18 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->schedulerTerminalHandler.init();
     drivers->djiMotorTerminalSerialHandler.init();
 
+    //ADC testing
+    modm::platform::Adc1::connect<modm::platform::GpioA6::In6>();
+    modm::platform::Adc1::initialize<
+        Board::SystemClock,      
+        modm::MHz(21)            //prescaler of 4 hopefully
+    >();
+    modm::platform::Adc1::setChannel(
+        modm::platform::Adc1::Channel::Channel6,
+        modm::platform::Adc1::SampleTime::Cycles56 // or your preferred sample time
+    );
+    //
+
     drivers->leds.set(tap::gpio::Leds::Red, false);
     drivers->bmi088.initialize(1000, 0.0f, 0.000f);
     drivers->bmi088.setTargetTemperature(35.0f);
