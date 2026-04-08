@@ -24,7 +24,7 @@ public:
 
     SimpleAutoDriveCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, TargetMode mode)
         : mode(mode), drivers(drivers),
-        positionCommand(drivers, drive, gimbal, {0.0f, 0.0f, 0.0f}, 0.3f)
+        positionCommand(drivers, drive, gimbal, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, 0.5f)
         {
         
         setupMap();
@@ -64,10 +64,12 @@ public:
             drivers->leds.set(tap::gpio::Leds::Red, false);
         }
         
-        positionCommand.targetPosition = {targets[targetIndex].first, targets[targetIndex].second, 0};
+        positionCommand.targetPosition = {targets[targetIndex].first.first, targets[targetIndex].first.second, 0};
+        positionCommand.inputVelocity = {direction*targets[targetIndex].second.first, direction*targets[targetIndex].second.second, 0};
 
         //do movement
         positionCommand.execute();
+        
     }
     
     
@@ -85,21 +87,28 @@ private:
     void setupMap() {
         switch (mode) {
         case TargetMode::TEST:
-            targets.push_back({0, 0});
+            targets.push_back({{0, 0}, {0, 0}});
             return;
         case TargetMode::PURDUE2V2:
             if(drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId))
             {
-                targets.push_back({0.0f, 0.0f}); //starting point (reload/heal zone) is 0,0
-                targets.push_back({-1.5f, 0.0f});
-                targets.push_back({-1.5f, 1.5f}); //should be at center
-                targets.push_back({0.5f, 3.5f}); //should be at center
+                targets.push_back({{0.0f, 0.0f}, {0.0f, 0.0f}}); //starting point (reload/heal zone) is 0,0
+                targets.push_back({{-1.5f, 0.0f}, {0.0f, 0.0f}});
+                targets.push_back({{-1.5f, 1.5f}, {0.0f, 0.0f}}); //should be at center
+                targets.push_back({{0.5f, 3.5f}, {0.0f, 0.0f}}); //should be at center
             }
             else {
-                targets.push_back({ 0.0f, 0.0f}); //starting point (reload/heal zone) is 0,0
-                targets.push_back({1.5f, 0.0f});
-                targets.push_back({1.5f, 1.5f}); //should be at center
-                targets.push_back({-0.5f, 3.5f}); //should be at center
+                targets.push_back({{0.0f, 0.0f}, {0.0f, 0.0f}}); //starting point (reload/heal zone) is 0,0
+                targets.push_back({{0.9f, 0.0f}, {1.5f, 0.0f}});
+                targets.push_back({{1.2f, 0.0838f}, {1.299f, 0.75f}});
+                targets.push_back({{1.419f, 0.3f}, {0.75f, 1.299f}});
+                targets.push_back({{1.5f, 0.6f}, {0.0f, 1.5f}});
+                targets.push_back({{1.5f, 0.671f}, {0.0f, 1.5f}});
+                targets.push_back({{1.461f, 1.061f}, {-0.29f, 1.47f}});
+                targets.push_back({{1.347f, 1.437f}, {-0.574f, 1.385f}});
+                targets.push_back({{1.162f, 1.782f}, {-0.833f, 1.247f}});
+                targets.push_back({{0.914f, 2.086f}, {-1.06f, 1.06f}});
+                targets.push_back({{-0.5f, 3.5f}, {0.0f, 0.0f}}); //should be at center
             }
             return;
         case TargetMode::ARCC:
@@ -136,6 +145,8 @@ private:
 
     MoveToPositionCommand positionCommand;
     
-    std::vector<std::pair<float, float>> targets; //don't need the rotation of Pose2d here, only need x and y
+    std::vector<std::pair<
+    std::pair<float, float> //position
+    , std::pair<float, float>>> targets; //velocity, don't need the rotation of Pose2d here, only need x and y
 };
 }

@@ -18,13 +18,13 @@ using tap::communication::serial::Remote;
 
 class MoveToPositionCommand : public tap::control::Command {
 public:
-    MoveToPositionCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, Pose2d targetPosition, float tolerance = 0.2f)
+    MoveToPositionCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, Pose2d targetPosition, Vector2d targetVelocityInput, float tolerance = 0.2f)
         : drivers(drivers),
           drivetrain(drive),
           gimbal(gimbal),
           tolerance(tolerance),
           targetPosition(targetPosition){
-        targetVelocity = Pose2d(0, 0, SPIN_VELO);
+        targetVelocity = Pose2d(targetVelocityInput.getX(), targetVelocityInput.getY(), SPIN_VELO);
     }
 
     void initialize() override;
@@ -36,8 +36,10 @@ public:
     bool isFinished() const override;
 
     const char* getName() const override { return "move to position command"; }
+    DrivetrainSubsystem* getDrivetrain() {return drivetrain;}
 
     Pose2d targetPosition;
+    Pose2d inputVelocity;
 
 protected:
     src::Drivers* drivers;

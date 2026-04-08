@@ -58,7 +58,7 @@ constexpr float COF_WHEEL = 0.9;           // unitless COF
 
 constexpr float GEAR_RATIO = 3591/187.0f;  // gear ratio
 constexpr float P_IDLE = 3;         // W, idle power
-constexpr float P_FOS = 0.70;       // unitless, power factor of safety
+constexpr float P_FOS = 0.65;       // unitless, power factor of safety
 
 // Tunable Parameters
 constexpr float KP_V_XY = 575;  // proportional gain for velocity
@@ -69,13 +69,14 @@ constexpr float KI_V = 0;  // integral gain for velocity
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
 constexpr float KP = 2.0f;              // proportional gain for position control
+constexpr float KI = 0.5f;
 constexpr float BEYBLADE_DELAY = .25;  // delay for beyblade mode/
 constexpr float BBterm1 = 19.534; //constant term
 constexpr float BBterm2 = -4.125; //linear term
 constexpr float BBterm3 = 0.0314; //quadratic term
 constexpr float BBmax = 19.5; //constant term
 constexpr float maxTorqueZ = 15;
-constexpr float TREQSCALE = 0.4;
+constexpr float TREQSCALE = 0.45;
 #elif defined(INFANTRY)
 // START getters and setters
 constexpr float TRACKWIDTH = 0.504;      // in m. We need to measure
