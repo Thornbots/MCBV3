@@ -11,6 +11,8 @@ const int RECALIBRATION_THRESHOLD_TIME = 15; // when there are fewer than this m
 src::Drivers drivers;
 RobotControl control{&drivers};
 
+float adctest;
+
 
 bool shouldExecuteScheduledRecalibration() {
     RefSerialData::Rx::GameStage currentGameStage = drivers.refSerial.getGameData().gameStage;
@@ -115,6 +117,7 @@ int main() {
         drivers.uart.updateSerial();
 
         if (refreshTimer.execute()) {
+            adctest = drivers.readPa6Adc();
             // tap::buzzer::playNote(&(drivers.pwm), 493);
             bool goingToRecalibrate = drivers.recal.isForcingRecalibration() || shouldExecuteScheduledRecalibration();
             if(goingToRecalibrate){
