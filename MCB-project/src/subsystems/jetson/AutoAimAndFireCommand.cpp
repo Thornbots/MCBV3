@@ -5,8 +5,6 @@ using namespace tap::communication::serial;
 
 void AutoAimAndFireCommand::initialize() {
     shoot = -1;
-
-    drivers->leds.set(tap::gpio::Leds::Green, true);
 }
 void AutoAimAndFireCommand::execute() {
     bool allowShooting = true;
@@ -25,10 +23,10 @@ void AutoAimAndFireCommand::execute() {
         }
 
         //don't spin before match
-        // if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
-        //     // countdown, only allow gimbal
-        //     allowGimbal = true;
-        // }
+        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
+            // countdown, only allow gimbal
+            allowGimbal = true;
+        }
 
     }
 
@@ -98,7 +96,6 @@ void AutoAimAndFireCommand::execute() {
 
 void AutoAimAndFireCommand::end(bool) {
     pitch = 0;
-    drivers->leds.set(tap::gpio::Leds::Green, false);
 }
 
 bool AutoAimAndFireCommand::isFinished() const { return !drivers->remote.isConnected(); }

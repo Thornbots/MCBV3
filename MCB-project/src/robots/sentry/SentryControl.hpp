@@ -147,7 +147,7 @@ public:
     commands::MouseMoveCommand lookMouse{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
     commands::AutoDriveCommand autoDrive{drivers, &drivetrain, &gimbal, &jetson};
-    commands::SimpleAutoDriveCommand simpleAutoDrive{drivers, &drivetrain, &gimbal, commands::SimpleAutoDriveCommand::TargetMode::PURDUE2V2};
+    commands::SimpleAutoDriveCommand simpleAutoDrive{drivers, &drivetrain, &gimbal, commands::SimpleAutoDriveCommand::TargetMode::TEST};
     commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, &autoDrive};
 
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};

@@ -117,7 +117,7 @@ int main() {
         drivers.uart.updateSerial();
 
         if (refreshTimer.execute()) {
-            adctest = drivers.readPa6Adc();
+            //adctest = drivers.readPa6Adc();
             // tap::buzzer::playNote(&(drivers.pwm), 493);
             bool goingToRecalibrate = drivers.recal.isForcingRecalibration() || shouldExecuteScheduledRecalibration();
             if(goingToRecalibrate){

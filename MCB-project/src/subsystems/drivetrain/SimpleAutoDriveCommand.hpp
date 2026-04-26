@@ -41,8 +41,7 @@ public:
         
         // if reached target, choose new target
         if(positionCommand.isFinished()){
-        //if(positionCommand.isFinished()){
-            drivers->leds.set(tap::gpio::Leds::Red, true);
+            // drivers->leds.set(tap::gpio::Leds::Red, true);
             bool allowAdvancing = true;
             int size = targets.size();
             
@@ -60,9 +59,9 @@ public:
                 targetIndex--;
             }
         }
-        else {
-            drivers->leds.set(tap::gpio::Leds::Red, false);
-        }
+        // else {
+        //     drivers->leds.set(tap::gpio::Leds::Red, false);
+        // }
         
         positionCommand.targetPosition = {targets[targetIndex].first.first, targets[targetIndex].first.second, 0};
         positionCommand.inputVelocity = {direction*targets[targetIndex].second.first, direction*targets[targetIndex].second.second, 0};
@@ -70,7 +69,12 @@ public:
         //do movement
         positionCommand.execute();
         
+        drivers->leds.set(tap::gpio::Leds::Blue, targetIndex==0);
+        drivers->leds.set(tap::gpio::Leds::Red, targetIndex==1);
+        drivers->leds.set(tap::gpio::Leds::Green, targetIndex==4);
+        
     }
+    
     
     
     bool isFinished() const override {
@@ -87,7 +91,12 @@ private:
     void setupMap() {
         switch (mode) {
         case TargetMode::TEST:
-            targets.push_back({{0, 0}, {0, 0}});
+            targets.push_back({{0.0f, 0.0f}, {0.0f, 0.0f}}); //always need to start at 0,0
+            
+            targets.push_back({{0.0f, 1.0f}, {0.0f, 0.0f}});
+            targets.push_back({{-1.0f, 1.0f}, {0.0f, 0.0f}});
+            targets.push_back({{-1.0f, 0.0f}, {0.0f, 0.0f}});
+            targets.push_back({{0.0f, 0.0f}, {0.0f, 0.0f}});
             return;
         case TargetMode::PURDUE2V2:
             if(drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId))
@@ -98,17 +107,17 @@ private:
                 targets.push_back({{0.5f, 3.5f}, {0.0f, 0.0f}}); //should be at center
             }
             else {
-                targets.push_back({{0.0f, 0.0f}, {0.0f, 0.0f}}); //starting point (reload/heal zone) is 0,0
-                targets.push_back({{0.9f, 0.0f}, {1.5f, 0.0f}});
-                targets.push_back({{1.2f, 0.0838f}, {1.299f, 0.75f}});
-                targets.push_back({{1.419f, 0.3f}, {0.75f, 1.299f}});
-                targets.push_back({{1.5f, 0.6f}, {0.0f, 1.5f}});
-                targets.push_back({{1.5f, 0.671f}, {0.0f, 1.5f}});
-                targets.push_back({{1.461f, 1.061f}, {-0.29f, 1.47f}});
-                targets.push_back({{1.347f, 1.437f}, {-0.574f, 1.385f}});
-                targets.push_back({{1.162f, 1.782f}, {-0.833f, 1.247f}});
-                targets.push_back({{0.914f, 2.086f}, {-1.06f, 1.06f}});
-                targets.push_back({{-0.5f, 3.5f}, {0.0f, 0.0f}}); //should be at center
+                targets.push_back({{0.0f/5, 0.0f/5}, {0.0f, 0.0f}}); //starting point (reload/heal zone) is 0,0
+                targets.push_back({{0.9f/5, 0.0f/5}, {1.5f, 0.0f}});
+                targets.push_back({{1.2f/5, 0.0838f/5}, {1.299f, 0.75f}});
+                targets.push_back({{1.419f/5, 0.3f/5}, {0.75f, 1.299f}});
+                targets.push_back({{1.5f/5, 0.6f/5}, {0.0f, 1.5f}});
+                targets.push_back({{1.5f/5, 0.671f/5}, {0.0f, 1.5f}});
+                targets.push_back({{1.461f/5, 1.061f/5}, {-0.29f, 1.47f}});
+                targets.push_back({{1.347f/5, 1.437f/5}, {-0.574f, 1.385f}});
+                targets.push_back({{1.162f/5, 1.782f/5}, {-0.833f, 1.247f}});
+                targets.push_back({{0.914f/5, 2.086f/5}, {-1.06f, 1.06f}});
+                targets.push_back({{-0.5f/5, 3.5f/5}, {0.0f, 0.0f}}); //should be at center
             }
             return;
         case TargetMode::ARCC:
@@ -120,7 +129,7 @@ private:
         switch (mode) {
         case TargetMode::TEST:
             if(drivers->refSerial.getRefSerialReceivingData()) {
-                static uint16_t oldHealth=0;
+                static uint16_t oldHealth=drivers->refSerial.getRobotData().currentHp;
                 if(drivers->refSerial.getRobotData().currentHp!=oldHealth){
                     direction = -direction;
                     oldHealth = drivers->refSerial.getRobotData().currentHp;
