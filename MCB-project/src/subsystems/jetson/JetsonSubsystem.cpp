@@ -66,7 +66,7 @@ void JetsonSubsystem::refresh() {
 
                 drivers->refSerial.isBlueTeam(robotData.robotId) << 7 | (robotData.robotBuffStatus.recoveryBuff > 0) << 6 |
                     (robotData.rfidStatus.any(
-                        tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE | tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE))
+                        tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE | tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_INSIDE_EXCHANGE))
                         << 5 |
                     robotData.rfidStatus.any(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::CENTRAL_BUFF) << 4 |
                     gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_TEAM) << 3 |
@@ -140,9 +140,9 @@ void JetsonSubsystem::update(
     currentYawTest = cvYaw;
     currentPitchTest = current_pitch;
     // express the body-fixed velocities in the correct convention
-    bodyXangVel = -drivers->bmi088.getGx() * PI / 180;
-    bodyYangVel = -drivers->bmi088.getGy() * PI / 180;
-    bodyZangVel = drivers->bmi088.getGz() * PI / 180;
+    bodyXangVel = -drivers->bmi088.getGx();
+    bodyYangVel = -drivers->bmi088.getGy();
+    bodyZangVel = drivers->bmi088.getGz();
 
     // convert body-fixed angular velocities into euler angle velocities
     // cvRollVel = sinf(cvYaw) * bodyYangVel + cosf(cvPitch) * cosf(cvYaw) * bodyXangVel;

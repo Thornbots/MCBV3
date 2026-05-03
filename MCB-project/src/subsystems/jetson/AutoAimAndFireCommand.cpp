@@ -76,11 +76,11 @@ void AutoAimAndFireCommand::execute() {
     if(allowShooting){
         if (isShooting) {
             // if we see a panel or recently have seen a panel
-            indexer->indexAtRate(20);
+            indexer->indexAtRate(5);//20 change to not make a mess
         } else {
             // if we haven't seen a panel for a bit
-            //  indexer->stopIndex();
-            indexer->unjam();
+             indexer->stopIndex();
+            // indexer->unjam();
         }
     } else {
         indexer->stopIndex();

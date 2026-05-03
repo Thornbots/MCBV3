@@ -1,0 +1,404 @@
+scons: Reading SConscript files ...
+======================================================================================
+          !!!WARNING!!!: No robot type was specified, defaulting to OLDINFANTRY          
+======================================================================================
+Building for OLDINFANTRY with sysid no_sysid
+Configured 8 parallel build jobs (-j8), OLDINFANTRY
+scons: done reading SConscript files.
+scons: Building targets ...
+Compiling C++·· build/hardware/scons-release/src/main.o
+Compiling C++·· build/hardware/scons-release/src/subsystems/indexer/HeroIndexerSubsystem.o
+Compiling C++·· build/hardware/scons-release/src/subsystems/indexer/SingleIndexerSubsystem.o
+Compiling C++·· build/hardware/scons-release/src/subsystems/jetson/JetsonSubsystem.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/platform/timer/timer_10.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/platform/timer/timer_4.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/platform/timer/timer_8.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/platform/uart/uart_1.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/platform/uart/uart_3.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/platform/uart/uart_6.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/character_display.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/font/all_caps_3x5.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/font/arcade_classic.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/font/assertion.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/font/fixed_width_5x8.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/font/matrix_8x8.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/font/numbers_14x32.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/font/numbers_40x56.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/font/numbers_46x64.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/font/scripto_narrow.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/font/ubuntu_36.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/graphic_display.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/graphic_display_fill.o
+In file included from src/subsystems/indexer/HeroIndexerSubsystem.hpp:5,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp: In constructor 'subsystems::IndexerUnit::IndexerUnit(src::Drivers*, tap::motor::DjiMotor*, float, float)':
+src/subsystems/indexer/IndexerUnit.hpp:80:19: warning: 'subsystems::IndexerUnit::drivers' will be initialized after [-Wreorder]
+   80 |     src::Drivers* drivers;
+      |                   ^~~~~~~
+src/subsystems/indexer/IndexerUnit.hpp:77:27: warning:   'tap::motor::DjiMotor* subsystems::IndexerUnit::index' [-Wreorder]
+   77 |     tap::motor::DjiMotor* index;
+      |                           ^~~~~
+In file included from src/subsystems/indexer/HeroIndexerSubsystem.hpp:5,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp:24:5: warning:   when initialized here [-Wreorder]
+   24 |     IndexerUnit(src::Drivers* drivers, tap::motor::DjiMotor* index, float shaftRevPerBall, float motorRevPerBall) : drivers(drivers), index(index), shaftRevPerBall(shaftRevPerBall), motorRevPerBall(motorRevPerBall)  {
+      |     ^~~~~~~~~~~
+In file included from src/subsystems/indexer/HeroIndexerSubsystem.hpp:5,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::positionControl()':
+src/subsystems/indexer/IndexerUnit.hpp:34:79: warning: 'virtual float tap::motor::MotorInterface::getPositionUnwrapped() const' is deprecated [-Wdeprecated-declarations]
+   34 |         index->setDesiredOutput(getIndexerVoltage(index->getPositionUnwrapped()/GEAR_RATIO, getCurrentOutputVelo(), targetIndexerPosition, 0, DT));
+      |                                                                               ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/subsystems/indexer/IndexerSubsystem.hpp:4,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.hpp:3,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+taproot/src/tap/motor/motor_interface.hpp:45:34: note: declared here
+   45 |     [[deprecated]] virtual float getPositionUnwrapped() const
+      |                                  ^~~~~~~~~~~~~~~~~~~~
+In file included from src/subsystems/indexer/HeroIndexerSubsystem.hpp:5,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::oldVelocityControl(float)':
+src/subsystems/indexer/IndexerUnit.hpp:44:117: warning: 'virtual int16_t tap::motor::MotorInterface::getShaftRPM() const' is deprecated [-Wdeprecated-declarations]
+   44 |         indexPIDController.runControllerDerivateError(ballsPerSecond * 60.0f * motorRevPerBall - index->getShaftRPM(), 1);
+      |                                                                                                                     ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/subsystems/indexer/IndexerSubsystem.hpp:4,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.hpp:3,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+taproot/src/tap/motor/motor_interface.hpp:53:36: note: declared here
+   53 |     [[deprecated]] virtual int16_t getShaftRPM() const
+      |                                    ^~~~~~~~~~~
+In file included from src/subsystems/indexer/HeroIndexerSubsystem.hpp:5,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::doAfterHomingOffset()':
+src/subsystems/indexer/IndexerUnit.hpp:59:34: warning: 'virtual void tap::motor::MotorInterface::resetEncoderValue()' is deprecated [-Wdeprecated-declarations]
+   59 |         index->resetEncoderValue();
+      |                                  ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/subsystems/indexer/IndexerSubsystem.hpp:4,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.hpp:3,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+taproot/src/tap/motor/motor_interface.hpp:44:33: note: declared here
+   44 |     [[deprecated]] virtual void resetEncoderValue() { this->getEncoder()->resetEncoderValue(); };
+      |                                 ^~~~~~~~~~~~~~~~~
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/graphic_display_text.o
+In file included from src/subsystems/indexer/HeroIndexerSubsystem.hpp:5,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp:60:56: error: 'INITIAL_INDEX_OFFSET' was not declared in this scope
+   60 |         targetIndexerPosition = getPositionIncrement()*INITIAL_INDEX_OFFSET;
+      |                                                        ^~~~~~~~~~~~~~~~~~~~
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::doGiveUpHomingOffset()':
+src/subsystems/indexer/IndexerUnit.hpp:64:61: warning: 'virtual float tap::motor::MotorInterface::getPositionUnwrapped() const' is deprecated [-Wdeprecated-declarations]
+   64 |         targetIndexerPosition = index->getPositionUnwrapped()/GEAR_RATIO;
+      |                                                             ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/subsystems/indexer/IndexerSubsystem.hpp:4,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.hpp:3,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+taproot/src/tap/motor/motor_interface.hpp:45:34: note: declared here
+   45 |     [[deprecated]] virtual float getPositionUnwrapped() const
+      |                                  ^~~~~~~~~~~~~~~~~~~~
+In file included from src/subsystems/indexer/HeroIndexerSubsystem.hpp:5,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::indexNearest()':
+src/subsystems/indexer/IndexerUnit.hpp:69:56: warning: 'virtual float tap::motor::MotorInterface::getPositionUnwrapped() const' is deprecated [-Wdeprecated-declarations]
+   69 |         float currentPos = index->getPositionUnwrapped()/GEAR_RATIO;  //radians
+      |                                                        ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/subsystems/indexer/IndexerSubsystem.hpp:4,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.hpp:3,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+taproot/src/tap/motor/motor_interface.hpp:45:34: note: declared here
+   45 |     [[deprecated]] virtual float getPositionUnwrapped() const
+      |                                  ^~~~~~~~~~~~~~~~~~~~
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/image/home_16x16.o
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/robots/infantry/InfantryControl.hpp:24,
+                 from src/robots/RobotControl.hpp:44,
+                 from src/main.cpp:5:
+src/subsystems/indexer/IndexerUnit.hpp: In constructor 'subsystems::IndexerUnit::IndexerUnit(src::Drivers*, tap::motor::DjiMotor*, float, float)':
+src/subsystems/indexer/IndexerUnit.hpp:80:19: warning: 'subsystems::IndexerUnit::drivers' will be initialized after [-Wreorder]
+   80 |     src::Drivers* drivers;
+      |                   ^~~~~~~
+src/subsystems/indexer/IndexerUnit.hpp:77:27: warning:   'tap::motor::DjiMotor* subsystems::IndexerUnit::index' [-Wreorder]
+   77 |     tap::motor::DjiMotor* index;
+      |                           ^~~~~
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/robots/infantry/InfantryControl.hpp:24,
+                 from src/robots/RobotControl.hpp:44,
+                 from src/main.cpp:5:
+src/subsystems/indexer/IndexerUnit.hpp:24:5: warning:   when initialized here [-Wreorder]
+   24 |     IndexerUnit(src::Drivers* drivers, tap::motor::DjiMotor* index, float shaftRevPerBall, float motorRevPerBall) : drivers(drivers), index(index), shaftRevPerBall(shaftRevPerBall), motorRevPerBall(motorRevPerBall)  {
+      |     ^~~~~~~~~~~
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/robots/infantry/InfantryControl.hpp:24,
+                 from src/robots/RobotControl.hpp:44,
+                 from src/main.cpp:5:
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::positionControl()':
+src/subsystems/indexer/IndexerUnit.hpp:34:79: warning: 'virtual float tap::motor::MotorInterface::getPositionUnwrapped() const' is deprecated [-Wdeprecated-declarations]
+   34 |         index->setDesiredOutput(getIndexerVoltage(index->getPositionUnwrapped()/GEAR_RATIO, getCurrentOutputVelo(), targetIndexerPosition, 0, DT));
+      |                                                                               ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/robots/infantry/MechInfantryHardware.hpp:3,
+                 from src/robots/infantry/InfantryControl.hpp:6,
+                 from src/robots/RobotControl.hpp:44,
+                 from src/main.cpp:5:
+taproot/src/tap/motor/motor_interface.hpp:45:34: note: declared here
+   45 |     [[deprecated]] virtual float getPositionUnwrapped() const
+      |                                  ^~~~~~~~~~~~~~~~~~~~
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/robots/infantry/InfantryControl.hpp:24,
+                 from src/robots/RobotControl.hpp:44,
+                 from src/main.cpp:5:
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::oldVelocityControl(float)':
+src/subsystems/indexer/IndexerUnit.hpp:44:117: warning: 'virtual int16_t tap::motor::MotorInterface::getShaftRPM() const' is deprecated [-Wdeprecated-declarations]
+   44 |         indexPIDController.runControllerDerivateError(ballsPerSecond * 60.0f * motorRevPerBall - index->getShaftRPM(), 1);
+      |                                                                                                                     ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/robots/infantry/MechInfantryHardware.hpp:3,
+                 from src/robots/infantry/InfantryControl.hpp:6,
+                 from src/robots/RobotControl.hpp:44,
+                 from src/main.cpp:5:
+taproot/src/tap/motor/motor_interface.hpp:53:36: note: declared here
+   53 |     [[deprecated]] virtual int16_t getShaftRPM() const
+      |                                    ^~~~~~~~~~~
+In file included from src/subsystems/indexer/HeroIndexerSubsystem.hpp:5,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp:71:81: error: 'INITIAL_INDEX_OFFSET' was not declared in this scope
+   71 |         targetIndexerPosition = (std::ceil((currentPos - getPositionIncrement()*INITIAL_INDEX_OFFSET) //find number of shots we are at
+      |                                                                                 ^~~~~~~~~~~~~~~~~~~~
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'float subsystems::IndexerUnit::getCurrentOutputVelo()':
+src/subsystems/indexer/IndexerUnit.hpp:102:35: warning: 'virtual int16_t tap::motor::MotorInterface::getShaftRPM() const' is deprecated [-Wdeprecated-declarations]
+  102 |         return index->getShaftRPM()*(PI/30)/GEAR_RATIO;
+      |                                   ^
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/robots/infantry/InfantryControl.hpp:24,
+                 from src/robots/RobotControl.hpp:44,
+                 from src/main.cpp:5:
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::doAfterHomingOffset()':
+src/subsystems/indexer/IndexerUnit.hpp:59:34: warning: 'virtual void tap::motor::MotorInterface::resetEncoderValue()' is deprecated [-Wdeprecated-declarations]
+   59 |         index->resetEncoderValue();
+      |                                  ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/subsystems/indexer/IndexerSubsystem.hpp:4,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.hpp:3,
+                 from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+taproot/src/tap/motor/motor_interface.hpp:53:36: note: declared here
+   53 |     [[deprecated]] virtual int16_t getShaftRPM() const
+      |                                    ^~~~~~~~~~~
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/robots/infantry/MechInfantryHardware.hpp:3,
+                 from src/robots/infantry/InfantryControl.hpp:6,
+                 from src/robots/RobotControl.hpp:44,
+                 from src/main.cpp:5:
+taproot/src/tap/motor/motor_interface.hpp:44:33: note: declared here
+   44 |     [[deprecated]] virtual void resetEncoderValue() { this->getEncoder()->resetEncoderValue(); };
+      |                                 ^~~~~~~~~~~~~~~~~
+In file included from src/subsystems/indexer/HeroIndexerSubsystem.cpp:1:
+src/subsystems/indexer/HeroIndexerSubsystem.hpp: In constructor 'subsystems::HeroIndexerSubsystem::HeroIndexerSubsystem(src::Drivers*, tap::motor::DjiMotor*, tap::motor::DjiMotor*)':
+src/subsystems/indexer/HeroIndexerSubsystem.hpp:44:17: warning: 'subsystems::HeroIndexerSubsystem::unitBottom' will be initialized after [-Wreorder]
+   44 |     IndexerUnit unitBottom;
+      |                 ^~~~~~~~~~
+src/subsystems/indexer/HeroIndexerSubsystem.hpp:41:17: warning:   'subsystems::ShotCounter subsystems::HeroIndexerSubsystem::counter' [-Wreorder]
+   41 |     ShotCounter counter;
+      |                 ^~~~~~~
+src/subsystems/indexer/HeroIndexerSubsystem.cpp:6:1: warning:   when initialized here [-Wreorder]
+    6 | HeroIndexerSubsystem::HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* indexTop, tap::motor::DjiMotor* indexBottom)
+      | ^~~~~~~~~~~~~~~~~~~~
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/robots/infantry/InfantryControl.hpp:24,
+                 from src/robots/RobotControl.hpp:44,
+                 from src/main.cpp:5:
+src/subsystems/indexer/IndexerUnit.hpp:60:56: error: 'INITIAL_INDEX_OFFSET' was not declared in this scope
+   60 |         targetIndexerPosition = getPositionIncrement()*INITIAL_INDEX_OFFSET;
+      |                                                        ^~~~~~~~~~~~~~~~~~~~
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::doGiveUpHomingOffset()':
+src/subsystems/indexer/IndexerUnit.hpp:64:61: warning: 'virtual float tap::motor::MotorInterface::getPositionUnwrapped() const' is deprecated [-Wdeprecated-declarations]
+   64 |         targetIndexerPosition = index->getPositionUnwrapped()/GEAR_RATIO;
+      |                                                             ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/robots/infantry/MechInfantryHardware.hpp:3,
+                 from src/robots/infantry/InfantryControl.hpp:6,
+                 from src/robots/RobotControl.hpp:44,
+                 from src/main.cpp:5:
+taproot/src/tap/motor/motor_interface.hpp:45:34: note: declared here
+   45 |     [[deprecated]] virtual float getPositionUnwrapped() const
+      |                                  ^~~~~~~~~~~~~~~~~~~~
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/robots/infantry/InfantryControl.hpp:24,
+                 from src/robots/RobotControl.hpp:44,
+                 from src/main.cpp:5:
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::indexNearest()':
+src/subsystems/indexer/IndexerUnit.hpp:69:56: warning: 'virtual float tap::motor::MotorInterface::getPositionUnwrapped() const' is deprecated [-Wdeprecated-declarations]
+   69 |         float currentPos = index->getPositionUnwrapped()/GEAR_RATIO;  //radians
+      |                                                        ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/robots/infantry/MechInfantryHardware.hpp:3,
+                 from src/robots/infantry/InfantryControl.hpp:6,
+                 from src/robots/RobotControl.hpp:44,
+                 from src/main.cpp:5:
+taproot/src/tap/motor/motor_interface.hpp:45:34: note: declared here
+   45 |     [[deprecated]] virtual float getPositionUnwrapped() const
+      |                                  ^~~~~~~~~~~~~~~~~~~~
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/robots/infantry/InfantryControl.hpp:24,
+                 from src/robots/RobotControl.hpp:44,
+                 from src/main.cpp:5:
+src/subsystems/indexer/IndexerUnit.hpp:71:81: error: 'INITIAL_INDEX_OFFSET' was not declared in this scope
+   71 |         targetIndexerPosition = (std::ceil((currentPos - getPositionIncrement()*INITIAL_INDEX_OFFSET) //find number of shots we are at
+      |                                                                                 ^~~~~~~~~~~~~~~~~~~~
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'float subsystems::IndexerUnit::getCurrentOutputVelo()':
+src/subsystems/indexer/IndexerUnit.hpp:102:35: warning: 'virtual int16_t tap::motor::MotorInterface::getShaftRPM() const' is deprecated [-Wdeprecated-declarations]
+  102 |         return index->getShaftRPM()*(PI/30)/GEAR_RATIO;
+      |                                   ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/robots/infantry/MechInfantryHardware.hpp:3,
+                 from src/robots/infantry/InfantryControl.hpp:6,
+                 from src/robots/RobotControl.hpp:44,
+                 from src/main.cpp:5:
+taproot/src/tap/motor/motor_interface.hpp:53:36: note: declared here
+   53 |     [[deprecated]] virtual int16_t getShaftRPM() const
+      |                                    ^~~~~~~~~~~
+src/main.cpp: In function 'void initializeIo(src::Drivers*)':
+src/main.cpp:30:14: error: 'class src::Drivers' has no member named 'analog'
+   30 |     drivers->analog.init();
+      |              ^~~~~~
+src/main.cpp:52:14: error: 'class src::Drivers' has no member named 'errorController'
+   52 |     drivers->errorController.init();
+      |              ^~~~~~~~~~~~~~~
+src/main.cpp:62:14: error: 'class src::Drivers' has no member named 'schedulerTerminalHandler'
+   62 |     drivers->schedulerTerminalHandler.init();
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~
+src/main.cpp:63:14: error: 'class src::Drivers' has no member named 'djiMotorTerminalSerialHandler'
+   63 |     drivers->djiMotorTerminalSerialHandler.init();
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/image/logo_eurobot_90x64.o
+src/subsystems/jetson/JetsonSubsystem.cpp: In member function 'virtual void subsystems::JetsonSubsystem::refresh()':
+src/subsystems/jetson/JetsonSubsystem.cpp:69:90: error: 'RESTORATION_ZONE' is not a member of 'tap::communication::serial::RefSerialData::Rx::RFIDActivationStatus'
+   69 |                         tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE | tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE))
+      |                                                                                          ^~~~~~~~~~~~~~~~
+src/subsystems/jetson/JetsonSubsystem.cpp:69:174: error: 'EXCHANGE_ZONE' is not a member of 'tap::communication::serial::RefSerialData::Rx::RFIDActivationStatus'
+   69 |                         tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE | tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE))
+      |                                                                                                                                                                              ^~~~~~~~~~~~~
+src/subsystems/jetson/JetsonSubsystem.cpp: In member function 'void subsystems::JetsonSubsystem::update(float, float, float, float, float*, float*, float*, float*, int*)':
+src/subsystems/jetson/JetsonSubsystem.cpp:96:11: warning: unused parameter 'current_yaw' [-Wunused-parameter]
+   96 |     float current_yaw,
+      |     ~~~~~~^~~~~~~~~~~
+src/subsystems/jetson/JetsonSubsystem.cpp:98:11: warning: unused parameter 'current_yaw_velo' [-Wunused-parameter]
+   98 |     float current_yaw_velo,
+      |     ~~~~~~^~~~~~~~~~~~~~~~
+src/subsystems/jetson/JetsonSubsystem.cpp:103:12: warning: unused parameter 'pitchVelOut' [-Wunused-parameter]
+  103 |     float* pitchVelOut,
+      |     ~~~~~~~^~~~~~~~~~~
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/image/logo_rca_90x64.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/image/skull_64x64.o
+Compiling C++·· build/hardware/scons-release/modm/src/modm/ui/display/virtual_graphic_display.o
+scons: *** [build/hardware/scons-release/src/subsystems/indexer/HeroIndexerSubsystem.o] Error 1
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp: In constructor 'subsystems::IndexerUnit::IndexerUnit(src::Drivers*, tap::motor::DjiMotor*, float, float)':
+src/subsystems/indexer/IndexerUnit.hpp:80:19: warning: 'subsystems::IndexerUnit::drivers' will be initialized after [-Wreorder]
+   80 |     src::Drivers* drivers;
+      |                   ^~~~~~~
+src/subsystems/indexer/IndexerUnit.hpp:77:27: warning:   'tap::motor::DjiMotor* subsystems::IndexerUnit::index' [-Wreorder]
+   77 |     tap::motor::DjiMotor* index;
+      |                           ^~~~~
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp:24:5: warning:   when initialized here [-Wreorder]
+   24 |     IndexerUnit(src::Drivers* drivers, tap::motor::DjiMotor* index, float shaftRevPerBall, float motorRevPerBall) : drivers(drivers), index(index), shaftRevPerBall(shaftRevPerBall), motorRevPerBall(motorRevPerBall)  {
+      |     ^~~~~~~~~~~
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::positionControl()':
+src/subsystems/indexer/IndexerUnit.hpp:34:79: warning: 'virtual float tap::motor::MotorInterface::getPositionUnwrapped() const' is deprecated [-Wdeprecated-declarations]
+   34 |         index->setDesiredOutput(getIndexerVoltage(index->getPositionUnwrapped()/GEAR_RATIO, getCurrentOutputVelo(), targetIndexerPosition, 0, DT));
+      |                                                                               ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.hpp:4,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+taproot/src/tap/motor/motor_interface.hpp:45:34: note: declared here
+   45 |     [[deprecated]] virtual float getPositionUnwrapped() const
+      |                                  ^~~~~~~~~~~~~~~~~~~~
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::oldVelocityControl(float)':
+src/subsystems/indexer/IndexerUnit.hpp:44:117: warning: 'virtual int16_t tap::motor::MotorInterface::getShaftRPM() const' is deprecated [-Wdeprecated-declarations]
+   44 |         indexPIDController.runControllerDerivateError(ballsPerSecond * 60.0f * motorRevPerBall - index->getShaftRPM(), 1);
+      |                                                                                                                     ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.hpp:4,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+taproot/src/tap/motor/motor_interface.hpp:53:36: note: declared here
+   53 |     [[deprecated]] virtual int16_t getShaftRPM() const
+      |                                    ^~~~~~~~~~~
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::doAfterHomingOffset()':
+src/subsystems/indexer/IndexerUnit.hpp:59:34: warning: 'virtual void tap::motor::MotorInterface::resetEncoderValue()' is deprecated [-Wdeprecated-declarations]
+   59 |         index->resetEncoderValue();
+      |                                  ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.hpp:4,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+taproot/src/tap/motor/motor_interface.hpp:44:33: note: declared here
+   44 |     [[deprecated]] virtual void resetEncoderValue() { this->getEncoder()->resetEncoderValue(); };
+      |                                 ^~~~~~~~~~~~~~~~~
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp:60:56: error: 'INITIAL_INDEX_OFFSET' was not declared in this scope
+   60 |         targetIndexerPosition = getPositionIncrement()*INITIAL_INDEX_OFFSET;
+      |                                                        ^~~~~~~~~~~~~~~~~~~~
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::doGiveUpHomingOffset()':
+src/subsystems/indexer/IndexerUnit.hpp:64:61: warning: 'virtual float tap::motor::MotorInterface::getPositionUnwrapped() const' is deprecated [-Wdeprecated-declarations]
+   64 |         targetIndexerPosition = index->getPositionUnwrapped()/GEAR_RATIO;
+      |                                                             ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.hpp:4,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+taproot/src/tap/motor/motor_interface.hpp:45:34: note: declared here
+   45 |     [[deprecated]] virtual float getPositionUnwrapped() const
+      |                                  ^~~~~~~~~~~~~~~~~~~~
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'void subsystems::IndexerUnit::indexNearest()':
+src/subsystems/indexer/IndexerUnit.hpp:69:56: warning: 'virtual float tap::motor::MotorInterface::getPositionUnwrapped() const' is deprecated [-Wdeprecated-declarations]
+   69 |         float currentPos = index->getPositionUnwrapped()/GEAR_RATIO;  //radians
+      |                                                        ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.hpp:4,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+taproot/src/tap/motor/motor_interface.hpp:45:34: note: declared here
+   45 |     [[deprecated]] virtual float getPositionUnwrapped() const
+      |                                  ^~~~~~~~~~~~~~~~~~~~
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.hpp:8,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+src/subsystems/indexer/IndexerUnit.hpp:71:81: error: 'INITIAL_INDEX_OFFSET' was not declared in this scope
+   71 |         targetIndexerPosition = (std::ceil((currentPos - getPositionIncrement()*INITIAL_INDEX_OFFSET) //find number of shots we are at
+      |                                                                                 ^~~~~~~~~~~~~~~~~~~~
+src/subsystems/indexer/IndexerUnit.hpp: In member function 'float subsystems::IndexerUnit::getCurrentOutputVelo()':
+src/subsystems/indexer/IndexerUnit.hpp:102:35: warning: 'virtual int16_t tap::motor::MotorInterface::getShaftRPM() const' is deprecated [-Wdeprecated-declarations]
+  102 |         return index->getShaftRPM()*(PI/30)/GEAR_RATIO;
+      |                                   ^
+In file included from taproot/src/tap/motor/dji_motor.hpp:37,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.hpp:4,
+                 from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+taproot/src/tap/motor/motor_interface.hpp:53:36: note: declared here
+   53 |     [[deprecated]] virtual int16_t getShaftRPM() const
+      |                                    ^~~~~~~~~~~
+In file included from src/subsystems/indexer/SingleIndexerSubsystem.cpp:1:
+src/subsystems/indexer/SingleIndexerSubsystem.hpp: In constructor 'subsystems::SingleIndexerSubsystem::SingleIndexerSubsystem(src::Drivers*, tap::motor::DjiMotor*)':
+src/subsystems/indexer/SingleIndexerSubsystem.hpp:62:17: warning: 'subsystems::SingleIndexerSubsystem::unit' will be initialized after [-Wreorder]
+   62 |     IndexerUnit unit;
+      |                 ^~~~
+src/subsystems/indexer/SingleIndexerSubsystem.hpp:60:17: warning:   'subsystems::ShotCounter subsystems::SingleIndexerSubsystem::counter' [-Wreorder]
+   60 |     ShotCounter counter; //was public
+      |                 ^~~~~~~
+src/subsystems/indexer/SingleIndexerSubsystem.cpp:8:1: warning:   when initialized here [-Wreorder]
+    8 | SingleIndexerSubsystem::SingleIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index)
+      | ^~~~~~~~~~~~~~~~~~~~~~
+scons: *** [build/hardware/scons-release/src/main.o] Error 1
+scons: *** [build/hardware/scons-release/src/subsystems/jetson/JetsonSubsystem.o] Error 1
+scons: *** [build/hardware/scons-release/src/subsystems/indexer/SingleIndexerSubsystem.o] Error 1
+scons: building terminated because of errors.

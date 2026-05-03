@@ -1,0 +1,137 @@
+#pragma once
+
+//TODO: we need to namespace other constants files
+// and maybe choose a better namespace structure
+namespace subsystems::indexer {
+
+constexpr float VOLT_MAX = 24;     // V
+constexpr float lat = .008;
+constexpr float DT = .001;
+constexpr int Q_SIZE = lat / DT;  // make this fancy later
+
+#if defined(HERO)
+constexpr float C = 0.07;  // kg-s/m^2
+constexpr float J = 0.07;  // kg-m^2
+constexpr float UK = 0.2;  // N-m
+
+constexpr float KB = 0.4538;                                       // V-rad/s
+constexpr float KT = 0.4414;                                       // N-m/A
+constexpr float RA = .5592;                                        // ohm
+constexpr float RATIO = 54.0 / 24.0;                               // unitless
+                                                                   // Position controller  constexprants
+constexpr float KP = 8.5;                                           // 10.5;  // sec^-1
+constexpr float THETA_DOT_BREAK = 10;                              // rad/s
+constexpr float A_DECEL = 0.5 * VOLT_MAX * KT * RATIO / (J * RA);  // experimental per Alex_Y
+
+// Feedforward  constexprants
+constexpr float A_SCALE = 0.9;  // 0.8            // unitless
+
+// Gain scheduling
+constexpr float KDT = -0.1;      // unitless
+constexpr float KDT_REV = -0.1;  // unitless
+
+// Velocity feedback
+constexpr float KPV = .1;         // A-s/rad
+constexpr float KIV = 10;          // A/rad
+constexpr float IV_MAX = 0.8 / KIV;  //.2 / KIV;              // units TBD
+
+constexpr float INT_THRESH = VOLT_MAX * 0.65;  // V
+constexpr float TAKEBACK = 0.1;
+constexpr float CURRENT_MAX = 20;  // A
+
+#elif defined(SENTRY)
+constexpr float C = 0.0;  // kg-s/m^2
+constexpr float J = 0.0078;  // kg-m^2
+constexpr float UK = 0.0;  // N-m
+
+constexpr float KB = 0.4324;                                       // V-rad/s
+constexpr float KT = 0.3125;                                       // N-m/A
+constexpr float RA = 0.906;                                        // ohm
+constexpr float RATIO = 1.0;                               // unitless
+                                                                   // Position controller  constexprants
+constexpr float KP = 45;                                           // 10.5;  // sec^-1
+constexpr float THETA_DOT_BREAK = .4;                              // rad/s
+constexpr float A_DECEL = 0.33 * VOLT_MAX * KT * RATIO / (J * RA);  // experimental per Alex_Y
+
+// Feedforward  constexprants
+constexpr float A_SCALE = 0.9;  // 0.8            // unitless
+
+// Velocity feedback
+constexpr float KPV = 10;         // A-s/rad
+constexpr float KIV = 0;          // A/rad
+constexpr float IV_MAX = 1; //3 / KIV;  //.2 / KIV;              // units TBD
+
+constexpr float INT_THRESH = VOLT_MAX * 0.85;  // V
+constexpr float TAKEBACK = 0.1;
+constexpr float CURRENT_MAX = 10;  // A
+
+
+#elif defined(INFANTRY)
+
+constexpr float C = 0.0;  // kg-s/m^2
+constexpr float J = 0.0078;  // kg-m^2
+constexpr float UK = 0.0;  // N-m
+
+constexpr float KB = 0.4324;                                       // V-rad/s
+constexpr float KT = 0.3125;                                       // N-m/A
+constexpr float RA = 0.906;                                        // ohm
+constexpr float RATIO = 1.0;                               // unitless
+                                                                   // Position controller  constexprants
+constexpr float KP = 45;                                           // 10.5;  // sec^-1
+constexpr float THETA_DOT_BREAK = .4;                              // rad/s
+constexpr float A_DECEL = 0.33 * VOLT_MAX * KT * RATIO / (J * RA);  // experimental per Alex_Y
+
+// Feedforward  constexprants
+constexpr float A_SCALE = 0.9;  // 0.8            // unitless
+
+// Gain scheduling
+
+// Velocity feedback
+constexpr float KPV = 10;         // A-s/rad
+constexpr float KIV = 0;          // A/rad
+constexpr float IV_MAX = 1; //3 / KIV;  //.2 / KIV;              // units TBD
+
+constexpr float INT_THRESH = VOLT_MAX * 0.85;  // V
+constexpr float TAKEBACK = 0.1;
+constexpr float CURRENT_MAX = 10;  // A
+
+#else
+constexpr float C = 0.005;                                         // kg-s/m^2
+constexpr float J = 0.028;                                         // kg-m^2
+constexpr float UK = 0.03;                                         // N-m
+constexpr float KB = 0.716;                                        // V-rad/s
+constexpr float KT = 0.741;                                        // N-m/A
+constexpr float RA = 8.705;                                        // ohm
+constexpr float RATIO = 1;                                         // unitless
+                                                                   // Position controller  constexprants
+constexpr float KP = 11.3;                                         // 10.5;  // sec^-1
+constexpr float THETA_DOT_BREAK = 999;                             // rad/s
+constexpr float A_DECEL = 0.7 * VOLT_MAX * KT * RATIO / (J * RA);  // experimental per Alex_Y
+
+// Feedforward  constexprants
+constexpr float A_SCALE = 0.9;  // 0.8            // unitless
+
+// Gain scheduling
+constexpr float KDT = -0.47;     // unitless
+constexpr float KDT_REV = -0.7;  // unitless
+
+// Velocity feedback
+constexpr float KPV = 0.7;                     // A-s/rad
+constexpr float KIV = 30;                      // A/rad
+constexpr float IV_MAX = 2 / KIV;              // units TBD
+constexpr float INT_THRESH = VOLT_MAX * 0.85;  // V
+constexpr float TAKEBACK = 0.01;               // unitless
+constexpr float CURRENT_MAX = 10;  // A
+
+#endif
+
+// calculated from existing  constexprants or robot independent (put after ifdef)
+
+constexpr float KSTATIC = (UK * RA) / (KT * RATIO);  // A
+constexpr float KV = KB * RATIO;                     // V-s/rad
+constexpr float KA = J / (KT * RATIO);               // A-s^2/rad
+constexpr float KVISC = C / (KT * RATIO);            // A-s/rad
+
+constexpr float VELO_MAX = VOLT_MAX / (KB * RATIO);  // rad/s
+
+}

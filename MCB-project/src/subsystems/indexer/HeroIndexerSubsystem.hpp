@@ -1,5 +1,8 @@
 #pragma once
+
 #include "IndexerSubsystem.hpp"
+#include "ShotCounter.hpp"
+#include "IndexerUnit.hpp"
 
 namespace subsystems
 {
@@ -14,22 +17,55 @@ public:
 
     ~HeroIndexerSubsystem() {}
 
-    virtual void initialize();
+    
+    virtual void finishInitialize();
 
-    virtual void refresh() override;
+    virtual void finishRefresh();
 
-    virtual float indexAtRate(float inputBallsPerSecond);
-    float loadAtRate(float inputBallsPerSecond);
-    virtual void indexAtMaxRate();
+    virtual void finishStopIndex();
+    
+    
+    virtual bool tryShootOnce();
+    
+    // sets to load if there isn't a shot ready
+    virtual void forceShootOnce();
 
-    //counter stuff doesn't change
+    virtual float getEstHeatRatio();
+    virtual bool heatAllowsShooting();
+    virtual float getTotalNumBallsShot();
+
 
     virtual bool isProjectileAtBeam();
 
-    virtual float getActualBallsPerSecond();
-private:
-IndexerSubsystem bottom;
+private: 
+    ShotCounter counter;
+    
+    IndexerUnit unitTop;
+    IndexerUnit unitBottom;
+    
+    bool isAutoUnjamming;
+    tap::arch::MilliTimeout timeoutUnjam;
+    
+    tap::arch::MilliTimeout timeoutExtra;
+    
 
-};
+    enum class HeroIndexerState : uint8_t {
+        // STOPPED = 0,  //not powering motor at all (Use indexersubsystem's isStopped)
+        INDEXING = 1,  //running regular indexing behavior until says there isn't a ball, will go back to loading
+        LOADING_THEN_DONE = 2,  //loads until beam says there is a ball, then goes to STOPPED
+        // LOADING_THEN_INDEX = 3,   //loads until beam says there is a ball, then goes to INDEXING
+        INDEXING_EXTRA = 4, //after firing, continue moving after the beambreak says the shot has left, defined by INDEXING_EXTRA_BALLS
+        DONE = 5,  //holding place, providing power but not trying to move anywhere
+    };
+
+    HeroIndexerState state = HeroIndexerState::DONE; //autounjamming doesn't transition state
+
+    float startingBalls = 0; //for INDEXING_EXTRA. 
+    // Maybe in the future make loading a lot like homing, 
+    // every time you shoot you need to rehome, except it is homing by indexing forwards (same velocity control homing standard and sentry do) 
+    // Once beam breaks, move an extra amount forward to be right on the edge of firing, 
+    // then when wanting shoot move a specific amount forward (as quickly as possible because it is position control)
+    float extraBallsPerSecond = 0;
+    };
 
 } // namespace subsystems

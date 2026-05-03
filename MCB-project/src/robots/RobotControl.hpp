@@ -13,7 +13,7 @@ using namespace tap::control;
 using namespace tap::communication::serial;
 using namespace input;
 
-#define TRIGGER(name, function) Trigger name{drivers, [this]() {return drivers->inputWrapper.function();}}
+#define TRIGGER(name, function) Trigger name{drivers, function}
 
 namespace robots
 {

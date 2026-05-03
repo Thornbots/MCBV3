@@ -80,7 +80,7 @@ public:
 
 private:
     src::Drivers* drivers;
-    UISubsystem* ui; 
+    UISubsystem* ui;
     GimbalSubsystem* gimbal;
     FlywheelSubsystem* flywheel;
     IndexerSubsystem* indexer;
@@ -93,7 +93,7 @@ private:
     ChassisOrientationIndicator orient{true, drivers, gimbal, drivetrain};
     PeekingLines peek{drivetrain, gimbal};
     HopperLidIndicator lid{servo};
-    Reticle reticle{gimbal, indexer};
+    Reticle reticle{drivers, gimbal, indexer};
     HitRing ring{drivers, gimbal};
     PredictedRemainingShotsIndicator remain{drivers, indexer};
     AllRobotHealthNumbers numbers{drivers};

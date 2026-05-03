@@ -24,9 +24,11 @@ public:
 
     void initialize() override {};
 
-    void execute() override { indexer->unjam();}
+    void execute() override { indexer->manualUnjam();}
 
-    void end(bool) override {};
+    void end(bool) override { 
+        // default command would tell this to stop
+    }
 
     bool isFinished() const override {return !drivers->remote.isConnected(); }
 

@@ -23,22 +23,31 @@ void GimbalSubsystem::initialize() {
     drivers->commandScheduler.registerSubsystem(this);
 }
 void GimbalSubsystem::refresh() {
+    if (isYawMotorOnline() && wasYawMotorOffline) {
+        targetYawAngleWorld = yawAngleRelativeWorld;
+    }
 
-    yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
+    yawAngularVelocity = drivers->bmi088.getGz();
 
 #if defined(INFANTRY) or defined(HERO)
-    gimbalPitchAngularVelocity = drivers->bmi088.getGx() * PI / 180;
+    gimbalPitchAngularVelocity = drivers->bmi088.getGx();
 
     // this happens to work because the X axis is alined with the pitch axis
-    gimbalPitchAngleRelativeWorld = drivers->bmi088.getRoll() * PI / 180;
+    gimbalPitchAngleRelativeWorld = drivers->bmi088.getRoll();
 
 #endif
 
     driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
-    yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw();
+    yawAngleRelativeWorld = drivers->bmi088.getYaw();
     updatePositionHistory(yawAngleRelativeWorld);
     motorPitch->setDesiredOutput(pitchMotorVoltage);
     motorYaw->setDesiredOutput(yawMotorVoltage);
+
+    if (isYawMotorOnline()) {
+        wasYawMotorOffline = false;
+    } else {
+        wasYawMotorOffline = true;
+    }
 }
 
 void GimbalSubsystem::setPrevTargetPitch(float value) {
@@ -171,4 +180,8 @@ float GimbalSubsystem::getPitchEncoderValue() { //more like get pitch relative t
 float GimbalSubsystem::getYawVel() { return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO; }
 float GimbalSubsystem::getPitchVel() { return motorPitch->getShaftRPM() * PI / 30; }
 float GimbalSubsystem::getYawAngleRelativeWorld() { return yawController.estimatedPosition; }
+
+bool GimbalSubsystem::isYawMotorOnline() {
+    return motorYaw->isMotorOnline();
+}
 }  // namespace subsystems  
