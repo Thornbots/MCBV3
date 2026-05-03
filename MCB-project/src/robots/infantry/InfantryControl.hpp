@@ -36,7 +36,6 @@
 
 #include "drivers.hpp"
 
-int rawEncoder = 0;
 namespace robots {
 class InfantryControl : public ControlInterface {
 public:
