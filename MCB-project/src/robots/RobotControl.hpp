@@ -85,7 +85,7 @@ using RobotControl = robots::SentryControl;
 #include "robots/infantry/InfantryControl.hpp"
 using RobotControl = robots::InfantryControl;
 
-#else //for standard
+#else //for old standard
 #include "robots/infantry/InfantryControl.hpp"
 using RobotControl = robots::InfantryControl;
 

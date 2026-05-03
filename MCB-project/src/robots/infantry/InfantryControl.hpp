@@ -79,8 +79,8 @@ public:
 
         // drive commands and also enable mouse looking
 
-        peekLeftButton.onTrue(&peekLeft);//->onFalse(&beybladeKeyboard);
-        peekRightButton.onTrue(&peekRight);//->onFalse(&beybladeKeyboard);
+        peekLeftButton.onTrue(&peekLeft);
+        peekRightButton.onTrue(&peekRight);
         peekNoneButton.onTrue(&beybladeKeyboard); //makes it so that the driver can be sloppy when they swap peeking directions, they are allowed to press q and e at the same time
 
         stopBeybladeKey.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
@@ -192,7 +192,7 @@ public:
         return (drivers->inputWrapper.isAnyKeyPressed() || drivers->remote.getMouseX() != 0 || drivers->remote.getMouseY() != 0) && drivetrain.isInControllerMode;
     }};
     
-    Trigger* triggers[25] = {&keyboardTakeControl, &peekNoneButton, &peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &joystickLook0, &joystickLook1, &joystickLook2, &shootButton, &unjamButton, &onlyCloseLidKey, &unjamKey, &shootKey, &shootRegKey, &shootFastKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
+    Trigger* triggers[25] = {&keyboardTakeControl, &peekNoneButton, &peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &joystickLook0, &joystickLook1, &joystickLook2, &shootButton, &unjamButton, &unjamKey, &shootKey, &shootRegKey, &shootFastKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey, &onlyCloseLidKey};//, &indexSpinButton};
 private:
     bool wasControllerModeBeforeRecal;
 };

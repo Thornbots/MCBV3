@@ -15,7 +15,6 @@ using namespace tap::can;
 
 namespace robots
 {
-//class for standard robot. This has hardware and subsystems that are robot specific. This means we can have multiple StandardControl for different control schemes
 class HeroHardware
 {
 public:
@@ -51,4 +50,4 @@ public:
 
 };
 
-}  // namespace ThornBots
+}

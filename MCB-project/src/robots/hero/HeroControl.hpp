@@ -66,8 +66,8 @@ public:
    
         // drive commands and also enable mouse looking
 
-        peekLeftButton.onTrue(&peekLeft)->onFalse(&beybladeKeyboard);
-        peekRightButton.onTrue(&peekRight)->onFalse(&beybladeKeyboard);
+        peekLeftButton.onTrue(&peekLeft);
+        peekRightButton.onTrue(&peekRight);
         peekNoneButton.onTrue(&beybladeKeyboard); //makes it so that the driver can be sloppy when they swap peeking directions, they are allowed to press q and e at the same time
 
         stopBeybladeKey.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
