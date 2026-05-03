@@ -191,11 +191,8 @@ public:
     Trigger keyboardTakeControl = Trigger{drivers, [this]() {
         return (drivers->inputWrapper.isAnyKeyPressed() || drivers->remote.getMouseX() != 0 || drivers->remote.getMouseY() != 0) && drivetrain.isInControllerMode;
     }};
-
-    //peeking
-    Trigger peekNoneButton = !(peekLeftButton|peekRightButton);
     
-    Trigger* triggers[25] = {&joystickLook0, &joystickLook1, &joystickLook2, &peekLeftButton, &peekRightButton, &peekNoneButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &onlyCloseLidKey, &unjamKey, &shootKey, &shootRegKey, &shootFastKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey, &keyboardTakeControl};//, &indexSpinButton};
+    Trigger* triggers[25] = {&keyboardTakeControl, &peekNoneButton, &peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &joystickLook0, &joystickLook1, &joystickLook2, &shootButton, &unjamButton, &onlyCloseLidKey, &unjamKey, &shootKey, &shootRegKey, &shootFastKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
 private:
     bool wasControllerModeBeforeRecal;
 };

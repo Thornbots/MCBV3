@@ -8,8 +8,6 @@ using tap::communication::serial::Remote;
 
 namespace input {
 
-#define TRIGGER(name, function) Trigger name{drivers, [this]() {return drivers->inputWrapper.function();}}
-
 class InputWrapper {
     private:
     tap::Drivers* drivers;

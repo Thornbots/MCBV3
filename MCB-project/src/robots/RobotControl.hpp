@@ -13,6 +13,8 @@ using namespace tap::control;
 using namespace tap::communication::serial;
 using namespace input;
 
+#define TRIGGER(name, function) Trigger name{drivers, [this]() {return drivers->inputWrapper.function();}}
+
 namespace robots
 {
 class ControlInterface
@@ -49,6 +51,8 @@ public:
     //peeking
     TRIGGER(peekLeftButton, isPeekLeftPressed);
     TRIGGER(peekRightButton, isPeekRightPressed);
+
+    Trigger peekNoneButton = !(peekLeftButton|peekRightButton);
     
     TRIGGER(scrollUp, isScrollUp);
     TRIGGER(scrollDown, isScrollDown);
