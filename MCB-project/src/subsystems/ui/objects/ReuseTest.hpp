@@ -11,10 +11,12 @@ using namespace subsystems;
 class ReuseTest : public GraphicsContainer {
 public:
     ReuseTest(tap::Drivers* drivers) : drivers(drivers) {
-        addGraphicsObject(&square);
-        addGraphicsObject(&circle);
-        addGraphicsObject(&string);
-        setHidden(0);
+        addGraphicsObject(&o1);
+        addGraphicsObject(&o2);
+        addGraphicsObject(&o3);
+        addGraphicsObject(&o4);
+        addGraphicsObject(&o5);
+        setHidden(i);
     }
 
     void update() {
@@ -25,7 +27,7 @@ public:
         if(!prev && f){
             prev=true;
             i++;
-            if(i==3) i=0;
+            if(i==5) i=0;
             setHidden(i);
         }
     }
@@ -34,19 +36,28 @@ private:
     tap::Drivers* drivers;
     
     void setHidden(int i){
-        square.setHidden(i!=0);
-        circle.setHidden(i!=1);
-        string.setHidden(i!=2);
+        o1.setHidden(i!=0);
+        o2.setHidden(i!=1);
+        o3.setHidden(i!=2);
+        o4.setHidden(i!=3);
+        o5.setHidden(i!=4);
     }
     
     bool prev = false;
     
     int i=0;
 
-    UnfilledRectangle square{UISubsystem::Color::WHITE, 1000, 600, 20, 20, 5};
-    UnfilledCircle circle{UISubsystem::Color::WHITE, 1000, 700, 20, 5};
-    StringGraphic string{UISubsystem::Color::WHITE, "Str", UISubsystem::HALF_SCREEN_WIDTH, 650, 20, 3};
-
+    IntegerGraphic o1{UISubsystem::Color::WHITE, 1, 10, 600, 20, 5};
+    // UnfilledCircle o2{UISubsystem::Color::WHITE, 1000, 700, 20, 5};
+    // StringGraphic o3{UISubsystem::Color::WHITE, "Str", UISubsystem::HALF_SCREEN_WIDTH, 650, 20, 3};
+    
+    // IntegerGraphic o3{UISubsystem::Color::WHITE, 123, UISubsystem::HALF_SCREEN_WIDTH, 650, 20, 3};
+    
+    IntegerGraphic o2{UISubsystem::Color::WHITE, 2, 10, 600, 20, 5};
+    IntegerGraphic o3{UISubsystem::Color::WHITE, 3, 10, 600, 20, 5};
+    IntegerGraphic o4{UISubsystem::Color::WHITE, 4, 10, 600, 20, 5};
+    IntegerGraphic o5{UISubsystem::Color::WHITE, 5, 10, 600, 20, 5};
+    
 };
 
 

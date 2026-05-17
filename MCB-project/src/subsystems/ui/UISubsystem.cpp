@@ -120,7 +120,7 @@ bool UISubsystem::run() { //run has to do with prototheads
     } //loop ends when the layer at innerGraphicsIndex needs cleared, or all layers were checked and all were clear
 
     if(needToClearAllLayers){
-        WAIT_UNTIL_READY();
+        WAIT_UNTIL_READY(); //wait to avoid dropping packets
         PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 0));
         for (innerGraphicsIndex = 0; innerGraphicsIndex < NUM_LAYERS; innerGraphicsIndex++) {
             layersState[innerGraphicsIndex]=LayerState::CLEAR;
@@ -129,6 +129,7 @@ bool UISubsystem::run() { //run has to do with prototheads
             topLevelContainer->allLayersCleared();
         }
         graphicsIndex=0;
+        PT_YIELD();
     } else if(layerToClear!=-1){
         WAIT_UNTIL_READY();
         PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_GRAPHIC_LAYER, layerToClear));
@@ -137,14 +138,17 @@ bool UISubsystem::run() { //run has to do with prototheads
             topLevelContainer->layerHasBeenCleared(layerToClear);
         }
         graphicsIndex=0;
+        PT_YIELD();
     }
 
-    // what was in the while loop
+    // wait before grabbing things to draw
+    WAIT_UNTIL_READY();
     timesResetIteration = 0;
-    addQueue={};
-    removeQueue={};
-    topLevelContainer->resetDrawMarks();
-    // topLevelContainer->prepare(addQueue, removeQueue);
+    //clear queues
+    std::queue<GraphicsObject*>().swap(addQueue);
+    std::queue<GraphicsObject*>().swap(removeQueue);
+    // topLevelContainer->resetDrawMarks(); //no id reuse
+    topLevelContainer->prepare(addQueue, removeQueue); //does id reuse
     while (timesResetIteration<2) { //might need to reset once if we started near the end, once we reset twice give up
         nextGraphicsObject = topLevelContainer->getNext();
 
@@ -184,8 +188,9 @@ bool UISubsystem::run() { //run has to do with prototheads
         numToSend=5;
     }
 
-    // drivers->leds.set(tap::gpio::Leds::Red, graphicsIndex == 1);
-    // drivers->leds.set(tap::gpio::Leds::Green, graphicsIndex == 7);
+    // drivers->leds.set(tap::gpio::Leds::Blue, graphicsIndex == 5);
+    // drivers->leds.set(tap::gpio::Leds::Red, graphicsIndex == 2);
+    // drivers->leds.set(tap::gpio::Leds::Green, graphicsIndex == 1);
 
     // so we have up to 7 objects to update, with 4 different types of messages
     //  Since I (really) want to reduce code duplication, I ventured into the land of macros and void pointers

@@ -30,7 +30,7 @@ public:
      * sending 1 at a time.
      *
      * Non containers (AtomicGraphicsObject's) are treated as containers
-     * of 1 object (so getNext(0) returns the GraphicsObject itself,
+     * of 1 object (so getNext() returns the GraphicsObject itself,
      * then nullptr until resetIteration() is called). You can use the
      * result of this for an if statement, nullptr is falsey and an actual
      * GrapicsObject* is truey.
