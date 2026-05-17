@@ -20,8 +20,6 @@ void HeroIndexerSubsystem::finishInitialize() {
 }
 
 void HeroIndexerSubsystem::finishRefresh() {
-    // drivers->leds.set(tap::gpio::Leds::Green, isProjectileAtBeam());
-    
     // state transitions
     if(state==HeroIndexerState::DONE && !isProjectileAtBeam()){
         // we thought we were done, we shouldn't be

@@ -5,6 +5,7 @@ using namespace tap::communication::serial;
 
 void AutoAimAndFireCommand::initialize() {
     shoot = -1;
+    isScheduled = true;
 }
 void AutoAimAndFireCommand::execute() {
     bool allowShooting = true;
@@ -96,7 +97,11 @@ void AutoAimAndFireCommand::execute() {
 
 void AutoAimAndFireCommand::end(bool) {
     pitch = 0;
+    isScheduled = false;
 }
+
+bool AutoAimAndFireCommand::getIsScheduled() { return isScheduled; }
+
 
 bool AutoAimAndFireCommand::isFinished() const { return !drivers->remote.isConnected(); }
 }  // namespace commands

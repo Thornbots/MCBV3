@@ -32,7 +32,7 @@ public:
     }
     
     void initialize() {
-
+        isScheduled = true;
     }
     
     void execute() {
@@ -41,7 +41,6 @@ public:
         
         // if reached target, choose new target
         if(positionCommand.isFinished()){
-            // drivers->leds.set(tap::gpio::Leds::Red, true);
             bool allowAdvancing = true;
             int size = targets.size();
             
@@ -59,20 +58,12 @@ public:
                 targetIndex--;
             }
         }
-        // else {
-        //     drivers->leds.set(tap::gpio::Leds::Red, false);
-        // }
         
         positionCommand.targetPosition = {targets[targetIndex].first.first, targets[targetIndex].first.second, 0};
         positionCommand.inputVelocity = {direction*targets[targetIndex].second.first, direction*targets[targetIndex].second.second, 0};
 
         //do movement
         positionCommand.execute();
-        
-        drivers->leds.set(tap::gpio::Leds::Blue, targetIndex==0);
-        drivers->leds.set(tap::gpio::Leds::Red, targetIndex==1);
-        drivers->leds.set(tap::gpio::Leds::Green, targetIndex==4);
-        
     }
     
     
@@ -81,8 +72,11 @@ public:
         return !drivers->remote.isConnected();
     }
     
+    bool getIsScheduled() { return isScheduled; }
+    
+    
     void end(bool cancel) override {
-        //might fix sentry not being able to move after leaving auto drive
+        isScheduled = false;
     }
     const char* getName() const override { return "simple auto drive command"; }
     
@@ -148,6 +142,8 @@ private:
 
     int targetIndex = 0; //index in targets
     int direction = 1; //either 1 or -1
+    bool isScheduled = false;
+    
     
     TargetMode mode;
     src::Drivers* drivers;
