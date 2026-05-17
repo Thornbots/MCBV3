@@ -38,6 +38,7 @@ constexpr float KI_V = 0 / .002;  // integral gain for velocity
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
 constexpr float KP = 0;              // proportional gain for position control
+constexpr float KI = 0.5f; //copied from sentry to compile
 constexpr float BEYBLADE_DELAY = .25 ;  // delay for beyblade mode/
 constexpr float BBterm1 = 11.7075; //constant term
 constexpr float BBterm2 = -3.3097; //linear term
@@ -101,6 +102,7 @@ constexpr float KI_V = 0 / .002;  // integral gain for velocity
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
 constexpr float KP = 0;              // proportional gain for position control
+constexpr float KI = 0.5f; //copied from sentry to compile
 constexpr float BEYBLADE_DELAY = .25;  // delay for beyblade mode/
 constexpr float BBterm1 = 11.9571; //constant term
 constexpr float BBterm2 = -3.4249; //linear term
@@ -131,6 +133,7 @@ constexpr float KI_V = 0;  // integral gain for velocity
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
 constexpr float KP = 0;              // proportional gain for position control
+constexpr float KI = 0.5f; //copied from sentry to compile
 constexpr float BEYBLADE_DELAY = .25;  // delay for beyblade mode/
 constexpr float BBterm1 = 10.7717; //constant term
 constexpr float BBterm2 = -2.0342; //linear term
