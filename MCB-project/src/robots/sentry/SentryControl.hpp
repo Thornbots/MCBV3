@@ -87,16 +87,32 @@ public:
         // recal when match is close to starting
         //drivers->recal.requestRecalibration();
     }
+    
+    
+    bool prevWhiteLedState = false;
 
-    bool startAdvance = false;
-    bool startRetreat = false;
-    int count = 0;
     void update() override {
 
         if (isStopped) return;
 
         for (Trigger* trigger : triggers) {
             trigger->update();
+        }
+        
+        if((autoDrive.getIsScheduled()||simpleAutoDrive.getIsScheduled()) && autoFire.getIsScheduled()){
+            if(!prevWhiteLedState){
+                drivers->leds.set(tap::gpio::Leds::Red, true);
+                drivers->leds.set(tap::gpio::Leds::Green, true);
+                drivers->leds.set(tap::gpio::Leds::Blue, true);
+            }
+            prevWhiteLedState=true;
+        } else {
+            if(prevWhiteLedState){
+                drivers->leds.set(tap::gpio::Leds::Red, false);
+                drivers->leds.set(tap::gpio::Leds::Green, false);
+                drivers->leds.set(tap::gpio::Leds::Blue, false);
+            }
+            prevWhiteLedState=false;
         }
 
         // if we don't have ref uart or we aren't in a match or we aren't currently in game, we are able to stop flywheels by buttons
