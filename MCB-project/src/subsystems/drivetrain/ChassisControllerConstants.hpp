@@ -91,7 +91,7 @@ constexpr float COF_WHEEL = 0.9;           // unitless COF
 
 constexpr float GEAR_RATIO = 3591.0f/187.0f;  // gear ratio
 constexpr float P_IDLE = 2.7;         // W, idle power
-constexpr float P_FOS = .65;       // unitless, power factor of safety
+constexpr float P_FOS = 1.0;       // unitless, power factor of safety
 
 // Tunable Parameters
 constexpr float KP_V_XY = 1150;  // proportional gain for velocity
@@ -109,7 +109,7 @@ constexpr float BBterm2 = -3.4249; //linear term
 constexpr float BBterm3 = -.1586; //quadratic term
 constexpr float BBmax = 12; //constant term
 constexpr float maxTorqueZ = 30;
-constexpr float TREQSCALE = 0.05;
+constexpr float TREQSCALE = 0.7;
 #else// START getters and setters
 constexpr float TRACKWIDTH = 0.49739;      // in m. We need to measure
 constexpr float M = 14.0;                  // robot mass kg
