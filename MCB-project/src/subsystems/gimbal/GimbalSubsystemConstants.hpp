@@ -24,7 +24,7 @@ static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 30;
 
 static constexpr float YAW_OFFSET =  0.75 * PI_CONST ;
 
-static constexpr float PITCH_OFFSET = (.12 ) * PI_CONST;  // to make gimbal horizontal when told to go to 0
+static constexpr float PITCH_OFFSET = (0.01 ) * PI_CONST;  // to make gimbal horizontal when told to go to 0
 
 static constexpr float SECOND_PITCH_OFFSET = 0.5;  // to make gimbal look down to fit sizing box
 

@@ -42,7 +42,7 @@ public:
         flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
-        //ui.initialize();
+        ui.initialize();
         odo.initialize();
 
         // Run startup commands
@@ -68,11 +68,11 @@ public:
         // Mouse and Keyboard mappings (Sentry as Standard)
         unjamKey.whileTrue(&indexerUnjam);
         shootRegKey.whileTrue(&indexerSingle)->onTrue(&shooterStart);
-        shootFastKey.whileTrue(&indexer10Hz)->onTrue(&shooterStart);
+        shootFastKey.whileTrue(&indexer20Hz)->onTrue(&shooterStart);
         autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart);
         // implement speed mode
 
-        toggleUIKey./*onTrue(&draw)->*/onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);  // press g to start robot
+        toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);  // press g to start robot
         // drivers->commandScheduler.addCommand(&draw); //tries to draw immediately, doesn't always work well
 
         // drive commands and also enable mouse looking
@@ -156,7 +156,7 @@ public:
     subsystems::JetsonSubsystem jetson{drivers, &gimbal};
 
     // commands
-    //commands::SentryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};
+    commands::SentryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};
     commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};

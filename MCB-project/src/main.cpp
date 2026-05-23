@@ -15,7 +15,7 @@ tap::arch::MilliTimeout autoRecalibrateTimeout;
 
 
 
-float adctest;
+// float adctest;
 
 void checkAutoRecalibrate() {
     if(drivers.remote.isConnected()){
@@ -43,63 +43,6 @@ bool shouldExecuteScheduledRecalibration() {
            drivers.refSerial.getGameData().stageTimeRemaining < RECALIBRATION_THRESHOLD_TIME;
 }
 
-void adc1_pa6_init() {
-    // 1. Enable clocks
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-    RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
-
-    // 2. Configure PA6 as analog (MODER = 11)
-    GPIOA->MODER |= (3U << (6 * 2));
-    GPIOA->PUPDR &= ~(3U << (6 * 2)); // no pull-up/down
-
-    // 3. ADC prescaler (common safe value: PCLK2 / 8)
-    ADC->CCR &= ~(3U << 16);
-    ADC->CCR |=  (1U << 16); // ADCPRE = 01 -> PCLK2/4 (or use 10 for /6, 11 for /8)
-
-    // 4. ADC configuration
-    ADC1->CR1 = 0;
-    ADC1->CR2 = 0;
-
-    // Right alignment
-    ADC1->CR2 &= ~ADC_CR2_ALIGN;
-
-    // 5. Single conversion mode (default)
-    ADC1->CR2 &= ~ADC_CR2_CONT;
-
-    // 6. Sampling time for channel 6 (PA6 -> IN6 in SMPR2)
-    // choose 144 cycles for stability
-    ADC1->SMPR2 &= ~(7U << (6 * 3));
-    ADC1->SMPR2 |=  (7U << (6 * 3));
-
-    // 7. Regular sequence length = 1 conversion
-    ADC1->SQR1 &= ~(0xF << 20);
-
-    // 8. Channel 6 as first conversion in sequence
-    ADC1->SQR3 = 6;
-
-    // 9. Enable ADC
-    // Power on ADC
-    ADC1->CR2 |= ADC_CR2_ADON;
-
-    // mandatory stabilization delay
-    for (volatile int i = 0; i < 10000; i++);
-
-    // trigger a dummy conversion (VERY important)
-    ADC1->CR2 |= ADC_CR2_SWSTART;
-    while (!(ADC1->SR & ADC_SR_EOC));
-    (void)ADC1->DR;
-}
-
-uint16_t adc1_pa6_read() {
-    // Start conversion
-    ADC1->CR2 |= ADC_CR2_SWSTART;
-
-    // Wait for EOC
-    while (!(ADC1->SR & ADC_SR_EOC));
-
-    // Read result clears EOC
-    return (uint16_t)ADC1->DR;
-}
 
 
 
@@ -150,18 +93,7 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->bmi088.initialize(1000, 0.0f, 0.000f);
     drivers->bmi088.setTargetTemperature(35.0f);
     drivers->bmi088.setCalibrationSamples(4000);
-    adc1_pa6_init();
-        //ADC testing
-        //modm::platform::Adc1::connect<modm::platform::GpioA6::In6>();
-        //modm::platform::Adc1::initialize<
-          //  Board::SystemClock,      
-         //   modm::MHz(21)            //prescaler of 4 hopefully
-        //>();
-        //modm::platform::Adc1::setChannel(
-        //   modm::platform::Adc1::Channel::Channel6,
-         //   modm::platform::Adc1::SampleTime::Cycles56 // or your preferred sample time
-        //);
-        //
+    drivers->adc1_pa6_init();
     drivers->executeCalibration();
     drivers->recal.setIsFirstCalibrating();
 }
@@ -200,7 +132,7 @@ int main() {
 
         if (refreshTimer.execute()) {
             
-            adctest = adc1_pa6_read();;
+            // adctest = adc1_pa6_read();
             //adctest = drivers.readPa6Adc();
             // tap::buzzer::playNote(&(drivers.pwm), 493);
             
