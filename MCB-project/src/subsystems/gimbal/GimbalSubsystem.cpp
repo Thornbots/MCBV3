@@ -101,7 +101,7 @@ void GimbalSubsystem::updateMotorsAndVelocityWithLatencyCompensation(float chang
 
 void GimbalSubsystem::resetEncoderIfGainPower() {
     if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
-        #if defined(SENTRY) //sentry uses adc for encoder
+        #if defined(SENTRY) or defined(INFANTRY) //sentry uses adc for encoder
         encoderOffset = drivers->adc1_pa6_read() * (-2*PI/4096) + YAW_OFFSET; //adc read is blocking right now.
         #else //others use i2c
         encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;

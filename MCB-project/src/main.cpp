@@ -15,7 +15,7 @@ tap::arch::MilliTimeout autoRecalibrateTimeout;
 
 
 
-// float adctest;
+//float adctest;
 
 void checkAutoRecalibrate() {
     if(drivers.remote.isConnected()){
@@ -133,7 +133,7 @@ int main() {
         if (refreshTimer.execute()) {
             
             // adctest = adc1_pa6_read();
-            //adctest = drivers.readPa6Adc();
+            //dctest = drivers.adc1_pa6_read();
             // tap::buzzer::playNote(&(drivers.pwm), 493);
             
             checkAutoRecalibrate(); //would make drivers.recal.isForcingRecalibration() return true
