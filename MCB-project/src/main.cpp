@@ -15,7 +15,7 @@ tap::arch::MilliTimeout autoRecalibrateTimeout;
 
 
 
-float adctest;
+// float adctest;
 
 void checkAutoRecalibrate() {
     if(drivers.remote.isConnected()){
@@ -132,8 +132,7 @@ int main() {
 
         if (refreshTimer.execute()) {
             
-             //adctest = adc1_pa6_read();
-            adctest = drivers.adc1_pa6_read();
+            // adctest = drivers.adc1_pa6_read(); //adc read is slow, this gets read in GimbalSubsystem when the yaw motor turns on again
             // tap::buzzer::playNote(&(drivers.pwm), 493);
             
             checkAutoRecalibrate(); //would make drivers.recal.isForcingRecalibration() return true
