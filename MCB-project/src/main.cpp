@@ -6,12 +6,35 @@
 
 #include "drivers.hpp"
 
-const int RECALIBRATION_THRESHOLD_TIME = 15; // when there are fewer than this many seconds remaining in the game stage, run scheduled recalibrations
+const int RECALIBRATION_THRESHOLD_TIME = 15; //s, when there are fewer than this many seconds remaining in the game stage, run scheduled recalibrations
+const int AUTORECALIBRATION_THRESHOLD_TIME = 60*3000; //ms, set to 3 min. if the controller has been off for this long, recalibrate
 
 src::Drivers drivers;
 RobotControl control{&drivers};
+tap::arch::MilliTimeout autoRecalibrateTimeout;
 
 
+
+float adctest;
+
+void checkAutoRecalibrate() {
+    if(drivers.remote.isConnected()){
+        //we have a controller, stop counting
+        autoRecalibrateTimeout.stop(); 
+    } else {
+        //no controller, start timer if needed, if timer is done, we should execute recalibration
+        if(autoRecalibrateTimeout.isStopped()){
+            autoRecalibrateTimeout.restart(AUTORECALIBRATION_THRESHOLD_TIME);
+        } 
+        if(autoRecalibrateTimeout.execute()){
+            autoRecalibrateTimeout.restart(AUTORECALIBRATION_THRESHOLD_TIME);
+            drivers.recal.forceCalibration();
+        }
+    }
+}
+
+
+//if ctrl r (not ctrl shift r) and it is time
 bool shouldExecuteScheduledRecalibration() {
     RefSerialData::Rx::GameStage currentGameStage = drivers.refSerial.getGameData().gameStage;
     return drivers.recal.isRequestingRecalibration() &&
@@ -19,6 +42,8 @@ bool shouldExecuteScheduledRecalibration() {
            (currentGameStage == RefSerial::Rx::GameStage::SETUP || currentGameStage == RefSerial::Rx::GameStage::INITIALIZATION) &&
            drivers.refSerial.getGameData().stageTimeRemaining < RECALIBRATION_THRESHOLD_TIME;
 }
+
+
 
 
 // Place any sort of input/output initialization here. For example, place
@@ -62,10 +87,13 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->schedulerTerminalHandler.init();
     drivers->djiMotorTerminalSerialHandler.init();
 
+
+
     drivers->leds.set(tap::gpio::Leds::Red, false);
     drivers->bmi088.initialize(1000, 0.0f, 0.000f);
     drivers->bmi088.setTargetTemperature(35.0f);
     drivers->bmi088.setCalibrationSamples(4000);
+    drivers->adc1_pa6_init();
     drivers->executeCalibration();
     drivers->recal.setIsFirstCalibrating();
 }
@@ -103,7 +131,12 @@ int main() {
         drivers.uart.updateSerial();
 
         if (refreshTimer.execute()) {
+            
+             //adctest = adc1_pa6_read();
+            adctest = drivers.adc1_pa6_read();
             // tap::buzzer::playNote(&(drivers.pwm), 493);
+            
+            checkAutoRecalibrate(); //would make drivers.recal.isForcingRecalibration() return true
             bool goingToRecalibrate = drivers.recal.isForcingRecalibration() || shouldExecuteScheduledRecalibration();
             if(goingToRecalibrate){
                 control.stopForImuRecal();
@@ -152,3 +185,5 @@ int main() {
 
     return 0;
 }
+
+

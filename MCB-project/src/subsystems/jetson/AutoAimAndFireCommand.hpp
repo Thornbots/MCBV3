@@ -49,6 +49,7 @@ public:
 
     const char* getName() const override { return "autoaim command"; }
     
+    bool getIsScheduled();
 
 
 private:
@@ -73,5 +74,7 @@ private:
     float yawvel = 0.0f, pitchvel = 0.0f;
     //int flip = 1;
     uint32_t lastSeenTime = 0;
+    
+    bool isScheduled = false;
 };
 }  // namespace commands

@@ -11,7 +11,7 @@ constexpr float RA = 0.5592;        // ohm, armature resistance
 
 constexpr float VOLT_MAX = 24;      // V, maximum
 
-constexpr float MAX_POS_VEL = 1.0;//1.25
+constexpr float MAX_POS_VEL = 1.0;//4.0
 
 #if defined(HERO)
 // START getters and setters
@@ -38,22 +38,23 @@ constexpr float KI_V = 0 / .002;  // integral gain for velocity
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
 constexpr float KP = 0;              // proportional gain for position control
+constexpr float KI = 0.5f; //copied from sentry to compile
 constexpr float BEYBLADE_DELAY = .25 ;  // delay for beyblade mode/
 constexpr float BBterm1 = 11.7075; //constant term
 constexpr float BBterm2 = -3.3097; //linear term
 constexpr float BBterm3 = -.1586; //quadratic term
 constexpr float BBmax = 12; //constant term
 constexpr float maxTorqueZ = 30;
-
+constexpr float TREQSCALE = 0.05;
 #elif defined(SENTRY)
 // START getters and setters
 constexpr float TRACKWIDTH = 0.50038;      // in m
-constexpr float M = 19;                  // robot mass kg
-constexpr float J = 0.44;                  // measured from sys id kg-m^2
-constexpr float R_WHEEL = 0.05;  // wheel radius m
-constexpr float J_WHEEL = 0.0009;          // wheel moment of inertia kg-m^2
-constexpr float C_MOTOR = 2.5e-4 * .02299;          // motor damping kg-s/m^2`
-constexpr float UK_MOTOR = 0.14 * .02299;           // motor dry friction N-m
+constexpr float M = 15.68;                  // robot mass kg
+constexpr float J = 0.474419;                  // measured from sys id kg-m^2
+constexpr float R_WHEEL = 0.094902;  // wheel radius m
+constexpr float J_WHEEL = 0.000048599;          // wheel moment of inertia kg-m^2
+constexpr float C_MOTOR = 4e-4 * .02299;          // motor damping kg-s/m^2`
+constexpr float UK_MOTOR = 0.17 * .02299;           // motor dry friction N-m
 constexpr float COF_WHEEL = 0.9;           // unitless COF
 
 constexpr float GEAR_RATIO = 3591/187.0f;  // gear ratio
@@ -61,21 +62,22 @@ constexpr float P_IDLE = 3;         // W, idle power
 constexpr float P_FOS = 0.65;       // unitless, power factor of safety
 
 // Tunable Parameters
-constexpr float KP_V_XY = 1500;  // proportional gain for velocity
-constexpr float KP_V_ROT = 30;   // proportional gain for rotational velocity
+constexpr float KP_V_XY = 575;  // proportional gain for velocity
+constexpr float KP_V_ROT = 70;   // proportional gain for rotational velocity
 
 constexpr float KI_V = 0;  // integral gain for velocity
 
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
-constexpr float KP = 1;              // proportional gain for position control
-constexpr float BEYBLADE_DELAY = .25 ;  // delay for beyblade mode/
-constexpr float BBterm1 = 9; //constant term
-constexpr float BBterm2 = -2.8647; //linear term
-constexpr float BBterm3 = -.3593; //quadratic term
-constexpr float BBmax = 9; //constant term
-constexpr float maxTorqueZ = 30 * 5/6;
-
+constexpr float KP = 2.0f;              // proportional gain for position control
+constexpr float KI = 0.5f;
+constexpr float BEYBLADE_DELAY = .25;  // delay for beyblade mode/
+constexpr float BBterm1 = 19.534; //constant term
+constexpr float BBterm2 = -4.125; //linear term
+constexpr float BBterm3 = 0.0314; //quadratic term
+constexpr float BBmax = 19.5; //constant term
+constexpr float maxTorqueZ = 15;
+constexpr float TREQSCALE = 0.45;
 #elif defined(INFANTRY)
 // START getters and setters
 constexpr float TRACKWIDTH = 0.504;      // in m. We need to measure
@@ -89,7 +91,7 @@ constexpr float COF_WHEEL = 0.9;           // unitless COF
 
 constexpr float GEAR_RATIO = 3591.0f/187.0f;  // gear ratio
 constexpr float P_IDLE = 2.7;         // W, idle power
-constexpr float P_FOS = .65;       // unitless, power factor of safety
+constexpr float P_FOS = 1.0;       // unitless, power factor of safety
 
 // Tunable Parameters
 constexpr float KP_V_XY = 1150;  // proportional gain for velocity
@@ -100,12 +102,14 @@ constexpr float KI_V = 0 / .002;  // integral gain for velocity
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
 constexpr float KP = 0;              // proportional gain for position control
+constexpr float KI = 0.5f; //copied from sentry to compile
 constexpr float BEYBLADE_DELAY = .25;  // delay for beyblade mode/
 constexpr float BBterm1 = 11.9571; //constant term
 constexpr float BBterm2 = -3.4249; //linear term
 constexpr float BBterm3 = -.1586; //quadratic term
 constexpr float BBmax = 12; //constant term
 constexpr float maxTorqueZ = 30;
+constexpr float TREQSCALE = 0.7;
 #else// START getters and setters
 constexpr float TRACKWIDTH = 0.49739;      // in m. We need to measure
 constexpr float M = 14.0;                  // robot mass kg
@@ -129,6 +133,7 @@ constexpr float KI_V = 0;  // integral gain for velocity
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
 constexpr float KP = 0;              // proportional gain for position control
+constexpr float KI = 0.5f; //copied from sentry to compile
 constexpr float BEYBLADE_DELAY = .25;  // delay for beyblade mode/
 constexpr float BBterm1 = 10.7717; //constant term
 constexpr float BBterm2 = -2.0342; //linear term
@@ -140,7 +145,7 @@ constexpr float maxTorqueZ = 30;
 
 // after the ifdefs
 
-constexpr float TREQSCALE = 0.5;
+
 constexpr float LATENCY = 0.008;  // latency s
 constexpr float DT = 0.001;       // DT in s
 

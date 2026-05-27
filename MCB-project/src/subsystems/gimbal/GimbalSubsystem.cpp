@@ -51,10 +51,7 @@ void GimbalSubsystem::refresh() {
 }
 
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
-    if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
-        encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
-        motorYaw->resetEncoderValue();
-    }
+    resetEncoderIfGainPower();
     float pitchVel = getPitchVel();
     float pitch = getPitchEncoderValue();
     prevTargetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
@@ -102,15 +99,22 @@ void GimbalSubsystem::updateMotorsAndVelocityWithLatencyCompensation(float chang
 
 }
 
+void GimbalSubsystem::resetEncoderIfGainPower() {
+    if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
+        encoderOffset = drivers->adc1_pa6_read() * (-2*PI/4096) + YAW_OFFSET; //adc read is blocking right now.
+        //#else //others use i2c
+        //encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
+        //#endif
+        motorYaw->resetEncoderValue();
+    }
+}
+
 void GimbalSubsystem::stopMotors() {
     pitchMotorVoltage = 0;
     yawMotorVoltage = 0;
     
     // #if defined(INFANTRY) or defined(HERO) or defined(SENTRY)  //all robots with 3508 turrets
-    if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
-        encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
-        motorYaw->resetEncoderValue();
-    }
+    resetEncoderIfGainPower();
     // #endif
     targetYawAngleWorld = yawAngleRelativeWorld;
 
