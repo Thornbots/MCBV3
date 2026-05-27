@@ -166,7 +166,7 @@ public:
     subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
-    subsystems::SingleIndexerSubsystem indexer{drivers, &hardware.indexMotor1};
+    subsystems::SingleIndexerSubsystem indexer{drivers, &hardware.indexMotor1, true}; //sentry homes
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::OdometrySubsystem odo{drivers, &hardware.odoMotor};
     subsystems::JetsonSubsystem jetson{drivers, &gimbal};
