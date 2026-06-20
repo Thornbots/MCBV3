@@ -2,15 +2,15 @@
 
 #include "tap/algorithms/math_user_utils.hpp"
 
-#include "subsystems/jetson/JetsonSubsystemConstants.hpp"
-#include "subsystems/indexer/IndexerSubsystem.hpp"
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
-#include "subsystems/ui/UISubsystem.hpp"
+#include "subsystems/indexer/IndexerSubsystem.hpp"
+#include "subsystems/jetson/JetsonSubsystemConstants.hpp"
 #include "subsystems/ui/Projections.hpp"
-#include "util/ui/GraphicsContainer.hpp"
-#include "util/ui/AtomicGraphicsObjects.hpp"
-#include "util/Vector3d.hpp"
+#include "subsystems/ui/UISubsystem.hpp"
 #include "util/Vector2d.hpp"
+#include "util/Vector3d.hpp"
+#include "util/ui/AtomicGraphicsObjects.hpp"
+#include "util/ui/GraphicsContainer.hpp"
 
 using namespace tap::communication::serial;
 using namespace subsystems;
@@ -23,7 +23,8 @@ public:  // important constants and enums
     static constexpr float PANEL_ANGLE = 15 * PI / 180;       // radians, tilt of the panel, 0 would be panel is not tilted
     static constexpr float AVERAGE_HEIGHT_OFF_GROUND = 0.18;  // meters, center of panel to ground, for calculating where on screen reticle things should be
 
-    // distances down range and colors to draw them
+    // distances down range
+    // needs to be at least 1 for FOR_DISTANCE to work
     static constexpr int NUM_THINGS = 9;
 
 #if defined(HERO)
@@ -32,6 +33,7 @@ public:  // important constants and enums
     static constexpr float DISTANCES[NUM_THINGS] = {1, 2, 3, 5, 7, 9, 11, 12, 13};  // meters, y distances, measured from center of robot to center of panel
 #endif
 
+    // cycle through colors
     static constexpr int NUM_COLORS = 1;
     static constexpr UISubsystem::Color COLORS[NUM_COLORS] = {UISubsystem::Color::GREEN};
 
@@ -48,6 +50,7 @@ public:  // important constants and enums
     enum class ReticleSolveMode : uint8_t {
         FOR_HEIGHT_OFF_GROUND = 0,  // uses pitch and DISTANCES away to solve for height, redraws the reticle often because pitch changes often
         FOR_PITCH = 1,              // uses AVERAGE_HEIGHT_OFF_GROUND and DISTANCES away to solve for pitch, reticle doesn't ever need redrawn because constants are constant
+        FOR_DISTANCE = 2,           // Ignores DISTANCES, uses AVERAGE_HEIGHT_OFF_GROUND and the pitch to draw one set of lines that changes when the pitch changes
     };
 
     enum class ReticleSidedMode : uint8_t {
@@ -57,21 +60,20 @@ public:  // important constants and enums
         ALT = 3,   // alternate between left and right
     };
 
-private: // draw settings
+private:  // draw settings
     ReticleDrawMode drawMode = ReticleDrawMode::VERT_LINES;
     ReticleSolveMode solveMode = ReticleSolveMode::FOR_PITCH;
     ReticleSidedMode sidedMode = ReticleSidedMode::BOTH;
 
-    static constexpr int DIAGONAL_OFFSET = 50; //when can't shoot, the vertical line becomes diagonal, by shifting x by this amount
+    static constexpr int DIAGONAL_OFFSET = 50;  // when can't shoot, the vertical line becomes diagonal, by shifting x by this amount
 
 public:
-
     Reticle(tap::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* index) : drivers(drivers), gimbal(gimbal), index(index) {
         for (int i = 0; i < NUM_THINGS; i++) {
-            rects[i].color = COLORS[i%NUM_COLORS];
+            rects[i].color = COLORS[i % NUM_COLORS];
             rectsContainer.addGraphicsObject(rects + i);
             for (int j = 0; j < NUM_LINES; j++) {
-                lines[i][j].color = COLORS[i%NUM_COLORS];
+                lines[i][j].color = COLORS[i % NUM_COLORS];
                 linesContainer.addGraphicsObject(&lines[i][j]);
             }
             forPitchLandingSpotsSolved[i] = false;
@@ -85,6 +87,18 @@ public:
     }
 
     void update() {
+        //pressing b swaps between FOR_PITCH and FOR_DISTANCE
+        bool b = drivers->remote.keyPressed(Remote::Key::B);
+        if(prev && !b) {
+            //on release
+            prev=false;
+        }
+        if(!prev && b){
+            //on press
+            prev=true;
+            solveMode = solveMode == ReticleSolveMode::FOR_DISTANCE ? ReticleSolveMode::FOR_PITCH : ReticleSolveMode::FOR_DISTANCE;
+        }
+        
         
         float pitch = gimbal->getPitchEncoderValue();
 
@@ -92,35 +106,35 @@ public:
 
         bool canShoot = true;
 
-        if(!index->isIndexOnline()){
+        if (!index->isIndexOnline()) {
             verticalLine.color = UISubsystem::Color::PINK;
-            canShoot=false;
+            canShoot = false;
         }
 
-        if(!index->isProjectileAtBeam()){
+        if (!index->isProjectileAtBeam()) {
             verticalLine.color = UISubsystem::Color::BLACK;
-            canShoot=false;
+            canShoot = false;
         }
 
-        if(!index->heatAllowsShooting()) {
+        if (!index->heatAllowsShooting()) {
             verticalLine.color = UISubsystem::Color::WHITE;
-            canShoot=false;
+            canShoot = false;
         }
-
 
         verticalLine.x1 = UISubsystem::HALF_SCREEN_WIDTH;
         verticalLine.x2 = UISubsystem::HALF_SCREEN_WIDTH;
-        if(canShoot){
+        if (canShoot) {
             verticalLine.color = index->refPoweringIndex() ? UISubsystem::Color::WHITE : UISubsystem::Color::PINK;
             verticalLine.thickness = 1;
         } else {
             verticalLine.thickness = 10;
-            verticalLine.x1+=DIAGONAL_OFFSET;
-            verticalLine.x2-=DIAGONAL_OFFSET;
+            verticalLine.x1 += DIAGONAL_OFFSET;
+            verticalLine.x2 -= DIAGONAL_OFFSET;
         }
 
         solvedForPitchLandingSpotThisCycle = false;
-        for (int i = 0; i < NUM_THINGS; i++) {
+        int numThings = solveMode == ReticleSolveMode::FOR_DISTANCE ? 1 : NUM_THINGS;
+        for (int i = 0; i < numThings; i++) {
             // assume all lines are hidden, if we are drawing lines
             for (int j = 0; j < NUM_LINES; j++) {
                 lines[i][j].hide();
@@ -169,8 +183,10 @@ public:
                 lines[i][1].x2 = lb.getX();
                 lines[i][1].y2 = lb.getY();
 
-                bool showRight = drawVertLines && (adjustedSidedMode == ReticleSidedMode::BOTH || adjustedSidedMode == ReticleSidedMode::RIGHT || (adjustedSidedMode == ReticleSidedMode::ALT && (i % 2)));
-                bool showLeft = drawVertLines && (adjustedSidedMode == ReticleSidedMode::BOTH || adjustedSidedMode == ReticleSidedMode::LEFT || (adjustedSidedMode == ReticleSidedMode::ALT && !(i % 2)));
+                bool showRight =
+                    drawVertLines && (adjustedSidedMode == ReticleSidedMode::BOTH || adjustedSidedMode == ReticleSidedMode::RIGHT || (adjustedSidedMode == ReticleSidedMode::ALT && (i % 2)));
+                bool showLeft =
+                    drawVertLines && (adjustedSidedMode == ReticleSidedMode::BOTH || adjustedSidedMode == ReticleSidedMode::LEFT || (adjustedSidedMode == ReticleSidedMode::ALT && !(i % 2)));
 
                 lines[i][0].setHidden(!showRight);
                 lines[i][1].setHidden(!showLeft);
@@ -197,14 +213,16 @@ public:
         }
 
         verticalLine.y1 = lines[0][0].y1;
-        verticalLine.y2 = lines[NUM_THINGS-1][0].y2;
-
+        verticalLine.y2 = lines[numThings - 1][0].y2;
     }
 
 private:
     tap::Drivers* drivers;
     GimbalSubsystem* gimbal;
     IndexerSubsystem* index;
+    
+    //for detecting button press
+    bool prev = false;
 
     Vector3d panelEdges[4] = {
         {PANEL_WIDTH / 2, 0, 0},                                                                     // right
@@ -223,9 +241,8 @@ private:
 
     static constexpr int NUM_LINES = 4;  // enough to support trapezoids
     Line lines[NUM_THINGS][NUM_LINES];   // not all are used in every mode
-    UnfilledRectangle rects[NUM_THINGS];
+    UnfilledRectangle rects[NUM_THINGS]; // for ReticleDrawMode::RECTANGLES
     Line verticalLine;
-
 
     // for solving for pitch
     static constexpr int MAX_NUM_ITERATIONS = 10;  // it is difficult to actually solve for pitch because initial launch positions depend on pitch
@@ -246,21 +263,29 @@ private:
         return Projections::vtmSpaceToScreenSpace(temp2);
     }
 
+    // i is index into DISTANCES, ignored if solveMode is FOR_DISTANCE
     Vector3d calculateLandingSpot(float* pitch, int i) {
+        Vector3d temp{0, initialShotVelocity, 0};
+        Vector3d initialVelo = temp.rotatePitch(-*pitch);
+        Vector3d initialPos{0, 0, 0};  // shot starts in barrel space
+        temp = Projections::barrelSpaceToPivotSpace(initialPos);
+        initialPos = temp.rotatePitch(-*pitch);
+        // initialPos and initialVelo are in pivot space, parallel to the ground so gravity is pulling in the -z direction only
+
         if (solveMode == ReticleSolveMode::FOR_HEIGHT_OFF_GROUND) {
-            Vector3d temp{0, initialShotVelocity, 0};
-            Vector3d initialVelo = temp.rotatePitch(-*pitch);
-            Vector3d initialPos{0, 0, 0};  // shot starts in barrel space
-            temp = Projections::barrelSpaceToPivotSpace(initialPos);
-            initialPos = temp.rotatePitch(-*pitch);
-            // initialPos and initialVelo are in pivot space, parallel to the ground so gravity is pulling in the -z direction only
-
             float t = (DISTANCES[i] - initialPos.getY()) / initialVelo.getY();  //(distance to travel [meters]) divided by (speed to get there [meters/seconds]) gives (time to get there [seconds])
-            float zFinal =
-                initialPos.getZ() + initialVelo.getZ() * t - tap::algorithms::ACCELERATION_GRAVITY / 2 * t * t;  // make sure gravity is negative, the taproot constant is positive, need to subtract
 
-            return Vector3d{initialPos.getX(), DISTANCES[i], zFinal};  // side to side doesn't change, we are defining the down range distance, and we calculated the height off the ground
-        } else { //FOR_PITCH
+            // make sure gravity is negative, the taproot constant is positive, need to subtract
+            float zFinal = initialPos.getZ() + initialVelo.getZ() * t - tap::algorithms::ACCELERATION_GRAVITY / 2 * t * t;
+
+            return Vector3d{initialPos.getX(), DISTANCES[i], zFinal};  // side to side doesn't change, we are defining the down range distance, and we calculated the height
+        } else if (solveMode == ReticleSolveMode::FOR_DISTANCE) {
+            float changeInZ = AVERAGE_HEIGHT_OFF_GROUND - Projections::OFFSET_Z_ROBOT_TO_PITCH_PIVOT - initialPos.getZ();
+            float distance = initialVelo.getY() * (initialVelo.getZ() + std::sqrt(-2 * tap::algorithms::ACCELERATION_GRAVITY * changeInZ + initialVelo.getZ() * initialVelo.getZ())) /
+                             tap::algorithms::ACCELERATION_GRAVITY;
+            // side to side doesn't change, we calculated the down range distance, and we are defining the height
+            return Vector3d{initialPos.getX(), distance, changeInZ};
+        } else {  // FOR_PITCH
             // if solved it earlier, return saved result
             if (forPitchLandingSpotsSolved[i]) {
                 *pitch = forPitchPitches[i];
