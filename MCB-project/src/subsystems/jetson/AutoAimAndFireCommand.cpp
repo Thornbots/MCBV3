@@ -5,8 +5,7 @@ using namespace tap::communication::serial;
 
 void AutoAimAndFireCommand::initialize() {
     shoot = -1;
-
-    drivers->leds.set(tap::gpio::Leds::Green, true);
+    isScheduled = true;
 }
 void AutoAimAndFireCommand::execute() {
     bool allowShooting = true;
@@ -24,6 +23,7 @@ void AutoAimAndFireCommand::execute() {
             allowGimbal = true;
         }
 
+        //don't spin before match
         if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
             // countdown, only allow gimbal
             allowGimbal = true;
@@ -76,11 +76,11 @@ void AutoAimAndFireCommand::execute() {
     if(allowShooting){
         if (isShooting) {
             // if we see a panel or recently have seen a panel
-            indexer->indexAtRate(20);
+            indexer->indexAtRate(5);//20 change to not make a mess
         } else {
             // if we haven't seen a panel for a bit
-            //  indexer->stopIndex();
-            indexer->unjam();
+             indexer->stopIndex();
+            // indexer->unjam();
         }
     } else {
         indexer->stopIndex();
@@ -97,8 +97,11 @@ void AutoAimAndFireCommand::execute() {
 
 void AutoAimAndFireCommand::end(bool) {
     pitch = 0;
-    drivers->leds.set(tap::gpio::Leds::Green, false);
+    isScheduled = false;
 }
+
+bool AutoAimAndFireCommand::getIsScheduled() { return isScheduled; }
+
 
 bool AutoAimAndFireCommand::isFinished() const { return !drivers->remote.isConnected(); }
 }  // namespace commands

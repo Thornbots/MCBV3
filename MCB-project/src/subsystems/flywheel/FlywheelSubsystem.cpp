@@ -21,12 +21,19 @@ namespace subsystems {
      * sets the target motor RPM of the flywheels
      */
     void FlywheelSubsystem::setTargetVelocity(int targetMotorRPM){
+        if (startupCounter < 80 && drivers->remote.isConnected()) {
+            startupCounter++;
+            stopMotors();
+        } else {
         this->targetMotorRPM = targetMotorRPM;
         flywheelPIDController1.runControllerDerivateError(targetMotorRPM - motorFlywheel1->getShaftRPM(), 1);
         flywheelPIDController2.runControllerDerivateError(targetMotorRPM - motorFlywheel2->getShaftRPM(), 1);
 
         flyWheel1Voltage = static_cast<int32_t>(flywheelPIDController1.getOutput());
         flyWheel2Voltage = static_cast<int32_t>(flywheelPIDController2.getOutput());
+        }
+
+        if (!drivers->remote.isConnected()) startupCounter = 0;
     }
 
     /**

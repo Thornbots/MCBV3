@@ -18,12 +18,14 @@ GimbalSubsystem::GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* ya
 void GimbalSubsystem::initialize() {
     motorPitch->initialize();
     motorYaw->initialize();
-    imuOffset = getYawEncoderValue();
 
     targetYawAngleWorld += yawAngleRelativeWorld;
     drivers->commandScheduler.registerSubsystem(this);
 }
 void GimbalSubsystem::refresh() {
+    if (isYawMotorOnline() && wasYawMotorOffline) {
+        targetYawAngleWorld = yawAngleRelativeWorld;
+    }
 
     yawAngularVelocity = PI / 180 * drivers->bmi088.getGz();
 
@@ -36,17 +38,20 @@ void GimbalSubsystem::refresh() {
 #endif
 
     driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
-    yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw(); 
+    yawAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw();
     updatePositionHistory(yawAngleRelativeWorld);
     motorPitch->setDesiredOutput(pitchMotorVoltage);
     motorYaw->setDesiredOutput(yawMotorVoltage);
+
+    if (isYawMotorOnline()) {
+        wasYawMotorOffline = false;
+    } else {
+        wasYawMotorOffline = true;
+    }
 }
 
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
-    if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
-        encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
-        motorYaw->resetEncoderValue();
-    }
+    resetEncoderIfGainPower();
     float pitchVel = getPitchVel();
     float pitch = getPitchEncoderValue();
     prevTargetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
@@ -94,15 +99,22 @@ void GimbalSubsystem::updateMotorsAndVelocityWithLatencyCompensation(float chang
 
 }
 
+void GimbalSubsystem::resetEncoderIfGainPower() {
+    if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
+        encoderOffset = drivers->adc1_pa6_read() * (-2*PI/4096) + YAW_OFFSET; //adc read is blocking right now.
+        //#else //others use i2c
+        //encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
+        //#endif
+        motorYaw->resetEncoderValue();
+    }
+}
+
 void GimbalSubsystem::stopMotors() {
     pitchMotorVoltage = 0;
     yawMotorVoltage = 0;
     
     // #if defined(INFANTRY) or defined(HERO) or defined(SENTRY)  //all robots with 3508 turrets
-    if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
-        encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
-        motorYaw->resetEncoderValue();
-    }
+    resetEncoderIfGainPower();
     // #endif
     targetYawAngleWorld = yawAngleRelativeWorld;
 
@@ -115,7 +127,8 @@ void GimbalSubsystem::clearBuildup() {
 }
     
 void GimbalSubsystem::reZeroYaw() {
-    // TODO
+    yawAngleRelativeWorld = 0.0;
+    targetYawAngleWorld = 0.0;
 }
 
 void GimbalSubsystem::updatePositionHistory(float newPos) {
@@ -167,4 +180,8 @@ float GimbalSubsystem::getPitchEncoderValue() { //more like get pitch relative t
 float GimbalSubsystem::getYawVel() { return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO; }
 float GimbalSubsystem::getPitchVel() { return motorPitch->getShaftRPM() * PI / 30; }
 float GimbalSubsystem::getYawAngleRelativeWorld() { return yawController.estimatedPosition; }
+
+bool GimbalSubsystem::isYawMotorOnline() {
+    return motorYaw->isMotorOnline();
+}
 }  // namespace subsystems  

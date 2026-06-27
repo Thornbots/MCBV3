@@ -1,58 +1,77 @@
 {
-    "version": "0.2.0",
-    "configurations": [
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Tests",
+      "type": "cppdbg",
+      "request": "launch",
+      "preLaunchTask": "Build Tests - Debug",
+      "program": "${workspaceFolder}/MCB-project/build/tests/scons-debug/MCB-project-tests.elf",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
         {
-            "name": "Debug Tests",
-            "type": "cppdbg",
-            "request": "launch",
-            "preLaunchTask": "Build Tests - Debug",
-            "program": "${workspaceFolder}/MCB-project/build/tests/scons-debug/MCB-project-tests.elf",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ]
-        },
-        {
-            "name": "Debug Sim",
-            "type": "cppdbg",
-            "request": "launch",
-            "preLaunchTask": "Build Sim - Debug",
-            "program": "${workspaceFolder}/MCB-project/build/sim/scons-debug/MCB-project.elf",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ]
-        },
-        {
-            "name": "Debug Hardware",
-            "type": "cortex-debug",
-            "request": "launch",
-            "servertype": "openocd",
-            "cwd": "${workspaceRoot}",
-            "preLaunchTask": "Program - Debug",
-            "executable": "./MCB-project/build/hardware/scons-debug/MCB-project.elf",
-            "device": "STM32F427II",
-            "configFiles": [
-                "./MCB-project/openocd.cfg"
-            ]
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
         }
-    ]
+      ]
+    },
+    {
+      "name": "Debug Sim",
+      "type": "cppdbg",
+      "request": "launch",
+      "preLaunchTask": "Build Sim - Debug",
+      "program": "${workspaceFolder}/MCB-project/build/sim/scons-debug/MCB-project.elf",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    },
+    {
+      "name": "Debug Hardware",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "openocd",
+      "cwd": "${workspaceRoot}",
+      "preLaunchTask": "Program - Debug",
+      "executable": "./MCB-project/build/hardware/scons-debug/MCB-project.elf",
+      "device": "STM32F427II",
+      "configFiles": [
+        "./MCB-project/openocd.cfg"
+      ]
+    },
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": true,
+      "cwd": "c:/Users/hardenej/Documents/GitHub/MCBV3/MCB-project/src/subsystems/indexer",
+      "program": "c:/Users/hardenej/Documents/GitHub/MCBV3/MCB-project/src/subsystems/indexer/build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
 }
