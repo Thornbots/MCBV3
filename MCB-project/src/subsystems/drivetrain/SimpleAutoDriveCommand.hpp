@@ -73,6 +73,10 @@ public:
             // going forwards if there is somewhere to go
             if(allowAdvancing && direction==1 && targetIndex<size-1){
                 targetIndex++;
+                if(needToApplyInitialPointChange){
+                    needToApplyInitialPointChange=false;
+                    targets[0].first = changedInitialPoint;
+                }
             }
             // going backwards if there is somewhere to go
             if(allowAdvancing && direction==-1 && targetIndex>0){
@@ -140,38 +144,42 @@ private:
         case TargetMode::ARCC_RAMP_PATH:
             flipXIfBlue = true;
             //coordinates for red team
+            changedInitialPoint = {TOWARDS_ZONE_OFFSET, -TOWARDS_ZONE_OFFSET};
             targets.push_back({{-1.8330f, 0.595f}, {0.0f, 0.0f}}); // mostly left, some forward: before ramp
             targets.push_back({{-1.8330f, 4.060f}, {0.0f, 0.0f}}); // forward: across ramp
-            targets.push_back({{0.203f, 4.358f}, {0.0f, 0.0f}}); // mostly right, some forward: to center
+            targets.push_back({{TOWARDS_ZONE_OFFSET, 4.125f+TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}}); // mostly right, some forward: to center
             return;
         case TargetMode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED:
             flipXIfBlue = true;
             //coordinates for red team
+            changedInitialPoint = {TOWARDS_ZONE_OFFSET, -TOWARDS_ZONE_OFFSET};
             targets.push_back({{-1.8330f, 0.595f}, {0.0f, 0.0f}}); // mostly left, some forward: before ramp
             targets.push_back({{-1.8330f, 4.872f}, {0.0f, 0.0f}}); // forward: across ramp (add 0.812)
-            targets.push_back({{0.203f, 5.170f}, {0.0f, 0.0f}}); // mostly right, some forward: to center (add 0.812)
+            targets.push_back({{TOWARDS_ZONE_OFFSET, 4.937f+TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}}); // mostly right, some forward: to center (add 0.812)
             return;
         case TargetMode::ARCC_HALLWAY_PATH:
             flipXIfBlue = true;
             //coordinates for red team
+            changedInitialPoint = {TOWARDS_ZONE_OFFSET, -TOWARDS_ZONE_OFFSET};
             targets.push_back({{-0.874f, 0.892f}, {0.0f, 0.0f}}); // left forward diagonal: before enter hallway
             targets.push_back({{-0.874f, 1.724f}, {0.0f, 0.0f}}); // forward: enter hallway
             targets.push_back({{0.693f, 1.724f}, {0.0f, 0.0f}}); // right: through hallway
             targets.push_back({{1.200f, 2.230f}, {0.0f, 0.0f}}); // forward right diagonal: leave hallway
-            targets.push_back({{1.200f, 4.358f}, {0.0f, 0.0f}}); // forward: to center
+            targets.push_back({{1.385f-TOWARDS_ZONE_OFFSET, 4.125f+TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}}); // forward: to center
             return;
         case TargetMode::ARCC_ROUGH_PATH:
             flipXIfBlue = true;
             //coordinates for red team
+            changedInitialPoint = {-TOWARDS_ZONE_OFFSET, -TOWARDS_ZONE_OFFSET};
             targets.push_back({{1.592f, 0.810f}, {0.0f, 0.0f}}); // right forward diagonal: before wall
             targets.push_back({{1.592f, 1.487f}, {0.0f, 0.0f}}); // forward: past wall
-            targets.push_back({{-0.185f, 4.358f}, {0.0f, 0.0f}}); // left forward diagonal: to center
+            targets.push_back({{-TOWARDS_ZONE_OFFSET, 4.125f+TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}}); // left forward diagonal: to center
             return;
         } //end switch
         
         //arcc map is mirrored across teams, mirror the x coordinates for blue team
         if(flipXIfBlue && drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId)){
-            for(int i=0; i<targets.size(); i++){
+            for(unsigned int i=0; i<targets.size(); i++){
                 targets[i].first.first = -targets[i].first.first; //flip position x
                 targets[i].second.first = -targets[i].second.first; //flip velocity x (probably 0 though)
             }
@@ -202,6 +210,12 @@ private:
     int targetIndex = 0; //index in targets
     int direction = 1; //either 1 or -1
     bool isScheduled = false;
+    
+    
+    bool needToApplyInitialPointChange = true;
+    std::pair<float, float> changedInitialPoint{0.0f, 0.0f};
+    
+    static constexpr float TOWARDS_ZONE_OFFSET = 0.5; //meters, how far (x and y distance) into a zone (reload or center) to be. 0 would stay at a corner.
     
     
     TargetMode mode;
