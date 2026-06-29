@@ -5,11 +5,12 @@ namespace subsystems {
 using namespace tap::communication::serial;
 using namespace subsystems::indexer;
 
-SingleIndexerSubsystem::SingleIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index)
+SingleIndexerSubsystem::SingleIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool enableHoming)
     : IndexerSubsystem(drivers, index),
     unit(drivers, index, REV_PER_BALL/GEAR_RATIO, REV_PER_BALL),
     counter(drivers, ShotCounter::BarrelType::TURRET_17MM_EITHER, index),
-    homingState(HomingState::NEED_TO_HOME)
+    homingState(HomingState::NEED_TO_HOME),
+    enableHoming(enableHoming)
     {}
 
 void SingleIndexerSubsystem::finishInitialize() {
@@ -17,13 +18,15 @@ void SingleIndexerSubsystem::finishInitialize() {
 }
 
 void SingleIndexerSubsystem::finishRefresh() {
-    doHomingTransitions();
-    if (homingState==HomingState::HOMING) {
-        homeIndexer();
+    if(enableHoming){
+        doHomingTransitions();
+        if (homingState==HomingState::HOMING) {
+            homeIndexer();
+        }
     }
     
     if(drivers->remote.isConnected()) {
-        if(homingState>=HomingState::HOMED) { //if homed or gave up
+        if(homingState>=HomingState::HOMED || !enableHoming) { //if homed or gave up (or not homing ever)
             // allow unjam only if homed. Might be a bad idea.
             if(isManualUnjamming){
                 shouldIndexNearest = true; //when we stop unjamming, index nearest
@@ -36,7 +39,7 @@ void SingleIndexerSubsystem::finishRefresh() {
                 unit.positionControl();
             }
         }
-        // otherwise homeIndexer would have set velocity control
+        // else: homeIndexer would have set velocity control
     } else {
         motorIndexer->setDesiredOutput(0); //disable indexer when remote is off
     }
