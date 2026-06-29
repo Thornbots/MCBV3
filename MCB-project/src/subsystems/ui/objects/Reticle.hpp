@@ -19,7 +19,7 @@ class Reticle : public GraphicsContainer {
 public:  // important constants and enums
     // panel things
     static constexpr float PANEL_WIDTH = 0.135;               // meters, wider panel is 0.230
-    static constexpr float PANEL_HEIGHT = 0.125;              // meters, height across the surface
+    static constexpr float PANEL_HEIGHT = 0.05;              // meters, height of the light part of the panel. height across the surface is 0.125
     static constexpr float PANEL_ANGLE = 15 * PI / 180;       // radians, tilt of the panel, 0 would be panel is not tilted
     static constexpr float AVERAGE_HEIGHT_OFF_GROUND = 0.18;  // meters, center of panel to ground, for calculating where on screen reticle things should be
 
