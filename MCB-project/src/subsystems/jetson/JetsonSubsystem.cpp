@@ -27,6 +27,9 @@ void JetsonSubsystem::initialize() {
 }
 int messageCount = 0;
 void JetsonSubsystem::refresh() {
+    
+    checkApplyRelocalize();
+    
     drivers->uart.updateSerial();
 
     hitRing.update();
@@ -34,12 +37,13 @@ void JetsonSubsystem::refresh() {
     if (poseDataTimeout.execute()) {
         messageCount++;
 
+        //9 poses, 1 ref sys msg
         if (messageCount < 10) {
             PoseData p{
-                drivers->i2c.odom.getX(),  // OdometrySubsystem doesn't provide wrappers for these
-                drivers->i2c.odom.getY(),
-                drivers->i2c.odom.getXVel(),
-                drivers->i2c.odom.getYVel(),
+                odo->getX(),
+                odo->getY(),
+                odo->getXVel(),
+                odo->getYVel(),
                 gimbal->getPitchEncoderValue(),
                 gimbal->getYawAngleRelativeWorld(),
                 // drivers->bmi088.getq0(),
@@ -79,6 +83,14 @@ void JetsonSubsystem::refresh() {
         }
     }
 }
+
+void JetsonSubsystem::checkApplyRelocalize() {
+    Relocalize relocalize_msg;
+    if (getMsg(&relocalize_msg)) {
+        odo->relocalizeTo(relocalize_msg.expectedX, relocalize_msg.expectedY);
+    }
+}
+
 
 bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d* jetsonExpectedPosition) {
     Relocalize relocalize_msg;

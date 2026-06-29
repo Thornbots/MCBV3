@@ -5,6 +5,7 @@
 
 #include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
+#include "subsystems/odometry/OdometrySubsystem.hpp"
 
 
 #include "drivers.hpp"
@@ -12,16 +13,18 @@
 namespace commands {
 using subsystems::DrivetrainSubsystem;
 using subsystems::GimbalSubsystem;
+using subsystems::OdometrySubsystem;
 
 using tap::communication::serial::Remote;
 
 
 class MoveToPositionCommand : public tap::control::Command {
 public:
-    MoveToPositionCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, Pose2d targetPosition, Vector2d targetVelocityInput, float tolerance = 0.2f)
+    MoveToPositionCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, OdometrySubsystem* odo, Pose2d targetPosition, Vector2d targetVelocityInput, float tolerance = 0.2f)
         : drivers(drivers),
           drivetrain(drive),
           gimbal(gimbal),
+          odo(odo),
           tolerance(tolerance),
           targetPosition(targetPosition){
         targetVelocity = Pose2d(targetVelocityInput.getX(), targetVelocityInput.getY(), SPIN_VELO);
@@ -45,6 +48,7 @@ protected:
     src::Drivers* drivers;
     DrivetrainSubsystem* drivetrain;
     GimbalSubsystem* gimbal;
+    OdometrySubsystem* odo;
 
     float tolerance;
     Pose2d targetVelocity;

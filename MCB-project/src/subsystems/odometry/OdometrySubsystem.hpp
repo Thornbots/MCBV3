@@ -32,6 +32,10 @@ private:  // Private Variables
     float odoMotorVoltage, driveTrainEncoder, odoEncoderCache, driveTrainAngularVelocity, odoAngleRelativeWorld, odoAngularVelocity;
 
     static constexpr float targetOdoAngleWorld = 0;
+    
+    // changes as a result of relocalizeTo, used in getX and getY
+    float offsetX = 0.0f;
+    float offsetY = 0.0f;
 
     // for sysid
     std::random_device rd;
@@ -52,6 +56,18 @@ public:  // Public Methods
      */
     void initialize();
 
+    // gives x accounting for relocalize offset
+    float getX();
+    
+    // gives y accounting for relocalize offset
+    float getY();
+    
+    float getXVel();
+    float getYVel();
+
+    // sets the offsets so that if the odo pods don't move after you call this, getX and getY return newX and newY
+    void relocalizeTo(float newX, float newY);
+    
     /*
      * reads the right joystick values and updates the internal values of where the gimbal needs to
      * go
@@ -78,5 +94,11 @@ public:  // Public Methods
 
 private:  // Private Methods
     int getOdoVoltage(float driveTrainAngularVelocity, float odoAngleRelativeWorld, float odoAngularVelocity, float desiredAngleWorld, float inputVel, float dt);
+
+    // gets the actual encoder value x. doesn't change after relocalize
+    float getRawX();
+    // gets the actual encoder value y. doesn't change after relocalize
+    float getRawY();
+
 };
 }  // namespace subsystems

@@ -4,12 +4,6 @@
 
 #include "OdometrySubsystemConstants.hpp"
 
-int voltageOdoOdo;
-float velocityOdoOdo;
-
-float odomX, odomY, odomXVel, odomYVel, axonEncoder;
-int loop = 0;
-
 namespace subsystems {
     using namespace odo;
 
@@ -29,12 +23,6 @@ void OdometrySubsystem::initialize() {
 bool useController = false;
 void OdometrySubsystem::refresh() {
 
-    odomX = drivers->i2c.odom.getX();
-    odomY = drivers->i2c.odom.getY();
-    odomXVel = drivers->i2c.odom.getXVel();
-    odomYVel = drivers->i2c.odom.getYVel();
-
-    axonEncoder = drivers->i2c.encoder.getAngle();
     if(!useController){
         motorOdo->setDesiredOutput(odoMotorVoltage);
     }
@@ -73,5 +61,29 @@ float OdometrySubsystem::getOdoEncoderValue() { return std::fmod(motorOdo->getPo
 
 float OdometrySubsystem::getOdoVel() { return motorOdo->getShaftRPM() * PI / 30; }
 
+float OdometrySubsystem::getRawX() {
+    return drivers->i2c.odom.getX();
+}
+float OdometrySubsystem::getRawY() {
+    return drivers->i2c.odom.getY();
+}
+void OdometrySubsystem::relocalizeTo(float newX, float newY) {
+    offsetX = newX - getRawX();
+    offsetY = newY - getRawY();
+    //off       = new - raw
+    //off + raw = new
+}
+float OdometrySubsystem::getX() {
+    return offsetX + getRawX();
+}
+float OdometrySubsystem::getY() {
+    return offsetY + getRawY();
+}
+float OdometrySubsystem::getXVel() {
+    return drivers->i2c.odom.getXVel();
+}
+float OdometrySubsystem::getYVel() {
+    return drivers->i2c.odom.getYVel();
+}
 
 }  // namespace subsystems

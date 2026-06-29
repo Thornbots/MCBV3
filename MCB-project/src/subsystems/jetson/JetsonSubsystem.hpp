@@ -151,6 +151,9 @@ public:  // Public Methods
     void initialize();
 
     void refresh() override;
+    
+    // check if jetson sent a relocalize message. If it did, overwrite where odo thinks it is
+    void checkApplyRelocalize();
 
     bool updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d* jetsonExpectedPosition);
     void update(float current_yaw, float current_pitch, float current_yaw_velo, float current_pitch_velo, float* yawOut, float* pitchOut, float* yawVelOut, float* pitchVelOut, int* action);

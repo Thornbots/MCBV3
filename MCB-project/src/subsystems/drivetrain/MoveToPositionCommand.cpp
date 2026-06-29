@@ -30,7 +30,7 @@ void MoveToPositionCommand::execute() {
 
 
     // Vector2d targetPositionAdjusted = targetPosition.vec() + startPosition;
-    currentPosition = Pose2d(drivers->i2c.odom.getX(), drivers->i2c.odom.getY(), referenceAngle);
+    currentPosition = Pose2d(odo->getX(), odo->getY(), referenceAngle);
 
   
 

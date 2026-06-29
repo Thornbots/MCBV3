@@ -3,6 +3,7 @@
 
 
 #include "subsystems/drivetrain/MoveToPositionCommand.hpp"
+#include "subsystems/odometry/OdometrySubsystem.hpp"
 #include "tap/communication/serial/ref_serial_data.hpp"
 
 
@@ -11,6 +12,7 @@ namespace commands {
 using tap::communication::serial::Remote;
 using namespace tap::communication::serial;
 
+using namespace subsystems;
 
 class SimpleAutoDriveCommand : public tap::control::Command {
 public:
@@ -39,9 +41,10 @@ public:
         ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED = 5
     };
 
-    SimpleAutoDriveCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, TargetMode mode)
+    SimpleAutoDriveCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, OdometrySubsystem* odo, TargetMode mode)
         : mode(mode), drivers(drivers),
-        positionCommand(drivers, drive, gimbal, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, 0.5f)
+        positionCommand(drivers, drive, gimbal, odo,{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, 0.5f),
+        odo(odo)
         {
         
         //always need to start at 0,0 because that is where the robot starts from
@@ -220,6 +223,7 @@ private:
     
     TargetMode mode;
     src::Drivers* drivers;
+    OdometrySubsystem* odo;
 
     MoveToPositionCommand positionCommand;
     
