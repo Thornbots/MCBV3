@@ -9,6 +9,7 @@
 #include "util/Pose2d.hpp"
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
+#include "subsystems/odometry/OdometrySubsystem.hpp"
 #include "subsystems/ui/objects/HitRing.hpp"
 
 #include "drivers.hpp"
@@ -119,6 +120,7 @@ class JetsonSubsystem : public tap::control::Subsystem {
 private:  // Private Variables
     src::Drivers* drivers;
     GimbalSubsystem* gimbal;
+    OdometrySubsystem* odo;
     HitRing hitRing{drivers, gimbal};
 
     static constexpr int TIME_FOR_REF_DATA = 200; //send at 5hz
@@ -142,7 +144,7 @@ private:  // Private Variables
 
     std::vector<PanelData> panelData;
 public:  // Public Methods
-    JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal);
+    JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal, OdometrySubsystem* odo);
 
     ~JetsonSubsystem() {}
 

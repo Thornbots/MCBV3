@@ -153,7 +153,7 @@ public:
     subsystems::SingleIndexerSubsystem indexer{drivers, &hardware.indexMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::OdometrySubsystem odo{drivers, &hardware.odoMotor};
-    subsystems::JetsonSubsystem jetson{drivers, &gimbal};
+    subsystems::JetsonSubsystem jetson{drivers, &gimbal, &odo};
 
     // commands
     commands::SentryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};

@@ -19,7 +19,7 @@ float targetPitchTest;
 
 namespace subsystems {
 
-JetsonSubsystem::JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal) : tap::control::Subsystem(drivers), drivers(drivers), gimbal(gimbal) {}
+JetsonSubsystem::JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal, OdometrySubsystem* odo) : tap::control::Subsystem(drivers), drivers(drivers), gimbal(gimbal), odo(odo) {}
 
 void JetsonSubsystem::initialize() {
     drivers->commandScheduler.registerSubsystem(this);
