@@ -62,7 +62,7 @@ public:  // important constants and enums
 
 private:  // draw settings
     ReticleDrawMode drawMode = ReticleDrawMode::VERT_LINES;
-    ReticleSolveMode solveMode = ReticleSolveMode::FOR_PITCH;
+    ReticleSolveMode solveMode = ReticleSolveMode::FOR_DISTANCE; //starting mode, B switches modes
     ReticleSidedMode sidedMode = ReticleSidedMode::BOTH;
 
     static constexpr int DIAGONAL_OFFSET = 50;  // when can't shoot, the vertical line becomes diagonal, by shifting x by this amount
@@ -131,16 +131,18 @@ public:
             verticalLine.x1 += DIAGONAL_OFFSET;
             verticalLine.x2 -= DIAGONAL_OFFSET;
         }
-
-        solvedForPitchLandingSpotThisCycle = false;
-        int numThings = solveMode == ReticleSolveMode::FOR_DISTANCE ? 1 : NUM_THINGS;
-        for (int i = 0; i < numThings; i++) {
-            // assume all lines are hidden, if we are drawing lines
+        
+        // assume all is hidden
+        for (int i = 0; i < NUM_THINGS; i++) {
             for (int j = 0; j < NUM_LINES; j++) {
                 lines[i][j].hide();
             }
             rects[i].setHidden(drawMode == ReticleDrawMode::RECTANGLES);
+        }
 
+        solvedForPitchLandingSpotThisCycle = false;
+        int numThings = solveMode == ReticleSolveMode::FOR_DISTANCE ? 1 : NUM_THINGS;
+        for (int i = 0; i < numThings; i++) {
             Vector3d landingSpot = calculateLandingSpot(&pitch, i);
 
             Vector2d r = project(landingSpot + panelEdges[0], pitch);
