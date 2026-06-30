@@ -201,8 +201,8 @@ private:
     }
 
     void setDirection() {
-        switch (mode) {
-        case TargetMode::TEST: //change direction on hit
+        // switch (mode) {
+        // case TargetMode::TEST: //change direction on hit
             if(drivers->refSerial.getRefSerialReceivingData()) {
                 static uint16_t oldHealth=drivers->refSerial.getRobotData().currentHp;
                 if(drivers->refSerial.getRobotData().currentHp!=oldHealth){
@@ -211,14 +211,14 @@ private:
                 }
             }
             return;
-        default: //change direction on low health
-            if(drivers->refSerial.getRefSerialReceivingData()) { //221 hp gate
-                float ratio = drivers->refSerial.getRobotData().currentHp * 1.0 / drivers->refSerial.getRobotData().maxHp;
-                if(ratio>0.99) direction=1;
-                if(ratio<=0.5525) direction=-1; //0.5 or equal to try to avoid hero 1-shot-kills
-            }
-            return;
-        }
+        // default: //change direction on low health
+        //     if(drivers->refSerial.getRefSerialReceivingData()) { //221 hp gate
+        //         float ratio = drivers->refSerial.getRobotData().currentHp * 1.0 / drivers->refSerial.getRobotData().maxHp;
+        //         if(ratio>0.99) direction=1;
+        //         if(ratio<=0.5525) direction=-1; //0.5 or equal to try to avoid hero 1-shot-kills
+        //     }
+        //     return;
+        // }
     }
 
     int targetIndex = 0; //index in targets

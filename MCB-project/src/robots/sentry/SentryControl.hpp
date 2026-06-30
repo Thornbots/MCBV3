@@ -135,7 +135,7 @@ public:
         isStopped = false;
         gimbal.clearBuildup();
         gimbal.reZeroYaw();
-        drivers->commandScheduler.addCommand(&autoDrive);
+        drivers->commandScheduler.addCommand(&simpleAutoDrive);
         drivers->commandScheduler.addCommand(&autoFire);
         drivers->commandScheduler.addCommand(&odoPointForwards);
         update();
@@ -163,7 +163,7 @@ public:
     commands::MouseMoveCommand lookMouse{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
     commands::AutoDriveCommand autoDrive{drivers, &drivetrain, &gimbal, &jetson};
-    commands::SimpleAutoDriveCommand simpleAutoDrive{drivers, &drivetrain, &gimbal, &odo, commands::SimpleAutoDriveCommand::TargetMode::ARCC_ROUGH_PATH};
+    commands::SimpleAutoDriveCommand simpleAutoDrive{drivers, &drivetrain, &gimbal, &odo, commands::SimpleAutoDriveCommand::TargetMode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED};
     commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, &autoDrive};
 
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};

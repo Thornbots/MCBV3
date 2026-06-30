@@ -28,8 +28,8 @@ static constexpr float cameraZoffset = .1295;
 
 static constexpr float initialShotVelocity = 22.0;           // Shot velocity
 
-static constexpr float l = 0.05;           // Combined camera + Jetson latency
-static constexpr float deltaTime = 0.033;  // Frame time
+static constexpr float l = 0.02;           // Combined camera + Jetson latency
+static constexpr float deltaTime = 0.0166;  // Frame time
 static constexpr float H = 9.95;   
 
 
