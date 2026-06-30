@@ -35,18 +35,20 @@ namespace tap::control::chassis
 PowerLimiter::PowerLimiter(
     const tap::Drivers *drivers,
     tap::communication::sensors::current::CurrentSensorInterface *currentSensor,
+    tap::communication::sensors::voltage::VoltageSensorInterface *voltageSensor,
     float startingEnergyBuffer,
     float energyBufferLimitThreshold,
     float energyBufferCritThreshold)
     : drivers(drivers),
       currentSensor(currentSensor),
+      voltageSensor(voltageSensor),
       startingEnergyBuffer(startingEnergyBuffer),
       energyBufferLimitThreshold(energyBufferLimitThreshold),
       energyBufferCritThreshold(energyBufferCritThreshold),
       energyBuffer(startingEnergyBuffer),
       consumedPower(0.0f),
       prevTime(0),
-      prevRobotDataReceivedTimestamp(0)
+      prevPowerHeatDataReceivedTimestamp(0)
 {
 }
 
@@ -79,8 +81,9 @@ void PowerLimiter::updatePowerAndEnergyBuffer()
 {
     const auto &robotData = drivers->refSerial.getRobotData();
     const auto &chassisData = robotData.chassis;
-    const float current = currentSensor->getCurrentMa();
-    const float newChassisPower = chassisData.volt * current / 1'000'000.0f;
+    const float current = currentSensor->getCurrentMa() / 1000.0f;
+    const float voltage = voltageSensor->getVoltageMv() / 1000.0f;
+    const float newChassisPower = voltage * current;
 
     // Manually compute energy buffer using consumedPower read from current sensor.
     // See rules manual for reasoning behind the energy buffer calculation.
@@ -88,10 +91,10 @@ void PowerLimiter::updatePowerAndEnergyBuffer()
     prevTime = tap::arch::clock::getTimeMilliseconds();
     energyBuffer -= (consumedPower - chassisData.powerConsumptionLimit) * dt / 1000.0f;
 
-    if (robotData.robotDataReceivedTimestamp != prevRobotDataReceivedTimestamp)
+    if (chassisData.powerHeatDataReceivedTimestamp != prevPowerHeatDataReceivedTimestamp)
     {
         energyBuffer = chassisData.powerBuffer;
-        prevRobotDataReceivedTimestamp = robotData.robotDataReceivedTimestamp;
+        prevPowerHeatDataReceivedTimestamp = chassisData.powerHeatDataReceivedTimestamp;
     }
 
     consumedPower = newChassisPower;

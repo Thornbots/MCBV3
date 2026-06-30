@@ -81,8 +81,8 @@ public:
      * parser yet. They are values that are used in message headers to indicate the type of message
      * we have received.
      *
-     * Current Ref Serial Version: 1.6.1
-     * Updated April 2024.
+     * Current Ref Serial Version: RoboMaster 2026 1.3.1
+     * Updated May 2026.
      */
     enum MessageType
     {
@@ -91,7 +91,6 @@ public:
         REF_MESSAGE_TYPE_ALL_ROBOT_HP = 0x3,
 
         REF_MESSAGE_TYPE_SITE_EVENT_DATA = 0x101,
-        REF_MESSAGE_TYPE_PROJECTILE_SUPPPLIER_ACTION = 0x102,
         REF_MESSAGE_TYPE_WARNING_DATA = 0x104,
         REF_MESSAGE_TYPE_DART_INFO = 0x105,
 
@@ -99,7 +98,6 @@ public:
         REF_MESSAGE_TYPE_POWER_AND_HEAT = 0x202,
         REF_MESSAGE_TYPE_ROBOT_POSITION = 0x203,
         REF_MESSAGE_TYPE_ROBOT_BUFF_STATUS = 0x204,
-        REF_MESSAGE_TYPE_AERIAL_ENERGY_STATUS = 0x205,
         REF_MESSAGE_TYPE_RECEIVE_DAMAGE = 0x206,
         REF_MESSAGE_TYPE_PROJECTILE_LAUNCH = 0x207,
         REF_MESSAGE_TYPE_BULLETS_REMAIN = 0x208,
@@ -111,9 +109,14 @@ public:
         REF_MESSAGE_TYPE_RADAR_INFO = 0x20E,
 
         REF_MESSAGE_TYPE_CUSTOM_DATA = 0x301,
-        // REF_MESSAGE_TYPE_CUSTOM_CONTROLLER = 0x302,
-        // REF_MESSAGE_TYPE_SMALL_MAP = 0x303,
-        // REF_MESSAGE_TYPE_VTM_INPUT_DATA = 0x304
+        // REF_MESSAGE_TYPE_CUSTOM_CONTROLLER_DATA_RECEIVE = 0x302,
+        // REF_MESSAGE_TYPE_SMALL_MAP_INTERACTION = 0x303,
+        // REF_MESSAGE_TYPE_VTM_INPUT_DATA = 0x304,
+        // REF_MESSAGE_TYPE_RADAR_MINIMAP = 0x305,
+        // REF_MESSAGE_TYPE_CUSTOM_CONTROLLER_DATA_SEND = 0x306,
+        // REF_MESSAGE_TYPE_SENTRY_SMALL_MAP = 0x307,
+        // REF_MESSAGE_TYPE_ROBOT_SMALL_MAP = 0x308,
+        // REF_MESSAGE_TYPE_ROBOT_CUSTOM_CONTROLLER_FEEDBACK = 0x309
     };
 
     /**
@@ -218,10 +221,6 @@ private:
      */
     bool decodeToSiteEventData(const ReceivedSerialMessage& message);
     /**
-     * Decodes ref serial message containing projectile supplier information.
-     */
-    bool decodeToProjectileSupplierAction(const ReceivedSerialMessage& message);
-    /**
      * Decodes ref serial message containing warning information (if a robot on your team received a
      * yellow or red card).
      */
@@ -249,11 +248,6 @@ private:
      * Decodes ref serial message containing the robot buff status of the robot.
      */
     bool decodeToRobotBuffs(const ReceivedSerialMessage& message);
-    /**
-     * Decodes ref serial message containing the energy status, a countdown timer from 30 seconds to
-     * 0 seconds.
-     */
-    bool decodeToAerialEnergyStatus(const ReceivedSerialMessage& message);
     /**
      * Decodes ref serial message containing containing the damaged armor and damage type
      * last taken by the robot.
