@@ -28,7 +28,8 @@ void JetsonSubsystem::initialize() {
 int messageCount = 0;
 void JetsonSubsystem::refresh() {
     
-    checkApplyRelocalize();
+    if(odo!=nullptr)
+        checkApplyRelocalize();
     
     drivers->uart.updateSerial();
 
@@ -38,7 +39,7 @@ void JetsonSubsystem::refresh() {
         messageCount++;
 
         //9 poses, 1 ref sys msg
-        if (messageCount < 10) {
+        if (messageCount < 10 && odo!=nullptr) {
             PoseData p{
                 odo->getX(),
                 odo->getY(),
