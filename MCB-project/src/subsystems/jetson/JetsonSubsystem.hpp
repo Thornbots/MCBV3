@@ -44,6 +44,7 @@ struct Relocalize
 {
     float expectedX = 0; //where I think I am, by the lidar
     float expectedY = 0;
+    float expectedZ = 0; //ignored, easier to change it here than on the jetson right now
 };
 
 struct CVData 
