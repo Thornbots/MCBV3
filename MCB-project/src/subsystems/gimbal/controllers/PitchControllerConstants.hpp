@@ -23,7 +23,7 @@ constexpr float TAKEBACK = 0.01;                // unitless
 #elif defined(SENTRY)
 
 constexpr float RATIO = 3;         // unitless
-constexpr float VOLT_MAX = 24;   // V
+constexpr float VOLT_MAX = 10;   // V
 constexpr float ACCEL_MAX = 3200.0;  // rad/s^2
 
 // Position controller constants

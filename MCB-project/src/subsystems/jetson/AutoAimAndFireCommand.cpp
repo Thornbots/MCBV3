@@ -46,13 +46,12 @@ void AutoAimAndFireCommand::execute() {
         dyaw = dyaw > PI ? dyaw - 2 * PI : dyaw < -PI ? dyaw + 2 * PI : dyaw;
         lastSeenTime = tap::arch::clock::getTimeMilliseconds();
 
-        float newPitch = currentPitch + (pitch - currentPitch) / 40.0f;
+        pitch = currentPitch + (pitch - currentPitch) / 5.0f; //here tune pitch
         if (abs(dyaw) > .05) {
             dyaw /= 4.0f;}
         else dyaw /= 1.75;
-        //pitch=0;
-        //pitchvel=0;
-        if (allowGimbal) gimbal->updateMotorsAndVelocityWithLatencyCompensation(dyaw/2.5f, pitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
+        //here tune yaw
+        if (allowGimbal) gimbal->updateMotorsAndVelocityWithLatencyCompensation(dyaw/20.0f, pitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
         if (shoot == 1) isShooting = true;
     } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime < PERSISTANCE) {
         //Haven't found a target right now but I have recently, keep shooting if I was shooting
@@ -62,15 +61,15 @@ void AutoAimAndFireCommand::execute() {
         //Haven't found a target, patrol
 
         isShooting = false;
-        pitch = 0.05;  // pitch down to avoid looking into the sky
+        // pitch = 0.05;  // pitch down to avoid looking into the sky
         numCyclesForBurst++;
 
         if(allowGimbal) {
             if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
-                gimbal->updateMotors(BURST_AMOUNT, pitch);
+                gimbal->updateMotors(BURST_AMOUNT, 0);
                 numCyclesForBurst = 0;
             } else {
-                gimbal->updateMotors(PATROL_SPEED, pitch);
+                gimbal->updateMotors(PATROL_SPEED, 0);
             }
         }
     }

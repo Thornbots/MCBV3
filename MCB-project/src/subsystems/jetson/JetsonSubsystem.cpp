@@ -173,10 +173,13 @@ void JetsonSubsystem::update(
 
     posXrel4 = msg->x + cameraXoffset;
     posYrel4 = -msg->z + cameraYoffset;  // taproot flips z y basis vec
-    posZrel4 = -msg->y + cameraZoffset;
+    posZrel4 = msg->y + cameraZoffset;   // msg->y is up; Z4 must point up so the pitch un-rotation
+                                         // gives true world height (mz*sinφ + my*cosφ), not the
+                                         // φ-dependent mz*sinφ - my*cosφ that caused the unstable
+                                         // 2φ-E feedback / endstop slam
     velXrel4 = msg->v_x;
     velYrel4 = -msg->v_z;
-    velZrel4 = -msg->v_y;
+    velZrel4 = msg->v_y;
     // precompute commonly used angles
 
     float cos_theta3 = cosf(cvYaw);
