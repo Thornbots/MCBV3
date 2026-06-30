@@ -54,6 +54,6 @@ protected:
     Pose2d targetVelocity;
     Pose2d currentPosition;
 
-    static constexpr float SPIN_VELO = 6.0;  //12.0
+    static constexpr float SPIN_VELO = 6.0;  //12.0   here tune spin velo
 };
 }  // namespace commands
