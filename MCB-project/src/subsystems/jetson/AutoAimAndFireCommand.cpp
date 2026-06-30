@@ -46,7 +46,7 @@ void AutoAimAndFireCommand::execute() {
         dyaw = dyaw > PI ? dyaw - 2 * PI : dyaw < -PI ? dyaw + 2 * PI : dyaw;
         lastSeenTime = tap::arch::clock::getTimeMilliseconds();
 
-        pitch = currentPitch + (pitch - currentPitch) / 5.0f; //here tune pitch
+        pitch = currentPitch + (pitch - currentPitch) / 10.0f; //here tune pitch
         if (abs(dyaw) > .05) {
             dyaw /= 4.0f;}
         else dyaw /= 1.75;

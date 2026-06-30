@@ -11,7 +11,7 @@ constexpr float RA = 0.5592;        // ohm, armature resistance
 
 constexpr float VOLT_MAX = 24;      // V, maximum
 
-constexpr float MAX_POS_VEL = 3.0;//4.0
+constexpr float MAX_POS_VEL = 3.0;//4.0  //here tune move speed
 
 #if defined(HERO)
 // START getters and setters
