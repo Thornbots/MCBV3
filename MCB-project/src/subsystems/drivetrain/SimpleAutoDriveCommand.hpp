@@ -112,12 +112,10 @@ private:
 
     void setupMap() {
         bool flipXIfBlue = false;
-        bool isBlue = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId);
         
         //0,0 starting point added in constructor
-        // (for arcc maps, 0,0 is center, relocalize happens)
         //these coordinates here are absolute, with the origin being where the robot was turned on from
-        //positive x is right (towards red reload), positive y is forward (towards rough)
+        //positive x is right, positive y is forward
         //first pair is position, second pair is velocity (nonzero doesn't work well right now, so use 0, 0)
         switch (mode) {
         case TargetMode::TEST:
@@ -149,50 +147,41 @@ private:
         case TargetMode::ARCC_RAMP_PATH:
             flipXIfBlue = true;
             //coordinates for red team
-            targets[0].first = {4.813f, -0.7f};
-            odo->relocalizeTo(targets[0].first.first * isBlue?-1:1, targets[0].first.second);
-            changedInitialPoint = {targets[0].first.first+TOWARDS_ZONE_OFFSET, targets[0].first.second+TOWARDS_ZONE_OFFSET};
-            targets.push_back({{4.218f, -2.526f}, {0.0f, 0.0f}}); // mostly left, some forward: before ramp
-            targets.push_back({{0.752f, -2.526f}, {0.0f, 0.0f}}); // forward: across ramp
-            targets.push_back({{0.7f-TOWARDS_ZONE_OFFSET, -0.7f+TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}}); // mostly right, some forward: to center
+            changedInitialPoint = {TOWARDS_ZONE_OFFSET, -TOWARDS_ZONE_OFFSET};
+            targets.push_back({{-1.8330f, 0.595f}, {0.0f, 0.0f}}); // mostly left, some forward: before ramp
+            targets.push_back({{-1.8330f, 4.060f}, {0.0f, 0.0f}}); // forward: across ramp
+            targets.push_back({{TOWARDS_ZONE_OFFSET, 4.125f+TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}}); // mostly right, some forward: to center
             return;
         case TargetMode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED:
             flipXIfBlue = true;
             //coordinates for red team
-            // across 2 hypos: add 0.812 to x
-            targets[0].first = {4.813f+0.812f, -0.7f};
-            odo->relocalizeTo(targets[0].first.first * isBlue?-1:1, targets[0].first.second);
-            changedInitialPoint = {targets[0].first.first+TOWARDS_ZONE_OFFSET, targets[0].first.second+TOWARDS_ZONE_OFFSET};
-            targets.push_back({{4.218f+0.812f, -2.526f}, {0.0f, 0.0f}}); // mostly left, some forward: before ramp
-            targets.push_back({{0.752f, -2.526f}, {0.0f, 0.0f}}); // forward: after ramp
-            targets.push_back({{0.7f-TOWARDS_ZONE_OFFSET, -0.7f+TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}}); // mostly right, some forward: to center
+            changedInitialPoint = {TOWARDS_ZONE_OFFSET, -TOWARDS_ZONE_OFFSET};
+            targets.push_back({{-1.8330f, 0.595f}, {0.0f, 0.0f}}); // mostly left, some forward: before ramp
+            targets.push_back({{-1.8330f, 4.872f}, {0.0f, 0.0f}}); // forward: across ramp (add 0.812)
+            targets.push_back({{TOWARDS_ZONE_OFFSET, 4.937f+TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}}); // mostly right, some forward: to center (add 0.812)
             return;
         case TargetMode::ARCC_HALLWAY_PATH:
             flipXIfBlue = true;
             //coordinates for red team
-            targets[0].first = {4.813f, -0.7f};
-            odo->relocalizeTo(targets[0].first.first * isBlue?-1:1, targets[0].first.second);
-            changedInitialPoint = {targets[0].first.first+TOWARDS_ZONE_OFFSET, targets[0].first.second+TOWARDS_ZONE_OFFSET};
-            targets.push_back({{3.921f, -1.566f}, {0.0f, 0.0f}}); // left forward diagonal: before enter hallway
-            targets.push_back({{3.089f, -1.566f}, {0.0f, 0.0f}}); // forward: enter hallway
-            targets.push_back({{3.089f, 0.0f}, {0.0f, 0.0f}}); // right: through hallway
-            targets.push_back({{2.583f, 0.507f}, {0.0f, 0.0f}}); // forward right diagonal: leave hallway
-            targets.push_back({{0.7f-TOWARDS_ZONE_OFFSET, 0.7f-TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}}); // forward: to center
+            changedInitialPoint = {TOWARDS_ZONE_OFFSET, -TOWARDS_ZONE_OFFSET};
+            targets.push_back({{-0.874f, 0.892f}, {0.0f, 0.0f}}); // left forward diagonal: before enter hallway
+            targets.push_back({{-0.874f, 1.724f}, {0.0f, 0.0f}}); // forward: enter hallway
+            targets.push_back({{0.693f, 1.724f}, {0.0f, 0.0f}}); // right: through hallway
+            targets.push_back({{1.200f, 2.230f}, {0.0f, 0.0f}}); // forward right diagonal: leave hallway
+            targets.push_back({{1.385f-TOWARDS_ZONE_OFFSET, 4.125f+TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}}); // forward: to center
             return;
         case TargetMode::ARCC_ROUGH_PATH:
             flipXIfBlue = true;
             //coordinates for red team
-            targets[0].first = {4.813f, 0.7f};
-            odo->relocalizeTo(targets[0].first.first * isBlue?-1:1, targets[0].first.second);
-            changedInitialPoint = {targets[0].first.first+TOWARDS_ZONE_OFFSET, targets[0].first.second-TOWARDS_ZONE_OFFSET};
-            targets.push_back({{4.002f, 2.285f}, {0.0f, 0.0f}}); // right forward diagonal: before wall
-            targets.push_back({{3.326f, 2.285f}, {0.0f, 0.0f}}); // forward: past wall
-            targets.push_back({{0.7f-TOWARDS_ZONE_OFFSET, 0.7f-TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}}); // left forward diagonal: to center
+            changedInitialPoint = {-TOWARDS_ZONE_OFFSET, -TOWARDS_ZONE_OFFSET};
+            targets.push_back({{2.236f, 0.0f}, {0.0f, 0.0f}}); // right forward diagonal: before wall
+            targets.push_back({{2.236f, 1.724f}, {0.0f, 0.0f}}); // forward: past wall
+            targets.push_back({{-TOWARDS_ZONE_OFFSET, 4.125f+TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}}); // left forward diagonal: to center
             return;
         } //end switch
         
         //arcc map is mirrored across teams, mirror the x coordinates for blue team
-        if(flipXIfBlue && isBlue){
+        if(flipXIfBlue && drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId)){
             for(unsigned int i=0; i<targets.size(); i++){
                 targets[i].first.first = -targets[i].first.first; //flip position x
                 targets[i].second.first = -targets[i].second.first; //flip velocity x (probably 0 though)
@@ -201,8 +190,8 @@ private:
     }
 
     void setDirection() {
-        // switch (mode) {
-        // case TargetMode::TEST: //change direction on hit
+        switch (mode) {
+        case TargetMode::TEST: //change direction on hit
             if(drivers->refSerial.getRefSerialReceivingData()) {
                 static uint16_t oldHealth=drivers->refSerial.getRobotData().currentHp;
                 if(drivers->refSerial.getRobotData().currentHp!=oldHealth){
@@ -211,14 +200,14 @@ private:
                 }
             }
             return;
-        // default: //change direction on low health
-        //     if(drivers->refSerial.getRefSerialReceivingData()) { //221 hp gate
-        //         float ratio = drivers->refSerial.getRobotData().currentHp * 1.0 / drivers->refSerial.getRobotData().maxHp;
-        //         if(ratio>0.99) direction=1;
-        //         if(ratio<=0.5525) direction=-1; //0.5 or equal to try to avoid hero 1-shot-kills
-        //     }
-        //     return;
-        // }
+        default: //change direction on low health
+            if(drivers->refSerial.getRefSerialReceivingData()) { //221 hp gate
+                float ratio = drivers->refSerial.getRobotData().currentHp * 1.0 / drivers->refSerial.getRobotData().maxHp;
+                if(ratio>0.99) direction=1;
+                if(ratio<=0.5525) direction=-1; //0.5 or equal to try to avoid hero 1-shot-kills
+            }
+            return;
+        }
     }
 
     int targetIndex = 0; //index in targets
