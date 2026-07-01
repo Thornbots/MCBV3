@@ -45,7 +45,8 @@ constexpr float BBterm2 = -3.3097; //linear term
 constexpr float BBterm3 = -.1586; //quadratic term
 constexpr float BBmax = 12; //constant term
 constexpr float maxTorqueZ = 30;
-constexpr float TREQSCALE = 0.05;
+constexpr float TREQSCALE = 0.7; //here tune hero using too much power. 
+//Lower number means use more power. 0.7 doesn't use any of power buffer, we want to use some of it
 #elif defined(SENTRY)
 // START getters and setters
 constexpr float TRACKWIDTH = 0.50038;      // in m
