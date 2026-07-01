@@ -27,7 +27,7 @@ public:
           odo(odo),
           tolerance(tolerance),
           targetPosition(targetPosition){
-        targetVelocity = Pose2d(targetVelocityInput.getX(), targetVelocityInput.getY(), SPIN_VELO);
+        targetVelocity = Pose2d(targetVelocityInput.getX(), targetVelocityInput.getY(), MOVE_TO_POS_SPIN_VELO);
     }
 
     void initialize() override;
@@ -44,9 +44,10 @@ public:
     Pose2d targetPosition;
     Pose2d inputVelocity;
 
+    DrivetrainSubsystem* drivetrain;
+    static constexpr float MOVE_TO_POS_SPIN_VELO = -6.0;  //was 12.0   here tune spin velo
 protected:
     src::Drivers* drivers;
-    DrivetrainSubsystem* drivetrain;
     GimbalSubsystem* gimbal;
     OdometrySubsystem* odo;
 
@@ -54,6 +55,5 @@ protected:
     Pose2d targetVelocity;
     Pose2d currentPosition;
 
-    static constexpr float SPIN_VELO = 6.0;  //12.0   here tune spin velo
 };
 }  // namespace commands

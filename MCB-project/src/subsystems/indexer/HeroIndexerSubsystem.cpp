@@ -60,10 +60,10 @@ void HeroIndexerSubsystem::finishRefresh() {
         unitBottom.oldVelocityControl(UNJAM_BALL_PER_SECOND);
     } else if(state==HeroIndexerState::INDEXING || state==HeroIndexerState::INDEXING_EXTRA) {
         // what speed should this happen at? Old system would set this at 20Hz in HeroControl. Maybe make this a constant.
-        unitTop.oldVelocityControl(20);
-        unitBottom.oldVelocityControl(0);
+        unitTop.oldVelocityControl(20); //20
+        unitBottom.oldVelocityControl(0); //0
     } else if(state==HeroIndexerState::LOADING_THEN_DONE){
-        unitTop.oldVelocityControl(LOAD_BALL_PER_SECOND); //top needs to spin too when loading
+        unitTop.oldVelocityControl(10); //top needs to spin too when loading //10
         unitBottom.oldVelocityControl(LOAD_BALL_PER_SECOND);
     }
 
