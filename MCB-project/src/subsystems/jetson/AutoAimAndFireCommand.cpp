@@ -92,7 +92,7 @@ void AutoAimAndFireCommand::execute() {
         flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM);
     } else {
         gimbal->stopMotors();
-        if(adc->getIsScheduled()) flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM/4);
+        if(adc!=nullptr && adc->getIsScheduled()) flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM/4);
     }
 }
 
