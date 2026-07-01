@@ -103,18 +103,22 @@ public:
                         fasterSpinning = true;
                     }
                 }
-                float inputSpin = fasterSpinning ? SPIN_VELOCITY : commands::MoveToPositionCommand::MOVE_TO_POS_SPIN_VELO;
-                positionCommand.targetPosition = {targets[targetIndex].first.first, targets[targetIndex].first.second, 0};
-                positionCommand.inputVelocity = {direction * targets[targetIndex].second.first, direction * targets[targetIndex].second.second, inputSpin};
+            } 
+            
+            // haven't reached a target yet
+            // set it
+            float inputSpin = fasterSpinning ? SPIN_VELOCITY : commands::MoveToPositionCommand::MOVE_TO_POS_SPIN_VELO;
+            positionCommand.targetPosition = {targets[targetIndex].first.first, targets[targetIndex].first.second, 0};
+            positionCommand.inputVelocity = {direction * targets[targetIndex].second.first, direction * targets[targetIndex].second.second, inputSpin};
 
-                // do movement
-                positionCommand.execute();
-            } else { // !positionCommand.isFinished()
-                if(stuckTimer.execute()){
-                    // stop 
-                    isScheduled = false;
-                    // applies next time
-                }
+            // do movement
+            positionCommand.execute();
+            
+            // if stuck
+            if(stuckTimer.execute()){
+                // stop 
+                isScheduled = false;
+                // applies next time
             }
         } else { // !isScheduled
             // self disabled: spin fast in place
