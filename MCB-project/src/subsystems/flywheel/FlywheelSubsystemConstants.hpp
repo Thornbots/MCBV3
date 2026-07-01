@@ -2,17 +2,17 @@
 #include "tap/algorithms/smooth_pid.hpp"
 
 #if defined(HERO)
-constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 6100;  //6400 in 15m/s commit
+constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 5500;  //6400 in 15m/s commit
 constexpr static int FLYWHEEL_RADIUS_MM = 60;
 #elif defined(SENTRY)
 constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 6000;  
 constexpr static int FLYWHEEL_RADIUS_MM = 60;
 #elif defined(INFANTRY)
-constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 6600; 
+constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 6000; 
 constexpr static int FLYWHEEL_RADIUS_MM = 60;
 #else
 constexpr static int FLYWHEEL_MOTOR_MAX_RPM = 8333; 
 constexpr static int FLYWHEEL_RADIUS_MM = 40;
 #endif
 
-constexpr static tap::algorithms::SmoothPidConfig PID_CONF_FLYWHEEL = {30, 0.1, 0, 10.0, 12000, 1, 0, 1, 0, 50, 0};
+constexpr static tap::algorithms::SmoothPidConfig PID_CONF_FLYWHEEL = {14.0106f, 31.6228f, 0, 10.0, 12000, 1, 0, 1, 0, 50, 0};

@@ -124,6 +124,7 @@ void GimbalSubsystem::stopMotors() {
 void GimbalSubsystem::clearBuildup() {
     pitchController.clearBuildup();
     yawController.clearBuildup();
+    yawController.estimateYawPos(yawAngleRelativeWorld, yawAngularVelocity, driveTrainAngularVelocity);
 }
     
 void GimbalSubsystem::reZeroYaw() {
