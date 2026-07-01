@@ -11,7 +11,7 @@ constexpr float RA = 0.5592;        // ohm, armature resistance
 
 constexpr float VOLT_MAX = 24;      // V, maximum
 
-constexpr float MAX_POS_VEL = 2.0;//4.0  //here tune move speed
+constexpr float MAX_POS_VEL = 1.5;//4.0  //here tune move speed
 
 #if defined(HERO)
 // START getters and setters
@@ -71,7 +71,7 @@ constexpr float KI_V = 0;  // integral gain for velocity
 constexpr float IV_MAX = 120;  // maximum integral term for velocity control
 
 constexpr float KP = 2.0f;              // proportional gain for position control
-constexpr float KI = 0.5f;
+constexpr float KI = 0.01f;
 constexpr float BEYBLADE_DELAY = .25;  // delay for beyblade mode/
 constexpr float BBterm1 = 19.534; //constant term
 constexpr float BBterm2 = -4.125; //linear term
