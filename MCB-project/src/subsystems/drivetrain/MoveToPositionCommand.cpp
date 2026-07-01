@@ -22,9 +22,10 @@ void MoveToPositionCommand::execute() {
             targetVelocity = Pose2d(0.0f, 0.0f, MOVE_TO_POS_SPIN_VELO);
         }
 
-        else
-            targetVelocity = Pose2d(targetVelocity.getX(), targetVelocity.getY(), 0);
-    }
+        else //not in a game
+            targetVelocity = inputVelocity; //let simpleautodrive control spin velo too [this should be merged with IN_GAME case]
+    } else //no ref? or no 3v3
+            targetVelocity = inputVelocity; //let simpleautodrive control spin velo too [this should be merged with IN_GAME case]
 
 
     float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
