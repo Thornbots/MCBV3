@@ -129,7 +129,7 @@ void JetsonSubsystem::update(
     CVData* msg = &cv_msg;
 
     // Add rotated offset vector of panel relative to RGB
-    if (msg->confidence <= 0.55f) return;
+    if (msg->confidence <= 0.70f) return;
 
     // float X_prime = -x + 0.0175;                                                     // left
     // float Y_prime = -y + 0.1295 * cos(current_pitch) - 0.0867 * sin(current_pitch);  // up
