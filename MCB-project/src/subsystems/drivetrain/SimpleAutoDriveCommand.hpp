@@ -218,7 +218,7 @@ private:
     bool needToApplyInitialPointChange = true;
     std::pair<float, float> changedInitialPoint{0.0f, 0.0f};
     
-    static constexpr float TOWARDS_ZONE_OFFSET = 0.5; //meters, how far (x and y distance) into a zone (reload or center) to be. 0 would stay at a corner.
+    static constexpr float TOWARDS_ZONE_OFFSET = 0.5f; //meters, how far (x and y distance) into a zone (reload or center) to be. 0 would stay at a corner.
     
     
     TargetMode mode;
