@@ -46,12 +46,12 @@ void AutoAimAndFireCommand::execute() {
         dyaw = dyaw > PI ? dyaw - 2 * PI : dyaw < -PI ? dyaw + 2 * PI : dyaw;
         lastSeenTime = tap::arch::clock::getTimeMilliseconds();
 
-        pitch = currentPitch + (pitch - currentPitch) / 10.0f; //here tune pitch
+        pitch = currentPitch + (pitch - currentPitch) / 1.5f; //here tune pitch
         if (abs(dyaw) > .05) {
-            dyaw /= 4.0f;}
-        else dyaw /= 1.75;
+            dyaw /= 10.0f;}
+        else dyaw /= 3.0f;
         //here tune yaw
-        if (allowGimbal) gimbal->updateMotorsAndVelocityWithLatencyCompensation(dyaw/20.0f, pitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
+        if (allowGimbal) gimbal->updateMotorsAndVelocityWithLatencyCompensation(dyaw, pitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
         if (shoot == 1) isShooting = true;
     } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime < PERSISTANCE) {
         //Haven't found a target right now but I have recently, keep shooting if I was shooting
@@ -77,7 +77,7 @@ void AutoAimAndFireCommand::execute() {
     if(allowShooting){
         if (isShooting) {
             // if we see a panel or recently have seen a panel
-            indexer->indexAtRate(10);//20 change to not make a mess
+            indexer->indexAtRate(7);//20 change to not make a mess
         } else {
             // if we haven't seen a panel for a bit
              indexer->stopIndex();
