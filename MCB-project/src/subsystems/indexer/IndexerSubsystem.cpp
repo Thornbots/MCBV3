@@ -116,8 +116,8 @@ bool IndexerSubsystem::isIndexOnline() {
 }
 
 bool IndexerSubsystem::refPoweringIndex() {
-    return true; //might just be before we get firmware updated
-    // return !drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower.any(RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER);
+    // return true; //might just be before we get firmware updated
+    return !drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower.any(RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER);
 }
 
 
