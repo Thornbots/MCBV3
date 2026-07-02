@@ -65,6 +65,7 @@ public:
             bool fasterSpinning = false;
             
             tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
+            tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
             
             if(relocalizeState == RfidRelocalizeState::STUCK_WAITING_FOR_RESUPPLY || relocalizeState == RfidRelocalizeState::WAITING_FOR_RESUPPLY) {
                 if(robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE)){
@@ -105,7 +106,8 @@ public:
                     stuckTimer.restart(STUCK_TIMER_AMOUNT);
                     if (targetIndex<size-1) {
                         // there is somewhere to go
-                        targetIndex++;
+                        if(gameData.gameStage == RefSerialData::Rx::GameStage::IN_GAME) targetIndex++;
+                        
                         if (needToApplyInitialPointChange) {
                             needToApplyInitialPointChange = false;
                             targets[0].first = changedInitialPoint;
