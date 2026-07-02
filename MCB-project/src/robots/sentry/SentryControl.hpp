@@ -101,16 +101,16 @@ public:
         
         if((autoDrive.getIsScheduled()||simpleAutoDrive.getIsScheduled()) && autoFire.getIsScheduled()){
             if(!prevWhiteLedState){
-                drivers->leds.set(tap::gpio::Leds::Red, true);
-                drivers->leds.set(tap::gpio::Leds::Green, true);
-                drivers->leds.set(tap::gpio::Leds::Blue, true);
+                // drivers->leds.set(tap::gpio::Leds::Red, true);
+                // drivers->leds.set(tap::gpio::Leds::Green, true);
+                // drivers->leds.set(tap::gpio::Leds::Blue, true);
             }
             prevWhiteLedState=true;
         } else {
             if(prevWhiteLedState){
-                drivers->leds.set(tap::gpio::Leds::Red, false);
-                drivers->leds.set(tap::gpio::Leds::Green, false);
-                drivers->leds.set(tap::gpio::Leds::Blue, false);
+                // drivers->leds.set(tap::gpio::Leds::Red, false);
+                // drivers->leds.set(tap::gpio::Leds::Green, false);
+                // drivers->leds.set(tap::gpio::Leds::Blue, false);
             }
             prevWhiteLedState=false;
         }
