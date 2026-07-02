@@ -67,16 +67,11 @@ public:
             tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
             tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
             
-            if(relocalizeState == RfidRelocalizeState::STUCK_WAITING_FOR_RESUPPLY || relocalizeState == RfidRelocalizeState::WAITING_FOR_RESUPPLY) {
+            if(relocalizeState == RfidRelocalizeState::WAITING_FOR_RESUPPLY) {
                 if(robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE)){
                     //relocalize just x to a specific value
                     relocalizeState = RfidRelocalizeState::WAITING_FOR_CENTER;
                     odo->relocalizeTo(0.0f, odo->getY()); //here tune the x offset it relocalizes (the 0.0f) [If stuck on wall, make more negative (I think)]
-                    if(timesRetriedRelocalize>=MAX_RELOCALIZE_TRIES){
-                        //give up on movement
-                        isScheduled = false;
-                        // applies next time
-                    }
                 }
             }
             
@@ -84,7 +79,6 @@ public:
                 if(robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::CENTRAL_BUFF)){
                     //allow relocalizing again
                     relocalizeState = RfidRelocalizeState::WAITING_FOR_RESUPPLY;
-                    timesRetriedRelocalize=0;
                 }
             }
 
@@ -141,9 +135,9 @@ public:
             
             // if stuck
             if(stuckTimer.execute()){
-                timesRetriedRelocalize++; //give up once at resupply, MAX_RELOCALIZE_TRIES
-                direction = -1; //go backwards
-                relocalizeState = RfidRelocalizeState::STUCK_WAITING_FOR_RESUPPLY;
+                // stop 
+                isScheduled = false;
+                // applies next time
             }
         } else { // !isScheduled
             // self disabled: spin fast in place
@@ -237,8 +231,6 @@ private:
     }
 
     void setDirection() {
-        if(relocalizeState==RfidRelocalizeState::STUCK_WAITING_FOR_RESUPPLY) return;
-        
         switch (mode) {
             case TargetMode::TEST:  // change direction on hit
                 if (drivers->refSerial.getRefSerialReceivingData()) {
@@ -284,14 +276,10 @@ private:
         
     enum class RfidRelocalizeState : uint8_t {
         WAITING_FOR_CENTER = 0, //don't relocalize at resupply until reach the center
-        WAITING_FOR_RESUPPLY = 1,
-        STUCK_WAITING_FOR_RESUPPLY = 2
+        WAITING_FOR_RESUPPLY = 1
     };
     
     RfidRelocalizeState relocalizeState = RfidRelocalizeState::WAITING_FOR_CENTER;
     
-    int timesRetriedRelocalize = 0;
-    
-    static constexpr int MAX_RELOCALIZE_TRIES = 3;
 };
 }  // namespace commands
