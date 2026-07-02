@@ -36,7 +36,11 @@ public:
         // odo will read wrong on the sloped ramp. This path pretends the ramp is longer, to account for
         // measuring the hypotenuses of the triangluar ramps with the odo pods.
         // Won't work well with jetson relocalization
-        ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED = 5
+        ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED = 5,
+        
+        
+        // bounty hunting
+        ARCC_HILL_PATH = 6,
     };
 
     SimpleAutoDriveCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, OdometrySubsystem* odo, TargetMode mode)
@@ -199,6 +203,13 @@ private:
                 targets.push_back({{2.236f, 0.0f}, {0.0f, 0.0f}});                                        // right forward diagonal: before wall
                 targets.push_back({{2.236f, 1.224f}, {0.0f, 0.0f}});                                      // forward: past wall
                 targets.push_back({{-TOWARDS_ZONE_OFFSET, 4.125f + TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}});  // left forward diagonal: to center
+                return;
+            case TargetMode::ARCC_HILL_PATH:
+                flipXIfBlue = true;
+                // coordinates for red team
+                changedInitialPoint = {TOWARDS_ZONE_OFFSET, -TOWARDS_ZONE_OFFSET};
+                targets.push_back({{-2.897f, 0.595f}, {0.0f, 0.0f}});                                        // left
+                targets.push_back({{-2.897f, 4.026f}, {0.0f, 0.0f}});                                      // forward
                 return;
         }  // end switch
 
