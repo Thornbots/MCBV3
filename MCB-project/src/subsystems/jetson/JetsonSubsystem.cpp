@@ -27,10 +27,8 @@ void JetsonSubsystem::initialize() {
 }
 int messageCount = 0;
 void JetsonSubsystem::refresh() {
-    
-    if(odo!=nullptr)
-        checkApplyRelocalize();
-    
+    if (odo != nullptr) checkApplyRelocalize();
+
     drivers->uart.updateSerial();
 
     hitRing.update();
@@ -38,8 +36,8 @@ void JetsonSubsystem::refresh() {
     if (poseDataTimeout.execute()) {
         messageCount++;
 
-        //9 poses, 1 ref sys msg
-        if (messageCount < 10 && odo!=nullptr) {
+        // 9 poses, 1 ref sys msg
+        if (messageCount < 10 && odo != nullptr) {
             PoseData p{
                 odo->getX(),
                 odo->getY(),
@@ -56,11 +54,11 @@ void JetsonSubsystem::refresh() {
                 // drivers->bmi088.getAz()
             };
             sendMsg(&p);
-        } else {//if(drivers->refSerial.getRefSerialReceivingData()) {
-    
+        } else {  // if(drivers->refSerial.getRefSerialReceivingData()) {
+
             tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
             tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-           
+
             RefSysMsg r{
                 (uint8_t)gameData.gameStage,
                 (uint16_t)gameData.stageTimeRemaining,
@@ -68,16 +66,13 @@ void JetsonSubsystem::refresh() {
                 (uint8_t)robotData.robotId % 100,  // blue hero is 101, we want to send 1
                 hitRing.getAngleToTurnForSentry(),
                 // 12.34,
-
                 drivers->refSerial.isBlueTeam(robotData.robotId) << 7 | (robotData.robotBuffStatus.recoveryBuff > 0) << 6 |
-                    (robotData.rfidStatus.any(
-                        tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::BASE_BUFF| tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::BASE_BUFF))
-                        << 5 |
-                    robotData.rfidStatus.any(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::CENTRAL_BUFF) << 4 |
-                    gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_OWN) << 3 |
-                    gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_OPPONENT) << 2 |
-                    robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::CHASSIS_HAS_POWER) << 1 |
-                    robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::GIMBAL_HAS_POWER)};
+                    robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE) << 5 |
+                    robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::CENTRAL_BUFF) << 4 |
+                    gameData.eventData.siteData.all(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_OWN) << 3 |
+                    gameData.eventData.siteData.all(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_OPPONENT) << 2 |
+                    robotData.robotPower.all(tap::communication::serial::RefSerial::Rx::RobotPower::CHASSIS_HAS_POWER) << 1 |
+                    robotData.robotPower.all(tap::communication::serial::RefSerial::Rx::RobotPower::GIMBAL_HAS_POWER)};
             // needToSendRefData = !
             sendMsg(&r);
             messageCount = 0;
@@ -92,18 +87,15 @@ void JetsonSubsystem::checkApplyRelocalize() {
     }
 }
 
-
 bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d* jetsonExpectedPosition) {
     Relocalize relocalize_msg;
     if (getMsg(&relocalize_msg)) {
         *jetsonExpectedPosition = Vector2d(relocalize_msg.expectedX, relocalize_msg.expectedY);
         // x is 5, y is 3
-        if(relocalize_msg.expectedX>4) drivers->leds.set(tap::gpio::Leds::Blue, true);
-        if(relocalize_msg.expectedY>2) drivers->leds.set(tap::gpio::Leds::Green, true);
+        if (relocalize_msg.expectedX > 4) drivers->leds.set(tap::gpio::Leds::Blue, true);
+        if (relocalize_msg.expectedY > 2) drivers->leds.set(tap::gpio::Leds::Green, true);
     };
 
-    
-    
     ROSData ros_msg;
     if (!getMsg(&ros_msg)) return false;
     *targetPosition = Vector2d(ros_msg.targetX, ros_msg.targetY);
@@ -127,6 +119,11 @@ void JetsonSubsystem::update(
     CVData cv_msg;
     if (!getMsg(&cv_msg)) return;
     CVData* msg = &cv_msg;
+    
+    // white led on first cv message
+    drivers->leds.set(tap::gpio::Leds::Red, true);
+    drivers->leds.set(tap::gpio::Leds::Green, true);
+    drivers->leds.set(tap::gpio::Leds::Blue, true);
 
     // Add rotated offset vector of panel relative to RGB
     if (msg->confidence <= 0.70f) return;
