@@ -33,6 +33,9 @@ void JetsonSubsystem::refresh() {
 
     hitRing.update();
 
+    // Push the current turret orientation into the delay line every cycle so that a latent CV
+    // frame can be paired with the orientation from when it was actually captured.
+    recordOrientationSample();
 
     if (poseDataTimeout.execute()) {
         messageCount++;
@@ -79,6 +82,32 @@ void JetsonSubsystem::refresh() {
             messageCount = 0;
         }
     }
+}
+
+void JetsonSubsystem::recordOrientationSample() {
+    // world-frame turret yaw straight from the IMU quaternion (same convention as update()).
+    float sq0 = drivers->bmi088.getq0();
+    float sq1 = -drivers->bmi088.getq1();  // negated to swap IMU frame -> 3d-dynamics frame
+    float sq2 = -drivers->bmi088.getq2();
+    float sq3 = drivers->bmi088.getq3();
+
+    OrientationSample sample;
+    sample.cvYaw = atan2f(sq0 * sq3 - sq1 * sq2, -0.5f + (sq1 * sq1 + sq0 * sq0));  // XYZ 3rd rotation
+    sample.cvYawVel = drivers->bmi088.getGz() * PI / 180;                           // body-z rate, rad/s
+
+    // Pitch comes from the gimbal (the source update() previously used via current_pitch), negated
+    // to match the transform's frame of reference exactly as `cvPitch = -current_pitch` did.
+    sample.cvPitch = -gimbal->getPitchEncoderValue();
+    sample.cvPitchVel = -gimbal->getPitchVel();
+
+    orientationQueue[orientationQueueHead] = sample;
+    orientationQueueHead = (orientationQueueHead + 1) % ORIENTATION_QUEUE_SIZE;
+}
+
+const OrientationSample& JetsonSubsystem::getDelayedOrientation() const {
+    // The oldest entry in the ring (the slot about to be overwritten) is the orientation from
+    // ~ORIENTATION_QUEUE_SIZE cycles ago.
+    return orientationQueue[orientationQueueHead];
 }
 
 void JetsonSubsystem::checkApplyRelocalize() {
@@ -148,18 +177,11 @@ void JetsonSubsystem::update(
     // processing + UART transport). Transform it into the world frame using the turret orientation
     // from that moment, pulled from the delay line, instead of the live orientation. (current_yaw
     // stays live below because the output is a delta from where the turret points right now.)
-    float sq0 = drivers->bmi088.getq0();
-    float sq1 = -drivers->bmi088.getq1();  // negated to swap IMU frame -> 3d-dynamics frame
-    float sq2 = -drivers->bmi088.getq2();
-    float sq3 = drivers->bmi088.getq3();
-
-    cvYaw = atan2f(sq0 * sq3 - sq1 * sq2, -0.5f + (sq1 * sq1 + sq0 * sq0));  // XYZ 3rd rotation
-    cvYawVel = drivers->bmi088.getGz() * PI / 180;                           // body-z rate, rad/s
-
-    // Pitch comes from the gimbal (the source update() previously used via current_pitch), negated
-    // to match the transform's frame of reference exactly as `cvPitch = -current_pitch` did.
-    cvPitch = -gimbal->getPitchEncoderValue();
-    cvPitchVel = -gimbal->getPitchVel();
+    const OrientationSample& delayed = getDelayedOrientation();
+    cvYaw = delayed.cvYaw;
+    cvPitch = delayed.cvPitch;
+    cvYawVel = delayed.cvYawVel;
+    cvPitchVel = delayed.cvPitchVel;
 
     currentYawTest = cvYaw;
     currentPitchTest = cvPitch;
@@ -222,7 +244,7 @@ void JetsonSubsystem::update(
     posYrelC = posYrel4;
     targetPitchTest = targetPitch;
 
-    yawouttest = (targetYaw - cvYaw); 
+    yawouttest = (targetYaw - current_yaw); //target yaw is computed from the properly queued yaw, and it needs to be compared to the current yaw to properly adjust
     yawtest2 = targetYaw;
 
     if (!valid) {
@@ -230,7 +252,7 @@ void JetsonSubsystem::update(
         return;
     }
 
-    *yawOut = (targetYaw - cvYaw);  // fmod(current_yaw + targetYaw, 2 * PI);
+    *yawOut = (targetYaw - current_yaw);  // fmod(current_yaw + targetYaw, 2 * PI);
     *pitchOut = targetPitch;
     *yawVelOut = (-cos_theta3 * velXrelPitch - sin_theta3 * velYrelPitch + velXrel4) / (cos_theta4 * posYrel4 - sin_theta4 * posZrel4);
     *pitchVelOut = 0; //unsure on how to compute this well and i dont trust AI
