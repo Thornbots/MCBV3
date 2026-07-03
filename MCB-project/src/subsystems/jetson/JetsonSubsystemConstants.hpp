@@ -8,6 +8,7 @@ static constexpr float MSG_CONFIDENCE_CUTOFF = 0.75f; //lower than this confiden
 //here tune allow 'cone' (we are just checking yaw)
 static constexpr float YAW_OUT_SHOOT_THRESH = PI / 8; //if cv wants to move the yaw less than this amount, allow shooting
 
+static constexpr float YAW_CLOSE = 0.05f;
 
 
 #if defined(INFANTRY)
@@ -29,7 +30,8 @@ static constexpr float H = 9.95;
 static constexpr float PITCH_DIVIDE = 1.5f; //higher number is less responsive
 
 //here tune yaw
-static constexpr float YAW_DIVIDE = 1.0f; //higher number is less responsive
+static constexpr float YAW_DIVIDE_FAR = 1.0f; //higher number is less responsive
+static constexpr float YAW_DIVIDE_CLOSE = 1.0f; //higher number is less responsive
 
 #elif defined(SENTRY)
 
@@ -50,7 +52,9 @@ static constexpr float H = 9.95;
 static constexpr float PITCH_DIVIDE = 3.0f; //higher number is less responsive
 
 //here tune yaw
-static constexpr float YAW_DIVIDE = 2.0f; //higher number is less responsive
+static constexpr float YAW_DIVIDE_FAR = 1.0f; //higher number is less responsive
+static constexpr float YAW_DIVIDE_CLOSE = 1.0f; //higher number is less responsive
+
 
 #elif defined(HERO)
 
@@ -71,7 +75,9 @@ static constexpr float H = 9.95;
 static constexpr float PITCH_DIVIDE = 3.0f; //higher number is less responsive
 
 //here tune yaw
-static constexpr float YAW_DIVIDE = 2.0f; //higher number is less responsive
+static constexpr float YAW_DIVIDE_FAR = 1.0f; //higher number is less responsive
+static constexpr float YAW_DIVIDE_CLOSE = 1.0f; //higher number is less responsive
+
 
 #else
 
@@ -90,6 +96,8 @@ static constexpr float H = 9.95;
 static constexpr float PITCH_DIVIDE = 3.0f; //higher number is less responsive
 
 //here tune yaw
-static constexpr float YAW_DIVIDE = 2.0f; //higher number is less responsive
+static constexpr float YAW_DIVIDE_FAR = 2.0f; //higher number is less responsive
+static constexpr float YAW_DIVIDE_CLOSE = 2.0f; //higher number is less responsive
+
 
 #endif

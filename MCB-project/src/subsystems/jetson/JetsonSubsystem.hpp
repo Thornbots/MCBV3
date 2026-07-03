@@ -1,4 +1,6 @@
 #pragma once
+#include <array>
+
 #include "tap/algorithms/ballistics.hpp"
 #include "tap/algorithms/smooth_pid.hpp"
 #include "tap/architecture/periodic_timer.hpp"
@@ -117,6 +119,17 @@ struct PanelData {
     double theta;
 };
 
+// Snapshot of the turret orientation (IMU-derived world-frame yaw/pitch and their rates) taken
+// once per control cycle. These are queued in a fixed-length delay line so that a CV frame, which
+// arrives with pipeline latency, can be transformed into the world frame using the orientation as
+// it was when that frame was actually captured rather than the live (newer) orientation.
+struct OrientationSample {
+    float cvYaw = 0;       // world-frame turret yaw   (XYZ-euler 3rd rotation), rad
+    float cvPitch = 0;     // world-frame turret pitch (XYZ-euler 2nd rotation), rad
+    float cvYawVel = 0;    // yaw rate, rad/s
+    float cvPitchVel = 0;  // pitch rate, rad/s
+};
+
 class JetsonSubsystem : public tap::control::Subsystem {
 private:  // Private Variables
     src::Drivers* drivers;
@@ -144,6 +157,16 @@ private:  // Private Variables
     float velXrelPitch, velYrelPitch, velZrelPitch;
 
     std::vector<PanelData> panelData;
+
+    // ---- orientation delay line for CV latency compensation ----
+    // Number of control cycles of orientation history to buffer. The transform reads the sample
+    // from the tail of the queue (the oldest one held), so this length sets the compensated
+    // latency: delay ~= ORIENTATION_QUEUE_SIZE * controlCyclePeriod. Tune so that delay matches
+    // the combined camera + Jetson + transport latency of a CV frame.
+    static constexpr size_t ORIENTATION_QUEUE_SIZE = 23;
+    std::array<OrientationSample, ORIENTATION_QUEUE_SIZE> orientationQueue{};
+    size_t orientationQueueHead = 0;  // index of the oldest sample == next slot to overwrite
+
 public:  // Public Methods
     JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal, OdometrySubsystem* odo);
 
@@ -164,7 +187,15 @@ public:  // Public Methods
 
 private:  // Private Methods
 
-    template<class msg_type> 
+    // Sample the current turret orientation from the IMU and push it into the delay line.
+    // Call exactly once per control cycle (from refresh()).
+    void recordOrientationSample();
+
+    // Returns the orientation held at the tail of the delay line, i.e. the turret orientation
+    // from ~ORIENTATION_QUEUE_SIZE cycles ago, used to compensate for CV pipeline latency.
+    const OrientationSample& getDelayedOrientation() const;
+
+    template<class msg_type>
     inline bool getMsg(msg_type* output){
         if(!drivers->uart.hasNewMessage())
             return false;

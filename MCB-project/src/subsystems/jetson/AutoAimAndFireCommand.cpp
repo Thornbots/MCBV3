@@ -1,6 +1,7 @@
 #include "AutoAimAndFireCommand.hpp"
 #include "JetsonSubsystemConstants.hpp"
 
+
 namespace commands {
 using namespace tap::communication::serial;
 
@@ -36,7 +37,8 @@ void AutoAimAndFireCommand::execute() {
     float dyaw = 0;
     float currentYaw = gimbal->getYawAngleRelativeWorld();
     float currentPitch = gimbal->getPitchEncoderValue();
-    cv->update(currentYaw, currentPitch, yawvel, pitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
+    float currentpitchvel = gimbal->getPitchVel(); //did add this for the actual CV stuff can make this 0 if we want
+    cv->update(currentYaw, currentPitch, yawvel, currentpitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
 
     if (shoot != -1) {
         //if(tap::arch::clock::getTimeMilliseconds() - lastSeenTime >  PERSISTANCE) flip = flip * -1;
@@ -47,11 +49,15 @@ void AutoAimAndFireCommand::execute() {
         dyaw = dyaw > PI ? dyaw - 2 * PI : dyaw < -PI ? dyaw + 2 * PI : dyaw;
         lastSeenTime = tap::arch::clock::getTimeMilliseconds();
 
-        pitch = currentPitch + (pitch - currentPitch) / PITCH_DIVIDE;
-        if (abs(dyaw) > .05) {
-            dyaw /= 10.0f;} //move slow (divide by more) if close [?]
-        else dyaw /= 3.0f;//move fast if not close [?]
-        if (allowGimbal) gimbal->updateMotorsAndVelocityWithLatencyCompensation(dyaw/YAW_DIVIDE, pitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
+        // pitch damper (analogous to the yaw divisor below): only step a fraction of the way
+        // from the current pitch toward the CV target each cycle, so the setpoint eases in
+        // instead of jumping with every (latent, ~30Hz) CV frame. Larger divisor = more
+        // damping / smoother but more lag; smaller = snappier but can ring.
+        float newPitch = currentPitch + (pitch - currentPitch) / PITCH_DIVIDE;
+        if (abs(dyaw) > YAW_CLOSE) {
+            dyaw /= YAW_DIVIDE_CLOSE;} //move slow (divide by more) if close [?]
+        else dyaw /= YAW_DIVIDE_FAR;//move fast if not close [?]
+        if (allowGimbal) gimbal->updateMotorsAndVelocity(dyaw, newPitch, yawvel, pitchvel);//WithLatencyCompensation(dyaw/20.5f, newPitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
         if (shoot == 1) isShooting = true;
     } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime < PERSISTANCE) {
         //Haven't found a target right now but I have recently, keep shooting if I was shooting
@@ -61,15 +67,15 @@ void AutoAimAndFireCommand::execute() {
         //Haven't found a target, patrol
 
         isShooting = false;
-        // pitch = 0.05;  // pitch down to avoid looking into the sky
+        pitch = 0.05;  // pitch down to avoid looking into the sky
         numCyclesForBurst++;
 
         if(allowGimbal) {
             if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
-                gimbal->updateMotors(BURST_AMOUNT, 0);
+                gimbal->updateMotors(BURST_AMOUNT, pitch);
                 numCyclesForBurst = 0;
             } else {
-                gimbal->updateMotors(PATROL_SPEED, 0);
+                gimbal->updateMotors(PATROL_SPEED, pitch);
             }
         }
     }
@@ -77,7 +83,7 @@ void AutoAimAndFireCommand::execute() {
     if(allowShooting){
         if (isShooting) {
             // if we see a panel or recently have seen a panel
-            indexer->indexAtRate(7);//20 change to not make a mess
+            indexer->indexAtRate(5);//20 change to not make a mess
         } else {
             // if we haven't seen a panel for a bit
              indexer->stopIndex();
@@ -92,7 +98,7 @@ void AutoAimAndFireCommand::execute() {
         flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM);
     } else {
         gimbal->stopMotors();
-        if(adc!=nullptr && adc->getIsScheduled()) flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM/4);
+        if(adc->getIsScheduled()) flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM/4);
     }
 }
 
