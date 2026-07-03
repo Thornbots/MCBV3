@@ -2,6 +2,13 @@
 
 #include "modm/math/geometry/vector.hpp"
 
+// here tune confidence
+static constexpr float MSG_CONFIDENCE_CUTOFF = 0.75f; //lower than this confidence is ignored
+
+//here tune allow 'cone' (we are just checking yaw)
+static constexpr float YAW_OUT_SHOOT_THRESH = PI / 4; //if cv wants to move the yaw less than this amount, allow shooting
+
+
 
 #if defined(INFANTRY)
 //distance to the camera in frame 4
@@ -13,9 +20,15 @@ static constexpr float cameraZoffset = .04505;
 
 static constexpr float initialShotVelocity = 24.0;           // Shot velocity
 
-static constexpr float l = 0.05;           // Combined camera + Jetson latency
-static constexpr float deltaTime = 0.033;  // Frame time
+// static constexpr float l = 0.02;           // Combined camera + Jetson latency
+// static constexpr float deltaTime = 0.0166;  // Frame time
 static constexpr float H = 9.95;   
+
+//here tune pitch
+static constexpr float PITCH_DIVIDE = 1.5f; //higher number is less responsive
+
+//here tune yaw
+static constexpr float YAW_DIVIDE = 1.0f; //higher number is less responsive
 
 #elif defined(SENTRY)
 
@@ -32,7 +45,11 @@ static constexpr float l = 0.02;           // Combined camera + Jetson latency
 static constexpr float deltaTime = 0.0166;  // Frame time
 static constexpr float H = 9.95;   
 
+//here tune pitch
+static constexpr float PITCH_DIVIDE = 3.0f; //higher number is less responsive
 
+//here tune yaw
+static constexpr float YAW_DIVIDE = 2.0f; //higher number is less responsive
 
 #elif defined(HERO)
 
@@ -49,7 +66,11 @@ static constexpr float l = 0.05;           // Combined camera + Jetson latency
 static constexpr float deltaTime = 0.033;  // Frame time
 static constexpr float H = 9.95;   
 
+//here tune pitch
+static constexpr float PITCH_DIVIDE = 3.0f; //higher number is less responsive
 
+//here tune yaw
+static constexpr float YAW_DIVIDE = 2.0f; //higher number is less responsive
 
 #else
 
@@ -64,5 +85,10 @@ static constexpr float l = 0.05;           // Combined camera + Jetson latency
 static constexpr float deltaTime = 0.033;  // Frame time
 static constexpr float H = 9.95;   
 
+//here tune pitch
+static constexpr float PITCH_DIVIDE = 3.0f; //higher number is less responsive
+
+//here tune yaw
+static constexpr float YAW_DIVIDE = 2.0f; //higher number is less responsive
 
 #endif
