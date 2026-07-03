@@ -142,12 +142,12 @@ public:
 
     // //commands
     commands::InfantryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &servo};
-    commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
+    commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson}; //includes auto firing for some reason, probably fix after arcc26
+    commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr};
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::MouseMoveCommand lookMouse{drivers, &gimbal};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
-    commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr};
 
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};

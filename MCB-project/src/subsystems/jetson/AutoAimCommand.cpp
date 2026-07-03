@@ -1,4 +1,5 @@
 #include "AutoAimCommand.hpp"
+#include "JetsonSubsystemConstants.hpp"
 
 namespace commands {
 void AutoAimCommand::initialize() {
@@ -17,11 +18,11 @@ void AutoAimCommand::execute() {
         dyaw = fmod(dyaw, 2*PI);
         //clamp between -Pi and PI to allow for dividing
         dyaw = dyaw > PI ? dyaw - 2*PI : dyaw < -PI ? dyaw + 2*PI : dyaw;
-        float newPitch = currentPitch + (pitch - currentPitch) / 2.0f;
+        float newPitch = currentPitch + (pitch - currentPitch) / PITCH_DIVIDE;
         if (abs(dyaw) > .05) {
-            dyaw /= 4.0f;}
-        else dyaw /= 2.0f;
-        gimbal->updateMotorsAndVelocityWithLatencyCompensation(dyaw, newPitch, yawvel, pitchvel); //division is to prevent overshoot from latency
+            dyaw /= 10.0f;} //move slow (divide by more) if close [?]
+        else dyaw /= 3.0f;//move fast if not close [?]
+        gimbal->updateMotorsAndVelocityWithLatencyCompensation(dyaw/YAW_DIVIDE, newPitch, yawvel, pitchvel); //division is to prevent overshoot from latency
         //gimbal->updateMotors(dyaw/3.0f, pitch);
     } else {
         // sentry's equivalent of patrol, do original mouse moving

@@ -10,6 +10,7 @@
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
 #include "subsystems/jetson/AutoAimCommand.hpp"
+#include "subsystems/jetson/AutoAimAndFireCommand.hpp"
 
 #include "subsystems/drivetrain/DrivetrainDriveCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainStopCommand.hpp"
@@ -127,8 +128,9 @@ public:
     // //commands
 
     commands::HeroDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};
-    commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
-    // commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
+    commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson}; //includes auto firing for some reason, probably fix after arcc26
+    // commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr};
+
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::JoystickMoveCommand lookJoystickOffset{drivers, &gimbal, true};
