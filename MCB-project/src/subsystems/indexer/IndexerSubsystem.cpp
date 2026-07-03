@@ -123,13 +123,18 @@ bool IndexerSubsystem::refPoweringIndex() {
 
 bool IndexerSubsystem::canShoot() {
     // return true;
-    return isIndexOnline() && refPoweringIndex() && heatAllowsShooting() && isProjectileAtBeam() && tap::arch::clock::getTimeMilliseconds()-lastShotTime>=MIN_SHOT_FREQ;
+    
+#if defined(HERO)
+    return isIndexOnline() && refPoweringIndex() && isProjectileAtBeam() && tap::arch::clock::getTimeMilliseconds()-lastShotTime>=MIN_SHOT_FREQ; //heatAllowsShooting() && 
+#else// START getters and setters
+    return isIndexOnline() && heatAllowsShooting() && refPoweringIndex() && isProjectileAtBeam() && tap::arch::clock::getTimeMilliseconds()-lastShotTime>=MIN_SHOT_FREQ;
+#endif
 }
 
 void IndexerSubsystem::justShot() {
     lastShotTime = tap::arch::clock::getTimeMilliseconds();
 }
-    
+     
 int IndexerSubsystem::getMeasurement() {
     return motorIndexer->getTorque();
 }
