@@ -246,13 +246,7 @@ void JetsonSubsystem::update(
     posYrelC = posYrel4;
     targetPitchTest = targetPitch;
 
-    float sq0 = drivers->bmi088.getq0();
-    float sq1 = -drivers->bmi088.getq1();  // negated to swap IMU frame -> 3d-dynamics frame
-    float sq2 = -drivers->bmi088.getq2();
-    float sq3 = drivers->bmi088.getq3();
-
-    float current_yaw_2 = atan2f(sq0 * sq3 - sq1 * sq2, -0.5f + (sq1 * sq1 + sq0 * sq0));  // XYZ 3rd rotation
-    yawouttest = (targetYaw - current_yaw_2); //target yaw is computed from the properly queued yaw, and it needs to be compared to the current yaw to properly adjust
+    yawouttest = (targetYaw - current_yaw); //target yaw is computed from the properly queued yaw, and it needs to be compared to the current yaw to properly adjust
     yawtest2 = targetYaw;
 
     if (!valid) {
@@ -260,7 +254,7 @@ void JetsonSubsystem::update(
         return;
     }
 
-    *yawOut = (targetYaw - current_yaw_2);  // fmod(current_yaw + targetYaw, 2 * PI);
+    *yawOut = (targetYaw - current_yaw);  // fmod(current_yaw + targetYaw, 2 * PI);
     *pitchOut = targetPitch;
     *yawVelOut = (-cos_theta3 * velXrelPitch - sin_theta3 * velYrelPitch + velXrel4) / (cos_theta4 * posYrel4 - sin_theta4 * posZrel4);
     *pitchVelOut = 0; //unsure on how to compute this well and i dont trust AI
