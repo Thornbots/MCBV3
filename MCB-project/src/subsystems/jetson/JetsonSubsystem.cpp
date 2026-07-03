@@ -126,7 +126,7 @@ void JetsonSubsystem::update(
     drivers->leds.set(tap::gpio::Leds::Blue, true);
 
     // Add rotated offset vector of panel relative to RGB
-    if (msg->confidence <= 0.75f) return;
+    if (msg->confidence <= MSG_CONFIDENCE_CUTOFF) return;
 
     // float X_prime = -x + 0.0175;                                                     // left
     // float Y_prime = -y + 0.1295 * cos(current_pitch) - 0.0867 * sin(current_pitch);  // up
@@ -235,7 +235,7 @@ void JetsonSubsystem::update(
     *pitchOut = targetPitch;
     *yawVelOut = (-cos_theta3 * velXrelPitch - sin_theta3 * velYrelPitch + velXrel4) / (cos_theta4 * posYrel4 - sin_theta4 * posZrel4);
 
-    if (abs(*yawOut) < PI / 4) {
+    if (abs(*yawOut) < YAW_OUT_SHOOT_THRESH) {
         // Enable shooting
         *action = 1;
         return;
