@@ -18,7 +18,8 @@ void AutoAimCommand::execute() {
         dyaw = fmod(dyaw, 2*PI);
         //clamp between -Pi and PI to allow for dividing
         dyaw = dyaw > PI ? dyaw - 2*PI : dyaw < -PI ? dyaw + 2*PI : dyaw;
-        float newPitch = currentPitch + (pitch - currentPitch) / PITCH_DIVIDE;
+        float dpitch = pitch - currentPitch;
+        float newPitch = currentPitch + dpitch * std::clamp(std::abs(dpitch)*PITCH_MULTIPLY_SCALE, PITCH_MULTIPLY_MIN, PITCH_MULTIPLY_MAX);
         dyaw *= std::clamp(std::abs(dyaw)*YAW_MULTIPLY_SCALE, YAW_MULTIPLY_MIN, YAW_MULTIPLY_MAX);
         gimbal->updateMotorsAndVelocity(dyaw, newPitch, yawvel, pitchvel); //WithLatencyCompensation(dyaw, newPitch, yawvel, pitchvel); //division is to prevent overshoot from latency
     } else {
