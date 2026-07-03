@@ -1,4 +1,5 @@
 #include "AutoAimAndFireCommand.hpp"
+#include "JetsonSubsystemConstants.hpp"
 
 namespace commands {
 using namespace tap::communication::serial;
@@ -46,12 +47,11 @@ void AutoAimAndFireCommand::execute() {
         dyaw = dyaw > PI ? dyaw - 2 * PI : dyaw < -PI ? dyaw + 2 * PI : dyaw;
         lastSeenTime = tap::arch::clock::getTimeMilliseconds();
 
-        pitch = currentPitch + (pitch - currentPitch) / 1.5f; //here tune pitch
+        pitch = currentPitch + (pitch - currentPitch) / PITCH_DIVIDE;
         if (abs(dyaw) > .05) {
-            dyaw /= 10.0f;}
-        else dyaw /= 3.0f;
-        //here tune yaw
-        if (allowGimbal) gimbal->updateMotorsAndVelocityWithLatencyCompensation(dyaw, pitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
+            dyaw /= 10.0f;} //move slow (divide by more) if close [?]
+        else dyaw /= 3.0f;//move fast if not close [?]
+        if (allowGimbal) gimbal->updateMotorsAndVelocityWithLatencyCompensation(dyaw/YAW_DIVIDE, pitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
         if (shoot == 1) isShooting = true;
     } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime < PERSISTANCE) {
         //Haven't found a target right now but I have recently, keep shooting if I was shooting
