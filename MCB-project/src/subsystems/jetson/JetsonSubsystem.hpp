@@ -163,7 +163,7 @@ private:  // Private Variables
     // from the tail of the queue (the oldest one held), so this length sets the compensated
     // latency: delay ~= ORIENTATION_QUEUE_SIZE * controlCyclePeriod. Tune so that delay matches
     // the combined camera + Jetson + transport latency of a CV frame.
-    static constexpr size_t ORIENTATION_QUEUE_SIZE = 35;
+    static constexpr size_t ORIENTATION_QUEUE_SIZE = 25; //affects 'resonating', where if it starts pointed at it, it gets worse and bounces side ot side
     std::array<OrientationSample, ORIENTATION_QUEUE_SIZE> orientationQueue{};
     size_t orientationQueueHead = 0;  // index of the oldest sample == next slot to overwrite
 
