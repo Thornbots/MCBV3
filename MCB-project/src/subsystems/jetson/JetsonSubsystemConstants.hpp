@@ -30,7 +30,7 @@ static constexpr float H = 9.95;
 static constexpr float PITCH_DIVIDE = 1.5f; //higher number is less responsive
 
 //here tune yaw
-static constexpr float YAW_DIVIDE_FAR = 1.0f; //higher number is less responsive
+static constexpr float YAW_DIVIDE_FAR = 2.0f; //higher number is less responsive
 static constexpr float YAW_DIVIDE_CLOSE = 0.1f; //higher number is less responsive
 
 #elif defined(SENTRY)
