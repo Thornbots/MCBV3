@@ -3,7 +3,7 @@
 #include "modm/math/geometry/vector.hpp"
 
 // here tune confidence
-static constexpr float MSG_CONFIDENCE_CUTOFF = 0.75f; //lower than this confidence is ignored
+static constexpr float MSG_CONFIDENCE_CUTOFF = 0.70f; //lower than this confidence is ignored
 
 //here tune allow 'cone' (we are just checking yaw)
 static constexpr float YAW_OUT_SHOOT_THRESH = PI / 8; //if cv wants to move the yaw less than this amount, allow shooting
@@ -33,7 +33,7 @@ static constexpr float PITCH_MULTIPLY_SCALE = 0.5f; //mult agains dyaw (in rad, 
 
 //here tune yaw. dyaw gets scaled by an amount proportional to dyaw
 static constexpr float YAW_MULTIPLY_MIN = 0.0f;
-static constexpr float YAW_MULTIPLY_MAX = 0.5f;
+static constexpr float YAW_MULTIPLY_MAX = 0.25f;
 static constexpr float YAW_MULTIPLY_SCALE = 0.5f; //mult agains dyaw (in rad, max is pi)
 
 #elif defined(SENTRY)
