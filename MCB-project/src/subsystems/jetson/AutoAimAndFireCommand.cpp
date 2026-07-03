@@ -56,8 +56,8 @@ void AutoAimAndFireCommand::execute() {
         float newPitch = currentPitch + (pitch - currentPitch) / PITCH_DIVIDE;
         if (abs(dyaw) > YAW_CLOSE) {
             dyaw /= YAW_DIVIDE_CLOSE;} //move slow (divide by more) if close [?]
-        else dyaw /= YAW_DIVIDE_FAR;//move fast if not close [?]
-        if (allowGimbal) gimbal->updateMotorsAndVelocity(dyaw, newPitch, yawvel, pitchvel);//WithLatencyCompensation(dyaw/20.5f, newPitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
+        else dyaw /= YAW_DIVIDE_FAR;//move fast if not close [?] (dyaw, newPitch, yawvel, pitchvel);//
+        if (allowGimbal) gimbal->updateMotorsAndVelocityWithLatencyCompensation(dyaw, newPitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
         if (shoot == 1) isShooting = true;
     } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime < PERSISTANCE) {
         //Haven't found a target right now but I have recently, keep shooting if I was shooting
