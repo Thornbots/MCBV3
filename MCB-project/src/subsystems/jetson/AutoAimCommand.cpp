@@ -19,11 +19,8 @@ void AutoAimCommand::execute() {
         //clamp between -Pi and PI to allow for dividing
         dyaw = dyaw > PI ? dyaw - 2*PI : dyaw < -PI ? dyaw + 2*PI : dyaw;
         float newPitch = currentPitch + (pitch - currentPitch) / PITCH_DIVIDE;
-        if (abs(dyaw) > YAW_CLOSE) {
-            dyaw /= YAW_DIVIDE_CLOSE;} //move slow (divide by more) if close [?]
-        else dyaw /= YAW_DIVIDE_FAR;//move fast if not close [?]
+        dyaw *= std::clamp(std::abs(dyaw)*YAW_MULTIPLY_SCALE, YAW_MULTIPLY_MIN, YAW_MULTIPLY_MAX);
         gimbal->updateMotorsAndVelocity(dyaw, newPitch, yawvel, pitchvel); //WithLatencyCompensation(dyaw, newPitch, yawvel, pitchvel); //division is to prevent overshoot from latency
-        //gimbal->updateMotors(dyaw/3.0f, pitch);
     } else {
         // sentry's equivalent of patrol, do original mouse moving
         MouseMoveCommand::execute();
