@@ -225,7 +225,7 @@ void JetsonSubsystem::update(
     modm::Vector3f position(posYrelPitch, -posXrelPitch, posZrelPitch);  // X is down range
 
     // velocity doesn't work well until the latency of the pipeline is significantly reduced
-    modm::Vector3f velocity(velYrelPitch / 100.0f, -velXrelPitch / 100.0f, velZrelPitch / 100.0f);
+    modm::Vector3f velocity(velYrelPitch / 4.0f, -velXrelPitch / 4.0f, velZrelPitch / 100.0f);
     modm::Vector3f acceleration(msg->a_x, msg->a_z, -msg->a_y);  // not imlemented yet afak
 
     SecondOrderKinematicState state(position, velocity, acceleration);  //(pos,vel,acc);
