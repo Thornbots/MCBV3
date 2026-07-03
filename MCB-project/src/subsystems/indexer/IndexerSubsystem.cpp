@@ -116,20 +116,25 @@ bool IndexerSubsystem::isIndexOnline() {
 }
 
 bool IndexerSubsystem::refPoweringIndex() {
-    return true; //might just be before we get firmware updated
-    // return !drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower.any(RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER);
+    // return true; //might just be before we get firmware updated
+    return !drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower.any(RefSerialData::Rx::RobotPower::SHOOTER_HAS_POWER);
 }
 
 
 bool IndexerSubsystem::canShoot() {
     // return true;
-    return isIndexOnline() && refPoweringIndex() && heatAllowsShooting() && isProjectileAtBeam() && tap::arch::clock::getTimeMilliseconds()-lastShotTime>=MIN_SHOT_FREQ;
+    
+#if defined(HERO)
+    return isIndexOnline() && refPoweringIndex() && isProjectileAtBeam() && tap::arch::clock::getTimeMilliseconds()-lastShotTime>=MIN_SHOT_FREQ; //heatAllowsShooting() && 
+#else// START getters and setters
+    return isIndexOnline() && heatAllowsShooting() && refPoweringIndex() && isProjectileAtBeam() && tap::arch::clock::getTimeMilliseconds()-lastShotTime>=MIN_SHOT_FREQ;
+#endif
 }
 
 void IndexerSubsystem::justShot() {
     lastShotTime = tap::arch::clock::getTimeMilliseconds();
 }
-    
+     
 int IndexerSubsystem::getMeasurement() {
     return motorIndexer->getTorque();
 }

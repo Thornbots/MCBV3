@@ -84,6 +84,10 @@ public:
         addGraphicsObject(&rectsContainer);
         addGraphicsObject(&linesContainer);
         addGraphicsObject(&verticalLine);
+        
+        #if defined(HERO)
+            addGraphicsObject(&pitchValue);
+        #endif
     }
 
     void update() {
@@ -101,6 +105,12 @@ public:
         
         
         float pitch = gimbal->getPitchEncoderValue();
+        
+        #if defined(HERO)
+            pitchValue._float = -pitch*100 + 100;
+            pitchValue.calculateNumbers();
+            pitchValue.x = UISubsystem::HALF_SCREEN_WIDTH - pitchValue.width/2;
+        #endif
 
         ReticleSidedMode adjustedSidedMode = drawMode == ReticleDrawMode::TRAPEZOIDS ? ReticleSidedMode::BOTH : sidedMode;
 
@@ -245,7 +255,11 @@ private:
     Line lines[NUM_THINGS][NUM_LINES];   // not all are used in every mode
     UnfilledRectangle rects[NUM_THINGS]; // for ReticleDrawMode::RECTANGLES
     Line verticalLine;
-
+    
+    #if defined(HERO)
+        FloatGraphic pitchValue{UISubsystem::Color::PURPLISH_RED, 0.0f, UISubsystem::HALF_SCREEN_WIDTH, 630, 50, 6};
+    #endif
+    
     // for solving for pitch
     static constexpr int MAX_NUM_ITERATIONS = 10;  // it is difficult to actually solve for pitch because initial launch positions depend on pitch
     int forPitchLandingSpotsSolved[NUM_THINGS];    // so we do a binary search, guessing a pitch, calculating where it lands, and trying a higher or lower pitch accordingly

@@ -126,7 +126,7 @@ void JetsonSubsystem::update(
     drivers->leds.set(tap::gpio::Leds::Blue, true);
 
     // Add rotated offset vector of panel relative to RGB
-    if (msg->confidence <= 0.70f) return;
+    if (msg->confidence <= MSG_CONFIDENCE_CUTOFF) return;
 
     // float X_prime = -x + 0.0175;                                                     // left
     // float Y_prime = -y + 0.1295 * cos(current_pitch) - 0.0867 * sin(current_pitch);  // up
@@ -169,13 +169,13 @@ void JetsonSubsystem::update(
     // get position of camera relative to shooting axis
 
     posXrel4 = msg->x + cameraXoffset;
-    posYrel4 = -msg->z + cameraYoffset;  // taproot flips z y basis vec
+    posYrel4 = msg->z + cameraYoffset;  // taproot flips z y basis vec
     posZrel4 = msg->y + cameraZoffset;   // msg->y is up; Z4 must point up so the pitch un-rotation
                                          // gives true world height (mz*sinφ + my*cosφ), not the
                                          // φ-dependent mz*sinφ - my*cosφ that caused the unstable
                                          // 2φ-E feedback / endstop slam
     velXrel4 = msg->v_x;
-    velYrel4 = -msg->v_z;
+    velYrel4 = msg->v_z;
     velZrel4 = msg->v_y;
     // precompute commonly used angles
 
@@ -235,7 +235,7 @@ void JetsonSubsystem::update(
     *pitchOut = targetPitch;
     *yawVelOut = (-cos_theta3 * velXrelPitch - sin_theta3 * velYrelPitch + velXrel4) / (cos_theta4 * posYrel4 - sin_theta4 * posZrel4);
 
-    if (abs(*yawOut) < PI / 4) {
+    if (abs(*yawOut) < YAW_OUT_SHOOT_THRESH) {
         // Enable shooting
         *action = 1;
         return;
