@@ -79,8 +79,8 @@ void AutoAimAndFireCommand::execute() {
         if(allowGimbal) {
             float angleToTurnForSentry = cv->getAngleToTurnForSentry();
             if(angleToTurnForSentry!=HitRing::PLACEHOLDER_ANGLE){
-                // gimbal->setAngles(angleToTurnForSentry, 0);
-                lastSeenTime = tap::arch::clock::getTimeMilliseconds();
+                gimbal->setAngles(angleToTurnForSentry, 0);
+                // lastSeenTime = tap::arch::clock::getTimeMilliseconds();
             } else
             if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
                 gimbal->updateMotors(BURST_AMOUNT, pitch);
