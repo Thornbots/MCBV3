@@ -116,7 +116,11 @@ float HeroIndexerSubsystem::getEstHeatRatio(){
     return counter.getEstHeatRatio();
 }
 bool HeroIndexerSubsystem::heatAllowsShooting(){
+#if defined(HERO)
+    return true; 
+#else// START getters and setters
     return counter.canShootAgain();
+#endif
 }
 
 float HeroIndexerSubsystem::getTotalNumBallsShot(){
