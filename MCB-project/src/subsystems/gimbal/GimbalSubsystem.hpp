@@ -117,7 +117,7 @@ public:  // Public Methods
 
     bool isYawMotorOnline();
 
-    void setYawAngle(float newAngle);
+    void setAngles(float yawAngle, float pitchAngle);
 
 
 private:  // Private Methods
