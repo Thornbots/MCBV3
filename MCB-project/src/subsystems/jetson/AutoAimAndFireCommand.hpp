@@ -71,6 +71,7 @@ private:
     static constexpr int PERSISTANCE = 200;
 
     float yaw = 0.0f, pitch = 0.0f;
+    float newPitch = 0.0f;
     float yawvel = 0.0f, pitchvel = 0.0f;
     //int flip = 1;
     uint32_t lastSeenTime = 0;

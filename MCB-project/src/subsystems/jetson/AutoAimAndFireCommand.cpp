@@ -44,6 +44,7 @@ void AutoAimAndFireCommand::execute() {
     bool inRfid = robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE);
     if(inRfid && allowGimbal){ //am i over the rfid
         gimbal->setAngles(0, 0);
+        newPitch = 0;
     } else if (shoot != -1) {
         //if(tap::arch::clock::getTimeMilliseconds() - lastSeenTime >  PERSISTANCE) flip = flip * -1;
         //Found a target, moving to it and maybe shooting at it
@@ -58,7 +59,9 @@ void AutoAimAndFireCommand::execute() {
         // instead of jumping with every (latent, ~30Hz) CV frame. Larger divisor = more
         // damping / smoother but more lag; smaller = snappier but can ring.
         float dpitch = pitch - currentPitch;
-        float newPitch = currentPitch + dpitch * std::clamp(std::abs(dpitch)*PITCH_MULTIPLY_SCALE, PITCH_MULTIPLY_MIN, PITCH_MULTIPLY_MAX);
+
+        newPitch = currentPitch + dpitch * std::clamp(std::abs(dpitch)*PITCH_MULTIPLY_SCALE, PITCH_MULTIPLY_MIN, PITCH_MULTIPLY_MAX);
+        
         dyaw *= std::clamp(std::abs(dyaw)*YAW_MULTIPLY_SCALE, YAW_MULTIPLY_MIN, YAW_MULTIPLY_MAX);
         //WithLatencyCompensation
         if (allowGimbal) gimbal->updateMotorsAndVelocity(dyaw, newPitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
@@ -66,12 +69,12 @@ void AutoAimAndFireCommand::execute() {
     } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime < PERSISTANCE) {
         //Haven't found a target right now but I have recently, keep shooting if I was shooting
 
-        if(allowGimbal) gimbal->updateMotors(0, pitch);
+        if(allowGimbal) gimbal->updateMotors(0, newPitch);
     } else {
         //Haven't found a target, patrol
 
         isShooting = false;
-        pitch = 0.05;  // pitch down to avoid looking into the sky
+        newPitch = 0.05;  // pitch down to avoid looking into the sky
         numCyclesForBurst++;
 
         if(allowGimbal) {
@@ -91,14 +94,14 @@ void AutoAimAndFireCommand::execute() {
             if (turningToHit && tap::arch::clock::getTimeMilliseconds() - hitTurnStartTime < HIT_TURN_DURATION) {
                 // Hold the heading toward the hit. CV still runs at the top of execute(), so if the
                 // attacker comes into view the shoot branch takes over and engages it.
-                gimbal->setAngles(hitTargetYaw, pitch);
+                gimbal->setAngles(hitTargetYaw, newPitch);
             } else {
                 turningToHit = false;
                 if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
-                    gimbal->updateMotors(BURST_AMOUNT, pitch);
+                    gimbal->updateMotors(BURST_AMOUNT, newPitch);
                     numCyclesForBurst = 0;
                 } else {
-                    gimbal->updateMotors(PATROL_SPEED, pitch);
+                    gimbal->updateMotors(PATROL_SPEED, newPitch);
                 }
             }
         }
