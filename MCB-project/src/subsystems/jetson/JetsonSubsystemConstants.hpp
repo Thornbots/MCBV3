@@ -59,8 +59,8 @@ static constexpr float PITCH_MULTIPLY_SCALE = 0.05f;//0.00000005f;
 
 //here tune yaw. dyaw gets scaled by an amount proportional to dyaw
 static constexpr float YAW_MULTIPLY_MIN = 0.0f;
-static constexpr float YAW_MULTIPLY_MAX = 0.25f;//0.015f;
-static constexpr float YAW_MULTIPLY_SCALE = 0.5f;//0.05f; //mult agains dyaw (in rad, max is pi)
+static constexpr float YAW_MULTIPLY_MAX = 0.015f;//0.015f;
+static constexpr float YAW_MULTIPLY_SCALE = 0.05f;//0.05f; //mult agains dyaw (in rad, max is pi)
 
 
 #elif defined(HERO)
