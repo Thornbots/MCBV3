@@ -237,7 +237,7 @@ void JetsonSubsystem::update(
     modm::Vector3f position(posYrelPitch, -posXrelPitch, posZrelPitch);  // X is down range
 
     // velocity doesn't work well until the latency of the pipeline is significantly reduced
-    modm::Vector3f velocity(velYrelPitch / 4.0f, -velXrelPitch / 4.0f, velZrelPitch / 100.0f);
+    modm::Vector3f velocity(velYrelPitch / 100.0f, -velXrelPitch / 100.0f, velZrelPitch / 100.0f);
     modm::Vector3f acceleration(msg->a_x, msg->a_z, -msg->a_y);  // not imlemented yet afak
 
     SecondOrderKinematicState state(position, velocity, acceleration);  //(pos,vel,acc);
@@ -265,7 +265,7 @@ void JetsonSubsystem::update(
     }
 
     *yawOut = (targetYaw - current_yaw);  // fmod(current_yaw + targetYaw, 2 * PI);
-    *pitchOut = targetPitch;
+    *pitchOut = -targetPitch;
     *yawVelOut = (-cos_theta3 * velXrelPitch - sin_theta3 * velYrelPitch + velXrel4) / (cos_theta4 * posYrel4 - sin_theta4 * posZrel4);
     *pitchVelOut = 0; //unsure on how to compute this well and i dont trust AI
 
