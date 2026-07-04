@@ -7,8 +7,8 @@ static constexpr tap::algorithms::SmoothPidConfig drivetrainPIDConfig{8, 0, -0, 
 
 static constexpr uint16_t INITIAL_POWER_LIMIT_3V3 = 60;  // W
 
-static constexpr float PEEK_LEFT_AMT = -PI/2;    // amount to peek left
-static constexpr float PEEK_RIGHT_AMT = PI/2;  // amount to peek right
+static constexpr float PEEK_LEFT_AMT = -1.5f;    // amount to peek left
+static constexpr float PEEK_RIGHT_AMT = 1.5f;  // amount to peek right
 
 static constexpr float MAX_LINEAR_SPEED = 4.3;
 static constexpr float SPIN_VELOCITY = 12.0f; //rad/s
