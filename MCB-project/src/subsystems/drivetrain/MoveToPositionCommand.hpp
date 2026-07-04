@@ -45,7 +45,7 @@ public:
     Pose2d inputVelocity;
 
     DrivetrainSubsystem* drivetrain;
-    static constexpr float MOVE_TO_POS_SPIN_VELO = -6.0;  //was 12.0   here tune spin velo
+    static constexpr float MOVE_TO_POS_SPIN_VELO = -8.0;  //was 12.0   here tune spin velo
 protected:
     src::Drivers* drivers;
     GimbalSubsystem* gimbal;
