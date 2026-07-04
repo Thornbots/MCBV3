@@ -7,6 +7,7 @@ static constexpr float MSG_CONFIDENCE_CUTOFF = 0.70f; //lower than this confiden
 
 //here tune allow 'cone' (we are just checking yaw)
 static constexpr float YAW_OUT_SHOOT_THRESH = PI / 8; //if cv wants to move the yaw less than this amount, allow shooting
+static constexpr float MAX_SHOOT_DIST = 3.0f; //if the panel is too far just keep patrolling
 
 static constexpr float YAW_CLOSE = 0.01f;
 
