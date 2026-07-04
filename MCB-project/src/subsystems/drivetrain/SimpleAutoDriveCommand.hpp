@@ -88,7 +88,7 @@ public:
             // if full health and in rfid and !needtoapplyinit...
             if(!needToApplyInitialPointChange && robotData.currentHp==robotData.maxHp && setLocalization){
                 if(robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE)){
-                    odo->relocalizeTo(xForLocalization + (isBlue ? 0.688 : -0.688), yForLocalization); //assume jetson knows what it is doing (if it told me any relocalization messages)
+                    odo->relocalizeTo(xForLocalization + (isBlue ? 0.688 : -0.688), yForLocalization - 0.05 ); //assume jetson knows what it is doing (if it told me any relocalization messages)
                 }
             }
             
@@ -237,7 +237,7 @@ private:
             case TargetMode::ARCC_ROUGH_PATH:
                 // coordinates for red team
                 changedInitialPoint = {m*-TOWARDS_ZONE_OFFSET, -TOWARDS_ZONE_OFFSET};
-                targets.push_back({{m*2.236f, 0.0f}, {0.0f, 0.0f}});                                        // right forward diagonal: before wall
+                targets.push_back({{m*2.236f, 0.5f}, {0.0f, 0.0f}});                                        // right forward diagonal: before wall
                 targets.push_back({{m*2.236f, 1.224f}, {0.0f, 0.0f}});                                      // forward: past wall
                 targets.push_back({{m*-TOWARDS_ZONE_OFFSET, 4.125f + TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}});  // left forward diagonal: to center
                 return;

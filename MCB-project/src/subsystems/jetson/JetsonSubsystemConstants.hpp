@@ -6,7 +6,7 @@
 static constexpr float MSG_CONFIDENCE_CUTOFF = 0.75f; //lower than this confidence is ignored
 
 //here tune allow 'cone' (we are just checking yaw)
-static constexpr float YAW_OUT_SHOOT_THRESH = PI / 4; //if cv wants to move the yaw less than this amount, allow shooting
+static constexpr float YAW_OUT_SHOOT_THRESH = PI / 3; //if cv wants to move the yaw less than this amount, allow shooting
 static constexpr float MAX_SHOOT_DIST = 3.0f; //if the panel is too far just keep patrolling
 
 static constexpr float YAW_CLOSE = 0.01f;
@@ -55,7 +55,7 @@ static constexpr float H = 9.95;
 //here tune pitch.
 static constexpr float PITCH_MULTIPLY_MIN = 0.0f;
 static constexpr float PITCH_MULTIPLY_MAX = 0.000005f; //smaller would prevent overshoot (Tune first. highest while still locking on)
-static constexpr float PITCH_MULTIPLY_SCALE = 0.000005f;
+static constexpr float PITCH_MULTIPLY_SCALE = 0.00000005f;
 
 //here tune yaw. dyaw gets scaled by an amount proportional to dyaw
 static constexpr float YAW_MULTIPLY_MIN = 0.0f;
