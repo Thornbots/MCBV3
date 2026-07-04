@@ -113,9 +113,9 @@ const OrientationSample& JetsonSubsystem::getDelayedOrientation() const {
 }
 
 float JetsonSubsystem::getAngleToTurnForSentry() {
-    float r = angleToTurnForSentry;
-    angleToTurnForSentry = HitRing::PLACEHOLDER_ANGLE;
-    return r;
+    // float r = angleToTurnForSentry;
+    // angleToTurnForSentry = HitRing::PLACEHOLDER_ANGLE;
+    return angleToTurnForSentry;
 }
 
 void JetsonSubsystem::checkApplyRelocalize() {
