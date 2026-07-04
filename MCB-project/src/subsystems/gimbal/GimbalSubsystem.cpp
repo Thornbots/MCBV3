@@ -132,6 +132,19 @@ void GimbalSubsystem::reZeroYaw() {
     targetYawAngleWorld = 0.0;
 }
 
+void GimbalSubsystem::setYawAngle(float newAngle) {
+    float pitch = getPitchEncoderValue();
+
+    driveTrainEncoder = getYawEncoderValue();
+    yawEncoderCache = driveTrainEncoder;
+    // THIS LINE BELOW WAS CAUSING ERROR
+    targetYawAngleWorld = newAngle;  // std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
+
+    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, 0, dt);
+
+}
+
+
 void GimbalSubsystem::updatePositionHistory(float newPos) {
     for (int i = LATENCY_Q_SIZE - 1; i >= 0; i--) {
         // Store the current values in the history
