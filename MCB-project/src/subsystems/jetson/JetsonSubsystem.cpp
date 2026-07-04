@@ -98,8 +98,8 @@ void JetsonSubsystem::recordOrientationSample() {
 
     // Pitch comes from the gimbal (the source update() previously used via current_pitch), negated
     // to match the transform's frame of reference exactly as `cvPitch = -current_pitch` did.
-    sample.cvPitch = -gimbal->getPitchEncoderValue();
-    sample.cvPitchVel = -gimbal->getPitchVel();
+    sample.cvPitch = gimbal->getPitchEncoderValue();
+    sample.cvPitchVel = gimbal->getPitchVel();
 
     orientationQueue[orientationQueueHead] = sample;
     orientationQueueHead = (orientationQueueHead + 1) % ORIENTATION_QUEUE_SIZE;
