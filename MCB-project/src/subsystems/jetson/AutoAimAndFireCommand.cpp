@@ -75,19 +75,6 @@ void AutoAimAndFireCommand::execute() {
         numCyclesForBurst++;
 
         if(allowGimbal) {
-            // getAngleToTurnForSentry() returns HitRing::PLACEHOLDER_ANGLE except on the single
-            // cycle right after a hit is registered, when it returns (headYaw - hitDirection) in
-            // world radians. Latch that one-shot value into an absolute world-yaw target and hold
-            // it, otherwise it is lost the instant patrol resumes and the turret never turns.
-            float angleToTurnForSentry = cv->getAngleToTurnForSentry();
-            if (angleToTurnForSentry != HitRing::PLACEHOLDER_ANGLE) {
-                // Face the hit: target heading = current heading minus the returned offset.
-                // (If the turret turns AWAY from the hit on hardware, flip this sign to a +.)
-                hitTargetYaw = currentYaw - angleToTurnForSentry;
-                turningToHit = true;
-                hitTurnStartTime = tap::arch::clock::getTimeMilliseconds();
-            }
-
             if (turningToHit && tap::arch::clock::getTimeMilliseconds() - hitTurnStartTime < HIT_TURN_DURATION) {
                 // Hold the heading toward the hit. CV still runs at the top of execute(), so if the
                 // attacker comes into view the shoot branch takes over and engages it.
