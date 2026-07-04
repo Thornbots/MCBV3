@@ -60,7 +60,7 @@ void AutoAimAndFireCommand::execute() {
         // damping / smoother but more lag; smaller = snappier but can ring.
         float dpitch = pitch - currentPitch;
 
-        newPitch = pitch;//currentPitch + dpitch * std::clamp(std::abs(dpitch)*PITCH_MULTIPLY_SCALE, PITCH_MULTIPLY_MIN, PITCH_MULTIPLY_MAX);
+        newPitch = currentPitch + dpitch * 0.2;//std::clamp(std::abs(dpitch)*PITCH_MULTIPLY_SCALE, PITCH_MULTIPLY_MIN, PITCH_MULTIPLY_MAX);
 
         dyaw *= std::clamp(std::abs(dyaw)*YAW_MULTIPLY_SCALE, YAW_MULTIPLY_MIN, YAW_MULTIPLY_MAX);
         //WithLatencyCompensation
