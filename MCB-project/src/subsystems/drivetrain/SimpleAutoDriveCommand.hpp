@@ -50,6 +50,10 @@ public:
 
         addSubsystemRequirement(drive);
         stuckTimer.stop();
+        
+        xForLocalization = 0;
+        yForLocalization = 0;
+        setLocalization = false;
     }
 
     void initialize() {
@@ -63,6 +67,7 @@ public:
             // set direction
             setDirection();
             bool fasterSpinning = false;
+            bool isBlue = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId);
             
             tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
             tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
@@ -77,6 +82,13 @@ public:
                         isScheduled = false;
                         // applies next time
                     }
+                }
+            }
+            
+            // if full health and in rfid and !needtoapplyinit...
+            if(!needToApplyInitialPointChange && robotData.currentHp==robotData.maxHp && setLocalization){
+                if(robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE)){
+                    odo->relocalizeTo(xForLocalization + (isBlue ? 0.688 : -0.688), yForLocalization); //assume jetson knows what it is doing (if it told me any relocalization messages)
                 }
             }
             
@@ -157,6 +169,10 @@ public:
 
     void end(bool cancel) override { isScheduled = false; }
     const char* getName() const override { return "simple auto drive command"; }
+    
+    static float xForLocalization;
+    static float yForLocalization;
+    static bool setLocalization;
 
 private:
     void setupMap() {
