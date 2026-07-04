@@ -200,7 +200,7 @@ void JetsonSubsystem::update(
     velYrel4 = msg->v_z;
     velZrel4 = msg->v_y;
 
-    if(posZrel4 < MAX_SHOOT_DIST) return;
+    if(posZrel4 > MAX_SHOOT_DIST) return;
     // precompute commonly used angles
 
 
