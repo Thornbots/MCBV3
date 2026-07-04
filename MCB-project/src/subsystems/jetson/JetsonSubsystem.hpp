@@ -182,7 +182,7 @@ public:  // Public Methods
     bool updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d* jetsonExpectedPosition);
     void update(float current_yaw, float current_pitch, float current_yaw_velo, float current_pitch_velo, float* yawOut, float* pitchOut, float* yawVelOut, float* pitchVelOut, int* action);
 
-    
+    float getAngleToTurnForSentry();
 
 
 private:  // Private Methods
@@ -214,6 +214,9 @@ private:  // Private Methods
             return drivers->uart.sendMsg((uint8_t*)msg, StructToMessageType<msg_type>::value, sizeof(msg_type));
         return false;
     }
+    
+    
+    float angleToTurnForSentry;
 
 };
 }  // namespace subsystems
