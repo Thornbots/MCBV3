@@ -134,13 +134,14 @@ void GimbalSubsystem::reZeroYaw() {
 
 void GimbalSubsystem::setAngles(float yawAngle, float pitchAngle) {
     prevTargetPitch = std::clamp(pitchAngle, -MAX_PITCH_DOWN, MAX_PITCH_UP);
+    float pitch = getPitchEncoderValue();
 
     driveTrainEncoder = getYawEncoderValue();
     yawEncoderCache = driveTrainEncoder;
     targetYawAngleWorld = yawAngle;  // std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
 
     // THIS LINE BELOW WAS CAUSING ERROR
-    pitchMotorVoltage = getPitchVoltage(prevTargetPitch, pitchAngle, 0, dt);
+    pitchMotorVoltage = getPitchVoltage(prevTargetPitch, pitch, 0, dt);
     
     // THIS LINE BELOW WAS CAUSING ERROR
 
