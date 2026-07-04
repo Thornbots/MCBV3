@@ -67,7 +67,7 @@ void AutoAimAndFireCommand::execute() {
         //Haven't found a target, patrol
 
         isShooting = false;
-        pitch = 0.05;  // pitch down to avoid looking into the sky
+        pitch = 0.15;  // pitch down to avoid looking into the sky
         numCyclesForBurst++;
 
         if(allowGimbal) {
