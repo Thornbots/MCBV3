@@ -40,7 +40,9 @@ void AutoAimAndFireCommand::execute() {
     float currentpitchvel = gimbal->getPitchVel(); //did add this for the actual CV stuff can make this 0 if we want
     cv->update(currentYaw, currentPitch, yawvel, currentpitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
 
-    if (shoot != -1) {
+    if(true){ //am i over the rfid
+        gimbal->setYawAngle(0);
+    } else if (shoot != -1) {
         //if(tap::arch::clock::getTimeMilliseconds() - lastSeenTime >  PERSISTANCE) flip = flip * -1;
         //Found a target, moving to it and maybe shooting at it
 
