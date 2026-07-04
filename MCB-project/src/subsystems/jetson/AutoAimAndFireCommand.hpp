@@ -76,7 +76,6 @@ private:
     uint32_t lastSeenTime = 0;
 
     
-    // This didn't work well, need to remove it more later
     // ---- turn-to-hit (sentry) ----
     // When patrolling and we take a hit, latch a world-yaw heading toward the hit source and hold
     // it briefly so CV has a chance to acquire the attacker before normal patrol resumes. This is
