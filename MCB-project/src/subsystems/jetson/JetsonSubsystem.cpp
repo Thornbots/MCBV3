@@ -1,6 +1,7 @@
 #include "JetsonSubsystem.hpp"
 
 #include "JetsonSubsystemConstants.hpp"
+#include "subsystems/drivetrain/SimpleAutoDriveCommand.hpp"
 
 float posXdebug;
 float posYdebug;
@@ -121,7 +122,10 @@ float JetsonSubsystem::getAngleToTurnForSentry() {
 void JetsonSubsystem::checkApplyRelocalize() {
     Relocalize relocalize_msg;
     if (getMsg(&relocalize_msg)) {
-        odo->relocalizeTo(relocalize_msg.expectedX, relocalize_msg.expectedY);
+        // odo->relocalizeTo(relocalize_msg.expectedX, relocalize_msg.expectedY);
+        commands::SimpleAutoDriveCommand::xForLocalization = relocalize_msg.expectedX;
+        commands::SimpleAutoDriveCommand::yForLocalization = relocalize_msg.expectedY;
+        commands::SimpleAutoDriveCommand::setLocalization = true;
     }
 }
 
