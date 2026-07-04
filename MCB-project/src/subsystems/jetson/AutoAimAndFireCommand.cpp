@@ -75,16 +75,31 @@ void AutoAimAndFireCommand::execute() {
         numCyclesForBurst++;
 
         if(allowGimbal) {
+            // getAngleToTurnForSentry() returns HitRing::PLACEHOLDER_ANGLE except on the single
+            // cycle right after a hit is registered, when it returns (headYaw - hitDirection) in
+            // world radians. Latch that one-shot value into an absolute world-yaw target and hold
+            // it, otherwise it is lost the instant patrol resumes and the turret never turns.
             float angleToTurnForSentry = cv->getAngleToTurnForSentry();
-            if(angleToTurnForSentry!=HitRing::PLACEHOLDER_ANGLE){
-                gimbal->setAngles(angleToTurnForSentry, 0);
-                // lastSeenTime = tap::arch::clock::getTimeMilliseconds();
-            } else
-            if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
-                gimbal->updateMotors(BURST_AMOUNT, pitch);
-                numCyclesForBurst = 0;
+            if (angleToTurnForSentry != HitRing::PLACEHOLDER_ANGLE) {
+                // Face the hit: target heading = current heading minus the returned offset.
+                // (If the turret turns AWAY from the hit on hardware, flip this sign to a +.)
+                hitTargetYaw = currentYaw - angleToTurnForSentry;
+                turningToHit = true;
+                hitTurnStartTime = tap::arch::clock::getTimeMilliseconds();
+            }
+
+            if (turningToHit && tap::arch::clock::getTimeMilliseconds() - hitTurnStartTime < HIT_TURN_DURATION) {
+                // Hold the heading toward the hit. CV still runs at the top of execute(), so if the
+                // attacker comes into view the shoot branch takes over and engages it.
+                gimbal->setAngles(hitTargetYaw, pitch);
             } else {
-                gimbal->updateMotors(PATROL_SPEED, pitch);
+                turningToHit = false;
+                if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
+                    gimbal->updateMotors(BURST_AMOUNT, pitch);
+                    numCyclesForBurst = 0;
+                } else {
+                    gimbal->updateMotors(PATROL_SPEED, pitch);
+                }
             }
         }
     }
