@@ -41,7 +41,7 @@ void AutoAimAndFireCommand::execute() {
     cv->update(currentYaw, currentPitch, yawvel, currentpitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
 
     if(true && allowGimbal){ //am i over the rfid
-        gimbal->setYawAngle(0);
+        gimbal->setAngles(0, 0);
     } else if (shoot != -1) {
         //if(tap::arch::clock::getTimeMilliseconds() - lastSeenTime >  PERSISTANCE) flip = flip * -1;
         //Found a target, moving to it and maybe shooting at it
