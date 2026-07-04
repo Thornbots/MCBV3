@@ -54,8 +54,8 @@ static constexpr float H = 9.95;
 
 //here tune pitch.
 static constexpr float PITCH_MULTIPLY_MIN = 0.0f;
-static constexpr float PITCH_MULTIPLY_MAX = 0.25f;//0.000005f; //smaller would prevent overshoot (Tune first. highest while still locking on)
-static constexpr float PITCH_MULTIPLY_SCALE = 0.5f;//0.00000005f;
+static constexpr float PITCH_MULTIPLY_MAX = 0.025f;//0.000005f; //smaller would prevent overshoot (Tune first. highest while still locking on)
+static constexpr float PITCH_MULTIPLY_SCALE = 0.05f;//0.00000005f;
 
 //here tune yaw. dyaw gets scaled by an amount proportional to dyaw
 static constexpr float YAW_MULTIPLY_MIN = 0.0f;
