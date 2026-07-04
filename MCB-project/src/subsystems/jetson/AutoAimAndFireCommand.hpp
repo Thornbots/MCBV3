@@ -67,7 +67,7 @@ private:
     int numCyclesForBurst = 0;
     static constexpr int CYCLES_UNTIL_BURST = 380; //cycles
     static constexpr float BURST_AMOUNT = 0.0; //rad/cycle
-    static constexpr float PATROL_SPEED = -0.004; //rad/cycle
+    static constexpr float PATROL_SPEED = -0.002; //rad/cycle
     static constexpr int PERSISTANCE = 200;
 
     float yaw = 0.0f, pitch = 0.0f;
@@ -82,7 +82,7 @@ private:
     bool turningToHit = false;
     float hitTargetYaw = 0.0f;                           // absolute world yaw (rad) held while facing a hit
     uint32_t hitTurnStartTime = 0;
-    static constexpr uint32_t HIT_TURN_DURATION = 1500;  // ms to face a hit before resuming patrol
+    static constexpr uint32_t HIT_TURN_DURATION = 500;  // ms to face a hit before resuming patrol
 
     bool isScheduled = false;
 };
