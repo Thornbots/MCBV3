@@ -62,13 +62,13 @@ void JetsonSubsystem::refresh() {
 
             tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
             tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-
+            angleToTurnForSentry = hitRing.getAngleToTurnForSentry();
             RefSysMsg r{
                 (uint8_t)gameData.gameStage,
                 (uint16_t)gameData.stageTimeRemaining,
                 (uint16_t)robotData.currentHp,
                 (uint8_t)robotData.robotId % 100,  // blue hero is 101, we want to send 1
-                hitRing.getAngleToTurnForSentry(),
+                angleToTurnForSentry,
                 // 12.34,
                 drivers->refSerial.isBlueTeam(robotData.robotId) << 7 | (robotData.robotBuffStatus.recoveryBuff > 0) << 6 |
                     robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE) << 5 |
@@ -108,6 +108,12 @@ const OrientationSample& JetsonSubsystem::getDelayedOrientation() const {
     // The oldest entry in the ring (the slot about to be overwritten) is the orientation from
     // ~ORIENTATION_QUEUE_SIZE cycles ago.
     return orientationQueue[orientationQueueHead];
+}
+
+float JetsonSubsystem::getAngleToTurnForSentry() {
+    float r = angleToTurnForSentry;
+    angleToTurnForSentry = HitRing::PLACEHOLDER_ANGLE;
+    return r;
 }
 
 void JetsonSubsystem::checkApplyRelocalize() {

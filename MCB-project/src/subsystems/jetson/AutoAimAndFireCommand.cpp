@@ -40,7 +40,9 @@ void AutoAimAndFireCommand::execute() {
     float currentpitchvel = gimbal->getPitchVel(); //did add this for the actual CV stuff can make this 0 if we want
     cv->update(currentYaw, currentPitch, yawvel, currentpitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
 
-    if(true && allowGimbal){ //am i over the rfid
+    tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
+    bool inRfid = robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE);
+    if(inRfid && allowGimbal){ //am i over the rfid
         gimbal->setAngles(0, 0);
     } else if (shoot != -1) {
         //if(tap::arch::clock::getTimeMilliseconds() - lastSeenTime >  PERSISTANCE) flip = flip * -1;
@@ -73,6 +75,11 @@ void AutoAimAndFireCommand::execute() {
         numCyclesForBurst++;
 
         if(allowGimbal) {
+            float angleToTurnForSentry = cv->getAngleToTurnForSentry();
+            if(angleToTurnForSentry!=HitRing::PLACEHOLDER_ANGLE){
+                // gimbal->setAngles(angleToTurnForSentry, 0);
+                lastSeenTime = tap::arch::clock::getTimeMilliseconds();
+            } else
             if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
                 gimbal->updateMotors(BURST_AMOUNT, pitch);
                 numCyclesForBurst = 0;
