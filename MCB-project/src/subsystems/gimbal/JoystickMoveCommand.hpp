@@ -46,10 +46,7 @@ private:
     src::Drivers* drivers;
     GimbalSubsystem* gimbal;
 
-    bool isCalibrated = false;
-
-    float yaw = 0.0f, pitch = 0.0f;
-
     bool isOffset = false;
+    bool firstTime = false;
 };
 }  // namespace commands
