@@ -72,8 +72,10 @@ public:
             tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
             tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
             
+            bool healZone = robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE) || robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE);
+            
             if(relocalizeState == RfidRelocalizeState::STUCK_WAITING_FOR_RESUPPLY || relocalizeState == RfidRelocalizeState::WAITING_FOR_RESUPPLY) {
-                if(robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE)){
+                if(healZone){
                     //relocalize just x to a specific value
                     relocalizeState = RfidRelocalizeState::WAITING_FOR_CENTER;
                     odo->relocalizeTo(0.0f, odo->getY()); //here tune the x offset it relocalizes (the 0.0f) [If stuck on wall, make more negative (I think)]
@@ -87,7 +89,7 @@ public:
             
             // if full health and in rfid and !needtoapplyinit...
             if(!needToApplyInitialPointChange && robotData.currentHp==robotData.maxHp && setLocalization){
-                if(robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE)){
+                if(healZone){
                     odo->relocalizeTo(xForLocalization + (isBlue ? 0.688 : -0.688), yForLocalization - 0.05 ); //assume jetson knows what it is doing (if it told me any relocalization messages)
                 }
             }

@@ -41,7 +41,7 @@ void AutoAimAndFireCommand::execute() {
     cv->update(currentYaw, currentPitch, yawvel, currentpitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
 
     tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-    bool inRfid = robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE);
+    bool inRfid = robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE) || robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE);
     if(inRfid && allowGimbal){ //am i over the rfid
         gimbal->setAngles(0, 0);
     } else if (shoot != -1) {
