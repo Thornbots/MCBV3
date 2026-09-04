@@ -19,7 +19,7 @@ class Reticle : public GraphicsContainer {
 public:  // important constants and enums
     // panel things
     static constexpr float PANEL_WIDTH = 0.135;               // meters, wider panel is 0.230
-    static constexpr float PANEL_HEIGHT = 0.05;              // meters, height of the light part of the panel. height across the surface is 0.125
+    static constexpr float PANEL_HEIGHT = 0.05;              // meters, height of the light part of the panel is 0.05. height across the surface is 0.125
     static constexpr float PANEL_ANGLE = 15 * PI / 180;       // radians, tilt of the panel, 0 would be panel is not tilted
     static constexpr float AVERAGE_HEIGHT_OFF_GROUND = 0.18;  // meters, center of panel to ground, for calculating where on screen reticle things should be
 
@@ -89,6 +89,31 @@ public:
             addGraphicsObject(&pitchValue);
         #endif
     }
+    
+    void setVerticalLineColor(UISubsystem::Color color){
+        if(solveMode == ReticleSolveMode::FOR_DISTANCE){
+            // one set of things
+            rects[0].color = color;
+            for(int i=0; i<NUM_LINES; i++){
+                lines[0][i].color = color;
+            }
+        } else {
+            // many sets of things
+            verticalLine.color = color;
+        }
+    }
+    void setVerticalLineThickness(uint16_t thickness){
+        if(solveMode == ReticleSolveMode::FOR_DISTANCE){
+            // one set of things
+            rects[0].thickness = thickness;
+            for(int i=0; i<NUM_LINES; i++){
+                lines[0][i].thickness = thickness;
+            }
+        } else {
+            // many sets of things
+            verticalLine.thickness = thickness;
+        }
+    }
 
     void update() {
         //pressing b swaps between FOR_PITCH and FOR_DISTANCE
@@ -114,30 +139,31 @@ public:
 
         ReticleSidedMode adjustedSidedMode = drawMode == ReticleDrawMode::TRAPEZOIDS ? ReticleSidedMode::BOTH : sidedMode;
 
+        auto poweredColor = solveMode == ReticleSolveMode::FOR_DISTANCE ? COLORS[0] : UISubsystem::Color::WHITE;
+        setVerticalLineColor(index->refPoweringIndex() ? poweredColor : UISubsystem::Color::PINK);
         bool canShoot = true;
 
         if (!index->isIndexOnline()) {
-            verticalLine.color = UISubsystem::Color::PINK;
+            setVerticalLineColor(UISubsystem::Color::PINK);
             canShoot = false;
         }
 
         if (!index->isProjectileAtBeam()) {
-            verticalLine.color = UISubsystem::Color::BLACK;
+            setVerticalLineColor(UISubsystem::Color::BLACK);
             canShoot = false;
         }
 
         if (!index->heatAllowsShooting()) {
-            verticalLine.color = UISubsystem::Color::WHITE;
-            canShoot = false;
+            setVerticalLineColor(UISubsystem::Color::YELLOW);
+            // canShoot = false; //don't obstruct vision when shooting at the heat limit
         }
 
         verticalLine.x1 = UISubsystem::HALF_SCREEN_WIDTH;
         verticalLine.x2 = UISubsystem::HALF_SCREEN_WIDTH;
         if (canShoot) {
-            verticalLine.color = index->refPoweringIndex() ? UISubsystem::Color::WHITE : UISubsystem::Color::PINK;
-            verticalLine.thickness = 1;
+            setVerticalLineThickness(1);
         } else {
-            verticalLine.thickness = 10;
+            setVerticalLineThickness(10);
             verticalLine.x1 += DIAGONAL_OFFSET;
             verticalLine.x2 -= DIAGONAL_OFFSET;
         }
@@ -149,6 +175,8 @@ public:
             }
             rects[i].setHidden(drawMode == ReticleDrawMode::RECTANGLES);
         }
+        // hide vert line moving with other moving things (cut down on updates)
+        verticalLine.setHidden(solveMode == ReticleSolveMode::FOR_DISTANCE);
 
         solvedForPitchLandingSpotThisCycle = false;
         int numThings = solveMode == ReticleSolveMode::FOR_DISTANCE ? 1 : NUM_THINGS;
