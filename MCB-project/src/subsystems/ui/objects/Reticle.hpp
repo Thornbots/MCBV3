@@ -85,9 +85,9 @@ public:
         addGraphicsObject(&linesContainer);
         addGraphicsObject(&verticalLine);
         
-        #if defined(HERO)
-            addGraphicsObject(&pitchValue);
-        #endif
+        // #if defined(HERO)
+        //     addGraphicsObject(&pitchValue);
+        // #endif
     }
     
     void setVerticalLineColor(UISubsystem::Color color){

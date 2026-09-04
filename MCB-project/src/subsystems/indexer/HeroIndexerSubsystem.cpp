@@ -89,6 +89,7 @@ void HeroIndexerSubsystem::forceShootOnce() {
     if(state==HeroIndexerState::DONE) {
         state = HeroIndexerState::INDEXING_EXTRA;
         timeoutExtra.restart(1000*INDEXING_EXTRA_TIME);
+        counter.incrementTargetNumBalls();
         justShot();
     }
 }
@@ -116,11 +117,11 @@ float HeroIndexerSubsystem::getEstHeatRatio(){
     return counter.getEstHeatRatio();
 }
 bool HeroIndexerSubsystem::heatAllowsShooting(){
-#if defined(HERO)
-    return true; 
-#else// START getters and setters
+// #if defined(HERO)
+//     return true; 
+// #else// START getters and setters
     return counter.canShootAgain();
-#endif
+// #endif
 }
 
 float HeroIndexerSubsystem::getTotalNumBallsShot(){
