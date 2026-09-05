@@ -90,7 +90,16 @@ public:
     
     
     bool prevWhiteLedState = false;
-
+    
+    bool rescheduleMoveJoystick = false;
+    bool rescheduleMoveKeyboard = false;
+    bool rescheduleAutoDrive = false;
+    bool rescheduleSimpleAutoDrive = false;
+    
+    bool rescheduleAutoFire = false;
+    bool rescheduleLookJoystick = false;
+    bool rescheduleLookMouse = false;
+    
     void update() override {
 
         if (isStopped) return;
@@ -99,7 +108,17 @@ public:
             trigger->update();
         }
         
-        if((autoDrive.getIsScheduled()||simpleAutoDrive.getIsScheduled()) && autoFire.getIsScheduled()){
+        rescheduleMoveJoystick = drivetrain.isInControllerMode; //drivetrainFollowJoystick
+        rescheduleMoveKeyboard = drivetrain.isInKeyboardMode;   //drivetrainFollowKeyboard
+        rescheduleAutoDrive =  drivers->commandScheduler.isCommandScheduled(&autoDrive);
+        rescheduleSimpleAutoDrive = drivers->commandScheduler.isCommandScheduled(&simpleAutoDrive);
+        
+        rescheduleAutoFire = drivers->commandScheduler.isCommandScheduled(&autoFire);
+        rescheduleLookJoystick = drivers->commandScheduler.isCommandScheduled(&lookJoystick);
+        rescheduleLookMouse = drivers->commandScheduler.isCommandScheduled(&lookMouse);
+
+        // white when sentry is set up correctly
+        if((rescheduleAutoDrive||rescheduleSimpleAutoDrive) && rescheduleAutoFire){
             if(!prevWhiteLedState){
                 // drivers->leds.set(tap::gpio::Leds::Red, true);
                 // drivers->leds.set(tap::gpio::Leds::Green, true);
@@ -135,8 +154,17 @@ public:
         isStopped = false;
         gimbal.clearBuildup();
         gimbal.reZeroYaw();
-        drivers->commandScheduler.addCommand(&simpleAutoDrive);
-        drivers->commandScheduler.addCommand(&autoFire);
+        // Need to find a better way to do this, like saving a reference 
+        // to the currently running command, and rescheduling it here.
+        // But I don't know how to get the currently running command on a subsystem.
+        if (rescheduleMoveJoystick)     drivers->commandScheduler.addCommand(&drivetrainFollowJoystick);
+        if (rescheduleMoveKeyboard)     drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
+        if (rescheduleAutoDrive)        drivers->commandScheduler.addCommand(&autoDrive);
+        if (rescheduleSimpleAutoDrive)  drivers->commandScheduler.addCommand(&simpleAutoDrive);
+        
+        if (rescheduleAutoFire)         drivers->commandScheduler.addCommand(&autoFire);
+        if (rescheduleLookJoystick)     drivers->commandScheduler.addCommand(&lookJoystick);
+        if (rescheduleLookMouse)        drivers->commandScheduler.addCommand(&lookMouse);
         drivers->commandScheduler.addCommand(&odoPointForwards);
         update();
     }
@@ -180,7 +208,6 @@ public:
     commands::OdometryPointForwardsCommand odoPointForwards{drivers, &odo, &gimbal};
     commands::OdometryStopCommand odoStop{drivers, &odo};
 
-    // CHANGE NUMBERS LATER
     commands::DrivetrainDriveCommand peekRight{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_RIGHT, commands::ControlMode::KEYBOARD};
     commands::DrivetrainDriveCommand peekLeft{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_LEFT, commands::ControlMode::KEYBOARD};
     commands::DrivetrainDriveCommand drivetrainFollowKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::KEYBOARD};
@@ -191,23 +218,6 @@ public:
 
     commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
 
-    // for 2025 rmna
-    // commands::MoveToPositionCommand m0{drivers, &drivetrain, &gimbal, Pose2d(-0.2f, 0.0f, 0.0f), 0.2f};
-    // commands::MoveToPositionCommand m1{drivers, &drivetrain, &gimbal, Pose2d(5.2f, 0.0f, 0.0f), 0.5f};
-    // commands::MoveToPositionCommand m2{drivers, &drivetrain, &gimbal, Pose2d(5.2f, 4.0f, 0.0f), 0.5f};
-    // commands::MoveToPositionCommand m3{drivers, &drivetrain, &gimbal, Pose2d(2.2f, 4.5f, 0.0f), 0.0f};  // Pose2d(3.0f, 4.2f, 0.0f)};
-
-    // for purdue scrimmage field for 2v2 competition
-    // commands::MoveToPositionCommand m02v2{drivers, &drivetrain, &gimbal, Pose2d(0.0f, 0.0f, 0.0f), 0.2f};
-    // commands::MoveToPositionCommand m12v2{drivers, &drivetrain, &gimbal, Pose2d(-2.0f, 1.8f, 0.0f), 0.3f};
-    // commands::MoveToPositionCommand m22v2{drivers, &drivetrain, &gimbal, Pose2d(-2.0f, 3.8f, 0.0f), 0.3f};
-
-    // SequentialCommand<3> initialMoveCommand{{&m12v2, &m22v2, &autoDrive}};  //{&m1, &m2, &m3}};
-
-    // SequentialCommand<3> retreatMoveCommand{{&m12v2, &m02v2, &autoDrive}};  //{&m2, &m1, &m0, &autoDrive}};
-
-    // SequentialCommand<4> testMoveCommand{{&m12v2, &m22v2, &m12v2, &m02v2}};  //{&m1, &m2, &m1, &m0}};
-
     // mappings
 
     // shooting
@@ -217,8 +227,8 @@ public:
     Trigger onlyCloseLidKey{drivers, Remote::Key::CTRL};  // blame peter
     Trigger autoAimKey{drivers, MouseButton::RIGHT};
     Trigger shootKey{drivers, MouseButton::LEFT};
-    Trigger shootFastKey = shootKey & !onlyCloseLidKey;
-    Trigger shootRegKey = shootKey & onlyCloseLidKey;
+    Trigger shootFastKey = shootKey & onlyCloseLidKey;
+    Trigger shootRegKey = shootKey & !onlyCloseLidKey;
 
     Trigger scrollUp{drivers, MouseScrollDirection::UP};
     Trigger scrollDown{drivers, MouseScrollDirection::DOWN};
