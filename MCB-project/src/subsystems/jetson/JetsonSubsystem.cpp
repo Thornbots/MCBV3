@@ -163,9 +163,9 @@ void JetsonSubsystem::update(
     CVData* msg = &cv_msg;
     
     // white led on first cv message
-    drivers->leds.set(tap::gpio::Leds::Red, true);
-    drivers->leds.set(tap::gpio::Leds::Green, true);
-    drivers->leds.set(tap::gpio::Leds::Blue, true);
+    // drivers->leds.set(tap::gpio::Leds::Red, true);
+    // drivers->leds.set(tap::gpio::Leds::Green, true);
+    // drivers->leds.set(tap::gpio::Leds::Blue, true);
 
     // Add rotated offset vector of panel relative to RGB
     if (msg->confidence <= MSG_CONFIDENCE_CUTOFF) return;
