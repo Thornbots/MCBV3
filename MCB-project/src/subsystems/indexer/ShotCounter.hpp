@@ -66,6 +66,7 @@ public:
     
     // applies the heat from this projectile instantly
     void incrementTargetNumBalls(){
+        timesIncremented++;
         estHeat+=getHeatPerBall();
     }
     
