@@ -9,7 +9,6 @@
 
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
-#include "subsystems/jetson/AutoAimCommand.hpp"
 #include "subsystems/jetson/AutoAimAndFireCommand.hpp"
 
 #include "subsystems/drivetrain/DrivetrainDriveCommand.hpp"
@@ -54,9 +53,9 @@ public:
         unjamKey.whileTrue(&indexerUnjam);
         shootKey.onTrue(&indexerSemi)->onTrue(&shooterStart);
         unjamButton.whileTrue(&indexerUnjam);
-        shootButton.whileTrue(&indexerSemi)->onTrue(&shooterStart);
+        shootButton.onTrue(&indexerSemi)->onTrue(&shooterStart);
         stopFlywheelTrigger.onTrue(&shooterStop);
-        autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart);
+        autoAimKey.onTrue(&shooterStart);
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
@@ -128,7 +127,6 @@ public:
     // //commands
 
     commands::HeroDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};
-    commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson}; //includes auto firing for some reason, probably fix after arcc26
     // commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr};
 
 
