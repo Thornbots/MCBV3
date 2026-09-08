@@ -17,7 +17,6 @@
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/SingleIndexerSubsystem.hpp"
 #include "subsystems/jetson/AutoAimAndFireCommand.hpp"
-#include "subsystems/jetson/AutoAimCommand.hpp"
 #include "subsystems/jetson/AutoDriveCommand.hpp"
 #include "subsystems/jetson/JetsonSubsystem.hpp"
 #include "subsystems/odometry/OdometryPointForwardsCommand.hpp"
@@ -52,7 +51,7 @@ public:
         indexer.setDefaultCommand(&indexerIdle);
         odo.setDefaultCommand(&odoStop);
 
-        shootButton.onTrue(&shooterStart)->whileTrue(&indexer20Hz);
+        shootButton.onTrue(&shooterStart)->onTrue(&indexerSingle);
         unjamButton.whileTrue(&indexerUnjam);
         stopFlywheelTrigger.onTrue(&shooterStop);
 
@@ -69,7 +68,7 @@ public:
         unjamKey.whileTrue(&indexerUnjam);
         shootRegKey.whileTrue(&indexerSingle)->onTrue(&shooterStart);
         shootFastKey.whileTrue(&indexer20Hz)->onTrue(&shooterStart);
-        autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart);
+        autoAimKey.onTrue(&shooterStart);
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);  // press g to start robot
@@ -185,7 +184,6 @@ public:
 
     // commands
     commands::SentryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};
-    commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::MouseMoveCommand lookMouse{drivers, &gimbal};
