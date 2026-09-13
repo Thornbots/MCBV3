@@ -28,20 +28,25 @@ private:
     
 
     Pose2d lastVelWorld{}, accumForceLocal{};
+    Vector2d positionIntegral;
+    
 
 public:
     Pose2d estPosWorld{}, estVelWorld{}, lastForceLocal{};
     float *targetVelocityHistory;  // For storing target velocity magnitudes
     Pose2d *forceHistory;          // history of past chassis forces
     float *targetVelocityMagnitudeHistory; //used for beyblade gain calculations
+
     ChassisController();
 
     ~ChassisController();
     //~YawController();
     void calculate(Pose2d targetVelLocal, float powerLimit, float angle, float motorVelocity[4], float motorCurrent[4], bool throttle);
 
+    void resetPositionIntegral();
+
     void followPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity, float powerLimit, float angle, float motorVelocity[4], float motorCurrent[4]);
-        
+
     float calculateBeybladeVelocity(float bb_freq, float bb_amp, Pose2d TargetVelocity);
 
     // intermediate functions

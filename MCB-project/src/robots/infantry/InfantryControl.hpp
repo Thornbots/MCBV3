@@ -19,7 +19,6 @@
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
 #include "subsystems/gimbal/GimbalStopCommand.hpp"
-#include "subsystems/jetson/AutoAimCommand.hpp"
 #include "subsystems/jetson/AutoAimAndFireCommand.hpp"
 #include "subsystems/indexer/SingleIndexerSubsystem.hpp"
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
@@ -62,13 +61,15 @@ public:
         unjamButton.whileTrue(&indexerUnjam)->onTrue(&openServo);
 
         stopFlywheelTrigger.onTrue(&shooterStop);
+        
+        autoFireTrigger.onTrue(&autoFire)->onFalse(&lookJoystick);
 
         // Mouse and Keyboard mappings
         unjamKey.whileTrue(&indexerUnjam)->onTrue(&openServo);
         onlyCloseLidKey.onTrue(&closeServo);
         shootRegKey.onTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
         shootFastKey.whileTrue(&indexer20Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
-        autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart)->onTrue(&closeServo);
+        autoAimKey.onTrue(&shooterStart)->onTrue(&closeServo);
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
@@ -132,16 +133,15 @@ public:
     subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
-    subsystems::SingleIndexerSubsystem indexer{drivers, &hardware.indexMotor};
+    subsystems::SingleIndexerSubsystem indexer{drivers, &hardware.indexMotor, false}; //standard doesn't home
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::ServoSubsystem servo{drivers, &hardware.servo};
-    subsystems::JetsonSubsystem jetson{drivers, &gimbal};
+    subsystems::JetsonSubsystem jetson{drivers, &gimbal, nullptr};
 
 
     // //commands
     commands::InfantryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &servo};
-    commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
-    // commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
+    commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr};
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::MouseMoveCommand lookMouse{drivers, &gimbal};
@@ -200,6 +200,8 @@ public:
     Trigger joystickDrive0{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};// = (Trigger(drivers, Remote::Key::Q) & Trigger(drivers, Remote::Key::E)) | Trigger(drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP);
     Trigger joystickDrive1{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::MID};
     Trigger joystickDrive2{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
+    
+    Trigger autoFireTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
 
 
     //keyboard driving
@@ -211,7 +213,7 @@ public:
 
     Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
-    Trigger* triggers[21] = {&peekLeftButton, &peekRightButton, &peekNoneButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &onlyCloseLidKey, &unjamKey, &shootKey, &shootRegKey, &shootFastKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
+    Trigger* triggers[22] = {&peekLeftButton, &peekRightButton, &peekNoneButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &onlyCloseLidKey, &unjamKey, &autoFireTrigger, &shootKey, &shootRegKey, &shootFastKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
 
 };
 

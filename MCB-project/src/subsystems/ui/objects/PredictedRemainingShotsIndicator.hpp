@@ -60,9 +60,9 @@ private:
     IndexerSubsystem* index;
 
     #if defined(HERO)
-    static constexpr int FILLED_NUM_SHOTS = 80; 
+    static constexpr int FILLED_NUM_SHOTS = 74; 
     #else
-    static constexpr int FILLED_NUM_SHOTS = 500; 
+    static constexpr int FILLED_NUM_SHOTS = 729; 
     #endif
 
     static constexpr int MAX_SHOTS_1v1 = 200;     // if in 1v1, then you are a standard, and you can shoot only 200
