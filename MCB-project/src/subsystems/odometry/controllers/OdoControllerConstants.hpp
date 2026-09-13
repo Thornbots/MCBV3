@@ -5,9 +5,9 @@ constexpr float lat = .008;
 constexpr float DT = .002;
 constexpr int Q_SIZE = lat / DT;  // make this fancy later
 
-constexpr float C = 0.000;                                          // kg-s/m^2
+constexpr float C = 0.0025;                                          // kg-s/m^2
 constexpr float J = 0.001;//259;                                        // kg-m^2
-constexpr float UK = -0.01;                                          // N-m
+constexpr float UK = -0.00;                                          // N-m
 constexpr float KB = 0.716;                                       // V-rad/s
 constexpr float KT = 0.741;                                       // N-m/A
 constexpr float RA = 8.705;                                       // ohm
@@ -27,7 +27,7 @@ constexpr float KDT_REV = 0;  // unitless
 // Velocity feedback
 constexpr float KPV = .15; //%0.04;                       // A-s/rad
 constexpr float KIV = 1;                      // A/rad
-constexpr float IV_MAX = 0/ KIV;              // units TBD
+constexpr float IV_MAX = .1 / KIV;              // units TBD
 constexpr float INT_THRESH = VOLT_MAX * 0.85;  // V
 constexpr float TAKEBACK = 0.1;               // unitless
 constexpr float CURRENT_MAX = 5;  // A

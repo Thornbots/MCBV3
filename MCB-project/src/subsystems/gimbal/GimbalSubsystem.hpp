@@ -117,8 +117,14 @@ public:  // Public Methods
 
     bool isYawMotorOnline();
 
+    void setAngles(float yawAngle, float pitchAngle);
+
+
 private:  // Private Methods
     int getPitchVoltage(float targetAngle, float pitchAngleRelativeGimbal, float pitchAngularVelocity, float dt);
     int getYawVoltage(float driveTrainAngularVelocity, float yawAngleRelativeWorld, float yawAngularVelocity, float desiredAngleWorld, float inputVel, float dt);
+
+    void resetEncoderIfGainPower();
+
 };
 }  // namespace subsystems

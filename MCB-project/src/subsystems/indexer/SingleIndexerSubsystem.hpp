@@ -19,7 +19,7 @@ class SingleIndexerSubsystem : public IndexerSubsystem
 
 public:  // Public Methods
 
-    SingleIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index);
+    SingleIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool enableHoming);
 
     ~SingleIndexerSubsystem() {}
 
@@ -82,7 +82,7 @@ private:
     bool temporaryVelocityControl = false;
 
     HomingState homingState;
-
+    bool enableHoming; //overrides homingState
 
 };
 } //namespace subsystems

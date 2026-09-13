@@ -13,10 +13,7 @@ namespace subsystems {
 YawController::YawController() {}
 
 float YawController::calculate(float currentPosition, float currentVelocity, float currentDrivetrainVelocity, float targetPosition, float inputVelocity, float deltaT) {
-
-    estimateState(&currentPosition, &currentVelocity, pastTorque, currentDrivetrainVelocity);
-
-    estimatedPosition = currentPosition;
+    estimateYawPos(currentPosition, currentVelocity, currentDrivetrainVelocity); //move to gimbalsubsystem's refresh for jetson to have a yaw value when remote is off
     // float positionError = std::fmod(targetPosition - currentPosition + PI, 2 * PI) - PI;  // wrap to [-PI, PI]
     float positionError = targetPosition - currentPosition;  // wrap to [-PI, PI]
 
@@ -72,6 +69,12 @@ float YawController::calculate(float currentPosition, float currentVelocity, flo
 #else
     return 0.8192f * targetCurrent;
 #endif
+}
+
+void YawController::estimateYawPos(float& currentPosition, float& currentVelocity, float currentDrivetrainVelocity) {
+    estimateState(&currentPosition, &currentVelocity, pastTorque, currentDrivetrainVelocity);
+
+    estimatedPosition = currentPosition;
 }
 
 void YawController::estimateState(float* theta, float* thetadot, float tLast, float drivetrainVelocity) {

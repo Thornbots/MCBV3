@@ -60,7 +60,7 @@ void DrivetrainDriveCommand::execute() {
         y *= MAX_NOSPIN_LINEAR_VELOCITY_TIMES_100 / 100.0f;
     } else if (driveMode == DriveMode::BEYBLADE) {
         autoBoost = true;
-        r = 12.0f * SPIN_DIRECTION;
+        r = SPIN_VELOCITY;
         x *= drivetrain->linearVelocityMultiplierTimes100 / 100.0f;
         y *= drivetrain->linearVelocityMultiplierTimes100 / 100.0f;
     } else {

@@ -49,6 +49,7 @@ public:
 
     const char* getName() const override { return "autoaim command"; }
     
+    bool getIsScheduled();
 
 
 private:
@@ -66,12 +67,24 @@ private:
     int numCyclesForBurst = 0;
     static constexpr int CYCLES_UNTIL_BURST = 380; //cycles
     static constexpr float BURST_AMOUNT = 0.0; //rad/cycle
-    static constexpr float PATROL_SPEED = 0.004; //rad/cycle
+    static constexpr float PATROL_SPEED = -0.002; //rad/cycle
     static constexpr int PERSISTANCE = 200;
 
     float yaw = 0.0f, pitch = 0.0f;
     float yawvel = 0.0f, pitchvel = 0.0f;
     //int flip = 1;
     uint32_t lastSeenTime = 0;
+
+    
+    // ---- turn-to-hit (sentry) ----
+    // When patrolling and we take a hit, latch a world-yaw heading toward the hit source and hold
+    // it briefly so CV has a chance to acquire the attacker before normal patrol resumes. This is
+    // needed because cv->getAngleToTurnForSentry() only reports the hit for a single cycle.
+    bool turningToHit = false;
+    float hitTargetYaw = 0.0f;                           // absolute world yaw (rad) held while facing a hit
+    uint32_t hitTurnStartTime = 0;
+    static constexpr uint32_t HIT_TURN_DURATION = 500;  // ms to face a hit before resuming patrol
+
+    bool isScheduled = false;
 };
 }  // namespace commands

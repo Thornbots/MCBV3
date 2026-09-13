@@ -20,8 +20,6 @@ void HeroIndexerSubsystem::finishInitialize() {
 }
 
 void HeroIndexerSubsystem::finishRefresh() {
-    // drivers->leds.set(tap::gpio::Leds::Green, isProjectileAtBeam());
-    
     // state transitions
     if(state==HeroIndexerState::DONE && !isProjectileAtBeam()){
         // we thought we were done, we shouldn't be
@@ -62,10 +60,10 @@ void HeroIndexerSubsystem::finishRefresh() {
         unitBottom.oldVelocityControl(UNJAM_BALL_PER_SECOND);
     } else if(state==HeroIndexerState::INDEXING || state==HeroIndexerState::INDEXING_EXTRA) {
         // what speed should this happen at? Old system would set this at 20Hz in HeroControl. Maybe make this a constant.
-        unitTop.oldVelocityControl(20);
-        unitBottom.oldVelocityControl(0);
+        unitTop.oldVelocityControl(20); //20
+        unitBottom.oldVelocityControl(0); //0
     } else if(state==HeroIndexerState::LOADING_THEN_DONE){
-        unitTop.oldVelocityControl(LOAD_BALL_PER_SECOND); //top needs to spin too when loading
+        unitTop.oldVelocityControl(10); //top needs to spin too when loading //10
         unitBottom.oldVelocityControl(LOAD_BALL_PER_SECOND);
     }
 
@@ -91,6 +89,7 @@ void HeroIndexerSubsystem::forceShootOnce() {
     if(state==HeroIndexerState::DONE) {
         state = HeroIndexerState::INDEXING_EXTRA;
         timeoutExtra.restart(1000*INDEXING_EXTRA_TIME);
+        counter.incrementTargetNumBalls();
         justShot();
     }
 }
@@ -118,7 +117,11 @@ float HeroIndexerSubsystem::getEstHeatRatio(){
     return counter.getEstHeatRatio();
 }
 bool HeroIndexerSubsystem::heatAllowsShooting(){
+// #if defined(HERO)
+//     return true; 
+// #else// START getters and setters
     return counter.canShootAgain();
+// #endif
 }
 
 float HeroIndexerSubsystem::getTotalNumBallsShot(){

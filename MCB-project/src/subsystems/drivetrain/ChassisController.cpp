@@ -11,6 +11,7 @@ ChassisController::ChassisController() {
     targetVelocityHistory = new float[Q_SIZE];
     forceHistory = new Pose2d[Q_SIZE];
     targetVelocityMagnitudeHistory = new float[BBQ_SIZE];
+    positionIntegral = Vector2d(0, 0);
 }
 
 ChassisController::~ChassisController() {
@@ -171,8 +172,13 @@ void ChassisController::calculatePowerLimiting(float powerLimit, float V_m_FF[4]
     }
 }
 
+void ChassisController::resetPositionIntegral()
+{
+    positionIntegral = Vector2d(0, 0);
+}
 void ChassisController::followPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity, float powerLimit, float angle, float motorVelocity[4], float motorCurrent[4]){
-    Vector2d controlEffort = (targetPosition - currentPosition.vec()) * KP;
+    positionIntegral = positionIntegral + (targetPosition - currentPosition.vec())*KI * DT;
+    Vector2d controlEffort = (targetPosition - currentPosition.vec()) * KP + positionIntegral;
     
 
 

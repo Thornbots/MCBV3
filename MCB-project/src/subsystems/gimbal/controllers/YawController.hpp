@@ -9,6 +9,8 @@ public:
     void estimateState(float *theta, float *thetadot, float tLast, float drivetrainVelocity);
     float calculate(float currentPosition, float currentVelocity, float currentDrivetrainVelocity, float targetPosition, float inputVelocity, float deltaT);
 
+    void estimateYawPos(float& currentPosition, float& currentVelocity, float currentDrivetrainVelocity);
+
     void clearBuildup() {
         buildup = 0;
         pastTargetVelocity = 0;

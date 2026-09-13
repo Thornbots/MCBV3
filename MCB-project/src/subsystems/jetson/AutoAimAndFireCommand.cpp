@@ -1,12 +1,13 @@
 #include "AutoAimAndFireCommand.hpp"
+#include "JetsonSubsystemConstants.hpp"
+
 
 namespace commands {
 using namespace tap::communication::serial;
 
 void AutoAimAndFireCommand::initialize() {
     shoot = -1;
-
-    drivers->leds.set(tap::gpio::Leds::Green, true);
+    isScheduled = true;
 }
 void AutoAimAndFireCommand::execute() {
     bool allowShooting = true;
@@ -24,6 +25,7 @@ void AutoAimAndFireCommand::execute() {
             allowGimbal = true;
         }
 
+        //don't spin before match
         if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
             // countdown, only allow gimbal
             allowGimbal = true;
@@ -35,9 +37,14 @@ void AutoAimAndFireCommand::execute() {
     float dyaw = 0;
     float currentYaw = gimbal->getYawAngleRelativeWorld();
     float currentPitch = gimbal->getPitchEncoderValue();
-    cv->update(currentYaw, currentPitch, yawvel, pitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
+    float currentpitchvel = gimbal->getPitchVel(); //did add this for the actual CV stuff can make this 0 if we want
+    cv->update(currentYaw, currentPitch, yawvel, currentpitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
 
-    if (shoot != -1) {
+    tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
+    bool inRfid = robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE) || robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE);
+    if(inRfid && allowGimbal){ //am i over the rfid
+        gimbal->setAngles(0, 0);
+    } else if (shoot != -1) {
         //if(tap::arch::clock::getTimeMilliseconds() - lastSeenTime >  PERSISTANCE) flip = flip * -1;
         //Found a target, moving to it and maybe shooting at it
 
@@ -46,11 +53,17 @@ void AutoAimAndFireCommand::execute() {
         dyaw = dyaw > PI ? dyaw - 2 * PI : dyaw < -PI ? dyaw + 2 * PI : dyaw;
         lastSeenTime = tap::arch::clock::getTimeMilliseconds();
 
-        float newPitch = currentPitch + (pitch - currentPitch) / 4.0f;
-        if (abs(dyaw) > .05) {
-            dyaw /= 4.0f;}
-        else dyaw /= 1.75;
-        if (allowGimbal) gimbal->updateMotorsAndVelocityWithLatencyCompensation(dyaw/2.5f, pitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
+        // pitch damper (analogous to the yaw divisor below): only step a fraction of the way
+        // from the current pitch toward the CV target each cycle, so the setpoint eases in
+        // instead of jumping with every (latent, ~30Hz) CV frame. Larger divisor = more
+        // damping / smoother but more lag; smaller = snappier but can ring.
+        float dpitch = pitch - currentPitch;
+        float newPitch = currentPitch + dpitch * std::clamp(std::abs(dpitch)*PITCH_MULTIPLY_SCALE, PITCH_MULTIPLY_MIN, PITCH_MULTIPLY_MAX);
+        dyaw *= std::clamp(std::abs(dyaw)*YAW_MULTIPLY_SCALE, YAW_MULTIPLY_MIN, YAW_MULTIPLY_MAX);
+        // if (abs(dyaw) > YAW_CLOSE) {
+        //     dyaw /= YAW_DIVIDE_CLOSE;} //move slow (divide by more) if close [?]
+        // else dyaw /= YAW_DIVIDE_FAR;//move fast if not close [?] (dyaw, newPitch, yawvel, pitchvel);//WithLatencyCompensation
+        if (allowGimbal) gimbal->updateMotorsAndVelocity(dyaw, newPitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
         if (shoot == 1) isShooting = true;
     } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime < PERSISTANCE) {
         //Haven't found a target right now but I have recently, keep shooting if I was shooting
@@ -64,11 +77,31 @@ void AutoAimAndFireCommand::execute() {
         numCyclesForBurst++;
 
         if(allowGimbal) {
-            if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
-                gimbal->updateMotors(BURST_AMOUNT, pitch);
-                numCyclesForBurst = 0;
+            // getAngleToTurnForSentry() returns HitRing::PLACEHOLDER_ANGLE except on the single
+            // cycle right after a hit is registered, when it returns (headYaw - hitDirection) in
+            // world radians. Latch that one-shot value into an absolute world-yaw target and hold
+            // it, otherwise it is lost the instant patrol resumes and the turret never turns.
+            float angleToTurnForSentry = cv->getAngleToTurnForSentry();
+            if (angleToTurnForSentry != HitRing::PLACEHOLDER_ANGLE) {
+                // Face the hit: target heading = current heading minus the returned offset.
+                // (If the turret turns AWAY from the hit on hardware, flip this sign to a +.)
+                hitTargetYaw = currentYaw - angleToTurnForSentry;
+                turningToHit = true;
+                hitTurnStartTime = tap::arch::clock::getTimeMilliseconds();
+            }
+
+            if (turningToHit && tap::arch::clock::getTimeMilliseconds() - hitTurnStartTime < HIT_TURN_DURATION) {
+                // Hold the heading toward the hit. CV still runs at the top of execute(), so if the
+                // attacker comes into view the shoot branch takes over and engages it.
+                gimbal->setAngles(hitTargetYaw, pitch);
             } else {
-                gimbal->updateMotors(PATROL_SPEED, pitch);
+                turningToHit = false;
+                if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
+                    gimbal->updateMotors(BURST_AMOUNT, pitch);
+                    numCyclesForBurst = 0;
+                } else {
+                    gimbal->updateMotors(PATROL_SPEED, pitch);
+                }
             }
         }
     }
@@ -76,7 +109,7 @@ void AutoAimAndFireCommand::execute() {
     if(allowShooting){
         if (isShooting) {
             // if we see a panel or recently have seen a panel
-            indexer->indexAtRate(5);//20 change to not make a mess
+            indexer->indexAtRate(10);//20 change to not make a mess
         } else {
             // if we haven't seen a panel for a bit
              indexer->stopIndex();
@@ -97,8 +130,11 @@ void AutoAimAndFireCommand::execute() {
 
 void AutoAimAndFireCommand::end(bool) {
     pitch = 0;
-    drivers->leds.set(tap::gpio::Leds::Green, false);
+    isScheduled = false;
 }
+
+bool AutoAimAndFireCommand::getIsScheduled() { return isScheduled; }
+
 
 bool AutoAimAndFireCommand::isFinished() const { return !drivers->remote.isConnected(); }
 }  // namespace commands

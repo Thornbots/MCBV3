@@ -51,10 +51,7 @@ void GimbalSubsystem::refresh() {
 }
 
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
-    if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
-        encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
-        motorYaw->resetEncoderValue();
-    }
+    resetEncoderIfGainPower();
     float pitchVel = getPitchVel();
     float pitch = getPitchEncoderValue();
     prevTargetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
@@ -102,15 +99,22 @@ void GimbalSubsystem::updateMotorsAndVelocityWithLatencyCompensation(float chang
 
 }
 
+void GimbalSubsystem::resetEncoderIfGainPower() {
+    if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
+        encoderOffset = drivers->adc1_pa6_read() * (-2*PI/4096) + YAW_OFFSET; //adc read is blocking right now.
+        //#else //others use i2c
+        //encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
+        //#endif
+        motorYaw->resetEncoderValue();
+    }
+}
+
 void GimbalSubsystem::stopMotors() {
     pitchMotorVoltage = 0;
     yawMotorVoltage = 0;
     
     // #if defined(INFANTRY) or defined(HERO) or defined(SENTRY)  //all robots with 3508 turrets
-    if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
-        encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
-        motorYaw->resetEncoderValue();
-    }
+    resetEncoderIfGainPower();
     // #endif
     targetYawAngleWorld = yawAngleRelativeWorld;
 
@@ -120,12 +124,32 @@ void GimbalSubsystem::stopMotors() {
 void GimbalSubsystem::clearBuildup() {
     pitchController.clearBuildup();
     yawController.clearBuildup();
+    yawController.estimateYawPos(yawAngleRelativeWorld, yawAngularVelocity, driveTrainAngularVelocity);
 }
     
 void GimbalSubsystem::reZeroYaw() {
     yawAngleRelativeWorld = 0.0;
     targetYawAngleWorld = 0.0;
 }
+
+void GimbalSubsystem::setAngles(float yawAngle, float pitchAngle) {
+    prevTargetPitch = std::clamp(pitchAngle, -MAX_PITCH_DOWN, MAX_PITCH_UP);
+    float pitch = getPitchEncoderValue();
+    float pitchVel = getPitchVel();
+
+    driveTrainEncoder = getYawEncoderValue();
+    yawEncoderCache = driveTrainEncoder;
+    targetYawAngleWorld = yawAngle;  // std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
+
+    // THIS LINE BELOW WAS CAUSING ERROR
+    pitchMotorVoltage = getPitchVoltage(prevTargetPitch, pitch, pitchVel, dt);
+    
+    // THIS LINE BELOW WAS CAUSING ERROR
+
+    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, 0, dt);
+
+}
+
 
 void GimbalSubsystem::updatePositionHistory(float newPos) {
     for (int i = LATENCY_Q_SIZE - 1; i >= 0; i--) {

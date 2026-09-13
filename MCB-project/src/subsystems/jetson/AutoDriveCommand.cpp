@@ -14,8 +14,6 @@ void AutoDriveCommand::initialize() {
     count = 0;
     
     targetPosition = Vector2d(drivers->i2c.odom.getX(), drivers->i2c.odom.getY());
-
-    drivers->leds.set(tap::gpio::Leds::Blue, true);
 }
 
 void AutoDriveCommand::execute() {
@@ -99,7 +97,6 @@ bool AutoDriveCommand::isFinished() const { return !drivers->remote.isConnected(
 bool AutoDriveCommand::getIsScheduled() { return isScheduled; }
 
 void AutoDriveCommand::end(bool cancel) { 
-    drivers->leds.set(tap::gpio::Leds::Blue, false);
     isScheduled = false;
 }
 

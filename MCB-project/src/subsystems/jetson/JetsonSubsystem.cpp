@@ -1,6 +1,7 @@
 #include "JetsonSubsystem.hpp"
 
 #include "JetsonSubsystemConstants.hpp"
+#include "subsystems/drivetrain/SimpleAutoDriveCommand.hpp"
 
 float posXdebug;
 float posYdebug;
@@ -19,7 +20,7 @@ float targetPitchTest;
 
 namespace subsystems {
 
-JetsonSubsystem::JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal) : tap::control::Subsystem(drivers), drivers(drivers), gimbal(gimbal) {}
+JetsonSubsystem::JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal, OdometrySubsystem* odo) : tap::control::Subsystem(drivers), drivers(drivers), gimbal(gimbal), odo(odo) {}
 
 void JetsonSubsystem::initialize() {
     drivers->commandScheduler.registerSubsystem(this);
@@ -27,19 +28,26 @@ void JetsonSubsystem::initialize() {
 }
 int messageCount = 0;
 void JetsonSubsystem::refresh() {
+    if (odo != nullptr) checkApplyRelocalize();
+
     drivers->uart.updateSerial();
 
     hitRing.update();
 
+    // Push the current turret orientation into the delay line every cycle so that a latent CV
+    // frame can be paired with the orientation from when it was actually captured.
+    recordOrientationSample();
+
     if (poseDataTimeout.execute()) {
         messageCount++;
 
-        if (messageCount < 10) {
+        // 9 poses, 1 ref sys msg
+        if (messageCount < 10 && odo != nullptr) {
             PoseData p{
-                drivers->i2c.odom.getX(),  // OdometrySubsystem doesn't provide wrappers for these
-                drivers->i2c.odom.getY(),
-                drivers->i2c.odom.getXVel(),
-                drivers->i2c.odom.getYVel(),
+                odo->getX(),
+                odo->getY(),
+                odo->getXVel(),
+                odo->getYVel(),
                 gimbal->getPitchEncoderValue(),
                 gimbal->getYawAngleRelativeWorld(),
                 // drivers->bmi088.getq0(),
@@ -51,19 +59,18 @@ void JetsonSubsystem::refresh() {
                 // drivers->bmi088.getAz()
             };
             sendMsg(&p);
-        } else {//if(drivers->refSerial.getRefSerialReceivingData()) {
-    
+        } else {  // if(drivers->refSerial.getRefSerialReceivingData()) {
+
             tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
             tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-           
+            angleToTurnForSentry = hitRing.getAngleToTurnForSentry();
             RefSysMsg r{
                 (uint8_t)gameData.gameStage,
                 (uint16_t)gameData.stageTimeRemaining,
                 (uint16_t)robotData.currentHp,
                 (uint8_t)robotData.robotId % 100,  // blue hero is 101, we want to send 1
-                hitRing.getAngleToTurnForSentry(),
+                angleToTurnForSentry,
                 // 12.34,
-
                 drivers->refSerial.isBlueTeam(robotData.robotId) << 7 | (robotData.robotBuffStatus.recoveryBuff > 0) << 6 |
                     (robotData.rfidStatus.any(
                         tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE | tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE))
@@ -80,9 +87,56 @@ void JetsonSubsystem::refresh() {
     }
 }
 
+void JetsonSubsystem::recordOrientationSample() {
+    // world-frame turret yaw straight from the IMU quaternion (same convention as update()).
+    float sq0 = drivers->bmi088.getq0();
+    float sq1 = -drivers->bmi088.getq1();  // negated to swap IMU frame -> 3d-dynamics frame
+    float sq2 = -drivers->bmi088.getq2();
+    float sq3 = drivers->bmi088.getq3();
+
+    OrientationSample sample;
+    sample.cvYaw = atan2f(sq0 * sq3 - sq1 * sq2, -0.5f + (sq1 * sq1 + sq0 * sq0));  // XYZ 3rd rotation
+    sample.cvYawVel = drivers->bmi088.getGz() * PI / 180;                           // body-z rate, rad/s
+
+    // Pitch comes from the gimbal (the source update() previously used via current_pitch), negated
+    // to match the transform's frame of reference exactly as `cvPitch = -current_pitch` did.
+    sample.cvPitch = -gimbal->getPitchEncoderValue();
+    sample.cvPitchVel = -gimbal->getPitchVel();
+
+    orientationQueue[orientationQueueHead] = sample;
+    orientationQueueHead = (orientationQueueHead + 1) % ORIENTATION_QUEUE_SIZE;
+}
+
+const OrientationSample& JetsonSubsystem::getDelayedOrientation() const {
+    // The oldest entry in the ring (the slot about to be overwritten) is the orientation from
+    // ~ORIENTATION_QUEUE_SIZE cycles ago.
+    return orientationQueue[orientationQueueHead];
+}
+
+float JetsonSubsystem::getAngleToTurnForSentry() {
+    float r = angleToTurnForSentry;
+    angleToTurnForSentry = HitRing::PLACEHOLDER_ANGLE;
+    return r;
+}
+
+void JetsonSubsystem::checkApplyRelocalize() {
+    Relocalize relocalize_msg;
+    if (getMsg(&relocalize_msg)) {
+        // odo->relocalizeTo(relocalize_msg.expectedX, relocalize_msg.expectedY);
+        commands::SimpleAutoDriveCommand::xForLocalization = relocalize_msg.expectedX;
+        commands::SimpleAutoDriveCommand::yForLocalization = relocalize_msg.expectedY;
+        commands::SimpleAutoDriveCommand::setLocalization = true;
+    }
+}
+
 bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d* jetsonExpectedPosition) {
     Relocalize relocalize_msg;
-    if (getMsg(&relocalize_msg)) *jetsonExpectedPosition = Vector2d(relocalize_msg.expectedX, relocalize_msg.expectedY);
+    if (getMsg(&relocalize_msg)) {
+        *jetsonExpectedPosition = Vector2d(relocalize_msg.expectedX, relocalize_msg.expectedY);
+        // x is 5, y is 3
+        if (relocalize_msg.expectedX > 4) drivers->leds.set(tap::gpio::Leds::Blue, true);
+        if (relocalize_msg.expectedY > 2) drivers->leds.set(tap::gpio::Leds::Green, true);
+    };
 
     ROSData ros_msg;
     if (!getMsg(&ros_msg)) return false;
@@ -107,9 +161,14 @@ void JetsonSubsystem::update(
     CVData cv_msg;
     if (!getMsg(&cv_msg)) return;
     CVData* msg = &cv_msg;
+    
+    // white led on first cv message
+    // drivers->leds.set(tap::gpio::Leds::Red, true);
+    // drivers->leds.set(tap::gpio::Leds::Green, true);
+    // drivers->leds.set(tap::gpio::Leds::Blue, true);
 
     // Add rotated offset vector of panel relative to RGB
-    // if (msg->confidence <= 0.2f) return;
+    if (msg->confidence <= MSG_CONFIDENCE_CUTOFF) return;
 
     // float X_prime = -x + 0.0175;                                                     // left
     // float Y_prime = -y + 0.1295 * cos(current_pitch) - 0.0867 * sin(current_pitch);  // up
@@ -125,45 +184,41 @@ void JetsonSubsystem::update(
     // state.velocity = modm::Vector3f(0,0,0);
     // state.acceleration = modm::Vector3f(0,0,0);
 
-    // get the quaternion directly
-    q0 = drivers->bmi088.getq0();
-    q1 = -drivers->bmi088.getq1();  // axis is negated to swap IMU reference frame to the 3d dynamics reference frame
-    q2 = -drivers->bmi088.getq2();  // axis is negated to swap IMU reference frame to the 3d dynamics reference frame
-    q3 = drivers->bmi088.getq3();
-
-    // express the IMU orientation in XYZ euler angles
-    // formula linked from matlab code
-    // cvRoll =  // 1st rotation
-    // cvPitch = asinf(std::clamp(2.0f * (q0 * q2 + q3 * q1), -1.0f, 1.0f));  // 2nd rotation
-    cvYaw = atan2f(q0 * q3 - q1 * q2, -0.5f + (q1 * q1 + q0 * q0));  // 3rd rotation
+    // ===== CV latency compensation =====
+    // This panel was captured ~ORIENTATION_QUEUE_SIZE control cycles ago (camera exposure + Jetson
+    // processing + UART transport). Transform it into the world frame using the turret orientation
+    // from that moment, pulled from the delay line, instead of the live orientation. (current_yaw
+    // stays live below because the output is a delta from where the turret points right now.)
+    const OrientationSample& delayed = getDelayedOrientation();
+    cvYaw = delayed.cvYaw;
+    cvPitch = delayed.cvPitch;
+    cvYawVel = delayed.cvYawVel;
+    cvPitchVel = delayed.cvPitchVel;
 
     currentYawTest = cvYaw;
-    currentPitchTest = current_pitch;
-    // express the body-fixed velocities in the correct convention
-    bodyXangVel = -drivers->bmi088.getGx() * PI / 180;
-    bodyYangVel = -drivers->bmi088.getGy() * PI / 180;
-    bodyZangVel = drivers->bmi088.getGz() * PI / 180;
-
-    // convert body-fixed angular velocities into euler angle velocities
-    // cvRollVel = sinf(cvYaw) * bodyYangVel + cosf(cvPitch) * cosf(cvYaw) * bodyXangVel;
-    // cvPitchVel = cosf(cvYaw) * bodyYangVel - cosf(cvPitch) * sinf(cvYaw) * bodyXangVel;
-    cvYawVel = bodyZangVel;
+    currentPitchTest = cvPitch;
 
     // get position of camera relative to shooting axis
 
-    posXrel4 = -msg->x + cameraXoffset;
+    posXrel4 = msg->x + cameraXoffset;
     posYrel4 = msg->z + cameraYoffset;  // taproot flips z y basis vec
-    posZrel4 = msg->y + cameraZoffset;
-    velXrel4 = -msg->v_x;
+    posZrel4 = msg->y + cameraZoffset;   // msg->y is up; Z4 must point up so the pitch un-rotation
+                                         // gives true world height (mz*sinφ + my*cosφ), not the
+                                         // φ-dependent mz*sinφ - my*cosφ that caused the unstable
+                                         // 2φ-E feedback / endstop slam
+    velXrel4 = msg->v_x;
     velYrel4 = msg->v_z;
     velZrel4 = msg->v_y;
+
+    // if(posYrel4 > MAX_SHOOT_DIST) return;
     // precompute commonly used angles
 
+
+    // all of these values should be computed off of the queued values of cvYaw and cvPitch, not the current values of yaw and pitch,
     float cos_theta3 = cosf(cvYaw);
     float sin_theta3 = sinf(cvYaw);
-    float cos_theta4 = cosf(-current_pitch);  // reversed due to frame of reference
-    float sin_theta4 = sinf(-current_pitch);
-    current_pitch_velo *= -1;
+    float cos_theta4 = cosf(cvPitch);
+    float sin_theta4 = sinf(cvPitch);
 
     // convert camera offset into reference frame 2
     posXrelPitch = cos_theta3 * posXrel4 + sin_theta3 * (-cos_theta4 * posYrel4 + sin_theta4 * posZrel4);
@@ -172,12 +227,12 @@ void JetsonSubsystem::update(
 
     // get the velocity of the camera in reference frame 2
     velXrelPitch = (-sin_theta3 * posXrel4 - cos_theta3 * (cos_theta4 * posYrel4 - sin_theta4 * posZrel4)) * cvYawVel +
-                   sin_theta3 * (sin_theta4 * posYrel4 + cos_theta4 * posZrel4) * current_pitch_velo + cos_theta3 * velXrel4 - sin_theta3 * (cos_theta4 * velYrel4 - sin_theta4 * velZrel4);
+                   sin_theta3 * (sin_theta4 * posYrel4 + cos_theta4 * posZrel4) * cvPitchVel + cos_theta3 * velXrel4 - sin_theta3 * (cos_theta4 * velYrel4 - sin_theta4 * velZrel4);
 
     velYrelPitch = (cos_theta3 * posXrel4 - sin_theta3 * (cos_theta4 * posYrel4 - sin_theta4 * posZrel4)) * cvYawVel -
-                   cos_theta3 * (sin_theta4 * posYrel4 + cos_theta4 * posZrel4) * current_pitch_velo + sin_theta3 * velXrel4 + cos_theta3 * (cos_theta4 * velYrel4 - sin_theta4 * velZrel4);
+                   cos_theta3 * (sin_theta4 * posYrel4 + cos_theta4 * posZrel4) * cvPitchVel + sin_theta3 * velXrel4 + cos_theta3 * (cos_theta4 * velYrel4 - sin_theta4 * velZrel4);
 
-    velZrelPitch = current_pitch_velo * cos_theta4 * posYrel4 + sin_theta4 * velYrel4 - current_pitch_velo * sin_theta4 * posZrel4 + cos_theta4 * velZrel4;
+    velZrelPitch = cvPitchVel  * cos_theta4 * posYrel4 + sin_theta4 * velYrel4 - cvPitchVel * sin_theta4 * posZrel4 + cos_theta4 * velZrel4;
 
     // get the velocity of the panel in 2
 
@@ -203,7 +258,7 @@ void JetsonSubsystem::update(
     posYrelC = posYrel4;
     targetPitchTest = targetPitch;
 
-    yawouttest = (targetYaw - cvYaw);
+    yawouttest = (targetYaw - current_yaw); //target yaw is computed from the properly queued yaw, and it needs to be compared to the current yaw to properly adjust
     yawtest2 = targetYaw;
 
     if (!valid) {
@@ -211,11 +266,12 @@ void JetsonSubsystem::update(
         return;
     }
 
-    *yawOut = (targetYaw - cvYaw);  // fmod(current_yaw + targetYaw, 2 * PI);
+    *yawOut = (targetYaw - current_yaw);  // fmod(current_yaw + targetYaw, 2 * PI);
     *pitchOut = targetPitch;
     *yawVelOut = (-cos_theta3 * velXrelPitch - sin_theta3 * velYrelPitch + velXrel4) / (cos_theta4 * posYrel4 - sin_theta4 * posZrel4);
+    *pitchVelOut = 0; //unsure on how to compute this well and i dont trust AI
 
-    if (abs(*yawOut) < PI / 4) {
+    if (abs(*yawOut) < YAW_OUT_SHOOT_THRESH) {
         // Enable shooting
         *action = 1;
         return;

@@ -4,16 +4,20 @@
 
 namespace commands {
 
-void JoystickMoveCommand::initialize() {}
+void JoystickMoveCommand::initialize() { firstTime = true; }
 void JoystickMoveCommand::execute() {
-    yaw = CONTROLLER_YAW_PROPORTIONAL * drivers->remote.getChannel(tap::communication::serial::Remote::Channel::RIGHT_HORIZONTAL);
-    pitch = CONTROLLER_PITCH_PROPORTIONAL * drivers->remote.getChannel(tap::communication::serial::Remote::Channel::RIGHT_VERTICAL);  // in the future, use the ranges from GimbalSubsystemConstants
+    float yawInc = CONTROLLER_YAW_PROPORTIONAL * drivers->remote.getChannel(tap::communication::serial::Remote::Channel::RIGHT_HORIZONTAL);
+    float pitchInc = CONTROLLER_PITCH_PROPORTIONAL * drivers->remote.getChannel(tap::communication::serial::Remote::Channel::RIGHT_VERTICAL);
 
-    if(isOffset)
-        pitch+=SECOND_PITCH_OFFSET;
-
-    gimbal->updateMotors(yaw, pitch);
-    // TODO this lmao
+    if (firstTime) {
+        firstTime=false;
+        if (isOffset) {
+            pitchInc += SECOND_PITCH_OFFSET;
+        }
+        gimbal->updateMotors(yawInc, pitchInc);
+    } else {
+        gimbal->updateMotors(yawInc, gimbal->getPrevTargetPitch() + pitchInc);
+    }
 }
 
 void JoystickMoveCommand::end(bool) {}
