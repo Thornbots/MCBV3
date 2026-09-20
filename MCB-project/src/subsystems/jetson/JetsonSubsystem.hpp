@@ -34,6 +34,14 @@ enum UartMessage : uint8_t{
     RELOCALIZE = 4,
 };
 
+
+enum OdomStatus : uint8_t{
+    ODOM_PODS = 0,                  // odometry pods healthy, best accuracy
+    ODOM_DRIVETRAIN = 1,            // drivetrain odometry, degraded by wheel slip
+    ODOM_I2C_DEAD = 2,              // I2C bus dead, no pod data, no fallback
+    ODOM_I2C_DEAD_DRIVETRAIN = 3    // I2C bus dead, drivetrain odometry instead
+};
+
 // =================== Incoming message types =======================
 
 struct ROSData
@@ -68,20 +76,13 @@ struct CVData
 
 struct PoseData
 {
-    float x;                     
-    float y;                     
-    float vel_x;                     
-    float vel_y;                     
-    float head_pitch;                     
-    float head_yaw;                     
-    // float imu_q0;
-    // float imu_q1;
-    // float imu_q2;
-    // float imu_q3;
-    // float imu_Ax;
-    // float imu_Ay;
-    // float imu_Az;
-    // uint64_t timestamp = 0;         
+    float x;
+    float y;
+    float vel_x;
+    float vel_y;
+    float head_pitch;
+    float head_yaw;
+    OdomStatus error_code;
 } modm_packed;
 // static_assert(sizeof(PoseData)<1024, "msg too large"); //TODO: implement static check
 

@@ -50,13 +50,7 @@ void JetsonSubsystem::refresh() {
                 odo->getYVel(),
                 gimbal->getPitchEncoderValue(),
                 gimbal->getYawAngleRelativeWorld(),
-                // drivers->bmi088.getq0(),
-                // drivers->bmi088.getq1(),
-                // drivers->bmi088.getq2(),
-                // drivers->bmi088.getq3(),
-                // drivers->bmi088.getAx(),
-                // drivers->bmi088.getAy(),
-                // drivers->bmi088.getAz()
+                OdomStatus::ODOM_PODS
             };
             sendMsg(&p);
         } else {  // if(drivers->refSerial.getRefSerialReceivingData()) {
