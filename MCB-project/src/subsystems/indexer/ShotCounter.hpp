@@ -32,7 +32,8 @@ public:
     }
 
     bool canShootAgain() {
-        return ((float)estHeat+getHeatPerBall()*HEAT_PER_BALL_MULT) <= ((float) drivers->refSerial.getRobotData().turret.heatLimit);
+        return true;
+        // return ((float)estHeat+getHeatPerBall()*HEAT_PER_BALL_MULT) <= ((float) drivers->refSerial.getRobotData().turret.heatLimit);
     }
 
     uint32_t getTimesIncremented() {

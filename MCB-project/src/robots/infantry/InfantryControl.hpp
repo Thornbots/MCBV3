@@ -44,7 +44,7 @@ public:
         gimbal.initialize();
         flywheel.initialize();
         indexer.initialize();
-        drivetrain.initialize();
+        // drivetrain.initialize();
         ui.initialize();
         servo.initialize();
         jetson.initialize();
@@ -150,7 +150,7 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexerSingle{drivers, &indexer, 1, 20};
+    commands::IndexerNBallsCommand indexerSingle{drivers, &indexer, 100, 20};
     commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 10};
     commands::IndexerNBallsCommand indexer20Hz{drivers, &indexer, -1, 20};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
