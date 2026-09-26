@@ -19,6 +19,7 @@
 #include "objects/Countdown.hpp"
 #include "objects/LinearVelocityIndicator.hpp"
 #include "objects/ImuRecalibrationIndicator.hpp"
+#include "subsystems/ui/objects/HitTracker.hpp"
 #include "drivers.hpp"
 
 namespace commands {
@@ -26,7 +27,7 @@ using subsystems::UISubsystem;
 
 class HeroDrawCommand : public tap::control::Command, GraphicsContainer {
 public:
-    HeroDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, HeroIndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain)
+    HeroDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, HeroIndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain, HitTrackerSubsystem* hitTracker)
         : drivers(drivers),
           ui(ui),
           gimbal(gimbal),
@@ -77,13 +78,14 @@ private:
     FlywheelSubsystem* flywheel;
     HeroIndexerSubsystem* indexer;
     DrivetrainSubsystem* drivetrain;
+    HitTrackerSubsystem* hitTracker;
 
     // add top level graphics objects here and in the constructor
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
     ChassisOrientationIndicator orient{true, drivers, gimbal, drivetrain};
     Reticle reticle{drivers, gimbal, indexer};
-    HitRing ring{drivers, gimbal};
+    HitRing ring{drivers, gimbal, hitTracker};
     PredictedRemainingShotsIndicator remain{drivers, indexer};
     AllRobotHealthNumbers numbers{drivers};
     Countdown countdown{drivers};

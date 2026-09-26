@@ -2,6 +2,7 @@
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
+#include "subsystems/ui/objects/HitTracker.hpp"
 #include "util/ui/GraphicsContainer.hpp"
 #include "util/ui/AtomicGraphicsObjects.hpp"
 
@@ -15,7 +16,7 @@ using namespace subsystems;
 // if someone hit you in that direction
 class HitRing : public GraphicsContainer {
 public:
-    HitRing(tap::Drivers* drivers, GimbalSubsystem* gimbal) : drivers(drivers), gimbal(gimbal) {
+    HitRing(tap::Drivers* drivers, GimbalSubsystem* gimbal, HitTrackerSubsystem* hitTracker) : drivers(drivers), gimbal(gimbal), hitTracker(hitTracker) {
         // initialize rings
         for (int i = 0; i < NUM_HISTORY; i++) {
             rings[i].width = STARTING_SIZE + SIZE_INCREMENT * i;
@@ -70,7 +71,8 @@ public:
                 // 2 is back, add 2*90 degrees
                 // 3 is right, add 3*90 degrees
                 // 4 is top, don't care because we don't have panels on top (yet?)
-                hitOrientations[nextIndex] = -encoder + imu + 90 * ((uint16_t)robotData.damagedArmorId);
+
+                hitTracker->AddHit(&robotData); // Save Current-Hit Orientation
                 rings[nextIndex].show();
                 expirationTimeouts[nextIndex].restart(RECENT_TIME + EXPIRATION_TIME);
                 rings[nextIndex].color = UISubsystem::Color::WHITE;
@@ -85,22 +87,11 @@ public:
         }
     }
 
-    
-    float getAngleToTurnForSentry() {
-        if(expirationTimeouts[0].isStopped())
-            return PLACEHOLDER_ANGLE;
-
-        expirationTimeouts[0].stop();
-        float inDegrees = rings[0].startAngle + ARC_LEN / 2;
-        if(inDegrees>180) inDegrees-=360;
-        return inDegrees * PI / 180;
-    }
-    
-    static constexpr float PLACEHOLDER_ANGLE = 123;  // a special value for telling jetson that you weren't hit
 
 private:
     tap::Drivers* drivers;
     GimbalSubsystem* gimbal;
+    HitTrackerSubsystem* hitTracker;
 
     uint16_t previousHp;
 
@@ -129,7 +120,7 @@ private:
     // once we know what direction we hit in, we no longer care about the drivetrain spinning (encoder)
     // we just need to know if the head moved in space (imu)
     void updateRing(int i, float imu) {
-        rings[i].startAngle = static_cast<uint16_t>(3 * 360 + imu - hitOrientations[i] - ARC_LEN / 2);
+        rings[i].startAngle = static_cast<uint16_t>(3 * 360 + imu - hitTracker->GetCurrentHit() - ARC_LEN / 2);
         UISubsystem::fixAngle(&rings[i].startAngle);
         rings[i].endAngle = rings[i].startAngle + ARC_LEN;
     }

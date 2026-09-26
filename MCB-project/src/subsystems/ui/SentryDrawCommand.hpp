@@ -16,6 +16,7 @@
 #include "objects/PeekingLines.hpp"
 #include "objects/HopperLidIndicator.hpp"
 #include "objects/HitRing.hpp"
+#include "objects/HitTracker.hpp"
 #include "objects/PredictedRemainingShotsIndicator.hpp"
 #include "objects/AllRobotHealthNumbers.hpp"
 #include "objects/Countdown.hpp"
@@ -28,7 +29,7 @@ using subsystems::UISubsystem;
 
 class SentryDrawCommand : public tap::control::Command, GraphicsContainer {
 public:
-    SentryDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain)
+    SentryDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain, HitTrackerSubsystem* hitTracker)
         : drivers(drivers),
           ui(ui),
           gimbal(gimbal),
@@ -81,6 +82,7 @@ private:
     FlywheelSubsystem* flywheel;
     IndexerSubsystem* indexer;
     DrivetrainSubsystem* drivetrain;
+    HitTrackerSubsystem* hitTracker;
 
     // add top level graphics objects here and in the constructor
     LaneAssistLines lane{gimbal};
@@ -88,7 +90,7 @@ private:
     ChassisOrientationIndicator orient{true, drivers, gimbal, drivetrain};
     PeekingLines peek{drivetrain, gimbal};
     Reticle reticle{drivers, gimbal, indexer};
-    HitRing ring{drivers, gimbal};
+    HitRing ring{drivers, gimbal, hitTracker};
     PredictedRemainingShotsIndicator remain{drivers, indexer};
     AllRobotHealthNumbers numbers{drivers};
     Countdown countdown{drivers};

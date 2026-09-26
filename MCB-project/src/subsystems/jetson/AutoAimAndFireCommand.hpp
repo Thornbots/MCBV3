@@ -26,7 +26,7 @@ using tap::communication::serial::Remote;
 class AutoAimAndFireCommand : public tap::control::Command
 {
 public:
-    AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* indexer, FlywheelSubsystem* flywheel, JetsonSubsystem* cv, AutoDriveCommand* adc)
+    AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* indexer, FlywheelSubsystem* flywheel, JetsonSubsystem* cv, AutoDriveCommand* adc, HitTrackerSubsystem* hitTracker)
         : drivers(drivers),
           gimbal(gimbal),
           indexer(indexer),
@@ -59,6 +59,7 @@ private:
     FlywheelSubsystem* flywheel;
     JetsonSubsystem* cv;
     AutoDriveCommand* adc;
+    HitTrackerSubsystem* hitTracker;
 
     bool isCalibrated = false;
     bool isShooting = false;

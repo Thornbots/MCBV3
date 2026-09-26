@@ -20,7 +20,7 @@ float targetPitchTest;
 
 namespace subsystems {
 
-JetsonSubsystem::JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal, OdometrySubsystem* odo) : tap::control::Subsystem(drivers), drivers(drivers), gimbal(gimbal), odo(odo) {}
+JetsonSubsystem::JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal, OdometrySubsystem* odo, HitTrackerSubsystem* hitTracker) : tap::control::Subsystem(drivers), drivers(drivers), gimbal(gimbal), odo(odo) {}
 
 void JetsonSubsystem::initialize() {
     drivers->commandScheduler.registerSubsystem(this);
@@ -57,7 +57,7 @@ void JetsonSubsystem::refresh() {
 
             tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
             tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-            angleToTurnForSentry = hitRing.getAngleToTurnForSentry();
+            angleToTurnForSentry = hitTracker->getAngleToTurnForSentry();
             RefSysMsg r{
                 (uint8_t)gameData.gameStage,
                 (uint16_t)gameData.stageTimeRemaining,
@@ -109,7 +109,7 @@ const OrientationSample& JetsonSubsystem::getDelayedOrientation() const {
 
 float JetsonSubsystem::getAngleToTurnForSentry() {
     float r = angleToTurnForSentry;
-    angleToTurnForSentry = HitRing::PLACEHOLDER_ANGLE;
+    angleToTurnForSentry = HitTrackerSubsystem::PLACEHOLDER_ANGLE;
     return r;
 }
 

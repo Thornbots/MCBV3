@@ -9,6 +9,7 @@
 #include "subsystems/ui/UISubsystem.hpp"
 #include "subsystems/servo/ServoSubsystem.hpp"
 
+
 #include "util/ui/GraphicsContainer.hpp"
 #include "objects/ChassisOrientationIndicator.hpp"
 #include "objects/LaneAssistLines.hpp"
@@ -17,6 +18,7 @@
 #include "objects/PeekingLines.hpp"
 #include "objects/HopperLidIndicator.hpp"
 #include "objects/HitRing.hpp"
+#include "objects/HitTracker.hpp"
 #include "objects/PredictedRemainingShotsIndicator.hpp"
 #include "objects/AllRobotHealthNumbers.hpp"
 #include "objects/Countdown.hpp"
@@ -29,7 +31,7 @@ using subsystems::UISubsystem;
 
 class InfantryDrawCommand : public tap::control::Command, GraphicsContainer {
 public:
-    InfantryDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain, ServoSubsystem* servo)
+    InfantryDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain, ServoSubsystem* servo, HitTrackerSubsystem* hitTracker)
         : drivers(drivers),
           ui(ui),
           gimbal(gimbal),
@@ -86,6 +88,7 @@ private:
     IndexerSubsystem* indexer;
     DrivetrainSubsystem* drivetrain;
     ServoSubsystem* servo;
+    HitTrackerSubsystem *hitTracker;
 
     // add top level graphics objects here and in the constructor
     LaneAssistLines lane{gimbal};
@@ -94,7 +97,7 @@ private:
     PeekingLines peek{drivetrain, gimbal};
     HopperLidIndicator lid{servo};
     Reticle reticle{drivers, gimbal, indexer};
-    HitRing ring{drivers, gimbal};
+    HitRing ring{drivers, gimbal, hitTracker};
     PredictedRemainingShotsIndicator remain{drivers, indexer};
     AllRobotHealthNumbers numbers{drivers};
     Countdown countdown{drivers};

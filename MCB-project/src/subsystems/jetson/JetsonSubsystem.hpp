@@ -13,6 +13,7 @@
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
 #include "subsystems/odometry/OdometrySubsystem.hpp"
 #include "subsystems/ui/objects/HitRing.hpp"
+#include "subsystems/ui/objects/HitTracker.hpp"
 
 #include "drivers.hpp"
 
@@ -136,7 +137,8 @@ private:  // Private Variables
     src::Drivers* drivers;
     GimbalSubsystem* gimbal;
     OdometrySubsystem* odo;
-    HitRing hitRing{drivers, gimbal};
+    HitTrackerSubsystem* hitTracker;
+    HitRing hitRing{drivers, gimbal, hitTracker};
 
     static constexpr int TIME_FOR_REF_DATA = 200; //send at 5hz
     tap::arch::PeriodicMilliTimer refDataSendingTimeout{TIME_FOR_REF_DATA};
@@ -169,7 +171,7 @@ private:  // Private Variables
     size_t orientationQueueHead = 0;  // index of the oldest sample == next slot to overwrite
 
 public:  // Public Methods
-    JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal, OdometrySubsystem* odo);
+    JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal, OdometrySubsystem* odo, HitTrackerSubsystem* hitTracker);
 
     ~JetsonSubsystem() {}
 
