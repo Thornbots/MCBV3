@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tap/communication/serial/ref_serial.hpp"
+#include "tap/communication/serial/ref_serial_data.hpp"
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
 
 
@@ -10,17 +10,19 @@ namespace subsystems
 class HitTracker 
 {
     public:
-        HitTracker(tap::Drivers* drivers, GimbalSubsystem* gimbal) : drivers(drivers), gimbal(gimbal)
+        HitTracker(tap::Drivers* drivers) : drivers(drivers), gimbal(nullptr)
         {
             // 
         }
 
 
         // Function to append a hit if the code structure already identifies a strike
-        void addHit(int index = -1)
+        void addHit()
         {
-            if (index == -1)
-            {index = nextIndex;}
+            // Check if gimbal pointer is defined
+            if (!gimbal)
+            {return;}
+            
 
             float encoder = gimbal->getYawEncoderValue() * 180 / PI;
             float imu = drivers->bmi088.getYaw();
@@ -31,11 +33,7 @@ class HitTracker
             // 3 is right, add 3*90 degrees
             // 4 is top, don't care because we don't have panels on top (yet?)
             
-            hitOrientations[nextIndex] = -encoder + imu + 90 * ((uint16_t)drivers->refSerial.getRobotData().damagedArmorId);
-            
-            // get the next index 
-            nextIndex++;
-            if (nextIndex == NUM_HISTORY) nextIndex = 0;  // cycle back around and overwrite if we get hit really often
+            hitOrientation = -encoder + imu + 90 * ((uint16_t)drivers->refSerial.getRobotData().damagedArmorId);
         }
         
 
@@ -43,7 +41,7 @@ class HitTracker
         void update() 
         {
             // check for a new hit
-            if (drivers->refSerial.getRefSerialReceivingData()) {
+            if (drivers->refSerial.getRefSerialReceivingData() && gimbal) {
                 const RefSerialData::Rx::RobotData &robotData = drivers->refSerial.getRobotData();
                 if (previousHp > robotData.currentHp && (robotData.damageType == RefSerialData::Rx::DamageType::ARMOR_DAMAGE || robotData.damageType == RefSerialData::Rx::DamageType::COLLISION)) {
                     // took some sort of damage and we think we took panel damage
@@ -75,28 +73,20 @@ class HitTracker
         */
 
 
-        // Returns Current Hit Orientation
-        float getCurrentHit(int index = -1)
+        // Returns Current Hit Orientation in degrees
+        float getCurrentHit()
         {
-            // Allow previous angle to be indexed
-            if(index == -1)
-            {index = nextIndex;}
-
-            return hitOrientations[nextIndex];
+            return hitOrientation;
         }
 
         
+        // Return angle in radians for the sentry to turn to
         float getAngleToTurnForSentry() {
-            if(expirationTimeouts[0].isStopped())
-                return PLACEHOLDER_ANGLE;
-
-            expirationTimeouts[0].stop();
-            float inDegrees = hitOrientations[nextIndex]; //rings[0].startAngle + ARC_LEN / 2;
-            if(inDegrees>180) inDegrees-=360;
-            return inDegrees * PI / 180;
+            if(hitOrientation>180) hitOrientation-=360;
+            return hitOrientation * PI / 180;
         }
     
-    static constexpr float PLACEHOLDER_ANGLE = 123;  // a special value for telling jetson that you weren't hit
+    //static constexpr float PLACEHOLDER_ANGLE = 123;  // a special value for telling jetson that you weren't hit
 
 
 
@@ -104,28 +94,8 @@ class HitTracker
         tap::Drivers* drivers;
         GimbalSubsystem* gimbal;
 
-        // Iterate through the array every time a hit occurs
-        int nextIndex = 0;
-
-        // Hit Detection Storage
-        // --------------------------------
-        // Number of hits to remember
-        #if defined(SENTRY)
-        static constexpr int NUM_HISTORY = 1;  // keep track of 1 to send to jetson, when we send it skip the timer and expire it
-        #else
-        static constexpr int NUM_HISTORY = 3;  // how many shots to keep track of
-        #endif
-
-        float hitOrientations[NUM_HISTORY];
-
-        
-        tap::arch::MilliTimeout expirationTimeouts[NUM_HISTORY];  // for knowing how old a hit is, stopped if not hit recently
+        float hitOrientation;
         uint16_t previousHp;
-
-        
-        
-    
-
 };
 
 }
