@@ -1,30 +1,56 @@
 #pragma once
 
 #include "tap/communication/serial/ref_serial_data.hpp"
-#include "subsystems/gimbal/GimbalSubsystem.hpp"
+//#include "subsystems/gimbal/GimbalSubsystem.hpp"
 
 
-namespace subsystems
-{
+#define RefSerialData tap::communication::serial::RefSerialData
 
 class HitTracker 
 {
     public:
-        HitTracker(tap::Drivers* drivers) : drivers(drivers), gimbal(nullptr)
+        float hitOrientation; // Hit Direction in Degrees
+
+
+
+        HitTracker(tap::Drivers* drivers) : drivers(drivers)
         {
             // 
         }
 
 
+        // Gimbal Function - Get Yaw Encoder
+        // ------------------------------------------
+        // Provide the ability to run the function without causing a circular dependency
+        
+        // Lambda Implementation
+        void SetGetYawEncoderFunction(std::function<float()> func)
+        {
+            this->getYawEncoderValue_func = func;
+            func();
+        }
+
+        float RunGetYawEncoderFunction()
+        {
+            return getYawEncoderValue_func();
+        }
+        // ------------------------------------------
+
+
+
+
+        // Hit Detection
+        // ------------------------------------------
         // Function to append a hit if the code structure already identifies a strike
         void addHit()
         {
-            // Check if gimbal pointer is defined
-            if (!gimbal)
+            // Check if get yaw encoder function pointer is defined
+            if (!getYawEncoderValue_func)
             {return;}
             
+           
 
-            float encoder = gimbal->getYawEncoderValue() * 180 / PI;
+            float encoder = RunGetYawEncoderFunction() * 180 / PI;
             float imu = drivers->bmi088.getYaw();
 
             // damagedArmorId==0 is forward, add 0*90 degrees
@@ -41,7 +67,7 @@ class HitTracker
         void update() 
         {
             // check for a new hit
-            if (drivers->refSerial.getRefSerialReceivingData() && gimbal) {
+            if (drivers->refSerial.getRefSerialReceivingData() && getYawEncoderValue_func) {
                 const RefSerialData::Rx::RobotData &robotData = drivers->refSerial.getRobotData();
                 if (previousHp > robotData.currentHp && (robotData.damageType == RefSerialData::Rx::DamageType::ARMOR_DAMAGE || robotData.damageType == RefSerialData::Rx::DamageType::COLLISION)) {
                     // took some sort of damage and we think we took panel damage
@@ -52,6 +78,20 @@ class HitTracker
                 previousHp = robotData.currentHp;
             }
         }
+        // ------------------------------------------
+
+
+ 
+        // Return Value Functions
+        // ------------------------------------------
+        // Return angle in radians for the sentry to turn to
+        float getAngleToTurnForSentry() {
+            if(hitOrientation>180) hitOrientation-=360;
+            return hitOrientation * PI / 180;
+        }
+
+        // ------------------------------------------
+
 
 
         /*
@@ -72,19 +112,6 @@ class HitTracker
         }
         */
 
-
-        // Returns Current Hit Orientation in degrees
-        float getCurrentHit()
-        {
-            return hitOrientation;
-        }
-
-        
-        // Return angle in radians for the sentry to turn to
-        float getAngleToTurnForSentry() {
-            if(hitOrientation>180) hitOrientation-=360;
-            return hitOrientation * PI / 180;
-        }
     
     //static constexpr float PLACEHOLDER_ANGLE = 123;  // a special value for telling jetson that you weren't hit
 
@@ -92,10 +119,11 @@ class HitTracker
 
     private:
         tap::Drivers* drivers;
-        GimbalSubsystem* gimbal;
+        //GimbalSubsystem* gimbal;
 
-        float hitOrientation;
+        
         uint16_t previousHp;
-};
 
-}
+        // Access gimble yaw encoder value without causing circular dependency
+        std::function<float()> getYawEncoderValue_func;
+};

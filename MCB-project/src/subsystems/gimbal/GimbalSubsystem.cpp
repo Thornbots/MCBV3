@@ -21,6 +21,10 @@ void GimbalSubsystem::initialize() {
 
     targetYawAngleWorld += yawAngleRelativeWorld;
     drivers->commandScheduler.registerSubsystem(this);
+
+    drivers->hitTracker.SetGetYawEncoderFunction([this]{return this->getYawEncoderValue();});
+
+    
 }
 void GimbalSubsystem::refresh() {
     if (isYawMotorOnline() && wasYawMotorOffline) {
