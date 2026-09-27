@@ -9,10 +9,9 @@ namespace subsystems
 class HitTrackerSubsystem : public tap::control::Subsystem
 {
     public:
-        HitTrackerSubsystem(tap::Drivers* drivers, GimbalSubsystem* gimbal_input) : tap::control::Subsystem(drivers), drivers(drivers), refSerialTransmitter(drivers)
+        HitTrackerSubsystem(tap::Drivers* drivers, GimbalSubsystem* gimbal_input) : tap::control::Subsystem(drivers), drivers(drivers), refSerialTransmitter(drivers), gimbal(gimbal_input)
         {
-            //drivers = drivers_input;
-            gimbal = gimbal_input;
+            // 
         }
 
 
