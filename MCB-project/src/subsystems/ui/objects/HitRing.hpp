@@ -15,7 +15,7 @@ using namespace subsystems;
 // if someone hit you in that direction
 class HitRing : public GraphicsContainer {
 public:
-    HitRing(tap::Drivers* drivers, GimbalSubsystem* gimbal) : drivers(drivers), gimbal(gimbal) {
+    HitRing(src::Drivers* drivers, GimbalSubsystem* gimbal) : drivers(drivers), gimbal(gimbal) {
         // initialize rings
         for (int i = 0; i < NUM_HISTORY; i++) {
             rings[i].width = STARTING_SIZE + SIZE_INCREMENT * i;
@@ -70,7 +70,7 @@ public:
                 // 2 is back, add 2*90 degrees
                 // 3 is right, add 3*90 degrees
                 // 4 is top, don't care because we don't have panels on top (yet?)
-                hitOrientations[nextIndex] = -encoder + imu + 90 * ((uint16_t)robotData.damagedArmorId);
+                drivers->hitTracker.addHit();
                 rings[nextIndex].show();
                 expirationTimeouts[nextIndex].restart(RECENT_TIME + EXPIRATION_TIME);
                 rings[nextIndex].color = UISubsystem::Color::WHITE;
@@ -99,7 +99,7 @@ public:
     static constexpr float PLACEHOLDER_ANGLE = 123;  // a special value for telling jetson that you weren't hit
 
 private:
-    tap::Drivers* drivers;
+    src::Drivers* drivers;
     GimbalSubsystem* gimbal;
 
     uint16_t previousHp;
