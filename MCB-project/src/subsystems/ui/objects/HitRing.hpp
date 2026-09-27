@@ -70,6 +70,8 @@ public:
                 // 2 is back, add 2*90 degrees
                 // 3 is right, add 3*90 degrees
                 // 4 is top, don't care because we don't have panels on top (yet?)
+
+                //hitOrientations[nextIndex] = -encoder + imu + 90 * ((uint16_t)robotData.damagedArmorId);
                 drivers->hitTracker.addHit();
                 rings[nextIndex].show();
                 expirationTimeouts[nextIndex].restart(RECENT_TIME + EXPIRATION_TIME);
@@ -122,14 +124,11 @@ private:
     int nextIndex = 0;
     tap::arch::MilliTimeout expirationTimeouts[NUM_HISTORY];  // for knowing how old a hit is, stopped if not hit recently
 
-    // need to know which orientation (compared to gimbal) we got hit.
-    // This is a combination of which panel got hit and what angle the drivetrain is at (compared to gimbal)
-    float hitOrientations[NUM_HISTORY];
 
     // once we know what direction we hit in, we no longer care about the drivetrain spinning (encoder)
     // we just need to know if the head moved in space (imu)
     void updateRing(int i, float imu) {
-        rings[i].startAngle = static_cast<uint16_t>(3 * 360 + imu - hitOrientations[i] - ARC_LEN / 2);
+        rings[i].startAngle = static_cast<uint16_t>(3 * 360 + imu - drivers->hitTracker.getCurrentHit() - ARC_LEN / 2);
         UISubsystem::fixAngle(&rings[i].startAngle);
         rings[i].endAngle = rings[i].startAngle + ARC_LEN;
     }

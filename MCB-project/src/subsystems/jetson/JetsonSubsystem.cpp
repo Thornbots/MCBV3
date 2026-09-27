@@ -57,7 +57,7 @@ void JetsonSubsystem::refresh() {
 
             tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
             tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-            angleToTurnForSentry = hitRing.getAngleToTurnForSentry();
+            angleToTurnForSentry = drivers->hitTracker.getAngleToTurnForSentry();
             RefSysMsg r{
                 (uint8_t)gameData.gameStage,
                 (uint16_t)gameData.stageTimeRemaining,
