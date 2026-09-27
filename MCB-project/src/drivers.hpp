@@ -144,7 +144,7 @@ public:
     communication::I2CCommunication i2c;
     communication::UARTCommunication uart;
     ImuRecalibration recal;
-    HitTracker hitTracker; 
+    HitTracker hitTracker{this}; 
 
     
     void executeCalibration() {
