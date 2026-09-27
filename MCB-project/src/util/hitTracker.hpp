@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tap/communication/serial/ref_serial.hpp"
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
 
 
