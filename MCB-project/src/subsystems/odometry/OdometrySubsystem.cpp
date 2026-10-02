@@ -17,7 +17,6 @@ OdometrySubsystem::OdometrySubsystem(src::Drivers* drivers, tap::motor::DjiMotor
 void OdometrySubsystem::initialize() {
     motorOdo->initialize();
 
-    // targetOdoAngleWorld = odoAngleRelativeWorld;
     drivers->commandScheduler.registerSubsystem(this);
 }
 bool useController = false;
@@ -26,7 +25,6 @@ void OdometrySubsystem::refresh() {
     if(!useController){
         motorOdo->setDesiredOutput(odoMotorVoltage);
     }
-    // odoAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw() - getOdoEncoderValue();
 }
 
 void OdometrySubsystem::updateMotor(float targetOdo, float odoAngleRelativeWorld, float odoVelRelativeWorld, float driveTrainAngularVelocity) {
