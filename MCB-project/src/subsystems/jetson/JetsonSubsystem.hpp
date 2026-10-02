@@ -23,15 +23,14 @@ namespace subsystems {
 
 enum UartMessage : uint8_t{
     // incoming
-    ROS_MSG = 0,
-    CV_MSG = 1,
+    NAV_GOAL_MSG = 0,
+    CV_TARGET_MSG = 1,
+    RELOCALIZE = 4,
 
     // outgoing
     POSE_MSG = 2,
     REF_SYS_MSG = 3,
 
-    // incoming
-    RELOCALIZE = 4,
 };
 
 
@@ -44,44 +43,47 @@ enum OdomStatus : uint8_t{
 
 // =================== Incoming message types =======================
 
-struct ROSData
+// where sentry wants to go
+struct NavGoal
 {
-    float targetX = 0; //where I want to go
-    float targetY = 0;
+    float targetX = 0; //meters
+    float targetY = 0; //meters
+};
+
+struct CVTarget
+{
+    float x = 0;           // meters
+    float y = 0;           // meters
+    float z = 0;           // meters
+    uint8_t booleans = 0;
+    // bool shoot;            //value 1: 0 is no shoot, 1 is shoot
+    // bool typeCBasedPatrol; //value 2: 0 disables patrolling, 1 allows patrolling
+    // bool turnToHit;        //value 4: 0 disables turning to the direction we got hit in, 1 allows it
+    // bool unused;           //value 8:
+    // bool unused;           //value 16:
+    // bool unused;           //value 32:
+    // bool unused;           //value 64:
+    // bool unused;           //value 128:
+    uint16_t delay_ms = 0; //from when we receive this to this time, a shot needs to be fired. Might not be used?
 };
 
 struct Relocalize
 {
-    float expectedX = 0; //where I think I am, by the lidar
-    float expectedY = 0;
-    float expectedZ = 0; //ignored, easier to change it here than on the jetson right now
-};
-
-struct CVData 
-{
-    float x = 0;          // meters
-    float y = 0;          // meters
-    float z = 0;          // meters
-    float v_x = 0;        // m/s
-    float v_y = 0;        // m/s
-    float v_z = 0;        // m/s
-    float a_x = 0;        // m/s^2
-    float a_y = 0;        // m/s^2
-    float a_z = 0;        // m/s^2
-    float confidence = 0; // 0.0 to 1.0
-    // uint64_t timestamp = 0;
+    //where I think I am, by the lidar
+    float expectedX = 0; //meters
+    float expectedY = 0; //meters
 };
 
 // =================== Output message types =======================
 
 struct PoseData
 {
-    float x;
-    float y;
-    float vel_x;
-    float vel_y;
-    float head_pitch;
-    float head_yaw;
+    float x;          //meters
+    float y;          //meters
+    float vel_x;      //meters/second
+    float vel_y;      //meters/second
+    float head_pitch; //rad
+    float head_yaw;   //rad
     OdomStatus error_code;
 } modm_packed;
 // static_assert(sizeof(PoseData)<1024, "msg too large"); //TODO: implement static check
@@ -108,17 +110,11 @@ struct RefSysMsg
 // ==== struct type to enum mapping ===
 template<typename T>
 struct StructToMessageType;
-template<> struct StructToMessageType<ROSData> { static constexpr UartMessage value = ROS_MSG; };
-template<> struct StructToMessageType<CVData> { static constexpr UartMessage value = CV_MSG; };
+template<> struct StructToMessageType<NavGoal> { static constexpr UartMessage value = NAV_GOAL_MSG; };
+template<> struct StructToMessageType<CVTarget> { static constexpr UartMessage value = CV_TARGET_MSG; };
 template<> struct StructToMessageType<PoseData> { static constexpr UartMessage value = POSE_MSG; };
 template<> struct StructToMessageType<RefSysMsg> { static constexpr UartMessage value = REF_SYS_MSG; };
 template<> struct StructToMessageType<Relocalize> { static constexpr UartMessage value = RELOCALIZE; };
-
-
-struct PanelData {
-    double r;
-    double theta;
-};
 
 // Snapshot of the turret orientation (IMU-derived world-frame yaw/pitch and their rates) taken
 // once per control cycle. These are queued in a fixed-length delay line so that a CV frame, which
@@ -157,8 +153,6 @@ private:  // Private Variables
     float posXrelPitch, posYrelPitch, posZrelPitch; //position of panel relative to frame 2 but offset up
     float velXrelPitch, velYrelPitch, velZrelPitch;
 
-    std::vector<PanelData> panelData;
-
     // ---- orientation delay line for CV latency compensation ----
     // Number of control cycles of orientation history to buffer. The transform reads the sample
     // from the tail of the queue (the oldest one held), so this length sets the compensated
@@ -183,6 +177,9 @@ public:  // Public Methods
     bool updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d* jetsonExpectedPosition);
     void update(float current_yaw, float current_pitch, float current_yaw_velo, float current_pitch_velo, float* yawOut, float* pitchOut, float* yawVelOut, float* pitchVelOut, int* action);
 
+    // AutoAimAndFireCommand knows how to interpret the CVTarget message
+    bool getCVTarget(CVTarget* cvTarget);
+    
     float getAngleToTurnForSentry();
 
 
@@ -196,6 +193,7 @@ private:  // Private Methods
     // from ~ORIENTATION_QUEUE_SIZE cycles ago, used to compensate for CV pipeline latency.
     const OrientationSample& getDelayedOrientation() const;
 
+    // Fill the data of the message with the most recently received message. Returns true if the message was updated, false if not.
     template<class msg_type>
     inline bool getMsg(msg_type* output){
         if(!drivers->uart.hasNewMessage())

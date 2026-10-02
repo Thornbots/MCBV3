@@ -123,6 +123,7 @@ void JetsonSubsystem::checkApplyRelocalize() {
     }
 }
 
+// TODO: ros-driven navigation is going likely going to change a lot
 bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d* jetsonExpectedPosition) {
     Relocalize relocalize_msg;
     if (getMsg(&relocalize_msg)) {
@@ -132,13 +133,19 @@ bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVeloci
         if (relocalize_msg.expectedY > 2) drivers->leds.set(tap::gpio::Leds::Green, true);
     };
 
-    ROSData ros_msg;
+    NavGoal ros_msg;
     if (!getMsg(&ros_msg)) return false;
     *targetPosition = Vector2d(ros_msg.targetX, ros_msg.targetY);
     *targetVelocity = Vector2d(0, 0);
 
     return true;
 }
+
+// Updates the contents of cvTarget and returns true if there was a new message, false if there wasn't a new message.
+bool JetsonSubsystem::getCVTarget(CVTarget* cvTarget) {
+    return getMsg(cvTarget);
+}
+
 
 void JetsonSubsystem::update(
     float current_yaw,

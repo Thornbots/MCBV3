@@ -21,6 +21,7 @@
 #include "objects/Countdown.hpp"
 #include "objects/LinearVelocityIndicator.hpp"
 #include "objects/ImuRecalibrationIndicator.hpp"
+#include "objects/AutoaimDebug.hpp"
 #include "drivers.hpp"
 
 namespace commands {
@@ -28,13 +29,14 @@ using subsystems::UISubsystem;
 
 class SentryDrawCommand : public tap::control::Command, GraphicsContainer {
 public:
-    SentryDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain)
+    SentryDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain, commands::AutoAimAndFireCommand* aaafc)
         : drivers(drivers),
           ui(ui),
           gimbal(gimbal),
           flywheel(flywheel),
           indexer(indexer),
-          drivetrain(drivetrain) {
+          drivetrain(drivetrain),
+          aaafc(aaafc) {
         addSubsystemRequirement(ui);
 
         addGraphicsObject(&lane);
@@ -81,6 +83,7 @@ private:
     FlywheelSubsystem* flywheel;
     IndexerSubsystem* indexer;
     DrivetrainSubsystem* drivetrain;
+    commands::AutoAimAndFireCommand* aaafc;
 
     // add top level graphics objects here and in the constructor
     LaneAssistLines lane{gimbal};
@@ -94,5 +97,6 @@ private:
     Countdown countdown{drivers};
     LinearVelocityIndicator velo{drivetrain};
     ImuRecalibrationIndicator recal{drivers};
+    AutoaimDebug aad{gimbal, aaafc};
 };
 }  // namespace commands
