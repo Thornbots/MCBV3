@@ -73,7 +73,7 @@ private:
     static constexpr float BURST_AMOUNT = PATROL_SPEED; //rad/cycle, set to PATROL_SPEED to disable burst mode
 
     
-    CVTarget cvTarget{};
+    CvTarget cvTarget{};
     tap::arch::MilliTimeout cvTargetValidTimeout{};
     tap::arch::MilliTimeout startShotTimeout{}; //ideally we don't have to queue up multiple shots
     static constexpr int TARGET_VALID_TIME = 200; //ms, perhaps the new version of PERSISTANCE after the last shot

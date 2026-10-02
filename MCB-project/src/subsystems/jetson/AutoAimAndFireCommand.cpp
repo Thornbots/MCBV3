@@ -34,7 +34,7 @@ void AutoAimAndFireCommand::execute() {
     
     tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
     bool inRfid = robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE) || robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE);
-    if(jetson->getCVTarget(&cvTarget)) {
+    if(jetson->getCvTarget(&cvTarget)) {
         cvTargetValidTimeout.restart(TARGET_VALID_TIME);
         startShotTimeout.restart(cvTarget.delay_ms-FIRING_LATENCY_TIME);
     }
@@ -56,7 +56,7 @@ void AutoAimAndFireCommand::execute() {
         targetPitch = Reticle::solveForPitch(deltaXY.magnitude(), cvTarget.z); //gimbal subsystem will clamp the pitch. If it gets clamped, maybe don't shoot?
         gimbal->setAngles(targetYaw, targetPitch);
         targeting = true;
-        bool shoot = cvTarget.booleans & 1; //from struct CVTarget in JetsonSubsystem.hpp
+        bool shoot = cvTarget.flags & CV_TARGET_FLAG_FIRE;
         if(allowShooting && shoot && startShotTimeout.execute()){
             indexer->tryShootOnce();
         }
@@ -72,7 +72,7 @@ void AutoAimAndFireCommand::execute() {
             // world radians. Latch that one-shot value into an absolute world-yaw target and hold
             // it, otherwise it is lost the instant patrol resumes and the turret never turns.
             float angleToTurnForSentry = jetson->getAngleToTurnForSentry();
-            bool turnToHit = cvTarget.booleans & 4; //from struct CVTarget in JetsonSubsystem.hpp
+            bool turnToHit = cvTarget.flags & CV_TARGET_FLAG_TURN_TO_HIT;
             if ((angleToTurnForSentry != HitRing::PLACEHOLDER_ANGLE) && angleToTurnForSentry) {
                 targetPitch = 0.05;  // pitch down to avoid looking into the sky
                 // Face the hit: target heading = current heading minus the returned offset.
@@ -87,7 +87,7 @@ void AutoAimAndFireCommand::execute() {
                 gimbal->setAngles(hitTargetYaw, targetPitch);
             } else {
                 turningToHit = false;
-                bool typeCBasedPatrol = cvTarget.booleans & 2; //from struct CVTarget in JetsonSubsystem.hpp
+                bool typeCBasedPatrol = cvTarget.flags & CV_TARGET_FLAG_TYPE_C_BASED_PATROL;
                 if(typeCBasedPatrol) targetPitch = 0.05;  // pitch down to avoid looking into the sky
                 
                 float yawChange = 0;

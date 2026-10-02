@@ -21,15 +21,17 @@ using namespace tap::algorithms::ballistics;
 
 namespace subsystems {
 
+// Named after the Jetson's ROS topic each one carries. Wire layouts:
+// ros2_dji_serial_bridge's UART_PROTOCOL.md, the Jetson's side of this file.
 enum UartMessage : uint8_t{
     // incoming
-    NAV_GOAL_MSG = 0,
-    CV_TARGET_MSG = 1,
+    NAV_GOAL = 0,
+    CV_TARGET = 1,
     RELOCALIZE = 4,
 
     // outgoing
-    POSE_MSG = 2,
-    REF_SYS_MSG = 3,
+    POSE = 2,
+    REF_SYS = 3,
 
 };
 
@@ -46,37 +48,35 @@ enum OdomStatus : uint8_t{
 // where sentry wants to go
 struct NavGoal
 {
-    float targetX = 0; //meters
-    float targetY = 0; //meters
+    float x = 0; //meters
+    float y = 0; //meters
 };
 
-struct CVTarget
+// Aim point and fire decision in one frame. x/y/z is a world-frame point in the
+// Jetson's odom (REP-105, z up), not a camera-frame one. delay_ms runs from receipt.
+struct CvTarget
 {
     float x = 0;           // meters
     float y = 0;           // meters
-    float z = 0;           // meters
-    uint8_t booleans = 0;
-    // bool shoot;            //value 1: 0 is no shoot, 1 is shoot
-    // bool typeCBasedPatrol; //value 2: 0 disables patrolling, 1 allows patrolling
-    // bool turnToHit;        //value 4: 0 disables turning to the direction we got hit in, 1 allows it
-    // bool unused;           //value 8:
-    // bool unused;           //value 16:
-    // bool unused;           //value 32:
-    // bool unused;           //value 64:
-    // bool unused;           //value 128:
-    uint16_t delay_ms = 0; //from when we receive this to this time, a shot needs to be fired. Might not be used?
-};
+    float z = 0;           // meters, up
+    uint16_t delay_ms = 0; // fire this many ms after the frame arrives (0 = now)
+    uint8_t flags = 0;     // CV_TARGET_FLAG_* bits, bits 3-7 reserved (0)
+} modm_packed;
+static constexpr uint8_t CV_TARGET_FLAG_FIRE = 0x01;                // fire delay_ms after receipt
+static constexpr uint8_t CV_TARGET_FLAG_TYPE_C_BASED_PATROL = 0x02; // 0 stops patrolling, 1 allows it
+static constexpr uint8_t CV_TARGET_FLAG_TURN_TO_HIT = 0x04;         // 0 stops turning toward a hit, 1 allows it
 
+//where lidar thinks the robot is
 struct Relocalize
 {
-    //where I think I am, by the lidar
-    float expectedX = 0; //meters
-    float expectedY = 0; //meters
-};
+    float x = 0; 
+    float y = 0;
+} modm_packed;
+
 
 // =================== Output message types =======================
 
-struct PoseData
+struct Pose
 {
     float x;          //meters
     float y;          //meters
@@ -84,17 +84,16 @@ struct PoseData
     float vel_y;      //meters/second
     float head_pitch; //rad
     float head_yaw;   //rad
-    OdomStatus error_code;
+    OdomStatus odom_status;
 } modm_packed;
-// static_assert(sizeof(PoseData)<1024, "msg too large"); //TODO: implement static check
 
-struct RefSysMsg
+struct RefSys
 {
-    uint8_t gameStage;
-    uint16_t stageTimeRemaining;
-    uint16_t robotHp;
-    uint8_t robotID; //if was on red team, so hero will always be 1 and not 101
-    float deltaAngleGotHitIn; //if we are looking in a certain direction and get hit in the left, this would be PI/2
+    uint8_t game_stage;
+    uint16_t stage_time_remaining;
+    uint16_t robot_hp;
+    uint8_t robot_id; //if was on red team, so hero will always be 1 and not 101
+    float delta_angle_got_hit_in; //if we are looking in a certain direction and get hit in the left, this would be PI/2
 
     uint8_t booleans;
     // bool isOnBlueTeam;
@@ -110,22 +109,12 @@ struct RefSysMsg
 // ==== struct type to enum mapping ===
 template<typename T>
 struct StructToMessageType;
-template<> struct StructToMessageType<NavGoal> { static constexpr UartMessage value = NAV_GOAL_MSG; };
-template<> struct StructToMessageType<CVTarget> { static constexpr UartMessage value = CV_TARGET_MSG; };
-template<> struct StructToMessageType<PoseData> { static constexpr UartMessage value = POSE_MSG; };
-template<> struct StructToMessageType<RefSysMsg> { static constexpr UartMessage value = REF_SYS_MSG; };
+template<> struct StructToMessageType<NavGoal> { static constexpr UartMessage value = NAV_GOAL; };
+template<> struct StructToMessageType<CvTarget> { static constexpr UartMessage value = CV_TARGET; };
+template<> struct StructToMessageType<Pose> { static constexpr UartMessage value = POSE; };
+template<> struct StructToMessageType<RefSys> { static constexpr UartMessage value = REF_SYS; };
 template<> struct StructToMessageType<Relocalize> { static constexpr UartMessage value = RELOCALIZE; };
 
-// Snapshot of the turret orientation (IMU-derived world-frame yaw/pitch and their rates) taken
-// once per control cycle. These are queued in a fixed-length delay line so that a CV frame, which
-// arrives with pipeline latency, can be transformed into the world frame using the orientation as
-// it was when that frame was actually captured rather than the live (newer) orientation.
-struct OrientationSample {
-    float cvYaw = 0;       // world-frame turret yaw   (XYZ-euler 3rd rotation), rad
-    float cvPitch = 0;     // world-frame turret pitch (XYZ-euler 2nd rotation), rad
-    float cvYawVel = 0;    // yaw rate, rad/s
-    float cvPitchVel = 0;  // pitch rate, rad/s
-};
 
 class JetsonSubsystem : public tap::control::Subsystem {
 private:  // Private Variables
@@ -140,28 +129,6 @@ private:  // Private Variables
     // bool needToSendRefData = false;
 
 
-    float q0, q1, q2, q3; //easier to convert frames of reference from the quatrenion directly
-    float cvRoll, cvPitch, cvYaw; //expressed in XYZ euler angles, not the IMU's standard ZYX
-    float cvRollVel, cvPitchVel, cvYawVel;
-    float bodyXangVel, bodyYangVel, bodyZangVel;
-    float imuGx;
-    float imuGy;
-    float imuGz;
-   
-    float posXrel4, posYrel4, posZrel4; //position of the panel relative to the 4th frame aka the shooter axis
-    float velXrel4, velYrel4, velZrel4;
-    float posXrelPitch, posYrelPitch, posZrelPitch; //position of panel relative to frame 2 but offset up
-    float velXrelPitch, velYrelPitch, velZrelPitch;
-
-    // ---- orientation delay line for CV latency compensation ----
-    // Number of control cycles of orientation history to buffer. The transform reads the sample
-    // from the tail of the queue (the oldest one held), so this length sets the compensated
-    // latency: delay ~= ORIENTATION_QUEUE_SIZE * controlCyclePeriod. Tune so that delay matches
-    // the combined camera + Jetson + transport latency of a CV frame.
-    static constexpr size_t ORIENTATION_QUEUE_SIZE = 23; // 1 isaffects 'resonating', where if it starts pointed at it, it gets worse and bounces side ot side
-    std::array<OrientationSample, ORIENTATION_QUEUE_SIZE> orientationQueue{};
-    size_t orientationQueueHead = 0;  // index of the oldest sample == next slot to overwrite
-
 public:  // Public Methods
     JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal, OdometrySubsystem* odo);
 
@@ -175,23 +142,14 @@ public:  // Public Methods
     void checkApplyRelocalize();
 
     bool updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d* jetsonExpectedPosition);
-    void update(float current_yaw, float current_pitch, float current_yaw_velo, float current_pitch_velo, float* yawOut, float* pitchOut, float* yawVelOut, float* pitchVelOut, int* action);
 
-    // AutoAimAndFireCommand knows how to interpret the CVTarget message
-    bool getCVTarget(CVTarget* cvTarget);
+    // AutoAimAndFireCommand knows how to interpret the CvTarget message
+    bool getCvTarget(CvTarget* cvTarget);
     
     float getAngleToTurnForSentry();
 
 
 private:  // Private Methods
-
-    // Sample the current turret orientation from the IMU and push it into the delay line.
-    // Call exactly once per control cycle (from refresh()).
-    void recordOrientationSample();
-
-    // Returns the orientation held at the tail of the delay line, i.e. the turret orientation
-    // from ~ORIENTATION_QUEUE_SIZE cycles ago, used to compensate for CV pipeline latency.
-    const OrientationSample& getDelayedOrientation() const;
 
     // Fill the data of the message with the most recently received message. Returns true if the message was updated, false if not.
     template<class msg_type>
