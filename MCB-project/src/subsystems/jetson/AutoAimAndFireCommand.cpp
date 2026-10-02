@@ -6,7 +6,6 @@ namespace commands {
 using namespace tap::communication::serial;
 
 void AutoAimAndFireCommand::initialize() {
-    shoot = -1;
     isScheduled = true;
 }
 void AutoAimAndFireCommand::execute() {
@@ -32,48 +31,39 @@ void AutoAimAndFireCommand::execute() {
         }
 
     }
-
-
-    float dyaw = 0;
-    float currentYaw = gimbal->getYawAngleRelativeWorld();
-    float currentPitch = gimbal->getPitchEncoderValue();
-    float currentpitchvel = gimbal->getPitchVel(); //did add this for the actual CV stuff can make this 0 if we want
-    cv->update(currentYaw, currentPitch, yawvel, currentpitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
-
+    
     tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
     bool inRfid = robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE) || robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE);
-    if(inRfid && allowGimbal){ //am i over the rfid
-        gimbal->setAngles(0, 0);
-    } else if (shoot != -1) {
-        //if(tap::arch::clock::getTimeMilliseconds() - lastSeenTime >  PERSISTANCE) flip = flip * -1;
-        //Found a target, moving to it and maybe shooting at it
-
-        dyaw = fmod(dyaw, 2 * PI);
-        // clamp between -Pi and PI to allow for dividing
-        dyaw = dyaw > PI ? dyaw - 2 * PI : dyaw < -PI ? dyaw + 2 * PI : dyaw;
-        lastSeenTime = tap::arch::clock::getTimeMilliseconds();
-
-        // pitch damper (analogous to the yaw divisor below): only step a fraction of the way
-        // from the current pitch toward the CV target each cycle, so the setpoint eases in
-        // instead of jumping with every (latent, ~30Hz) CV frame. Larger divisor = more
-        // damping / smoother but more lag; smaller = snappier but can ring.
-        float dpitch = pitch - currentPitch;
-        float newPitch = currentPitch + dpitch * std::clamp(std::abs(dpitch)*PITCH_MULTIPLY_SCALE, PITCH_MULTIPLY_MIN, PITCH_MULTIPLY_MAX);
-        dyaw *= std::clamp(std::abs(dyaw)*YAW_MULTIPLY_SCALE, YAW_MULTIPLY_MIN, YAW_MULTIPLY_MAX);
-        // if (abs(dyaw) > YAW_CLOSE) {
-        //     dyaw /= YAW_DIVIDE_CLOSE;} //move slow (divide by more) if close [?]
-        // else dyaw /= YAW_DIVIDE_FAR;//move fast if not close [?] (dyaw, newPitch, yawvel, pitchvel);//WithLatencyCompensation
-        if (allowGimbal) gimbal->updateMotorsAndVelocity(dyaw, newPitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
-        if (shoot == 1) isShooting = true;
-    } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime < PERSISTANCE) {
-        //Haven't found a target right now but I have recently, keep shooting if I was shooting
-
-        if(allowGimbal) gimbal->updateMotors(0, pitch);
+    if(jetson->getCVTarget(&cvTarget)) {
+        cvTargetValidTimeout.restart(TARGET_VALID_TIME);
+        startShotTimeout.restart(cvTarget.delay_ms-FIRING_LATENCY_TIME);
+    }
+    if (allowGimbal&&!cvTargetValidTimeout.isExpired()) { //do position-based aiming
+        // the tap::algorithms::ballistics::findTargetProjectileIntersection function
+        // is useful for knowing how to hit a moving target, but the jetson already
+        // did that work. So we just need to do simple projectile motion to aim
+        // at a position that isn't moving.
+        // The cvTarget xyz is in the coord frame from odometry, so if odo thinks
+        // we are at (3, 4) and cvTarget says to aim at (3, 6, 0.2), we need to aim forward.
+        // We adjust our aiming to hit the cvTarget as odo moves, so if we move to (3.2, 4)
+        // while we are aiming, we need to look slightly to the left.
+        
+        // Note that for gimbal subsystem, positive pitch is downward.
+        // yaw of 0 is forward (when rfid localizaition was used, 0,0 meant look forward and horizontal),
+        // guessing that positive yaw is the way it should be (counterclockwise in xy plane)
+        Vector2d deltaXY{cvTarget.x - odo->getX(), cvTarget.y - odo->getY()};
+        targetYaw = deltaXY.angle()-PI/2; //angle would be PI/2 if we should point in y direction, but to the gimbal subsystem 0 is pointing in the y direction
+        targetPitch = Reticle::solveForPitch(deltaXY.magnitude(), cvTarget.z); //gimbal subsystem will clamp the pitch. If it gets clamped, maybe don't shoot?
+        gimbal->setAngles(targetYaw, targetPitch);
+        targeting = true;
+        bool shoot = cvTarget.booleans & 1; //from struct CVTarget in JetsonSubsystem.hpp
+        if(allowShooting && shoot && startShotTimeout.execute()){
+            indexer->tryShootOnce();
+        }
     } else {
         //Haven't found a target, patrol
+        targeting = false;
 
-        isShooting = false;
-        pitch = 0.05;  // pitch down to avoid looking into the sky
         numCyclesForBurst++;
 
         if(allowGimbal) {
@@ -81,11 +71,12 @@ void AutoAimAndFireCommand::execute() {
             // cycle right after a hit is registered, when it returns (headYaw - hitDirection) in
             // world radians. Latch that one-shot value into an absolute world-yaw target and hold
             // it, otherwise it is lost the instant patrol resumes and the turret never turns.
-            float angleToTurnForSentry = cv->getAngleToTurnForSentry();
-            if (angleToTurnForSentry != HitRing::PLACEHOLDER_ANGLE) {
+            float angleToTurnForSentry = jetson->getAngleToTurnForSentry();
+            bool turnToHit = cvTarget.booleans & 4; //from struct CVTarget in JetsonSubsystem.hpp
+            if ((angleToTurnForSentry != HitRing::PLACEHOLDER_ANGLE) && angleToTurnForSentry) {
+                targetPitch = 0.05;  // pitch down to avoid looking into the sky
                 // Face the hit: target heading = current heading minus the returned offset.
-                // (If the turret turns AWAY from the hit on hardware, flip this sign to a +.)
-                hitTargetYaw = currentYaw - angleToTurnForSentry;
+                hitTargetYaw = gimbal->getYawAngleRelativeWorld() - angleToTurnForSentry;
                 turningToHit = true;
                 hitTurnStartTime = tap::arch::clock::getTimeMilliseconds();
             }
@@ -93,31 +84,26 @@ void AutoAimAndFireCommand::execute() {
             if (turningToHit && tap::arch::clock::getTimeMilliseconds() - hitTurnStartTime < HIT_TURN_DURATION) {
                 // Hold the heading toward the hit. CV still runs at the top of execute(), so if the
                 // attacker comes into view the shoot branch takes over and engages it.
-                gimbal->setAngles(hitTargetYaw, pitch);
+                gimbal->setAngles(hitTargetYaw, targetPitch);
             } else {
                 turningToHit = false;
+                bool typeCBasedPatrol = cvTarget.booleans & 2; //from struct CVTarget in JetsonSubsystem.hpp
+                if(typeCBasedPatrol) targetPitch = 0.05;  // pitch down to avoid looking into the sky
+                
+                float yawChange = 0;
                 if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
-                    gimbal->updateMotors(BURST_AMOUNT, pitch);
+                    if(typeCBasedPatrol) yawChange = BURST_AMOUNT;
                     numCyclesForBurst = 0;
                 } else {
-                    gimbal->updateMotors(PATROL_SPEED, pitch);
+                    if(typeCBasedPatrol) yawChange = PATROL_SPEED;
                 }
+                gimbal->updateMotors(yawChange, targetPitch);
             }
         }
     }
 
-    if(allowShooting){
-        if (isShooting) {
-            // if we see a panel or recently have seen a panel
-            indexer->indexAtRate(10);//20 change to not make a mess
-        } else {
-            // if we haven't seen a panel for a bit
-             indexer->stopIndex();
-            // indexer->unjam();
-        }
-    } else {
+    if(!allowShooting){
         indexer->stopIndex();
-        
     }
 
     if(allowGimbal) {
@@ -129,7 +115,6 @@ void AutoAimAndFireCommand::execute() {
 }
 
 void AutoAimAndFireCommand::end(bool) {
-    pitch = 0;
     isScheduled = false;
 }
 
