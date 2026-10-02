@@ -70,10 +70,12 @@ struct CvTarget
     float y = 0;           // meters
     float z = 0;           // meters, up
     uint16_t delay_ms = 0; // fire this many ms after the frame arrives (0 = now)
-    uint8_t flags = 0;     // bit0 fire, bits 1-7 reserved (0)
+    uint8_t flags = 0;     // CV_TARGET_FLAG_* bits, bits 3-7 reserved (0)
 } modm_packed;
 static_assert(sizeof(CvTarget) == 19, "CvTarget must match the bridge's CvTargetPayload");
-static constexpr uint8_t CV_TARGET_FLAG_FIRE = 0x01;
+static constexpr uint8_t CV_TARGET_FLAG_FIRE = 0x01;                // fire delay_ms after receipt
+static constexpr uint8_t CV_TARGET_FLAG_TYPE_C_BASED_PATROL = 0x02; // 0 stops patrolling, 1 allows it
+static constexpr uint8_t CV_TARGET_FLAG_TURN_TO_HIT = 0x04;         // 0 stops turning toward a hit, 1 allows it
 
 // =================== Output message types =======================
 
