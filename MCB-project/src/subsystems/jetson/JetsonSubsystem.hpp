@@ -32,6 +32,9 @@ enum UartMessage : uint8_t{
     // outgoing
     POSE = 2,
     REF_SYS = 3,
+    
+    // bidirectional
+    PING = 5,
 
 };
 
@@ -52,6 +55,10 @@ struct NavGoal
     float y = 0; //meters
 };
 
+
+static constexpr uint8_t CV_TARGET_FLAG_FIRE = 0x01;                // fire delay_ms after receipt
+static constexpr uint8_t CV_TARGET_FLAG_TYPE_C_BASED_PATROL = 0x02; // 0 stops patrolling, 1 allows it
+static constexpr uint8_t CV_TARGET_FLAG_TURN_TO_HIT = 0x04;         // 0 stops turning toward a hit, 1 allows it
 // Aim point and fire decision in one frame. x/y/z is a world-frame point in the
 // Jetson's odom (REP-105, z up), not a camera-frame one. delay_ms runs from receipt.
 struct CvTarget
@@ -62,9 +69,6 @@ struct CvTarget
     uint16_t delay_ms = 0; // fire this many ms after the frame arrives (0 = now)
     uint8_t flags = 0;     // CV_TARGET_FLAG_* bits, bits 3-7 reserved (0)
 } modm_packed;
-static constexpr uint8_t CV_TARGET_FLAG_FIRE = 0x01;                // fire delay_ms after receipt
-static constexpr uint8_t CV_TARGET_FLAG_TYPE_C_BASED_PATROL = 0x02; // 0 stops patrolling, 1 allows it
-static constexpr uint8_t CV_TARGET_FLAG_TURN_TO_HIT = 0x04;         // 0 stops turning toward a hit, 1 allows it
 
 //where lidar thinks the robot is
 struct Relocalize
@@ -106,6 +110,11 @@ struct RefSys
     // bool doesGimbalHavePower;
 } modm_packed;
 
+struct Ping
+{
+    uint8_t number=0;
+} modm_packed;
+
 // ==== struct type to enum mapping ===
 template<typename T>
 struct StructToMessageType;
@@ -114,6 +123,7 @@ template<> struct StructToMessageType<CvTarget> { static constexpr UartMessage v
 template<> struct StructToMessageType<Pose> { static constexpr UartMessage value = POSE; };
 template<> struct StructToMessageType<RefSys> { static constexpr UartMessage value = REF_SYS; };
 template<> struct StructToMessageType<Relocalize> { static constexpr UartMessage value = RELOCALIZE; };
+template<> struct StructToMessageType<Ping> { static constexpr UartMessage value = PING; };
 
 
 class JetsonSubsystem : public tap::control::Subsystem {
