@@ -4,6 +4,7 @@
 #include "tap/control/command.hpp"
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
+#include "subsystems/gimbal/MouseMoveCommand.hpp"
 #include "subsystems/flywheel/FlywheelSubsystem.hpp"
 #include "subsystems/flywheel/FlywheelSubsystemConstants.hpp"
 #include "subsystems/indexer/IndexerSubsystem.hpp"
@@ -27,7 +28,13 @@ using tap::communication::serial::Remote;
 class AutoAimAndFireCommand : public tap::control::Command
 {
 public:
-    AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* indexer, FlywheelSubsystem* flywheel, JetsonSubsystem* jetson, OdometrySubsystem* odo, AutoDriveCommand* adc);
+    // enum class AutoAimMode : uint8_t {
+    //     SENTRY_MODE = 0,
+    //     JOYSTICK_ASSIST = 1,
+    //     MOUSE_ASSIST = 2
+    // };
+
+    AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* indexer, FlywheelSubsystem* flywheel, JetsonSubsystem* jetson, OdometrySubsystem* odo, AutoDriveCommand* adc, bool isManualControl);
 
     void initialize() override;
 
@@ -45,6 +52,8 @@ public:
     float targetPitch = 0;
     bool targeting = false;
 
+    CvTarget cvTarget{};
+    bool receivedCvTargetEver = false;
 
 private:
     src::Drivers* drivers;
@@ -54,14 +63,15 @@ private:
     JetsonSubsystem* jetson;
     OdometrySubsystem* odo;
     AutoDriveCommand* adc;
+    bool isManualControl;
 
     int numCyclesForBurst = 0;
     static constexpr int CYCLES_UNTIL_BURST = 380; //cycles
-    static constexpr float PATROL_SPEED = -0.002; //rad/cycle
+    static constexpr float PATROL_SPEED = -0.0002; //rad/cycle
     static constexpr float BURST_AMOUNT = PATROL_SPEED; //rad/cycle, set to PATROL_SPEED to disable burst mode
+    static constexpr float PATROL_PITCH = 0.05; // also used for turn to hit
 
     
-    CvTarget cvTarget{};
     tap::arch::MilliTimeout cvTargetValidTimeout{};
     tap::arch::MilliTimeout startShotTimeout{}; //ideally we don't have to queue up multiple shots
     static constexpr int TARGET_VALID_TIME = 200; //ms, perhaps the new version of PERSISTANCE after the last shot
