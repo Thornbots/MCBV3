@@ -50,6 +50,10 @@ void GimbalSubsystem::refresh() {
     }
 }
 
+void GimbalSubsystem::setAngles(float yawAngle, float pitchAngle) {
+    updateMotors(yawAngle-targetYawAngleWorld, pitchAngle);
+}
+
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
     resetEncoderIfGainPower();
     float pitchVel = getPitchVel();
@@ -127,11 +131,6 @@ void GimbalSubsystem::reZeroYaw() {
     yawAngleRelativeWorld = 0.0;
     targetYawAngleWorld = 0.0;
 }
-
-void GimbalSubsystem::setAngles(float yawAngle, float pitchAngle) {
-    updateMotors(yawAngle-targetYawAngleWorld, pitchAngle);
-}
-
 
 void GimbalSubsystem::updatePositionHistory(float newPos) {
     for (int i = LATENCY_Q_SIZE - 1; i >= 0; i--) {

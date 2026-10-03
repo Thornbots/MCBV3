@@ -18,6 +18,11 @@ void JetsonSubsystem::refresh() {
     drivers->uart.updateSerial();
 
     hitRing.update();
+    
+    Ping ping{};
+    if(getMsg(&ping)){
+        sendMsg(&ping);
+    }
 
     if (poseDataTimeout.execute()) {
         messageCount++;

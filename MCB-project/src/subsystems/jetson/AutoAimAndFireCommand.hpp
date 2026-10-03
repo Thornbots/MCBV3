@@ -27,19 +27,7 @@ using tap::communication::serial::Remote;
 class AutoAimAndFireCommand : public tap::control::Command
 {
 public:
-    AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* indexer, FlywheelSubsystem* flywheel, JetsonSubsystem* jetson, OdometrySubsystem* odo, AutoDriveCommand* adc)
-        : drivers(drivers),
-          gimbal(gimbal),
-          indexer(indexer),
-          flywheel(flywheel),
-          jetson(jetson),
-          odo(odo),
-          adc(adc)
-    {
-        addSubsystemRequirement(gimbal);
-        addSubsystemRequirement(indexer);
-        addSubsystemRequirement(flywheel);
-    }
+    AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* indexer, FlywheelSubsystem* flywheel, JetsonSubsystem* jetson, OdometrySubsystem* odo, AutoDriveCommand* adc);
 
     void initialize() override;
 
@@ -77,7 +65,7 @@ private:
     tap::arch::MilliTimeout cvTargetValidTimeout{};
     tap::arch::MilliTimeout startShotTimeout{}; //ideally we don't have to queue up multiple shots
     static constexpr int TARGET_VALID_TIME = 200; //ms, perhaps the new version of PERSISTANCE after the last shot
-    static constexpr int FIRING_LATENCY_TIME = 5; //ms. When we tell the indexer to shoot, how long until that happens. Needs to be tested.
+    static constexpr int FIRING_LATENCY_TIME = 80; //ms. When we tell the indexer to shoot, how long until that happens. Needs to be tested.
     
 
     

@@ -5,6 +5,20 @@
 namespace commands {
 using namespace tap::communication::serial;
 
+AutoAimAndFireCommand::AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* indexer, FlywheelSubsystem* flywheel, JetsonSubsystem* jetson, OdometrySubsystem* odo, AutoDriveCommand* adc) 
+    : drivers(drivers),
+        gimbal(gimbal),
+        indexer(indexer),
+        flywheel(flywheel),
+        jetson(jetson),
+        odo(odo),
+        adc(adc)
+{
+    addSubsystemRequirement(gimbal);
+    addSubsystemRequirement(indexer);
+    addSubsystemRequirement(flywheel);
+}
+
 void AutoAimAndFireCommand::initialize() {
     isScheduled = true;
 }
@@ -33,12 +47,14 @@ void AutoAimAndFireCommand::execute() {
     }
     
     tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-    bool inRfid = robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE) || robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE);
     if(jetson->getCvTarget(&cvTarget)) {
         cvTargetValidTimeout.restart(TARGET_VALID_TIME);
         startShotTimeout.restart(cvTarget.delay_ms-FIRING_LATENCY_TIME);
     }
-    if (allowGimbal&&!cvTargetValidTimeout.isExpired()) { //do position-based aiming
+    float angleToTurnForSentry = jetson->getAngleToTurnForSentry();
+    bool needToTurnToHit = (cvTarget.flags & CV_TARGET_FLAG_TURN_TO_HIT)>0 && (angleToTurnForSentry != HitRing::PLACEHOLDER_ANGLE);
+    
+    if (allowGimbal&&!cvTargetValidTimeout.isExpired()&&!(needToTurnToHit||turningToHit)) { //do position-based aiming
         // the tap::algorithms::ballistics::findTargetProjectileIntersection function
         // is useful for knowing how to hit a moving target, but the jetson already
         // did that work. So we just need to do simple projectile motion to aim
@@ -52,12 +68,12 @@ void AutoAimAndFireCommand::execute() {
         // yaw of 0 is forward (when rfid localizaition was used, 0,0 meant look forward and horizontal),
         // guessing that positive yaw is the way it should be (counterclockwise in xy plane)
         Vector2d deltaXY{cvTarget.x - odo->getX(), cvTarget.y - odo->getY()};
-        targetYaw = deltaXY.angle()-PI/2; //angle would be PI/2 if we should point in y direction, but to the gimbal subsystem 0 is pointing in the y direction
+        targetYaw = deltaXY.angle(); //angle would be PI/2 if we should point in y direction, but to the gimbal subsystem 0 is pointing in the y direction
         targetPitch = Reticle::solveForPitch(deltaXY.magnitude(), cvTarget.z); //gimbal subsystem will clamp the pitch. If it gets clamped, maybe don't shoot?
         gimbal->setAngles(targetYaw, targetPitch);
         targeting = true;
-        bool shoot = cvTarget.flags & CV_TARGET_FLAG_FIRE;
-        if(allowShooting && shoot && startShotTimeout.execute()){
+        bool shootFlag = (cvTarget.flags & CV_TARGET_FLAG_FIRE)>0;
+        if(startShotTimeout.execute() && allowShooting && shootFlag){
             indexer->tryShootOnce();
         }
     } else {
@@ -71,9 +87,7 @@ void AutoAimAndFireCommand::execute() {
             // cycle right after a hit is registered, when it returns (headYaw - hitDirection) in
             // world radians. Latch that one-shot value into an absolute world-yaw target and hold
             // it, otherwise it is lost the instant patrol resumes and the turret never turns.
-            float angleToTurnForSentry = jetson->getAngleToTurnForSentry();
-            bool turnToHit = cvTarget.flags & CV_TARGET_FLAG_TURN_TO_HIT;
-            if ((angleToTurnForSentry != HitRing::PLACEHOLDER_ANGLE) && angleToTurnForSentry) {
+            if (needToTurnToHit) {
                 targetPitch = 0.05;  // pitch down to avoid looking into the sky
                 // Face the hit: target heading = current heading minus the returned offset.
                 hitTargetYaw = gimbal->getYawAngleRelativeWorld() - angleToTurnForSentry;
@@ -87,15 +101,15 @@ void AutoAimAndFireCommand::execute() {
                 gimbal->setAngles(hitTargetYaw, targetPitch);
             } else {
                 turningToHit = false;
-                bool typeCBasedPatrol = cvTarget.flags & CV_TARGET_FLAG_TYPE_C_BASED_PATROL;
-                if(typeCBasedPatrol) targetPitch = 0.05;  // pitch down to avoid looking into the sky
+                bool typeCBasedPatrolFlag = (cvTarget.flags & CV_TARGET_FLAG_TYPE_C_BASED_PATROL)>0;
+                if(typeCBasedPatrolFlag) targetPitch = 0.05;  // pitch down to avoid looking into the sky
                 
                 float yawChange = 0;
                 if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
-                    if(typeCBasedPatrol) yawChange = BURST_AMOUNT;
+                    if(typeCBasedPatrolFlag) yawChange = BURST_AMOUNT;
                     numCyclesForBurst = 0;
                 } else {
-                    if(typeCBasedPatrol) yawChange = PATROL_SPEED;
+                    if(typeCBasedPatrolFlag) yawChange = PATROL_SPEED;
                 }
                 gimbal->updateMotors(yawChange, targetPitch);
             }
