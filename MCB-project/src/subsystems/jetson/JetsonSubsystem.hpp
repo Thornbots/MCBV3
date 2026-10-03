@@ -61,13 +61,14 @@ static constexpr uint8_t CV_TARGET_FLAG_TYPE_C_BASED_PATROL = 0x02; // 0 stops p
 static constexpr uint8_t CV_TARGET_FLAG_TURN_TO_HIT = 0x04;         // 0 stops turning toward a hit, 1 allows it
 // Aim point and fire decision in one frame. x/y/z is a world-frame point in the
 // Jetson's odom (REP-105, z up), not a camera-frame one. delay_ms runs from receipt.
+static constexpr uint8_t CV_TARGET_FLAGS_DEFAULT = CV_TARGET_FLAG_TURN_TO_HIT | CV_TARGET_FLAG_TYPE_C_BASED_PATROL;
 struct CvTarget
 {
     float x = 0;           // meters
     float y = 0;           // meters
     float z = 0;           // meters, up
     uint16_t delay_ms = 0; // fire this many ms after the frame arrives (0 = now)
-    uint8_t flags = 0;     // CV_TARGET_FLAG_* bits, bits 3-7 reserved (0)
+    uint8_t flags = CV_TARGET_FLAGS_DEFAULT;     // CV_TARGET_FLAG_* bits, bits 3-7 reserved (0)
 } modm_packed;
 
 //where lidar thinks the robot is

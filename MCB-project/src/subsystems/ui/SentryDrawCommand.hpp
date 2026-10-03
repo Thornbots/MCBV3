@@ -50,6 +50,7 @@ public:
         addGraphicsObject(&countdown);
         addGraphicsObject(&velo);
         addGraphicsObject(&recal);
+        addGraphicsObject(&aad);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -66,6 +67,7 @@ public:
         countdown.update();
         velo.update();
         recal.update();
+        aad.update();
         // logo doesn't need updating
     };
 

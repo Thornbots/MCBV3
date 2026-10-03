@@ -6,6 +6,15 @@ namespace commands {
 
 void JoystickMoveCommand::initialize() { firstTime = true; }
 void JoystickMoveCommand::execute() {
+    executeWith(drivers, gimbal, firstTime, isOffset);
+}
+
+void JoystickMoveCommand::executeWith(src::Drivers* drivers, GimbalSubsystem* gimbal) {
+    bool firstTime = false;
+    bool isOffset = false;
+    executeWith(drivers, gimbal, firstTime, isOffset);
+}
+void JoystickMoveCommand::executeWith(src::Drivers* drivers, GimbalSubsystem* gimbal, bool& firstTime, bool& isOffset) {
     float yawInc = CONTROLLER_YAW_PROPORTIONAL * drivers->remote.getChannel(tap::communication::serial::Remote::Channel::RIGHT_HORIZONTAL);
     float pitchInc = CONTROLLER_PITCH_PROPORTIONAL * drivers->remote.getChannel(tap::communication::serial::Remote::Channel::RIGHT_VERTICAL);
 
