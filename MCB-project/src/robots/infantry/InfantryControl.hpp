@@ -66,7 +66,6 @@ public:
 
         // Mouse and Keyboard mappings
         unjamKey.whileTrue(&indexerUnjam)->onTrue(&openServo);
-        onlyCloseLidKey.onTrue(&closeServo);
         shootRegKey.onTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
         shootFastKey.whileTrue(&indexer20Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
         autoAimKey.onTrue(&shooterStart)->onTrue(&closeServo);

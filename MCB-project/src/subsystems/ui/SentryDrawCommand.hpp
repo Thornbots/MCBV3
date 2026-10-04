@@ -14,7 +14,6 @@
 #include "objects/Reticle.hpp"
 #include "objects/SupercapChargeIndicator.hpp"
 #include "objects/PeekingLines.hpp"
-#include "objects/HopperLidIndicator.hpp"
 #include "objects/HitRing.hpp"
 #include "objects/PredictedRemainingShotsIndicator.hpp"
 #include "objects/AllRobotHealthNumbers.hpp"
