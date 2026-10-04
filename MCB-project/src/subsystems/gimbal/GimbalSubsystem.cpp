@@ -54,6 +54,10 @@ void GimbalSubsystem::refresh() {
     }
 }
 
+void GimbalSubsystem::setAngles(float yawAngle, float pitchAngle) {
+    updateMotors(yawAngle-targetYawAngleWorld, pitchAngle);
+}
+
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
     resetEncoderIfGainPower();
     float pitchVel = getPitchVel();
@@ -66,15 +70,11 @@ void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
 #endif
 
     targetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
-
     driveTrainEncoder = getYawEncoderValue();
     yawEncoderCache = driveTrainEncoder;
-    // THIS LINE BELOW WAS CAUSING ERROR
-    targetYawAngleWorld += changeInTargetYaw;  // std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
+    targetYawAngleWorld += changeInTargetYaw;
     pitchMotorVoltage = getPitchVoltage(targetPitch, pitch, pitchVel, dt);
-
     yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, changeInTargetYaw / dt, dt);
-    // moved
 }
 
 float GimbalSubsystem::getPrevTargetPitch() {
@@ -135,25 +135,6 @@ void GimbalSubsystem::reZeroYaw() {
     yawAngleRelativeWorld = 0.0;
     targetYawAngleWorld = 0.0;
 }
-
-void GimbalSubsystem::setAngles(float yawAngle, float pitchAngle) {
-    prevTargetPitch = std::clamp(pitchAngle, -MAX_PITCH_DOWN, MAX_PITCH_UP);
-    float pitch = getPitchEncoderValue();
-    float pitchVel = getPitchVel();
-
-    driveTrainEncoder = getYawEncoderValue();
-    yawEncoderCache = driveTrainEncoder;
-    targetYawAngleWorld = yawAngle;  // std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
-
-    // THIS LINE BELOW WAS CAUSING ERROR
-    pitchMotorVoltage = getPitchVoltage(prevTargetPitch, pitch, pitchVel, dt);
-    
-    // THIS LINE BELOW WAS CAUSING ERROR
-
-    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, 0, dt);
-
-}
-
 
 void GimbalSubsystem::updatePositionHistory(float newPos) {
     for (int i = LATENCY_Q_SIZE - 1; i >= 0; i--) {

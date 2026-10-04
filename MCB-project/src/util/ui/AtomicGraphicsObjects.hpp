@@ -361,8 +361,14 @@ public:
     virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
         setLen(floatLen(_float));
         calculateNumbers();
-        // the 3 is decimal precision, need to see what changing it does
+        // the 3 is decimal precision, changing it does nothing
         RefSerialTransmitter::configFloatingNumber(fontSize, 3, thickness, textX, textY, _float, graphicData);
+        
+        // probably the part that taproot says is broken: have to handle negative values specially
+        if(_float<0){
+            graphicData->value = _float*-1000;
+            graphicData->value = -graphicData->value;
+        }
         setPrev();
     }
 

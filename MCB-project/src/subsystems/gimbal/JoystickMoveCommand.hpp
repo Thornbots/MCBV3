@@ -29,6 +29,9 @@ public:
     {
         addSubsystemRequirement(gimbal);
     }
+    
+    static void executeWith(src::Drivers* drivers, GimbalSubsystem* gimbal);
+    static void executeWith(src::Drivers* drivers, GimbalSubsystem* gimbal, bool& firstTime, bool& isOffset);
 
     void initialize() override;
 
