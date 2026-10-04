@@ -21,9 +21,9 @@ public:
         yawdiff._float = gimbal->getYawAngleRelativeWorld()-aaafc->targetYaw;
         pitchdiff._float = gimbal->getPitchEncoderValue()-aaafc->targetPitch;
         
-        Vector2d xy = {aaafc->cvTarget.x, aaafc->cvTarget.y};
+        Vector2d xy = {aaafc->deltaX, aaafc->deltaY};
         xy.rotate(-gimbal->getYawAngleRelativeWorld());
-        Vector3d position = {xy.getX(), xy.getY(), aaafc->cvTarget.z};
+        Vector3d position = {xy.getX(), xy.getY(), aaafc->deltaZ};
         Vector3d position2 = Projections::robotSpaceToPivotSpace(position);
         position = Projections::pivotSpaceToVtmSpace(position2);
         Vector2d screenPosition = Projections::vtmSpaceToScreenSpace(position);

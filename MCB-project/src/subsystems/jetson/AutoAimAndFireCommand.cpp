@@ -68,8 +68,11 @@ void AutoAimAndFireCommand::execute() {
     targeting = allowGimbal&&!cvTargetValidTimeout.isStopped()&&!(needToTurnToHit||turningToHit);
     if(isManualControl) targeting &= shootFlag&&drivers->remote.getMouseR();
     Vector2d deltaXY{cvTarget.x - odo->getX(), cvTarget.y - odo->getY()};
+    deltaX = deltaXY.getX();
+    deltaY = deltaXY.getY();
+    deltaZ = cvTarget.z-Projections::OFFSET_Z_ROBOT_TO_PITCH_PIVOT;
     targetYaw = deltaXY.angle(); //angle would be PI/2 if we should point in y direction, but to the gimbal subsystem 0 is pointing in the y direction
-    targetPitch = Reticle::solveForPitch(deltaXY.magnitude(), cvTarget.z); //gimbal subsystem will clamp the pitch. If it gets clamped, maybe don't shoot?
+    targetPitch = Reticle::solveForPitch(deltaXY.magnitude(), deltaZ); //gimbal subsystem will clamp the pitch. If it gets clamped, maybe don't shoot?
     
     if (targeting) { //do position-based aiming
         // the tap::algorithms::ballistics::findTargetProjectileIntersection function
