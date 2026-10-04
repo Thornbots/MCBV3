@@ -22,7 +22,7 @@ void GimbalSubsystem::initialize() {
     targetYawAngleWorld += yawAngleRelativeWorld;
     drivers->commandScheduler.registerSubsystem(this);
 
-    drivers->hitTracker.SetGetYawEncoderFunction([this]{return this->getYawEncoderValue();});
+    drivers->hitTracker.setGetYawEncoderFunction([this]{return this->getYawEncoderValue();});
 
     
 }

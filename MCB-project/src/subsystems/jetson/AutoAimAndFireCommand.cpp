@@ -81,8 +81,8 @@ void AutoAimAndFireCommand::execute() {
             // cycle right after a hit is registered, when it returns (headYaw - hitDirection) in
             // world radians. Latch that one-shot value into an absolute world-yaw target and hold
             // it, otherwise it is lost the instant patrol resumes and the turret never turns.
-            float angleToTurnForSentry = cv->getAngleToTurnForSentry();
-            if (angleToTurnForSentry != HitRing::PLACEHOLDER_ANGLE) {
+            float angleToTurnForSentry = drivers->hitTracker.getAngleToTurnForSentry();
+            if (angleToTurnForSentry != HitTracker::PLACEHOLDER_ANGLE) {
                 // Face the hit: target heading = current heading minus the returned offset.
                 // (If the turret turns AWAY from the hit on hardware, flip this sign to a +.)
                 hitTargetYaw = currentYaw - angleToTurnForSentry;
