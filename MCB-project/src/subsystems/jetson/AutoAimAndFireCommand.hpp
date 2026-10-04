@@ -51,6 +51,9 @@ public:
     float targetYaw = 0;
     float targetPitch = 0;
     bool targeting = false;
+    float deltaX = 0;
+    float deltaY = 0;
+    float deltaZ = 0;
 
     CvTarget cvTarget{};
     bool receivedCvTargetEver = false;
