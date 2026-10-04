@@ -15,7 +15,7 @@ using namespace subsystems;
 // if someone hit you in that direction
 class HitRing : public GraphicsContainer {
 public:
-    HitRing(tap::Drivers* drivers, GimbalSubsystem* gimbal) : drivers(drivers), gimbal(gimbal) {
+    HitRing(src::Drivers* drivers, GimbalSubsystem* gimbal) : drivers(drivers), gimbal(gimbal) {
         // initialize rings
         for (int i = 0; i < NUM_HISTORY; i++) {
             rings[i].width = STARTING_SIZE + SIZE_INCREMENT * i;
@@ -30,7 +30,6 @@ public:
     }
 
     void update() {
-        float encoder = gimbal->getYawEncoderValue() * 180 / PI;
         float imu = drivers->bmi088.getYaw();
         // if the gimbal compared to the drivetrain (from the encoder) is facing forward, heading would be 360, if facing right, heading would be 90
 
@@ -60,46 +59,29 @@ public:
         if (allSlotsUnused) nextIndex = 0;
 
         // check for a new hit
-        if (drivers->refSerial.getRefSerialReceivingData()) {
-            RefSerialData::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-            if (previousHp > robotData.currentHp && (robotData.damageType == RefSerialData::Rx::DamageType::ARMOR_DAMAGE || robotData.damageType == RefSerialData::Rx::DamageType::COLLISION)) {
-                // took some sort of damage and we think we took panel damage
+        if (drivers->hitTracker.isHit) {
+            // took some sort of damage and we think we took panel damage
 
-                // damagedArmorId==0 is forward, add 0*90 degrees
-                // 1 is left, add 1*90 degrees
-                // 2 is back, add 2*90 degrees
-                // 3 is right, add 3*90 degrees
-                // 4 is top, don't care because we don't have panels on top (yet?)
-                hitOrientations[nextIndex] = -encoder + imu + 90 * ((uint16_t)robotData.damagedArmorId);
-                rings[nextIndex].show();
-                expirationTimeouts[nextIndex].restart(RECENT_TIME + EXPIRATION_TIME);
-                rings[nextIndex].color = UISubsystem::Color::WHITE;
-                updateRing(nextIndex, imu);
+            hitOrientations[nextIndex] = drivers->hitTracker.hitOrientation / PI * 180.0;
+            rings[nextIndex].show();
+            expirationTimeouts[nextIndex].restart(RECENT_TIME + EXPIRATION_TIME);
+            rings[nextIndex].color = UISubsystem::Color::WHITE;
+            updateRing(nextIndex, imu);
 
-                // get the next index
-                nextIndex++;
-                if (nextIndex == NUM_HISTORY) nextIndex = 0;  // cycle back around and overwrite if we get hit really often
-            }
+            // get the next index
+            nextIndex++;
+            if (nextIndex == NUM_HISTORY) nextIndex = 0;  // cycle back around and overwrite if we get hit really often
 
-            previousHp = robotData.currentHp;
+            previousHp = drivers->hitTracker.previousHp; // Updated to be the current health after change in health check
         }
     }
 
-    
-    float getAngleToTurnForSentry() {
-        if(expirationTimeouts[0].isStopped())
-            return PLACEHOLDER_ANGLE;
 
-        expirationTimeouts[0].stop();
-        float inDegrees = rings[0].startAngle + ARC_LEN / 2;
-        if(inDegrees>180) inDegrees-=360;
-        return inDegrees * PI / 180;
-    }
     
     static constexpr float PLACEHOLDER_ANGLE = 123;  // a special value for telling jetson that you weren't hit
 
 private:
-    tap::Drivers* drivers;
+    src::Drivers* drivers;
     GimbalSubsystem* gimbal;
 
     uint16_t previousHp;

@@ -43,7 +43,7 @@ void JetsonSubsystem::refresh() {
 
             tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
             tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-            angleToTurnForSentry = hitRing.getAngleToTurnForSentry();
+            angleToTurnForSentry = drivers->hitTracker.getAngleToTurnForSentry();
             RefSys r{
                 (uint8_t)gameData.gameStage,
                 (uint16_t)gameData.stageTimeRemaining,
@@ -65,12 +65,6 @@ void JetsonSubsystem::refresh() {
             messageCount = 0;
         }
     }
-}
-
-float JetsonSubsystem::getAngleToTurnForSentry() {
-    float r = angleToTurnForSentry;
-    angleToTurnForSentry = HitRing::PLACEHOLDER_ANGLE;
-    return r;
 }
 
 void JetsonSubsystem::checkApplyRelocalize() {

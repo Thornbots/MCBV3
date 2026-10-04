@@ -57,11 +57,11 @@ void AutoAimAndFireCommand::execute() {
         startShotTimeout.restart(cvTarget.delay_ms-FIRING_LATENCY_TIME);
     }
     if(cvTargetValidTimeout.isExpired()) cvTargetValidTimeout.stop();
-    float angleToTurnForSentry = jetson->getAngleToTurnForSentry();
+    float angleToTurnForSentry = drivers->hitTracker.getAngleToTurnForSentry();
     bool turnToHitFlag =        (cvTarget.flags & CV_TARGET_FLAG_TURN_TO_HIT)>0;
     bool typeCBasedPatrolFlag = (cvTarget.flags & CV_TARGET_FLAG_TYPE_C_BASED_PATROL)>0;
     bool shootFlag =            (cvTarget.flags & CV_TARGET_FLAG_FIRE)>0;
-    bool needToTurnToHit = turnToHitFlag && (angleToTurnForSentry != HitRing::PLACEHOLDER_ANGLE);
+    bool needToTurnToHit = turnToHitFlag && drivers->hitTracker.isHit;
     turningToHit &= turnToHitFlag;
     
     // set variables that ui debug can use
@@ -101,7 +101,7 @@ void AutoAimAndFireCommand::execute() {
             // it, otherwise it is lost the instant patrol resumes and the turret never turns.
             if (needToTurnToHit) {
                 // Face the hit: target heading = current heading minus the returned offset.
-                hitTargetYaw = gimbal->getYawAngleRelativeWorld() - angleToTurnForSentry;
+                hitTargetYaw = angleToTurnForSentry;
                 turningToHit = true;
                 hitTurnStartTime = tap::arch::clock::getTimeMilliseconds();
             }

@@ -157,7 +157,6 @@ public:  // Public Methods
     // AutoAimAndFireCommand knows how to interpret the CvTarget message
     bool getCvTarget(CvTarget* cvTarget);
     
-    float getAngleToTurnForSentry();
 
 
 private:  // Private Methods

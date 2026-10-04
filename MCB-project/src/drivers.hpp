@@ -26,6 +26,8 @@
 #include "communication/I2CCommunication.hpp"
 #include "communication/UARTCommunication.hpp"
 
+#include "util/hitTracker.hpp"
+
 #define PRINT(msg_to_send ...) ({\
     char str[BUFSIZ]; \
     sprintf(str, msg_to_send); \
@@ -142,6 +144,8 @@ public:
     communication::I2CCommunication i2c;
     communication::UARTCommunication uart;
     ImuRecalibration recal;
+    HitTracker hitTracker{this}; 
+
     
     void executeCalibration() {
         this->bmi088.requestCalibration();
