@@ -18,7 +18,6 @@ class HitTracker
 
         HitTracker(tap::Drivers* drivers) : drivers(drivers)
         {
-            // 
         }
 
 
@@ -32,24 +31,11 @@ class HitTracker
             this->getYawEncoderValue_func = func;
         }
 
-        // ------------------------------------------
-
-
-
-
-        // Hit Detection
-        // ------------------------------------------
         // Function to append a hit if the code structure already identifies a strike
         void addHit()
         {
-            // Check if get yaw encoder function pointer is defined
-            if (!getYawEncoderValue_func)
-            {return;}
-            
-           
-
             float encoder = getYawEncoderValue_func();
-            float imu = drivers->bmi088.getYaw() / 180 * PI;
+            float imu = drivers->bmi088.getYaw() / 180.0f * PI;
 
             // damagedArmorId==0 is forward, add 0*90 degrees
             // 1 is left, add 1*(pi/2) Radians
@@ -57,9 +43,9 @@ class HitTracker
             // 3 is right, add 3*(pi/2) Radians
             // 4 is top, don't care because we don't have panels on top (yet?)
             
-            hitOrientation = -encoder + imu + (PI/2) * ((uint16_t)drivers->refSerial.getRobotData().damagedArmorId);
+            hitOrientation = -encoder + imu + ((PI/2) * ((uint16_t)drivers->refSerial.getRobotData().damagedArmorId));
+            isHit = true;
         }
-        
 
         // Detect if a hit occurs -- appends the hit orientation
         void update() 
@@ -72,38 +58,21 @@ class HitTracker
                 if (previousHp > robotData.currentHp && (robotData.damageType == RefSerialData::Rx::DamageType::ARMOR_DAMAGE || robotData.damageType == RefSerialData::Rx::DamageType::COLLISION)) {
                     // took some sort of damage and we think we took panel damage
                     addHit();
-                    isHit = true;
                 }
 
                 previousHp = robotData.currentHp;
             }
         }
-        // ------------------------------------------
-
-
  
-        // Return Value Functions
-        // ------------------------------------------
         // Return angle in radians for the sentry to turn to
         float getAngleToTurnForSentry() {
-            if (isHit == false)
-            {return PLACEHOLDER_ANGLE;}
+            if (isHit) return hitOrientation;
 
-            if(hitOrientation>PI) hitOrientation-=2*PI;
-            return hitOrientation;
+            return PLACEHOLDER_ANGLE;
         }
-
-        // ------------------------------------------
-
-
-    
-
 
     private:
         tap::Drivers* drivers;
-        //GimbalSubsystem* gimbal;
-
-        
 
         // Access gimbal yaw encoder value without causing circular dependency
         std::function<float()> getYawEncoderValue_func;

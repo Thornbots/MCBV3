@@ -25,17 +25,14 @@ public:
     void initialize() override;
 
     void execute() override;
+    
+    static void executeWith(src::Drivers* drivers, GimbalSubsystem* gimbal);
 
     void end(bool interrupted) override;
 
     bool isFinished() const override;
 
     const char* getName() const override { return "move turret mouse command"; }
-    
-
-
-private:
-    bool isCalibrated = false;
 
 protected:
     src::Drivers* drivers;

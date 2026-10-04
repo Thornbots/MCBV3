@@ -19,10 +19,7 @@ private:                                            // Private Variables
 
     tap::motor::DjiMotor* motorArray[4];
 
-    
-
     Pose2d lastDrive;
-
 
     float motorCurrent[4] = {0.0f,0.0f,0.0f,0.0f};
 
@@ -33,7 +30,6 @@ private:                                            // Private Variables
     tap::algorithms::SmoothPid rotationPIDController;
     float boost;
     float throttle;
-   
 
 public:  // Public Methods
     float powerLimit; //default value

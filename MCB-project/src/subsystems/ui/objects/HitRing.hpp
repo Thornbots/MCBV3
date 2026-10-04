@@ -30,7 +30,6 @@ public:
     }
 
     void update() {
-        float encoder = gimbal->getYawEncoderValue() * 180 / PI;
         float imu = drivers->bmi088.getYaw();
         // if the gimbal compared to the drivetrain (from the encoder) is facing forward, heading would be 360, if facing right, heading would be 90
 
@@ -61,24 +60,19 @@ public:
 
         // check for a new hit
         if (drivers->hitTracker.isHit) {
-                // took some sort of damage and we think we took panel damage
+            // took some sort of damage and we think we took panel damage
 
-                // damagedArmorId==0 is forward, add 0*90 degrees
-                // 1 is left, add 1*90 degrees
-                // 2 is back, add 2*90 degrees
-                // 3 is right, add 3*90 degrees
-                // 4 is top, don't care because we don't have panels on top (yet?)
-                hitOrientations[nextIndex] = drivers->hitTracker.hitOrientation;
-                rings[nextIndex].show();
-                expirationTimeouts[nextIndex].restart(RECENT_TIME + EXPIRATION_TIME);
-                rings[nextIndex].color = UISubsystem::Color::WHITE;
-                updateRing(nextIndex, imu);
+            hitOrientations[nextIndex] = drivers->hitTracker.hitOrientation / PI * 180.0;
+            rings[nextIndex].show();
+            expirationTimeouts[nextIndex].restart(RECENT_TIME + EXPIRATION_TIME);
+            rings[nextIndex].color = UISubsystem::Color::WHITE;
+            updateRing(nextIndex, imu);
 
-                // get the next index
-                nextIndex++;
-                if (nextIndex == NUM_HISTORY) nextIndex = 0;  // cycle back around and overwrite if we get hit really often
+            // get the next index
+            nextIndex++;
+            if (nextIndex == NUM_HISTORY) nextIndex = 0;  // cycle back around and overwrite if we get hit really often
 
-                previousHp = drivers->hitTracker.previousHp; // Updated to be the current health after change in health check
+            previousHp = drivers->hitTracker.previousHp; // Updated to be the current health after change in health check
         }
     }
 
