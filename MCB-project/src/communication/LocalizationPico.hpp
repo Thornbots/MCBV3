@@ -12,7 +12,6 @@ public:
 
     bool run() {
         PT_BEGIN();
-        // auto rez = this->ping();
         while (true) {
             buffer2[0] = uint8_t(static_cast<uint8_t>(odom_x)); //uint8_t(ANGLE_ADDR);
             
@@ -20,33 +19,14 @@ public:
             PT_WAIT_WHILE(this->isTransactionRunning());
 
             if (this->wasTransactionSuccessful()) {
-                // s.printf("i2c result: %d %d %d %d\n", buffer[0], buffer[1], buffer[2], buffer[3]); 
-                // float *rez = (float*)buffer;
-                // static_cast<float>(buffer);
-
-                // s.printf("odom:\n");
-                // s.printf("odom: %f %f %f %f\n", buffer[0], buffer[1], buffer[2], buffer[3]); 
                 odom_x = buffer[0]; 
                 odom_y = buffer[1];
                 odom_x_vel = buffer[2];
                 odom_y_vel = buffer[3];
-                // s.printf("odom: %f\n", this->getX());
-                
 
                 // angle <13:6>             | <5:0>
                 // start 0b0000000011111111 | 0b0000000011111100
                 //  end  0b0011111111000000 | 0b0000000000111111
-
-                // angle = (static_cast<uint16_t>(buffer[0]) << 6);
-
-                // buffer[0] = uint8_t(69);
-                // PT_WAIT_UNTIL(this->startWriteRead(buffer, 1,buffer,4));
-                // PT_WAIT_WHILE(this->isTransactionRunning());
-
-                // if (this->wasTransactionSuccessful()) {
-            
-                //     angle |= (static_cast<uint16_t>(buffer[0]) >> 2);
-                // }
             }
         }
         PT_END();
