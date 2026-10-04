@@ -15,7 +15,8 @@ void AutoDriveCommand::initialize() {
 
     count = 0;
     
-    targetPosition = Vector2d(drivers->i2c.odom.getX(), drivers->i2c.odom.getY());
+    // REP-105 (x forward, y left); the pods are x right, y forward
+    targetPosition = Vector2d(drivers->i2c.odom.getY(), -drivers->i2c.odom.getX());
 }
 
 void AutoDriveCommand::execute() {
@@ -62,7 +63,7 @@ void AutoDriveCommand::execute() {
     bool result = jetson->updateROS(&targetPosition, &targetVelocity, &jetsonExpectedPosition);
 
 
-    Pose2d currentPosition = Pose2d(drivers->i2c.odom.getX() + offsetX, drivers->i2c.odom.getY() + offsetY, referenceAngle);
+    Pose2d currentPosition = Pose2d(drivers->i2c.odom.getY() + offsetX, -drivers->i2c.odom.getX() + offsetY, referenceAngle);
     
     //midpoint is chaos, walls get bumped into, don't trust that jetson knows where it is 
     if(allowRelocalize && jetsonExpectedPosition != nullptr){

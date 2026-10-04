@@ -32,7 +32,7 @@ private:  // Private Variables
 
     static constexpr float targetOdoAngleWorld = 0;
     
-    // changes as a result of relocalizeTo, used in getX and getY
+    // changes as a result of relocalizeTo, used in getX and getY. x right, y forward like the pods
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
@@ -49,10 +49,13 @@ public:  // Public Methods
 
     void initialize();
 
-    // gives x accounting for relocalize offset
+    // getX, getY, their velocities and relocalizeTo are REP-105: x forward, y left of
+    // the heading at power-on, what the Jetson speaks. The pods are x right, y forward.
+
+    // gives x (forward) accounting for relocalize offset
     float getX();
     
-    // gives y accounting for relocalize offset
+    // gives y (left) accounting for relocalize offset
     float getY();
     
     float getXVel();

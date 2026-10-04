@@ -105,62 +105,62 @@ namespace commands {
 
         // 0,0 starting point added in constructor
         // these coordinates here are absolute, with the origin being where the robot was turned on from
-        // positive x is right, positive y is forward
+        // REP-105: positive x is forward, positive y is left
         // first pair is position, second pair is velocity (nonzero doesn't work well right now, so use 0, 0)
         switch (mode) {
             case TargetMode::TEST:
-                targets.push_back({{m*0.0f, 1.0f}, {0.0f, 0.0f}});   // forward
-                targets.push_back({{m*-1.0f, 1.0f}, {0.0f, 0.0f}});  // left
-                targets.push_back({{m*-1.0f, 0.0f}, {0.0f, 0.0f}});  // back
-                targets.push_back({{m*0.0f, 0.0f}, {0.0f, 0.0f}});   // right
+                targets.push_back({{1.0f, 0.0f}, {0.0f, 0.0f}});     // forward
+                targets.push_back({{1.0f, m*1.0f}, {0.0f, 0.0f}});   // left
+                targets.push_back({{0.0f, m*1.0f}, {0.0f, 0.0f}});   // back
+                targets.push_back({{0.0f, 0.0f}, {0.0f, 0.0f}});     // right
                 return;
             case TargetMode::PURDUE2V2:
                 if (drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId)) {
-                    targets.push_back({{-1.5f, 0.0f}, {0.0f, 0.0f}});
-                    targets.push_back({{-1.5f, 1.5f}, {0.0f, 0.0f}});
-                    targets.push_back({{0.5f, 3.5f}, {0.0f, 0.0f}});   // should be at center
+                    targets.push_back({{0.0f, 1.5f}, {0.0f, 0.0f}});
+                    targets.push_back({{1.5f, 1.5f}, {0.0f, 0.0f}});
+                    targets.push_back({{3.5f, -0.5f}, {0.0f, 0.0f}});   // should be at center
                 } else {
-                    targets.push_back({{0.9f / 5, 0.0f / 5}, {1.5f, 0.0f}});
-                    targets.push_back({{1.2f / 5, 0.0838f / 5}, {1.299f, 0.75f}});
-                    targets.push_back({{1.419f / 5, 0.3f / 5}, {0.75f, 1.299f}});
-                    targets.push_back({{1.5f / 5, 0.6f / 5}, {0.0f, 1.5f}});
-                    targets.push_back({{1.5f / 5, 0.671f / 5}, {0.0f, 1.5f}});
-                    targets.push_back({{1.461f / 5, 1.061f / 5}, {-0.29f, 1.47f}});
-                    targets.push_back({{1.347f / 5, 1.437f / 5}, {-0.574f, 1.385f}});
-                    targets.push_back({{1.162f / 5, 1.782f / 5}, {-0.833f, 1.247f}});
-                    targets.push_back({{0.914f / 5, 2.086f / 5}, {-1.06f, 1.06f}});
-                    targets.push_back({{-0.5f / 5, 3.5f / 5}, {0.0f, 0.0f}});  // should be at center
+                    targets.push_back({{0.0f / 5, -0.9f / 5}, {0.0f, -1.5f}});
+                    targets.push_back({{0.0838f / 5, -1.2f / 5}, {0.75f, -1.299f}});
+                    targets.push_back({{0.3f / 5, -1.419f / 5}, {1.299f, -0.75f}});
+                    targets.push_back({{0.6f / 5, -1.5f / 5}, {1.5f, 0.0f}});
+                    targets.push_back({{0.671f / 5, -1.5f / 5}, {1.5f, 0.0f}});
+                    targets.push_back({{1.061f / 5, -1.461f / 5}, {1.47f, 0.29f}});
+                    targets.push_back({{1.437f / 5, -1.347f / 5}, {1.385f, 0.574f}});
+                    targets.push_back({{1.782f / 5, -1.162f / 5}, {1.247f, 0.833f}});
+                    targets.push_back({{2.086f / 5, -0.914f / 5}, {1.06f, 1.06f}});
+                    targets.push_back({{3.5f / 5, 0.5f / 5}, {0.0f, 0.0f}});  // should be at center
                 }
                 return;
             case TargetMode::ARCC_RAMP_PATH:
                 // coordinates for red team
-                changedInitialPoint = {m*TOWARDS_ZONE_OFFSET, -TOWARDS_ZONE_OFFSET};
-                targets.push_back({{m*-1.8330f, 0.595f}, {0.0f, 0.0f}});                                   // mostly left, some forward: before ramp
-                targets.push_back({{m*-1.8330f, 4.060f}, {0.0f, 0.0f}});                                   // forward: across ramp
-                targets.push_back({{m*TOWARDS_ZONE_OFFSET, 4.125f + TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}});  // mostly right, some forward: to center
+                changedInitialPoint = {-TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET};
+                targets.push_back({{0.595f, m*1.8330f}, {0.0f, 0.0f}});                                   // mostly left, some forward: before ramp
+                targets.push_back({{4.060f, m*1.8330f}, {0.0f, 0.0f}});                                   // forward: across ramp
+                targets.push_back({{4.125f + TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}});  // mostly right, some forward: to center
                 return;
             case TargetMode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED:
                 // coordinates for red team
-                changedInitialPoint = {m*TOWARDS_ZONE_OFFSET, -TOWARDS_ZONE_OFFSET};
-                targets.push_back({{m*-1.8330f, 0.595f}, {0.0f, 0.0f}});                                   // mostly left, some forward: before ramp
-                targets.push_back({{m*-1.8330f, 4.872f}, {0.0f, 0.0f}});                                   // forward: across ramp (add 0.812)
-                targets.push_back({{m*TOWARDS_ZONE_OFFSET, 4.937f + TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}});  // mostly right, some forward: to center (add 0.812)
+                changedInitialPoint = {-TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET};
+                targets.push_back({{0.595f, m*1.8330f}, {0.0f, 0.0f}});                                   // mostly left, some forward: before ramp
+                targets.push_back({{4.872f, m*1.8330f}, {0.0f, 0.0f}});                                   // forward: across ramp (add 0.812)
+                targets.push_back({{4.937f + TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}});  // mostly right, some forward: to center (add 0.812)
                 return;
             case TargetMode::ARCC_HALLWAY_PATH:
                 // coordinates for red team
-                changedInitialPoint = {m*TOWARDS_ZONE_OFFSET, -TOWARDS_ZONE_OFFSET};
-                targets.push_back({{m*-0.874f, 0.892f}, {0.0f, 0.0f}});                                               // left forward diagonal: before enter hallway
-                targets.push_back({{m*-0.874f, 1.724f}, {0.0f, 0.0f}});                                               // forward: enter hallway
-                targets.push_back({{m*0.693f, 1.724f}, {0.0f, 0.0f}});                                                // right: through hallway
-                targets.push_back({{m*1.200f, 2.230f}, {0.0f, 0.0f}});                                                // forward right diagonal: leave hallway
-                targets.push_back({{m*(1.385f - TOWARDS_ZONE_OFFSET), 4.125f + TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}});  // forward: to center
+                changedInitialPoint = {-TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET};
+                targets.push_back({{0.892f, m*0.874f}, {0.0f, 0.0f}});                                               // left forward diagonal: before enter hallway
+                targets.push_back({{1.724f, m*0.874f}, {0.0f, 0.0f}});                                               // forward: enter hallway
+                targets.push_back({{1.724f, -m*0.693f}, {0.0f, 0.0f}});                                                // right: through hallway
+                targets.push_back({{2.230f, -m*1.200f}, {0.0f, 0.0f}});                                                // forward right diagonal: leave hallway
+                targets.push_back({{4.125f + TOWARDS_ZONE_OFFSET, -m*(1.385f - TOWARDS_ZONE_OFFSET)}, {0.0f, 0.0f}});  // forward: to center
                 return;
             case TargetMode::ARCC_ROUGH_PATH:
                 // coordinates for red team
-                changedInitialPoint = {m*-TOWARDS_ZONE_OFFSET, -TOWARDS_ZONE_OFFSET};
-                targets.push_back({{m*2.236f, 0.5f}, {0.0f, 0.0f}});                                        // right forward diagonal: before wall
-                targets.push_back({{m*2.236f, 1.224f}, {0.0f, 0.0f}});                                      // forward: past wall
-                targets.push_back({{m*-TOWARDS_ZONE_OFFSET, 4.125f + TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}});  // left forward diagonal: to center
+                changedInitialPoint = {-TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET};
+                targets.push_back({{0.5f, -m*2.236f}, {0.0f, 0.0f}});                                        // right forward diagonal: before wall
+                targets.push_back({{1.224f, -m*2.236f}, {0.0f, 0.0f}});                                      // forward: past wall
+                targets.push_back({{4.125f + TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET}, {0.0f, 0.0f}});  // left forward diagonal: to center
                 return;
         }  // end switch
     }

@@ -65,23 +65,25 @@ float OdometrySubsystem::getRawX() {
 float OdometrySubsystem::getRawY() {
     return drivers->i2c.odom.getY();
 }
+// getX/getY/relocalizeTo are REP-105 (x forward, y left); the pods and the
+// offsets are x right, y forward: REP-105 (x, y) is raw (-y, x)
 void OdometrySubsystem::relocalizeTo(float newX, float newY) {
-    offsetX = newX - getRawX();
-    offsetY = newY - getRawY();
+    offsetX = -newY - getRawX();
+    offsetY = newX - getRawY();
     //off       = new - raw
     //off + raw = new
 }
 float OdometrySubsystem::getX() {
-    return offsetX + getRawX();
-}
-float OdometrySubsystem::getY() {
     return offsetY + getRawY();
 }
+float OdometrySubsystem::getY() {
+    return -(offsetX + getRawX());
+}
 float OdometrySubsystem::getXVel() {
-    return drivers->i2c.odom.getXVel();
+    return drivers->i2c.odom.getYVel();
 }
 float OdometrySubsystem::getYVel() {
-    return drivers->i2c.odom.getYVel();
+    return -drivers->i2c.odom.getXVel();
 }
 
 }  // namespace subsystems

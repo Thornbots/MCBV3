@@ -67,11 +67,13 @@ void AutoAimAndFireCommand::execute() {
     // set variables that ui debug can use
     targeting = allowGimbal&&!cvTargetValidTimeout.isStopped()&&!(needToTurnToHit||turningToHit);
     if(isManualControl) targeting &= shootFlag&&drivers->remote.getMouseR();
+    // cvTarget and the odometry here are both REP-105 (x forward, y left), so yaw 0 is
+    // forward and positive is counterclockwise, as the gimbal's world yaw is
     Vector2d deltaXY{cvTarget.x - odo->getX(), cvTarget.y - odo->getY()};
     deltaX = deltaXY.getX();
     deltaY = deltaXY.getY();
     deltaZ = cvTarget.z-Projections::OFFSET_Z_ROBOT_TO_PITCH_PIVOT;
-    targetYaw = deltaXY.angle(); //angle would be PI/2 if we should point in y direction, but to the gimbal subsystem 0 is pointing in the y direction
+    targetYaw = deltaXY.angle();
     targetPitch = Reticle::solveForPitch(deltaXY.magnitude(), deltaZ); //gimbal subsystem will clamp the pitch. If it gets clamped, maybe don't shoot?
     
     if (targeting) { //do position-based aiming
@@ -79,14 +81,12 @@ void AutoAimAndFireCommand::execute() {
         // is useful for knowing how to hit a moving target, but the jetson already
         // did that work. So we just need to do simple projectile motion to aim
         // at a position that isn't moving.
-        // The cvTarget xyz is in the coord frame from odometry, so if odo thinks
-        // we are at (3, 4) and cvTarget says to aim at (3, 6, 0.2), we need to aim forward.
-        // We adjust our aiming to hit the cvTarget as odo moves, so if we move to (3.2, 4)
+        // The cvTarget xyz is in REP-105 odometry, so if odo thinks we are at (3, 4)
+        // and cvTarget says to aim at (5, 4, 0.2), we need to aim forward. We adjust
+        // our aiming to hit the cvTarget as odo moves, so if we move to (3, 3.8)
         // while we are aiming, we need to look slightly to the left.
-        
+
         // Note that for gimbal subsystem, positive pitch is downward.
-        // yaw of 0 is forward (when rfid localizaition was used, 0,0 meant look forward and horizontal),
-        // guessing that positive yaw is the way it should be (counterclockwise in xy plane)
         gimbal->setAngles(targetYaw, targetPitch);
         if(startShotTimeout.execute() && allowShooting && shootFlag){
             indexer->tryShootOnce();

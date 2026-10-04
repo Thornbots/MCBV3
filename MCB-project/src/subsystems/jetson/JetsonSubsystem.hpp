@@ -46,6 +46,9 @@ enum OdomStatus : uint8_t{
     ODOM_I2C_DEAD_DRIVETRAIN = 3    // I2C bus dead, drivetrain odometry instead
 };
 
+// Every x/y on the wire is REP-105: x forward, y left of the heading at power-on,
+// the same as OdometrySubsystem's getX/getY and every world point on the MCB.
+
 // =================== Incoming message types =======================
 
 // where sentry wants to go
@@ -74,8 +77,8 @@ struct CvTarget
 //where lidar thinks the robot is
 struct Relocalize
 {
-    float x = 0; 
-    float y = 0;
+    float x = 0; //meters
+    float y = 0; //meters
 } modm_packed;
 
 
@@ -88,7 +91,7 @@ struct Pose
     float vel_x;      //meters/second
     float vel_y;      //meters/second
     float head_pitch; //rad
-    float head_yaw;   //rad
+    float head_yaw;   //rad, world, counterclockwise, 0 at IMU boot
     OdomStatus odom_status;
 } modm_packed;
 

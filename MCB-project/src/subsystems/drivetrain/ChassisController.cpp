@@ -185,7 +185,10 @@ void ChassisController::followPosition(Vector2d targetPosition, Pose2d currentPo
     float normMagnitude = std::max(controlEffort.magnitude()/MAX_POS_VEL, 1.0f);
 
     Pose2d targetVelocity = inputVelocity + controlEffort * (1/normMagnitude); // Normalize the control effort to get the target velocity
-  
+
+    // Positions are REP-105 (x forward, y left); the chassis frame below is x right, y forward
+    targetVelocity = Pose2d(-targetVelocity.getY(), targetVelocity.getX(), targetVelocity.getRotation());
+
     // Calculate the target velocity in the local frame
     calculate(targetVelocity.rotate(currentPosition.getRotation()), powerLimit, angle, motorVelocity, motorCurrent, false);
 }
