@@ -171,6 +171,7 @@ int main() {
             }
             if(drivers.recal.getIsImuReady()){
                 drivers.commandScheduler.run();
+                drivers.hitTracker.update();
                 control.update();
             }
 
