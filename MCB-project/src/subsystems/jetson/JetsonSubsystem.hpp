@@ -46,8 +46,8 @@ enum OdomStatus : uint8_t{
     ODOM_I2C_DEAD_DRIVETRAIN = 3    // I2C bus dead, drivetrain odometry instead
 };
 
-// Every x/y on the wire is REP-105: x forward, y left of the heading at power-on,
-// the same as OdometrySubsystem's getX/getY and every world point on the MCB.
+// Every x/y and yaw on the wire is in the field frame: REP-105, (0, 0) at the field
+// centre, x toward blue's base (OdometrySubsystemConstants.hpp), like OdometrySubsystem.
 
 // =================== Incoming message types =======================
 
@@ -91,7 +91,7 @@ struct Pose
     float vel_x;      //meters/second
     float vel_y;      //meters/second
     float head_pitch; //rad
-    float head_yaw;   //rad, world, counterclockwise, 0 at IMU boot
+    float head_yaw;   //rad, field frame, counterclockwise, [0, 2pi)
     OdomStatus odom_status;
 } modm_packed;
 

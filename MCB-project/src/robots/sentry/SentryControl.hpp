@@ -188,7 +188,7 @@ public:
     // commands::MouseMoveCommand lookMouse{drivers, &gimbal};
     commands::AutoAimAndFireCommand lookMouse{drivers, &gimbal, &indexer, &flywheel, &jetson, &odo, &autoDrive, true};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
-    commands::AutoDriveCommand autoDrive{drivers, &drivetrain, &gimbal, &jetson};
+    commands::AutoDriveCommand autoDrive{drivers, &drivetrain, &gimbal, &jetson, &odo};
     commands::SimpleAutoDriveCommand simpleAutoDrive{drivers, &drivetrain, &gimbal, &odo, commands::SimpleAutoDriveCommand::TargetMode::ARCC_ROUGH_PATH};
     commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, &odo, &autoDrive, false};
 

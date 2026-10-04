@@ -35,7 +35,7 @@ void JetsonSubsystem::refresh() {
                 odo->getXVel(),
                 odo->getYVel(),
                 gimbal->getPitchEncoderValue(),
-                gimbal->getYawAngleRelativeWorld(),
+                std::fmod(gimbal->getYawAngleRelativeWorld() + odo->getStartYaw(), 2 * PI),  // field yaw
                 OdomStatus::ODOM_PODS
             };
             sendMsg(&p);
