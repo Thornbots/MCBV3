@@ -9,9 +9,9 @@
 
 namespace subsystems {
 ChassisController::ChassisController() {
-    targetVelocityHistory = new float[Q_SIZE];
+    targetVelocityHistory = new float[Q_SIZE]{};
     forceHistory = new Pose2d[Q_SIZE];
-    targetVelocityMagnitudeHistory = new float[BBQ_SIZE];
+    targetVelocityMagnitudeHistory = new float[BBQ_SIZE]{};
     positionIntegral = Vector2d(0, 0);
 }
 

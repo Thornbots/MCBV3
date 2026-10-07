@@ -55,3 +55,29 @@ scons run robot=<ROBOT_TYPE> sysid=<SYSID_TYPE>
 ```
 
 These arguments will work for `scons build` too!
+
+## Continuous integration
+
+GitHub Actions compiles ARM firmware for `infantry`, `hero`, and `sentry`
+on every push and pull request. Each build uploads its ELF file for
+inspection; CI never flashes a board. The hosted sentry job runs the package's
+geometry and chassis GoogleTests, then builds real firmware and exercises its
+UART parser, referee gates, aiming, firing, and driving through the pinned
+`Thornbots/sim` fixture. A missing executable or skipped UART test fails CI.
+
+Run the C++ tests in a Linux terminal with GCC 11 and GoogleTest installed:
+
+```bash
+tools/test_cpp.sh
+```
+
+This runner tests package-owned code directly. The historical `scons run-tests`
+target also compiles vendored Taproot test suites and needs additional GoogleMock
+dependencies. The UART fixture revision is pinned in
+`.github/workflows/firmware.yml`; update it deliberately when the wire protocol
+changes. Existing compiler warnings remain visible in CI, including deprecated
+motor accessors and constructor member ordering.
+
+The legacy `oldinfantry` target is excluded: its indexer homing offset and power
+limiter torque scaling are missing. Restore measured calibration values before
+enabling that target in CI.
