@@ -107,6 +107,8 @@ bool UISubsystem::run() { //run has to do with prototheads
     }
 
     // what was in the while loop
+    // Auto mode can receive referee data before a draw command installs a container.
+    PT_WAIT_UNTIL(topLevelContainer != nullptr);
     timesResetIteration = 0;
     topLevelContainer->resetDrawMarks();
     while (timesResetIteration<2) {

@@ -170,9 +170,18 @@ int GimbalSubsystem::getPitchVoltage(float targetAngle, float pitchAngleRelative
 #endif
 }
 
-float GimbalSubsystem::getYawEncoderValue() { return std::fmod(motorYaw->getPositionUnwrapped() / YAW_TOTAL_RATIO + encoderOffset, 2 * PI); }
+float GimbalSubsystem::getYawEncoderValue() {
+#ifdef MCB_HOSTED
+    return std::fmod(hosted::sensors.jointYaw, 2 * PI);
+#else
+    return std::fmod(motorYaw->getPositionUnwrapped() / YAW_TOTAL_RATIO + encoderOffset, 2 * PI);
+#endif
+}
 
 float GimbalSubsystem::getPitchEncoderValue() { //more like get pitch relative to frame
+#ifdef MCB_HOSTED
+    return hosted::sensors.jointPitch;
+#else
     float temp = std::fmod(motorPitch->getPositionWrapped() / PITCH_RATIO - PITCH_OFFSET, 2 * PI);
     #if defined(HERO) //wraparound fix  
     return (temp > (1.3 * PI/PITCH_RATIO)) ? temp - 2 * PI/PITCH_RATIO : temp;
@@ -181,12 +190,25 @@ float GimbalSubsystem::getPitchEncoderValue() { //more like get pitch relative t
     #else
     return (temp > PI) ? temp - 2 * PI : temp;
     #endif
+#endif
 }
-float GimbalSubsystem::getYawVel() { return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO; }
-float GimbalSubsystem::getPitchVel() { return motorPitch->getShaftRPM() * PI / 30; }
+float GimbalSubsystem::getYawVel() {
+#ifdef MCB_HOSTED
+    return hosted::sensors.jointYawRate;
+#else
+    return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO;
+#endif
+}
+float GimbalSubsystem::getPitchVel() {
+#ifdef MCB_HOSTED
+    return hosted::sensors.jointPitchRate * PITCH_RATIO;
+#else
+    return motorPitch->getShaftRPM() * PI / 30;
+#endif
+}
 float GimbalSubsystem::getYawAngleRelativeWorld() { return yawController.estimatedPosition; }
 
 bool GimbalSubsystem::isYawMotorOnline() {
     return motorYaw->isMotorOnline();
 }
-}  // namespace subsystems  
+}  // namespace subsystems

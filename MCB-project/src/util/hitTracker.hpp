@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 
 #include "tap/communication/serial/ref_serial_data.hpp"
 

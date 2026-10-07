@@ -32,6 +32,10 @@
 #include "tap/util_macros.hpp"
 
 #include "bmi088_data.hpp"
+#ifdef MCB_HOSTED
+#include <cmath>
+#include "hosted/sensor_state.hpp"
+#endif
 
 namespace tap
 {
@@ -60,6 +64,19 @@ public:
     Bmi088(Drivers *drivers) : AbstractIMU(), drivers(drivers), imuHeater(drivers) {}
     DISALLOW_COPY_AND_ASSIGN(Bmi088)
     mockable ~Bmi088() = default;
+
+#ifdef MCB_HOSTED
+    // Calibrated hardware readings, visible through both src::Drivers and tap::Drivers.
+    float getYaw() const override {
+        float yaw = std::fmod(hosted::sensors.yaw * 180 / M_PI, 360);
+        return yaw < 0 ? yaw + 360 : yaw;
+    }
+    float getGz() const override { return hosted::sensors.yawRate * 180 / M_PI; }
+    float getGx() const override { return 0; }
+    float getRoll() const override { return 0; }
+    void requestCalibration() override {}
+    ImuState getImuState() const override { return ImuState::IMU_CALIBRATED; }
+#endif
 
     static constexpr Acc::AccRange_t ACC_RANGE = Acc::AccRange::G3;
     static constexpr Gyro::GyroRange_t GYRO_RANGE = Gyro::GyroRange::DPS2000;

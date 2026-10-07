@@ -1,4 +1,5 @@
 #include "ChassisController.hpp"
+#include <algorithm>
 #include "ChassisControllerConstants.hpp"
 
 #include <cmath>
@@ -224,6 +225,9 @@ void ChassisController::calculate(Pose2d targetVelLocal, float powerLimit, float
     Pose2d forceLocal;
 
     targetVelLocal = Pose2d(targetVelLocal.getX(), targetVelLocal.getY(), calculateBeybladeVelocity(0, 0, targetVelLocal));
+#ifdef MCB_HOSTED
+    hostedTargetVelocity = targetVelLocal;
+#endif
     // // First, estimate the input errors then do velocity PI control
     velocityControl(targetVelLocal, estVelWorld, estVelLocal, lastForceWorld, &forceLocal);
 

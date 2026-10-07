@@ -32,6 +32,9 @@ private:                                            // Private Variables
     float throttle;
 
 public:  // Public Methods
+#ifdef MCB_HOSTED
+    Pose2d getHostedTargetVelocity() const { return controller.hostedTargetVelocity; }
+#endif
     float powerLimit; //default value
     float angularVel;
     DrivetrainSubsystem(src::Drivers* driver, tap::motor::DjiMotor* motorOne, tap::motor::DjiMotor* motorTwo, tap::motor::DjiMotor* motorThree, tap::motor::DjiMotor* motorFour);

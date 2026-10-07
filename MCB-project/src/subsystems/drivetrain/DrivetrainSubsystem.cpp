@@ -110,6 +110,9 @@ void DrivetrainSubsystem::setTargetPosition(Vector2d targetPosition, Pose2d curr
 
 // fix function
 void DrivetrainSubsystem::stopMotors() {
+#ifdef MCB_HOSTED
+    controller.hostedTargetVelocity = Pose2d{};
+#endif
 #if defined(drivetrain_sysid)
     time = 0;
 #endif

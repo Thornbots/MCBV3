@@ -1,3 +1,4 @@
+#pragma once
 #include "tap/control/sequential_command.hpp"
 
 #include "robots/RobotControl.hpp"

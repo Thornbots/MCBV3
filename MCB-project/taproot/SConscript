@@ -145,7 +145,8 @@ if args["PROFILING"] == "true":
 
 # Add target-specific flags
 if args["TARGET_ENV"] == "sim":
-    env.AppendUnique(CPPFLAGS=["-DPLATFORM_HOSTED"])
+    env.AppendUnique(CPPFLAGS=["-DPLATFORM_HOSTED", "-DMCB_HOSTED"])
+    env.PrependUnique(CPPPATH=[abspath("../src")])
     env.AppendUnique(LIBS=HOSTED_LIBS)
     env.AppendUnique(CPPPATH=[
         abspath(r"modm/ext/cmsis/dsp"),
@@ -193,6 +194,9 @@ env.SConscript(dirs=["ext"], exports=["env"])
 # Find all files that need to be built with the library (files in src and ext, files
 # in test if target environment is tests)
 files = env.FindSourceFiles("src")
+if args["TARGET_ENV"] == "sim":
+    # The hosted UART supplies the physical link; keep DJISerial and all parsers.
+    files = [f for f in files if not str(f).endswith("communication/serial/uart.cpp")]
 
 if args["TARGET_ENV"] == "tests" or args["TARGET_ENV"] == "sim":
     # Cross compile CMSIS arm matrix to be able to use it on the hosted platform
