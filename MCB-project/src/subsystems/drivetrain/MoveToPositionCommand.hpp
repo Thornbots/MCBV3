@@ -5,7 +5,7 @@
 
 #include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
-#include "subsystems/jetson/JetsonSubsystem.hpp"
+#include "subsystems/odometry/OdometrySubsystem.hpp"
 
 
 #include "drivers.hpp"
@@ -13,21 +13,21 @@
 namespace commands {
 using subsystems::DrivetrainSubsystem;
 using subsystems::GimbalSubsystem;
-using subsystems::JetsonSubsystem;
+using subsystems::OdometrySubsystem;
 
 using tap::communication::serial::Remote;
 
 
 class MoveToPositionCommand : public tap::control::Command {
 public:
-    MoveToPositionCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, Pose2d targetPosition, float tolerance = 0.2f)
+    MoveToPositionCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, OdometrySubsystem* odo, Pose2d targetPosition, Vector2d targetVelocityInput, float tolerance = 0.2f)
         : drivers(drivers),
           drivetrain(drive),
           gimbal(gimbal),
+          odo(odo),
           tolerance(tolerance),
           targetPosition(targetPosition){
-        targetVelocity = Pose2d(0, 0, 10.5);
-        addSubsystemRequirement(drive);
+        targetVelocity = Pose2d(targetVelocityInput.getX(), targetVelocityInput.getY(), MOVE_TO_POS_SPIN_VELO);
     }
 
     void initialize() override;
@@ -39,15 +39,19 @@ public:
     bool isFinished() const override;
 
     const char* getName() const override { return "move to position command"; }
+    DrivetrainSubsystem* getDrivetrain() {return drivetrain;}
 
+    Pose2d targetPosition;
+    Pose2d inputVelocity;
 
-private:
-    src::Drivers* drivers;
     DrivetrainSubsystem* drivetrain;
+    static constexpr float MOVE_TO_POS_SPIN_VELO = -8.0;  //was 12.0   here tune spin velo
+protected:
+    src::Drivers* drivers;
     GimbalSubsystem* gimbal;
+    OdometrySubsystem* odo;
 
     float tolerance;
-    Pose2d targetPosition;
     Pose2d targetVelocity;
     Pose2d currentPosition;
 

@@ -128,6 +128,7 @@ ImuRecalibrationState getState() {
     return state;
 }
 
+
 private:
 ImuRecalibrationState state = ImuRecalibrationState::BEFORE_FIRST_CALIBRATION;
 bool pendingScheduledRecalibration = false;
@@ -147,6 +148,64 @@ public:
     }
 
 
+    
+    void adc1_pa6_init() {
+        // 1. Enable clocks
+        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+        RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
+
+        // 2. Configure PA6 as analog (MODER = 11)
+        GPIOA->MODER |= (3U << (6 * 2));
+        GPIOA->PUPDR &= ~(3U << (6 * 2)); // no pull-up/down
+
+        // 3. ADC prescaler (common safe value: PCLK2 / 8)
+        ADC->CCR &= ~(3U << 16);
+        ADC->CCR |=  (1U << 16); // ADCPRE = 01 -> PCLK2/4 (or use 10 for /6, 11 for /8)
+
+        // 4. ADC configuration
+        ADC1->CR1 = 0;
+        ADC1->CR2 = 0;
+
+        // Right alignment
+        ADC1->CR2 &= ~ADC_CR2_ALIGN;
+
+        // 5. Single conversion mode (default)
+        ADC1->CR2 &= ~ADC_CR2_CONT;
+
+        // 6. Sampling time for channel 6 (PA6 -> IN6 in SMPR2)
+        // choose 144 cycles for stability
+        ADC1->SMPR2 &= ~(7U << (6 * 3));
+        ADC1->SMPR2 |=  (7U << (6 * 3));
+
+        // 7. Regular sequence length = 1 conversion
+        ADC1->SQR1 &= ~(0xF << 20);
+
+        // 8. Channel 6 as first conversion in sequence
+        ADC1->SQR3 = 6;
+
+        // 9. Enable ADC
+        // Power on ADC
+        ADC1->CR2 |= ADC_CR2_ADON;
+
+        // mandatory stabilization delay
+        for (volatile int i = 0; i < 10000; i++);
+
+        // trigger a dummy conversion (VERY important)
+        ADC1->CR2 |= ADC_CR2_SWSTART;
+        while (!(ADC1->SR & ADC_SR_EOC));
+        (void)ADC1->DR;
+    }
+
+    uint16_t adc1_pa6_read() {
+        // Start conversion
+        ADC1->CR2 |= ADC_CR2_SWSTART;
+
+        // Wait for EOC
+        while (!(ADC1->SR & ADC_SR_EOC));
+
+        // Read result clears EOC
+        return (uint16_t)ADC1->DR;
+    }
 
 };  // class Drivers
 

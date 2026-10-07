@@ -9,7 +9,7 @@
 
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
-#include "subsystems/jetson/AutoAimCommand.hpp"
+#include "subsystems/jetson/AutoAimAndFireCommand.hpp"
 
 #include "subsystems/drivetrain/DrivetrainDriveCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainStopCommand.hpp"
@@ -53,9 +53,9 @@ public:
         unjamKey.whileTrue(&indexerUnjam);
         shootKey.onTrue(&indexerSemi)->onTrue(&shooterStart);
         unjamButton.whileTrue(&indexerUnjam);
-        shootButton.whileTrue(&indexerSemi)->onTrue(&shooterStart);
+        shootButton.onTrue(&indexerSemi)->onTrue(&shooterStart);
         stopFlywheelTrigger.onTrue(&shooterStop);
-        autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart);
+        autoAimKey.onTrue(&shooterStart);
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
@@ -123,12 +123,12 @@ public:
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     subsystems::HeroIndexerSubsystem indexer{drivers, &hardware.indexTopMotor, &hardware.indexBottomMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
-    subsystems::JetsonSubsystem jetson{drivers, &gimbal};
+    subsystems::JetsonSubsystem jetson{drivers, &gimbal, nullptr};
     // //commands
 
     commands::HeroDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};
-    commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
-    // commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
+    // commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr};
+
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::JoystickMoveCommand lookJoystickOffset{drivers, &gimbal, true};
@@ -138,7 +138,7 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
-    commands::IndexerNBallsCommand indexerSemi{drivers, &indexer, 1, 20}; //semiauto, each click is one shot
+    commands::IndexerNBallsCommand indexerSemi{drivers, &indexer, 1, 20}; //semiauto, each click is one shot [Hero ignores the 20, need to fix this]
     commands::IndexerNBallsCommand indexerAuto{drivers, &indexer, -1, 2};//full auto, holding the wheel it the forward position shoots as long as it is held
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
 

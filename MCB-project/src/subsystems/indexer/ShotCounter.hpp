@@ -32,7 +32,7 @@ public:
     }
 
     bool canShootAgain() {
-        return estHeat+getHeatPerBall()+getHeatPerBall()/2 < drivers->refSerial.getRobotData().turret.heatLimit;
+        return ((float)estHeat+getHeatPerBall()*HEAT_PER_BALL_MULT) <= ((float) drivers->refSerial.getRobotData().turret.heatLimit);
     }
 
     uint32_t getTimesIncremented() {
@@ -66,6 +66,7 @@ public:
     
     // applies the heat from this projectile instantly
     void incrementTargetNumBalls(){
+        timesIncremented++;
         estHeat+=getHeatPerBall();
     }
     
@@ -100,6 +101,14 @@ private:
 
     static constexpr float HEAT_PER_17 = 10.0f;
     static constexpr float HEAT_PER_42 = 100.0f;
+    
+    
+    // heat limiting isn't perfect, this tunes how careful heat limiting is. Tunes 'shoot if there is enough room for exactly HEAT_PER_BALL_MULT projectiles'
+#if defined(HERO)
+    static constexpr float HEAT_PER_BALL_MULT = 1;
+#else// START getters and setters
+    static constexpr float HEAT_PER_BALL_MULT = 2;
+#endif
 };
 
 } // namespace subsystems

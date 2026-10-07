@@ -95,6 +95,8 @@ public:
         if(inDegrees>180) inDegrees-=360;
         return inDegrees * PI / 180;
     }
+    
+    static constexpr float PLACEHOLDER_ANGLE = 123;  // a special value for telling jetson that you weren't hit
 
 private:
     tap::Drivers* drivers;
@@ -107,8 +109,6 @@ private:
     static constexpr uint16_t STARTING_SIZE = 180;  // pixels
     static constexpr uint16_t SIZE_INCREMENT = 15;  // pixels. If 0, the history of lines will all be overlapping
 
-
-    static constexpr float PLACEHOLDER_ANGLE = NAN;  // a special value for telling jetson that you weren't hit
 
 #if defined(SENTRY)
     static constexpr int NUM_HISTORY = 1;  // keep track of 1 to send to jetson, when we send it skip the timer and expire it

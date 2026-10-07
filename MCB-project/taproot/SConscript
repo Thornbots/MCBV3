@@ -17,6 +17,7 @@
 
 import shutil
 import os
+import os
 from os.path import abspath
 import platform
 import sys
@@ -189,6 +190,7 @@ if args["TARGET_ENV"] == "tests":
     env.AppendUnique(CPPPATH=[abspath("test")])
 
 # Build external library, external SConscript should be ran before any of the build code defined below
+if os.path.exists("ext"):
 if os.path.exists("ext"):
     env.SConscript(dirs=["ext"], exports=["env"])
 
