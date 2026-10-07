@@ -21,6 +21,10 @@ void GimbalSubsystem::initialize() {
 
     targetYawAngleWorld += yawAngleRelativeWorld;
     drivers->commandScheduler.registerSubsystem(this);
+
+    drivers->hitTracker.setGetYawEncoderFunction([this]{return this->getYawEncoderValue();});
+
+    
 }
 void GimbalSubsystem::refresh() {
     if (isYawMotorOnline() && wasYawMotorOffline) {
@@ -50,6 +54,10 @@ void GimbalSubsystem::refresh() {
     }
 }
 
+void GimbalSubsystem::setAngles(float yawAngle, float pitchAngle) {
+    updateMotors(yawAngle-targetYawAngleWorld, pitchAngle);
+}
+
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
     resetEncoderIfGainPower();
     float pitchVel = getPitchVel();
@@ -62,15 +70,11 @@ void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
 #endif
 
     targetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
-
     driveTrainEncoder = getYawEncoderValue();
     yawEncoderCache = driveTrainEncoder;
-    // THIS LINE BELOW WAS CAUSING ERROR
-    targetYawAngleWorld += changeInTargetYaw;  // std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
+    targetYawAngleWorld += changeInTargetYaw;
     pitchMotorVoltage = getPitchVoltage(targetPitch, pitch, pitchVel, dt);
-
     yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, changeInTargetYaw / dt, dt);
-    // moved
 }
 
 float GimbalSubsystem::getPrevTargetPitch() {
@@ -132,25 +136,6 @@ void GimbalSubsystem::reZeroYaw() {
     targetYawAngleWorld = 0.0;
 }
 
-void GimbalSubsystem::setAngles(float yawAngle, float pitchAngle) {
-    prevTargetPitch = std::clamp(pitchAngle, -MAX_PITCH_DOWN, MAX_PITCH_UP);
-    float pitch = getPitchEncoderValue();
-    float pitchVel = getPitchVel();
-
-    driveTrainEncoder = getYawEncoderValue();
-    yawEncoderCache = driveTrainEncoder;
-    targetYawAngleWorld = yawAngle;  // std::fmod(targetYawAngleWorld + changeInTargetYaw, 2 * PI);
-
-    // THIS LINE BELOW WAS CAUSING ERROR
-    pitchMotorVoltage = getPitchVoltage(prevTargetPitch, pitch, pitchVel, dt);
-    
-    // THIS LINE BELOW WAS CAUSING ERROR
-
-    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, 0, dt);
-
-}
-
-
 void GimbalSubsystem::updatePositionHistory(float newPos) {
     for (int i = LATENCY_Q_SIZE - 1; i >= 0; i--) {
         // Store the current values in the history
@@ -185,9 +170,18 @@ int GimbalSubsystem::getPitchVoltage(float targetAngle, float pitchAngleRelative
 #endif
 }
 
-float GimbalSubsystem::getYawEncoderValue() { return std::fmod(motorYaw->getPositionUnwrapped() / YAW_TOTAL_RATIO + encoderOffset, 2 * PI); }
+float GimbalSubsystem::getYawEncoderValue() {
+#ifdef MCB_HOSTED
+    return std::fmod(hosted::sensors.jointYaw, 2 * PI);
+#else
+    return std::fmod(motorYaw->getPositionUnwrapped() / YAW_TOTAL_RATIO + encoderOffset, 2 * PI);
+#endif
+}
 
 float GimbalSubsystem::getPitchEncoderValue() { //more like get pitch relative to frame
+#ifdef MCB_HOSTED
+    return hosted::sensors.jointPitch;
+#else
     float temp = std::fmod(motorPitch->getPositionWrapped() / PITCH_RATIO - PITCH_OFFSET, 2 * PI);
     #if defined(HERO) //wraparound fix  
     return (temp > (1.3 * PI/PITCH_RATIO)) ? temp - 2 * PI/PITCH_RATIO : temp;
@@ -196,12 +190,25 @@ float GimbalSubsystem::getPitchEncoderValue() { //more like get pitch relative t
     #else
     return (temp > PI) ? temp - 2 * PI : temp;
     #endif
+#endif
 }
-float GimbalSubsystem::getYawVel() { return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO; }
-float GimbalSubsystem::getPitchVel() { return motorPitch->getShaftRPM() * PI / 30; }
+float GimbalSubsystem::getYawVel() {
+#ifdef MCB_HOSTED
+    return hosted::sensors.jointYawRate;
+#else
+    return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO;
+#endif
+}
+float GimbalSubsystem::getPitchVel() {
+#ifdef MCB_HOSTED
+    return hosted::sensors.jointPitchRate * PITCH_RATIO;
+#else
+    return motorPitch->getShaftRPM() * PI / 30;
+#endif
+}
 float GimbalSubsystem::getYawAngleRelativeWorld() { return yawController.estimatedPosition; }
 
 bool GimbalSubsystem::isYawMotorOnline() {
     return motorYaw->isMotorOnline();
 }
-}  // namespace subsystems  
+}  // namespace subsystems

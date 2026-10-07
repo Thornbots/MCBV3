@@ -77,6 +77,9 @@ public:  // Public Methods
     void updateMotors(float changeInTargetYaw, float targetPitch);
 
     float getPrevTargetPitch();
+#ifdef MCB_HOSTED
+    float getHostedTargetYaw() const { return targetYawAngleWorld; }
+#endif
 
     /*
      *   Straight up gives a full state for the controllers to target

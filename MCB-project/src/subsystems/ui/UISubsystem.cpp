@@ -56,7 +56,9 @@ bool UISubsystem::run() { //run has to do with prototheads
         restart();  // Restart the thread
     }
 
-    PT_BEGIN(); //ignore this error, it still builds, need to figure out how to make vscode not angry at this
+    // These resumable sends have no result to consume. PT_WAIT_UNTIL preserves
+    // their wait state without PT_CALL's jump into a GNU statement expression.
+    PT_BEGIN();
     // inside of a protothread, you aren't able to make new variables, errors with: 'jump to case label'
     // so make new variables in the hpp and set their values here
 
@@ -79,7 +81,7 @@ bool UISubsystem::run() { //run has to do with prototheads
     } //loop ends when the layer at innerGraphicsIndex needs cleared, or all layers were checked and all were clear
 
     if(needToClearAllLayers){
-        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 0));
+        PT_WAIT_UNTIL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_ALL, 0).getState() <= modm::rf::NestingError);
         for (innerGraphicsIndex = 0; innerGraphicsIndex < NUM_LAYERS; innerGraphicsIndex++) {
             layersState[innerGraphicsIndex]=0;
         }
@@ -87,7 +89,7 @@ bool UISubsystem::run() { //run has to do with prototheads
             topLevelContainer->allLayersCleared();
         }
     } else if(layerToClear!=-1){
-        PT_CALL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_GRAPHIC_LAYER, layerToClear));
+        PT_WAIT_UNTIL(refSerialTransmitter.deleteGraphicLayer(RefSerialTransmitter::Tx::DELETE_GRAPHIC_LAYER, layerToClear).getState() <= modm::rf::NestingError);
         layersState[layerToClear]=0;
         if (topLevelContainer){
             topLevelContainer->layerHasBeenCleared(layerToClear);
@@ -107,6 +109,8 @@ bool UISubsystem::run() { //run has to do with prototheads
     }
 
     // what was in the while loop
+    // Auto mode can receive referee data before a draw command installs a container.
+    PT_WAIT_UNTIL(topLevelContainer != nullptr);
     timesResetIteration = 0;
     topLevelContainer->resetDrawMarks();
     while (timesResetIteration<2) {
@@ -123,7 +127,7 @@ bool UISubsystem::run() { //run has to do with prototheads
             // if it is a string, keep the array as it is and send the string on its own
             nextGraphicsObject->configCharacterData(&messageCharacter);
             if(layersState[messageCharacter.graphicData.layer]==0) layersState[messageCharacter.graphicData.layer]=1;
-            PT_CALL(refSerialTransmitter.sendGraphic(&messageCharacter));
+            PT_WAIT_UNTIL(refSerialTransmitter.sendGraphic(&messageCharacter).getState() <= modm::rf::NestingError);
             delayTimeout.restart(2 * RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&messageCharacter));
             PT_WAIT_UNTIL(delayTimeout.execute());
         } else {
@@ -154,28 +158,28 @@ bool UISubsystem::run() { //run has to do with prototheads
     if (numToSend == 1) {
         objectsToSend[0]->configGraphicData(&message1.graphicData);
         if(layersState[message1.graphicData.layer]==0) layersState[message1.graphicData.layer]=1;
-        PT_CALL(refSerialTransmitter.sendGraphic(&message1));
+        PT_WAIT_UNTIL(refSerialTransmitter.sendGraphic(&message1).getState() <= modm::rf::NestingError);
         delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message1));
     } else if (numToSend == 2) {
         for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) {
             objectsToSend[innerGraphicsIndex]->configGraphicData(&message2.graphicData[innerGraphicsIndex]);
             if(layersState[message2.graphicData[innerGraphicsIndex].layer]==0) layersState[message2.graphicData[innerGraphicsIndex].layer]=1;
         }
-        PT_CALL(refSerialTransmitter.sendGraphic(&message2));
+        PT_WAIT_UNTIL(refSerialTransmitter.sendGraphic(&message2).getState() <= modm::rf::NestingError);
         delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message2));
     } else if (numToSend == 5) {
         for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) {
             objectsToSend[innerGraphicsIndex]->configGraphicData(&message5.graphicData[innerGraphicsIndex]);
             if(layersState[message5.graphicData[innerGraphicsIndex].layer]==0) layersState[message5.graphicData[innerGraphicsIndex].layer]=1;
         }
-        PT_CALL(refSerialTransmitter.sendGraphic(&message5));
+        PT_WAIT_UNTIL(refSerialTransmitter.sendGraphic(&message5).getState() <= modm::rf::NestingError);
         delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message5));
     } else if (numToSend == 7) {
         for (innerGraphicsIndex = 0; innerGraphicsIndex < numToSend; innerGraphicsIndex++) {
             objectsToSend[innerGraphicsIndex]->configGraphicData(&message7.graphicData[innerGraphicsIndex]);
             if(layersState[message7.graphicData[innerGraphicsIndex].layer]==0) layersState[message7.graphicData[innerGraphicsIndex].layer]=1;
         }
-        PT_CALL(refSerialTransmitter.sendGraphic(&message7));
+        PT_WAIT_UNTIL(refSerialTransmitter.sendGraphic(&message7).getState() <= modm::rf::NestingError);
         delayTimeout.restart(RefSerialData::Tx::getWaitTimeAfterGraphicSendMs(&message7));
     }
 

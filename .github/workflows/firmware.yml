@@ -1,0 +1,90 @@
+name: Firmware build and tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firmware-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hardware:
+    name: ARM / ${{ matrix.robot }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        robot: [infantry, hero, sentry]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+          python3 -m pip install scons==3.1.2 pyelftools==0.32 Jinja2==3.1.6
+          git submodule update --init taproot-scripts
+      - name: Compile firmware
+        working-directory: MCB-project
+        run: scons build robot=${{ matrix.robot }} profile=release -j2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: firmware-${{ matrix.robot }}
+          path: MCB-project/build/hardware/scons-release/MCB-project.elf
+          if-no-files-found: error
+
+  hosted:
+    name: Hosted control and UART tests
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install build and test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-11 g++-11 libgtest-dev
+          python3 -m pip install scons==3.1.2 pyelftools==0.32 Jinja2==3.1.6 pytest==8.3.5
+          git submodule update --init taproot-scripts
+      - name: Run package C++ tests
+        run: tools/test_cpp.sh --gtest_output=xml:build/unit-tests/results.xml
+      - name: Compile hosted firmware
+        working-directory: MCB-project
+        run: scons build-sim robot=sentry profile=release -j2
+      - name: Check out compatible UART test fixture
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: Thornbots/sim
+          ref: 124f526bb9e8947b9cf10eaced32166bc47acaee
+          path: uart-fixture
+      - name: Exercise the compiled firmware over UART
+        env:
+          PYTHONPATH: ${{ github.workspace }}/uart-fixture
+          MCB_FIRMWARE_BINARY: ${{ github.workspace }}/MCB-project/build/sim/scons-release/MCB-project.elf
+          MCB_REFEREE_RFID_SCHEMA: '2025'
+        run: |
+          test -x "$MCB_FIRMWARE_BINARY"
+          python3 -m pytest uart-fixture/test/mcb/test_mcb_protocol.py uart-fixture/test/mcb/test_mcb_firmware.py -q -o addopts='' --junitxml=uart-results.xml
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          suites = ET.parse('uart-results.xml').getroot().iter('testsuite')
+          totals = {key: 0 for key in ('tests', 'skipped', 'failures', 'errors')}
+          for suite in suites:
+              for key in totals:
+                  totals[key] += int(suite.get(key, 0))
+          assert totals['tests'] > 0, totals
+          assert not any(totals[key] for key in ('skipped', 'failures', 'errors')), totals
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: firmware-test-results
+          path: |
+            MCB-project/build/unit-tests/results.xml
+            uart-results.xml
+          if-no-files-found: error

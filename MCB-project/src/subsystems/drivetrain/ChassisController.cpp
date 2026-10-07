@@ -1,4 +1,5 @@
 #include "ChassisController.hpp"
+#include <algorithm>
 #include "ChassisControllerConstants.hpp"
 
 #include <cmath>
@@ -8,9 +9,9 @@
 
 namespace subsystems {
 ChassisController::ChassisController() {
-    targetVelocityHistory = new float[Q_SIZE];
+    targetVelocityHistory = new float[Q_SIZE]{};
     forceHistory = new Pose2d[Q_SIZE];
-    targetVelocityMagnitudeHistory = new float[BBQ_SIZE];
+    targetVelocityMagnitudeHistory = new float[BBQ_SIZE]{};
     positionIntegral = Vector2d(0, 0);
 }
 
@@ -185,7 +186,10 @@ void ChassisController::followPosition(Vector2d targetPosition, Pose2d currentPo
     float normMagnitude = std::max(controlEffort.magnitude()/MAX_POS_VEL, 1.0f);
 
     Pose2d targetVelocity = inputVelocity + controlEffort * (1/normMagnitude); // Normalize the control effort to get the target velocity
-  
+
+    // Positions are REP-105 (x forward, y left); the chassis frame below is x right, y forward
+    targetVelocity = Pose2d(-targetVelocity.getY(), targetVelocity.getX(), targetVelocity.getRotation());
+
     // Calculate the target velocity in the local frame
     calculate(targetVelocity.rotate(currentPosition.getRotation()), powerLimit, angle, motorVelocity, motorCurrent, false);
 }
@@ -221,6 +225,9 @@ void ChassisController::calculate(Pose2d targetVelLocal, float powerLimit, float
     Pose2d forceLocal;
 
     targetVelLocal = Pose2d(targetVelLocal.getX(), targetVelLocal.getY(), calculateBeybladeVelocity(0, 0, targetVelLocal));
+#ifdef MCB_HOSTED
+    hostedTargetVelocity = targetVelLocal;
+#endif
     // // First, estimate the input errors then do velocity PI control
     velocityControl(targetVelLocal, estVelWorld, estVelLocal, lastForceWorld, &forceLocal);
 

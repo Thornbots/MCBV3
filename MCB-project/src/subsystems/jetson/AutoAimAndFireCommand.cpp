@@ -5,15 +5,32 @@
 namespace commands {
 using namespace tap::communication::serial;
 
+AutoAimAndFireCommand::AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* indexer, FlywheelSubsystem* flywheel, JetsonSubsystem* jetson, OdometrySubsystem* odo, AutoDriveCommand* adc, bool isManualControl)
+    : drivers(drivers),
+        gimbal(gimbal),
+        indexer(indexer),
+        flywheel(flywheel),
+        jetson(jetson),
+        odo(odo),
+        adc(adc),
+        isManualControl(isManualControl)
+{
+    addSubsystemRequirement(gimbal);
+    if(!isManualControl) {
+        addSubsystemRequirement(indexer);
+        addSubsystemRequirement(flywheel);
+    }
+}
+
 void AutoAimAndFireCommand::initialize() {
-    shoot = -1;
     isScheduled = true;
 }
 void AutoAimAndFireCommand::execute() {
     bool allowShooting = true;
     bool allowGimbal = true;
 
-    if (drivers->refSerial.getRefSerialReceivingData() && 
+    // if automatic, check if we are in a game, and if we are before it starts, don't allow aiming or shooting
+    if (!isManualControl && drivers->refSerial.getRefSerialReceivingData() && 
        (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
 
         allowShooting = false;
@@ -32,60 +49,59 @@ void AutoAimAndFireCommand::execute() {
         }
 
     }
-
-
-    float dyaw = 0;
-    float currentYaw = gimbal->getYawAngleRelativeWorld();
-    float currentPitch = gimbal->getPitchEncoderValue();
-    float currentpitchvel = gimbal->getPitchVel(); //did add this for the actual CV stuff can make this 0 if we want
-    cv->update(currentYaw, currentPitch, yawvel, currentpitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
-
+    
     tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-    bool inRfid = robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE) || robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE);
-    if(inRfid && allowGimbal){ //am i over the rfid
-        gimbal->setAngles(0, 0);
-    } else if (shoot != -1) {
-        //if(tap::arch::clock::getTimeMilliseconds() - lastSeenTime >  PERSISTANCE) flip = flip * -1;
-        //Found a target, moving to it and maybe shooting at it
+    if(jetson->getCvTarget(&cvTarget)) {
+        receivedCvTargetEver = true;
+        cvTargetValidTimeout.restart(TARGET_VALID_TIME);
+        startShotTimeout.restart(cvTarget.delay_ms-FIRING_LATENCY_TIME);
+    }
+    if(cvTargetValidTimeout.isExpired()) cvTargetValidTimeout.stop();
+    float angleToTurnForSentry = drivers->hitTracker.getAngleToTurnForSentry();
+    bool turnToHitFlag =        (cvTarget.flags & CV_TARGET_FLAG_TURN_TO_HIT)>0;
+    bool typeCBasedPatrolFlag = (cvTarget.flags & CV_TARGET_FLAG_TYPE_C_BASED_PATROL)>0;
+    bool shootFlag =            (cvTarget.flags & CV_TARGET_FLAG_FIRE)>0;
+    bool needToTurnToHit = turnToHitFlag && drivers->hitTracker.isHit;
+    turningToHit &= turnToHitFlag;
+    
+    // set variables that ui debug can use
+    targeting = allowGimbal&&!cvTargetValidTimeout.isStopped()&&!(needToTurnToHit||turningToHit);
+    if(isManualControl) targeting &= shootFlag&&drivers->remote.getMouseR();
+    // cvTarget and the odometry are both in the field frame. The gimbal's world yaw is
+    // the IMU's, counterclockwise and zero at power-on, so take the start's yaw off
+    Vector2d deltaXY{cvTarget.x - odo->getX(), cvTarget.y - odo->getY()};
+    deltaX = deltaXY.getX();
+    deltaY = deltaXY.getY();
+    deltaZ = cvTarget.z-Projections::OFFSET_Z_ROBOT_TO_PITCH_PIVOT;
+    targetYaw = deltaXY.angle() - odo->getStartYaw();
+    targetPitch = Reticle::solveForPitch(deltaXY.magnitude(), deltaZ); //gimbal subsystem will clamp the pitch. If it gets clamped, maybe don't shoot?
+    
+    if (targeting) { //do position-based aiming
+        // the tap::algorithms::ballistics::findTargetProjectileIntersection function
+        // is useful for knowing how to hit a moving target, but the jetson already
+        // did that work. So we just need to do simple projectile motion to aim
+        // at a position that isn't moving.
+        // The cvTarget xyz is in the field frame, so if odo thinks we are at (3, 4)
+        // and cvTarget says to aim at (5, 4, 0.2), we need to aim toward +x. We adjust
+        // our aiming to hit the cvTarget as odo moves, so if we move to (3, 3.8)
+        // while we are aiming, we need to look slightly to the left of +x.
 
-        dyaw = fmod(dyaw, 2 * PI);
-        // clamp between -Pi and PI to allow for dividing
-        dyaw = dyaw > PI ? dyaw - 2 * PI : dyaw < -PI ? dyaw + 2 * PI : dyaw;
-        lastSeenTime = tap::arch::clock::getTimeMilliseconds();
-
-        // pitch damper (analogous to the yaw divisor below): only step a fraction of the way
-        // from the current pitch toward the CV target each cycle, so the setpoint eases in
-        // instead of jumping with every (latent, ~30Hz) CV frame. Larger divisor = more
-        // damping / smoother but more lag; smaller = snappier but can ring.
-        float dpitch = pitch - currentPitch;
-        float newPitch = currentPitch + dpitch * std::clamp(std::abs(dpitch)*PITCH_MULTIPLY_SCALE, PITCH_MULTIPLY_MIN, PITCH_MULTIPLY_MAX);
-        dyaw *= std::clamp(std::abs(dyaw)*YAW_MULTIPLY_SCALE, YAW_MULTIPLY_MIN, YAW_MULTIPLY_MAX);
-        // if (abs(dyaw) > YAW_CLOSE) {
-        //     dyaw /= YAW_DIVIDE_CLOSE;} //move slow (divide by more) if close [?]
-        // else dyaw /= YAW_DIVIDE_FAR;//move fast if not close [?] (dyaw, newPitch, yawvel, pitchvel);//WithLatencyCompensation
-        if (allowGimbal) gimbal->updateMotorsAndVelocity(dyaw, newPitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
-        if (shoot == 1) isShooting = true;
-    } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime < PERSISTANCE) {
-        //Haven't found a target right now but I have recently, keep shooting if I was shooting
-
-        if(allowGimbal) gimbal->updateMotors(0, pitch);
+        // Note that for gimbal subsystem, positive pitch is downward.
+        gimbal->setAngles(targetYaw, targetPitch);
+        if(startShotTimeout.execute() && allowShooting && shootFlag){
+            indexer->tryShootOnce();
+        }
     } else {
-        //Haven't found a target, patrol
-
-        isShooting = false;
-        pitch = 0.05;  // pitch down to avoid looking into the sky
-        numCyclesForBurst++;
-
-        if(allowGimbal) {
+        if(isManualControl){
+            MouseMoveCommand::executeWith(drivers, gimbal);
+        } else if (allowGimbal){ //automatic movement
             // getAngleToTurnForSentry() returns HitRing::PLACEHOLDER_ANGLE except on the single
             // cycle right after a hit is registered, when it returns (headYaw - hitDirection) in
             // world radians. Latch that one-shot value into an absolute world-yaw target and hold
             // it, otherwise it is lost the instant patrol resumes and the turret never turns.
-            float angleToTurnForSentry = cv->getAngleToTurnForSentry();
-            if (angleToTurnForSentry != HitRing::PLACEHOLDER_ANGLE) {
+            if (needToTurnToHit) {
                 // Face the hit: target heading = current heading minus the returned offset.
-                // (If the turret turns AWAY from the hit on hardware, flip this sign to a +.)
-                hitTargetYaw = currentYaw - angleToTurnForSentry;
+                hitTargetYaw = angleToTurnForSentry;
                 turningToHit = true;
                 hitTurnStartTime = tap::arch::clock::getTimeMilliseconds();
             }
@@ -93,43 +109,38 @@ void AutoAimAndFireCommand::execute() {
             if (turningToHit && tap::arch::clock::getTimeMilliseconds() - hitTurnStartTime < HIT_TURN_DURATION) {
                 // Hold the heading toward the hit. CV still runs at the top of execute(), so if the
                 // attacker comes into view the shoot branch takes over and engages it.
-                gimbal->setAngles(hitTargetYaw, pitch);
+                gimbal->setAngles(hitTargetYaw, PATROL_PITCH);
             } else {
                 turningToHit = false;
-                if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
-                    gimbal->updateMotors(BURST_AMOUNT, pitch);
-                    numCyclesForBurst = 0;
-                } else {
-                    gimbal->updateMotors(PATROL_SPEED, pitch);
+                float yawChange = 0;
+                if(typeCBasedPatrolFlag) {
+                    numCyclesForBurst++;
+                    if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
+                        yawChange = BURST_AMOUNT;
+                        numCyclesForBurst = 0;
+                    } else {
+                        yawChange = PATROL_SPEED;
+                    }
                 }
+                gimbal->updateMotors(yawChange, PATROL_PITCH);
             }
         }
     }
 
-    if(allowShooting){
-        if (isShooting) {
-            // if we see a panel or recently have seen a panel
-            indexer->indexAtRate(10);//20 change to not make a mess
-        } else {
-            // if we haven't seen a panel for a bit
-             indexer->stopIndex();
-            // indexer->unjam();
+    if(!isManualControl){
+        if(!allowShooting){
+            indexer->stopIndex();
         }
-    } else {
-        indexer->stopIndex();
-        
-    }
-
-    if(allowGimbal) {
-        flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM);
-    } else {
-        gimbal->stopMotors();
-        if(adc->getIsScheduled()) flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM/4);
+        if(allowGimbal) {
+            flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM);
+        } else {
+            gimbal->stopMotors();
+            if(adc->getIsScheduled()) flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM/4);
+        }
     }
 }
 
 void AutoAimAndFireCommand::end(bool) {
-    pitch = 0;
     isScheduled = false;
 }
 

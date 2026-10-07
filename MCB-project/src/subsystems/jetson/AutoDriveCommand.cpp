@@ -1,3 +1,5 @@
+// TODO: ros-driven navigation is going likely going to change a lot
+
 #include "AutoDriveCommand.hpp"
 
 #include "subsystems/drivetrain/DrivetrainSubsystemConstants.hpp"
@@ -13,7 +15,7 @@ void AutoDriveCommand::initialize() {
 
     count = 0;
     
-    targetPosition = Vector2d(drivers->i2c.odom.getX(), drivers->i2c.odom.getY());
+    targetPosition = Vector2d(odo->getX(), odo->getY());
 }
 
 void AutoDriveCommand::execute() {
@@ -44,7 +46,8 @@ void AutoDriveCommand::execute() {
     }
     // allowMoving = false;
 
-    float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
+    // minus the chassis' field heading: the IMU's zero is the start's heading
+    float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld() - odo->getStartYaw();
 
     // crude autodrive implementation
     // count++;
@@ -60,7 +63,7 @@ void AutoDriveCommand::execute() {
     bool result = jetson->updateROS(&targetPosition, &targetVelocity, &jetsonExpectedPosition);
 
 
-    Pose2d currentPosition = Pose2d(drivers->i2c.odom.getX() + offsetX, drivers->i2c.odom.getY() + offsetY, referenceAngle);
+    Pose2d currentPosition = Pose2d(odo->getX() + offsetX, odo->getY() + offsetY, referenceAngle);
     
     //midpoint is chaos, walls get bumped into, don't trust that jetson knows where it is 
     if(allowRelocalize && jetsonExpectedPosition != nullptr){
