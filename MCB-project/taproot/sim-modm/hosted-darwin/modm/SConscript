@@ -17,7 +17,6 @@ env["CONFIG_PROFILE"] = profile
 env["BUILDPATH"] = join(env["CONFIG_BUILD_BASE"], "scons-" + profile)
 env["BASEPATH"] = abspath("..")
 # Using homebrew gcc on macOS instead of clang
-env["COMPILERSUFFIX"] = env.Detect(["gcc-11", "gcc-10"])[3:]
 # SCons tools
 env.Append(toolpath=[
     abspath(r"scons/site_tools"),

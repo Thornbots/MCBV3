@@ -48,10 +48,10 @@ void JetsonSubsystem::refresh() {
                 (uint8_t)gameData.gameStage,
                 (uint16_t)gameData.stageTimeRemaining,
                 (uint16_t)robotData.currentHp,
-                (uint8_t)robotData.robotId % 100,  // blue hero is 101, we want to send 1
+                static_cast<uint8_t>(static_cast<uint8_t>(robotData.robotId) % 100),  // blue hero is 101, we want to send 1
                 angleToTurnForSentry,
                 // 12.34,
-                drivers->refSerial.isBlueTeam(robotData.robotId) << 7 | (robotData.robotBuffStatus.recoveryBuff > 0) << 6 |
+                static_cast<uint8_t>(drivers->refSerial.isBlueTeam(robotData.robotId) << 7 | (robotData.robotBuffStatus.recoveryBuff > 0) << 6 |
                     (robotData.rfidStatus.any(
                         tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE | tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_INSIDE_EXCHANGE))
                         << 5 |
@@ -59,7 +59,7 @@ void JetsonSubsystem::refresh() {
                     gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_TEAM) << 3 |
                     gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_OPPONENT) << 2 |
                     robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::CHASSIS_HAS_POWER) << 1 |
-                    robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::GIMBAL_HAS_POWER)};
+                    robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::GIMBAL_HAS_POWER))};
             // needToSendRefData = !
             sendMsg(&r);
             messageCount = 0;
@@ -75,7 +75,7 @@ void JetsonSubsystem::checkApplyRelocalize() {
 }
 
 // TODO: ros-driven navigation is going likely going to change a lot
-bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d* jetsonExpectedPosition) {
+bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d*) {
     NavGoal navGoal;
     if (!getMsg(&navGoal)) return false;
     *targetPosition = Vector2d(navGoal.x, navGoal.y);

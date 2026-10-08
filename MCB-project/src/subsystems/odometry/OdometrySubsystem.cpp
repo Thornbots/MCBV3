@@ -50,7 +50,13 @@ void OdometrySubsystem::stopMotors() {
 
 
 // assume odoAngleRelativeWorld is in radians, not sure
-int OdometrySubsystem::getOdoVoltage(float driveTrainAngularVelocity, float odoAngleRelativeWorld, float odoAngularVelocity, float desiredAngleWorld, float inputVel, float dt) {
+int OdometrySubsystem::getOdoVoltage(
+    [[maybe_unused]] float driveTrainAngularVelocity,
+    [[maybe_unused]] float odoAngleRelativeWorld,
+    [[maybe_unused]] float odoAngularVelocity,
+    [[maybe_unused]] float desiredAngleWorld,
+    [[maybe_unused]] float inputVel,
+    [[maybe_unused]] float dt) {
 #if defined(odo_sysid)
     voltageOdo = distOdo(gen);
     velocityOdo = odoAngularVelocity;
@@ -62,9 +68,9 @@ int OdometrySubsystem::getOdoVoltage(float driveTrainAngularVelocity, float odoA
 #endif
 }
 
-float OdometrySubsystem::getOdoEncoderValue() { return std::fmod(motorOdo->getPositionUnwrapped() + encoderOffsetOdo, 2 * PI); }
+float OdometrySubsystem::getOdoEncoderValue() { return std::fmod(motorOdo->getEncoder()->getPosition().getUnwrappedValue() + encoderOffsetOdo, 2 * PI); }
 
-float OdometrySubsystem::getOdoVel() { return motorOdo->getShaftRPM() * PI / 30; }
+float OdometrySubsystem::getOdoVel() { return motorOdo->getEncoder()->getVelocity(); }
 
 float OdometrySubsystem::getRawX() {
     return drivers->i2c.odom.getX();

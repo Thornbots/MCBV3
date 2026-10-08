@@ -459,10 +459,11 @@ Rcc::disable()
 		RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA1EN;
 	if constexpr (peripheral == Peripheral::Dma2)
 		RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA2EN;
-	if constexpr (peripheral == Peripheral::Eth)
+	if constexpr (peripheral == Peripheral::Eth) {
 		RCC->AHB1ENR &= ~RCC_AHB1ENR_ETHMACEN; __DSB();
 		RCC->AHB1ENR &= ~RCC_AHB1ENR_ETHMACRXEN; __DSB();
 		RCC->AHB1ENR &= ~RCC_AHB1ENR_ETHMACTXEN;
+	}
 	if constexpr (peripheral == Peripheral::Fsmc)
 		RCC->AHB3ENR &= ~RCC_AHB3ENR_FSMCEN;
 	if constexpr (peripheral == Peripheral::I2c1)
@@ -525,9 +526,10 @@ Rcc::disable()
 		RCC->APB2ENR &= ~RCC_APB2ENR_USART6EN;
 	if constexpr (peripheral == Peripheral::Usbotgfs)
 		RCC->AHB2ENR &= ~RCC_AHB2ENR_OTGFSEN;
-	if constexpr (peripheral == Peripheral::Usbotghs)
+	if constexpr (peripheral == Peripheral::Usbotghs) {
 		RCC->AHB1ENR &= ~RCC_AHB1ENR_OTGHSEN; __DSB();
 		RCC->AHB1ENR &= ~RCC_AHB1ENR_OTGHSULPIEN;
+	}
 	if constexpr (peripheral == Peripheral::Wwdg)
 		RCC->APB1ENR &= ~RCC_APB1ENR_WWDGEN;
 	__DSB();

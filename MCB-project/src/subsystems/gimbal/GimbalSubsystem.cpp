@@ -109,7 +109,7 @@ void GimbalSubsystem::resetEncoderIfGainPower() {
         //#else //others use i2c
         //encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
         //#endif
-        motorYaw->resetEncoderValue();
+        motorYaw->getEncoder()->resetEncoderValue();
     }
 }
 
@@ -147,7 +147,13 @@ void GimbalSubsystem::updatePositionHistory(float newPos) {
 }
 
 // assume yawAngleRelativeWorld is in radians, not sure
-int GimbalSubsystem::getYawVoltage(float driveTrainAngularVelocity, float yawAngleRelativeWorld, float yawAngularVelocity, float desiredAngleWorld, float inputVel, float dt) {
+int GimbalSubsystem::getYawVoltage(
+    [[maybe_unused]] float driveTrainAngularVelocity,
+    [[maybe_unused]] float yawAngleRelativeWorld,
+    [[maybe_unused]] float yawAngularVelocity,
+    [[maybe_unused]] float desiredAngleWorld,
+    [[maybe_unused]] float inputVel,
+    [[maybe_unused]] float dt) {
 #if defined(yaw_sysid)
     voltage = distYaw(gen);
     velocity = yawAngularVelocity;
@@ -160,7 +166,11 @@ int GimbalSubsystem::getYawVoltage(float driveTrainAngularVelocity, float yawAng
 }
 
 // assume targetangle is in radians, not sure
-int GimbalSubsystem::getPitchVoltage(float targetAngle, float pitchAngleRelativeGimbal, float pitchAngularVelocity, float dt) {
+int GimbalSubsystem::getPitchVoltage(
+    [[maybe_unused]] float targetAngle,
+    [[maybe_unused]] float pitchAngleRelativeGimbal,
+    [[maybe_unused]] float pitchAngularVelocity,
+    [[maybe_unused]] float dt) {
 #if defined(pitch_sysid)
     return distPitch(gen);
 #elif defined(drivetrain_sysid)
@@ -174,7 +184,7 @@ float GimbalSubsystem::getYawEncoderValue() {
 #ifdef MCB_HOSTED
     return std::fmod(hosted::sensors.jointYaw, 2 * PI);
 #else
-    return std::fmod(motorYaw->getPositionUnwrapped() / YAW_TOTAL_RATIO + encoderOffset, 2 * PI);
+    return std::fmod(motorYaw->getEncoder()->getPosition().getUnwrappedValue() / YAW_TOTAL_RATIO + encoderOffset, 2 * PI);
 #endif
 }
 
@@ -182,7 +192,7 @@ float GimbalSubsystem::getPitchEncoderValue() { //more like get pitch relative t
 #ifdef MCB_HOSTED
     return hosted::sensors.jointPitch;
 #else
-    float temp = std::fmod(motorPitch->getPositionWrapped() / PITCH_RATIO - PITCH_OFFSET, 2 * PI);
+    float temp = std::fmod(motorPitch->getEncoder()->getPosition().getWrappedValue() / PITCH_RATIO - PITCH_OFFSET, 2 * PI);
     #if defined(HERO) //wraparound fix  
     return (temp > (1.3 * PI/PITCH_RATIO)) ? temp - 2 * PI/PITCH_RATIO : temp;
     #elif defined(SENTRY) //wraparound fix  
@@ -196,14 +206,14 @@ float GimbalSubsystem::getYawVel() {
 #ifdef MCB_HOSTED
     return hosted::sensors.jointYawRate;
 #else
-    return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO;
+    return motorYaw->getEncoder()->getVelocity() / YAW_TOTAL_RATIO;
 #endif
 }
 float GimbalSubsystem::getPitchVel() {
 #ifdef MCB_HOSTED
     return hosted::sensors.jointPitchRate * PITCH_RATIO;
 #else
-    return motorPitch->getShaftRPM() * PI / 30;
+    return motorPitch->getEncoder()->getVelocity();
 #endif
 }
 float GimbalSubsystem::getYawAngleRelativeWorld() { return yawController.estimatedPosition; }

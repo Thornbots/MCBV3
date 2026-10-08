@@ -104,12 +104,17 @@ namespace modm
 		 *
 		 * \todo	decrement operator doesn't work correctly
 		 */
-		class iterator : public std::iterator<std::forward_iterator_tag, T>
+		class iterator
 		{
 			friend class DoublyLinkedList;
 			friend class const_iterator;
 
 		public:
+			using iterator_category = std::forward_iterator_tag;
+			using value_type = T;
+			using difference_type = std::ptrdiff_t;
+			using pointer = T*;
+			using reference = T&;
 			/// Default constructor
 			iterator();
 			iterator(const iterator& other);
@@ -133,11 +138,16 @@ namespace modm
 		 *
 		 * \todo	decrement operator doesn't work correctly
 		 */
-		class const_iterator : public std::iterator<std::forward_iterator_tag, T>
+		class const_iterator
 		{
 			friend class DoublyLinkedList;
 
 		public:
+			using iterator_category = std::forward_iterator_tag;
+			using value_type = T;
+			using difference_type = std::ptrdiff_t;
+			using pointer = const T*;
+			using reference = const T&;
 			/// Default constructor
 			const_iterator();
 

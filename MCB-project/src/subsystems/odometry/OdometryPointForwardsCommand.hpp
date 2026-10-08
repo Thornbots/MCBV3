@@ -35,7 +35,7 @@ public:
         odometry->updateMotor(-dtAngularVelo/200, odoAngleRelativeWorld, odoVelRelativeWorld, dtAngularVelo);
     };
 
-    void end(bool interrupted) override {};
+    void end(bool) override {};
 
     bool isFinished() const {return !drivers->remote.isConnected();};
 

@@ -47,7 +47,7 @@ void ChassisController::estimateState(Pose2d inputForces, Pose2d* estVelLocal, P
     *estVelLocal = estVelWorld->rotate(-estPosWorld->getRotation());
 }
 
-float ChassisController::calculateBeybladeVelocity(float bb_freq, float bb_amp, Pose2d TargetVelocity) {
+float ChassisController::calculateBeybladeVelocity(float, float, Pose2d TargetVelocity) {
     // Get the target velocity commands (or position commands) from the controller
     // This part would integrate the user input or other controller logic to set target velocity
         float velmagMax = 0;
@@ -148,7 +148,7 @@ void ChassisController::calculateTractionLimiting(Pose2d localForce, Pose2d* lim
 }
 
 // Calculates scaling factor based on the equations in the notion
-void ChassisController::calculatePowerLimiting(float powerLimit, float V_m_FF[4], float I_m_FF[4], float T_req_m[4], float T_req_m2[4], float thetaDotEst, float thetaDotDes) {
+void ChassisController::calculatePowerLimiting(float powerLimit, float V_m_FF[4], float I_m_FF[4], float T_req_m[4], float T_req_m2[4], float, float) {
     // // Get all the summations out of the way first
     float aSum = 0, bSumFirst = 0, bSumSecond = 0, cSumFirst = 0, cSumSecond = 0;
     for (int i = 0; i < 4; i++) {

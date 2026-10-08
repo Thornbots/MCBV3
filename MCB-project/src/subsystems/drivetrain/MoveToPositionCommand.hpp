@@ -21,12 +21,12 @@ using tap::communication::serial::Remote;
 class MoveToPositionCommand : public tap::control::Command {
 public:
     MoveToPositionCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, OdometrySubsystem* odo, Pose2d targetPosition, Vector2d targetVelocityInput, float tolerance = 0.2f)
-        : drivers(drivers),
+        : targetPosition(targetPosition),
           drivetrain(drive),
+          drivers(drivers),
           gimbal(gimbal),
           odo(odo),
-          tolerance(tolerance),
-          targetPosition(targetPosition){
+          tolerance(tolerance){
         targetVelocity = Pose2d(targetVelocityInput.getX(), targetVelocityInput.getY(), MOVE_TO_POS_SPIN_VELO);
     }
 

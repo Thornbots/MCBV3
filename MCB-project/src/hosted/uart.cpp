@@ -22,7 +22,7 @@ size_t Uart::read(UartPort port, uint8_t* data, size_t n) {
     if (port == Uart1) {
         auto count = ::read(jetsonFd, data, n);
         if (count >= 0) return count;
-        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EIO) return 0;
+        if (errno == EAGAIN || (EWOULDBLOCK != EAGAIN && errno == EWOULDBLOCK) || errno == EIO) return 0;
         throw std::runtime_error("hosted UART read failed");
     }
     auto& queue = incoming.at(port);
@@ -43,7 +43,7 @@ size_t Uart::write(UartPort port, const uint8_t* data, size_t n) {
     if (port != Uart1) return n;
     auto count = ::write(jetsonFd, data, n);
     if (count >= 0) return count;
-    if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EIO) return 0;
+    if (errno == EAGAIN || (EWOULDBLOCK != EAGAIN && errno == EWOULDBLOCK) || errno == EIO) return 0;
     throw std::runtime_error("hosted UART write failed");
 }
 bool Uart::isWriteFinished(UartPort) const { return true; }

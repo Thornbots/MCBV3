@@ -15,47 +15,54 @@ concurrency:
 
 jobs:
   hardware:
-    name: ARM / ${{ matrix.robot }}
-    runs-on: ubuntu-22.04
+    name: ARM / ${{ matrix.robot }} / ${{ matrix.sysid }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         robot: [infantry, hero, sentry]
+        sysid: [none, dt, yaw, odo]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Install build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
-          python3 -m pip install scons==3.1.2 pyelftools==0.32 Jinja2==3.1.6
+          python3 -m pip install scons==4.11.1 pyelftools==0.32 Jinja2==3.1.6
           git submodule update --init taproot-scripts
       - name: Compile firmware
         working-directory: MCB-project
-        run: scons build robot=${{ matrix.robot }} profile=release -j2
+        run: scons build robot=${{ matrix.robot }} sysid=${{ matrix.sysid }} profile=release -j2
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: firmware-${{ matrix.robot }}
+          name: firmware-${{ matrix.robot }}-${{ matrix.sysid }}
           path: MCB-project/build/hardware/scons-release/MCB-project.elf
           if-no-files-found: error
 
   hosted:
     name: Hosted control and UART tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Install build and test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-11 g++-11 libgtest-dev
-          python3 -m pip install scons==3.1.2 pyelftools==0.32 Jinja2==3.1.6 pytest==8.3.5
+          sudo apt-get install -y gcc-14 g++-14 libgtest-dev
+          python3 -m pip install scons==4.11.1 pyelftools==0.32 Jinja2==3.1.6 pytest==8.3.5
           git submodule update --init taproot-scripts
       - name: Run package C++ tests
+        env:
+          CXX: g++-14
         run: tools/test_cpp.sh --gtest_output=xml:build/unit-tests/results.xml
       - name: Compile hosted firmware
         working-directory: MCB-project
-        run: scons build-sim robot=sentry profile=release -j2
+        run: scons build-sim robot=sentry profile=release compiler-suffix=-14 -j2
+      - name: Run hosted C++ regression tests
+        env:
+          CXX: g++-14
+        run: tools/test_hosted_cpp.sh --gtest_output=xml:build/unit-tests/firmware-results.xml
       - name: Check out compatible UART test fixture
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -85,6 +92,6 @@ jobs:
         with:
           name: firmware-test-results
           path: |
-            MCB-project/build/unit-tests/results.xml
+            MCB-project/build/unit-tests/*.xml
             uart-results.xml
           if-no-files-found: error

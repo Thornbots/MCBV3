@@ -3,10 +3,10 @@
 namespace commands {
 
     SimpleAutoDriveCommand::SimpleAutoDriveCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, OdometrySubsystem* odo, TargetMode mode)
-        : mode(mode),
-          drivers(drivers),
-          positionCommand(drivers, drive, gimbal, odo, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, 0.5f),
-          odo(odo) {
+        : drivers(drivers),
+          odo(odo),
+          mode(mode),
+          positionCommand(drivers, drive, gimbal, odo, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, 0.5f) {
         // always need to start where the robot starts from; setupMap puts it in the field frame
         // should be the reload/heal zone
         targets.push_back({{0.0f, 0.0f}, {0.0f, 0.0f}});
@@ -27,7 +27,6 @@ namespace commands {
             setDirection();
             bool fasterSpinning = false;
             
-            tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
             tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
 
             // if reached target, choose new target

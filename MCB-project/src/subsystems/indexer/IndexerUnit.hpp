@@ -21,7 +21,7 @@ class IndexerUnit
 
 public:
 
-    IndexerUnit(src::Drivers* drivers, tap::motor::DjiMotor* index, float shaftRevPerBall, float motorRevPerBall) : drivers(drivers), index(index), shaftRevPerBall(shaftRevPerBall), motorRevPerBall(motorRevPerBall)  {
+    IndexerUnit(src::Drivers* drivers, tap::motor::DjiMotor* index, float shaftRevPerBall, float motorRevPerBall) : index(index), drivers(drivers), shaftRevPerBall(shaftRevPerBall), motorRevPerBall(motorRevPerBall)  {
         
     }
 
@@ -31,7 +31,7 @@ public:
 
     // uses stored target position to do position control
     void positionControl(){
-        index->setDesiredOutput(getIndexerVoltage(index->getPositionUnwrapped()/GEAR_RATIO, getCurrentOutputVelo(), targetIndexerPosition, 0, DT));
+        index->setDesiredOutput(getIndexerVoltage(index->getEncoder()->getPosition().getUnwrappedValue()/GEAR_RATIO, getCurrentOutputVelo(), targetIndexerPosition, 0, DT));
     }
 
     // uses given balls per second and rev per ball to do velo control
@@ -41,7 +41,7 @@ public:
     
     // uses a plain pid controller instead of a more fancy one
     void oldVelocityControl(float ballsPerSecond) {
-        indexPIDController.runControllerDerivateError(ballsPerSecond * 60.0f * motorRevPerBall - index->getShaftRPM(), 1);
+        indexPIDController.runControllerDerivateError(ballsPerSecond * 60.0f * motorRevPerBall - (index->getEncoder()->getVelocity() * 30.0f / PI), 1);
 
         index->setDesiredOutput(static_cast<int32_t>(indexPIDController.getOutput()));
     }
@@ -56,17 +56,17 @@ public:
     }
     
     void doAfterHomingOffset() {
-        index->resetEncoderValue();
+        index->getEncoder()->resetEncoderValue();
         targetIndexerPosition = getPositionIncrement()*INITIAL_INDEX_OFFSET;
     }
     
     void doGiveUpHomingOffset() {
-        targetIndexerPosition = index->getPositionUnwrapped()/GEAR_RATIO;
+        targetIndexerPosition = index->getEncoder()->getPosition().getUnwrappedValue()/GEAR_RATIO;
     }
     
     // goes only forwards, so don't call repeatedly
     void indexNearest() {        
-        float currentPos = index->getPositionUnwrapped()/GEAR_RATIO;  //radians
+        float currentPos = index->getEncoder()->getPosition().getUnwrappedValue()/GEAR_RATIO;  //radians
         //index to the nearest next shot. This ensures we always have a shot ready to shoot
         targetIndexerPosition = (std::ceil((currentPos - getPositionIncrement()*INITIAL_INDEX_OFFSET) //find number of shots we are at
         /getPositionIncrement())
@@ -99,7 +99,7 @@ private:
     
     
     float getCurrentOutputVelo() {
-        return index->getShaftRPM()*(PI/30)/GEAR_RATIO;
+        return index->getEncoder()->getVelocity()/GEAR_RATIO;
     }
 
     float getPositionIncrement(){

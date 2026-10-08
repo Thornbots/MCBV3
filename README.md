@@ -59,24 +59,27 @@ These arguments will work for `scons build` too!
 ## Continuous integration
 
 GitHub Actions compiles ARM firmware for `infantry`, `hero`, and `sentry`
-on every push and pull request. Each build uploads its ELF file for
+on main pushes and pull requests, including all four system identification modes. Each build uploads its ELF file for
 inspection; CI never flashes a board. The hosted sentry job runs the package's
 geometry and chassis GoogleTests, then builds real firmware and exercises its
 UART parser, referee gates, aiming, firing, and driving through the pinned
 `Thornbots/sim` fixture. A missing executable or skipped UART test fails CI.
 
-Run the C++ tests in a Linux terminal with GCC 11 and GoogleTest installed:
+Run the C++ tests in a Linux terminal with GCC 14 and GoogleTest installed:
 
 ```bash
-tools/test_cpp.sh
+CXX=g++-14 tools/test_cpp.sh
+(cd MCB-project && scons build-sim robot=sentry profile=release compiler-suffix=-14 -j4)
+CXX=g++-14 tools/test_hosted_cpp.sh
 ```
 
 This runner tests package-owned code directly. The historical `scons run-tests`
 target also compiles vendored Taproot test suites and needs additional GoogleMock
 dependencies. The UART fixture revision is pinned in
 `.github/workflows/firmware.yml`; update it deliberately when the wire protocol
-changes. Existing compiler warnings remain visible in CI, including deprecated
-motor accessors and constructor member ordering.
+changes. ARM builds use Ubuntu 24.04's GCC 13 cross compiler; hosted builds use GCC 14.
+All builds treat compiler warnings as errors. Hosted builds use the system GCC
+by default; `compiler-suffix=-14` selects GCC 14 explicitly.
 
 The legacy `oldinfantry` target is excluded: its indexer homing offset and power
 limiter torque scaling are missing. Restore measured calibration values before
@@ -87,3 +90,22 @@ second. The hosted fixture uses the same units. Its referee schema uses the
 2025 Taproot RFID fields: resupply outside/inside exchange at bits 19/20 and
 central buff at bit 23. CI selects that schema explicitly and tests the UART
 encoding; these checks do not measure robot calibration or field RFID placement.
+
+## GCC compatibility
+
+Motor feedback uses Taproot's encoder interface: positions and velocities are
+in radians and radians per second. Flywheel and legacy indexer PID inputs are
+explicitly converted to RPM. UART timeouts use the boot millisecond clock and
+unsigned subtraction so they survive its 32-bit rollover.
+
+The bare board has no POSIX files, process control, or entropy source.
+Package-owned newlib hooks return failure with `ENOSYS`; `_getpid` identifies
+the single firmware process. Hardware I/O still goes through Taproot.
+These hooks let modern newlib link without its warning-bearing nosys fallbacks.
+
+The generated Taproot/modm copies checked into this repository contain local
+compatibility fixes: explicit iterator traits instead of `std::iterator`,
+`delay_us`, guarded peripheral clock writes, and erase/remove for null command
+mappings. Preserve these fixes when regenerating from the pinned upstream
+submodules. The hosted C++ regression tests check iterator traits, null command
+filtering, UART payload bounds, and clock rollover.

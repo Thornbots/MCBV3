@@ -50,7 +50,6 @@ void AutoAimAndFireCommand::execute() {
 
     }
     
-    tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
     if(jetson->getCvTarget(&cvTarget)) {
         receivedCvTargetEver = true;
         cvTargetValidTimeout.restart(TARGET_VALID_TIME);

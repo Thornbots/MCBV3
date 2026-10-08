@@ -7,8 +7,8 @@ using namespace subsystems::indexer;
 
 SingleIndexerSubsystem::SingleIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool enableHoming)
     : IndexerSubsystem(drivers, index),
-    unit(drivers, index, REV_PER_BALL/GEAR_RATIO, REV_PER_BALL),
     counter(drivers, ShotCounter::BarrelType::TURRET_17MM_EITHER, index),
+    unit(drivers, index, REV_PER_BALL/GEAR_RATIO, REV_PER_BALL),
     homingState(HomingState::NEED_TO_HOME),
     enableHoming(enableHoming)
     {}

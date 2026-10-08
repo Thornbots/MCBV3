@@ -38,8 +38,8 @@ DrivetrainSubsystem::DrivetrainSubsystem(src::Drivers* drivers, tap::motor::DjiM
     : tap::control::Subsystem(drivers),
       drivers(drivers),
       motorArray{motorOne, motorTwo, motorThree, motorFour},
-      powerLimit(DEFAULT_POWER_LIMIT),
-      rotationPIDController(drivetrainPIDConfig) {}
+      rotationPIDController(drivetrainPIDConfig),
+      powerLimit(DEFAULT_POWER_LIMIT) {}
 
 void DrivetrainSubsystem::initialize() {
     drivers->commandScheduler.registerSubsystem(this);
@@ -62,13 +62,13 @@ void DrivetrainSubsystem::refresh() {
     powerLimit = std::min(minLimit, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
 
     for (int i = 0; i < 4; i++) {
-        motorVel[i] = motorArray[i]->getShaftRPM() * PI / 30.0f;  // in rad/s
+        motorVel[i] = motorArray[i]->getEncoder()->getVelocity();  // in rad/s
     }
     angularVel = controller.estVelWorld.getRotation();
     // }
 }
 
-void DrivetrainSubsystem::setTargetTranslation(Pose2d drive, bool shouldBoost) {
+void DrivetrainSubsystem::setTargetTranslation(Pose2d drive, [[maybe_unused]] bool shouldBoost) {
     lastDrive = drive;
 
 #if defined(drivetrain_sysid)
