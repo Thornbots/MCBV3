@@ -81,9 +81,14 @@ changes. ARM builds use Ubuntu 24.04's GCC 13 cross compiler; hosted builds use 
 All builds treat compiler warnings as errors. Hosted builds use the system GCC
 by default; `compiler-suffix=-14` selects GCC 14 explicitly.
 
-The legacy `oldinfantry` target is excluded: its indexer homing offset and power
-limiter torque scaling are missing. Restore measured calibration values before
-enabling that target in CI.
+The `engineer` target (formerly `oldinfantry` / `oldstandard`) is excluded:
+its indexer homing offset and power limiter torque scaling are missing. Restore measured calibration values before
+enabling that target in CI. Build selection now uses `robot=engineer` (or
+`ENGINEER`); the old target names are rejected. Its hardware lives in
+`src/robots/engineer/EngineerHardware.hpp` and it retains the shared infantry
+controls and legacy tuning pending calibration. An omitted `robot` still selects
+this target, so specify `robot=sentry`, `robot=infantry`, or `robot=hero`
+for a calibrated build.
 
 `main` preserves its regenerated Taproot IMU API in radians and radians per
 second. The hosted fixture uses the same units. Its referee schema uses the

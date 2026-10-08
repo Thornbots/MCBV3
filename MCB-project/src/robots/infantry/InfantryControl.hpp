@@ -1,9 +1,9 @@
 #include "robots/RobotControl.hpp"
 
-#if defined(INFANTRY)
-#include "robots/infantry/InfantryHardware.hpp"
+#if defined(ENGINEER)
+#include "robots/engineer/EngineerHardware.hpp"
 #else
-#include "robots/infantry/MechInfantryHardware.hpp"
+#include "robots/infantry/InfantryHardware.hpp"
 #endif
 
 #include "subsystems/ui/UISubsystem.hpp"
@@ -36,8 +36,13 @@ int rawEncoder = 0;
 namespace robots {
 class InfantryControl : public ControlInterface {
 public:
+#if defined(ENGINEER)
+    using Hardware = EngineerHardware;
+#else
+    using Hardware = InfantryHardware;
+#endif
     // pass drivers back to root robotcontrol to store
-    InfantryControl(src::Drivers *drivers) : drivers(drivers), hardware(InfantryHardware{drivers}) {}
+    InfantryControl(src::Drivers *drivers) : drivers(drivers), hardware(Hardware{drivers}) {}
     // functions we are using
     void initialize() override {
         // Initialize subsystems (registration is internal)
@@ -126,7 +131,7 @@ public:
     bool isStopped = true;
 
     src::Drivers *drivers;
-    InfantryHardware hardware;
+    Hardware hardware;
 
 
     // Subsystems

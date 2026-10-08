@@ -122,6 +122,7 @@ constexpr float IV_MAX = 2 / KIV;              // units TBD
 constexpr float INT_THRESH = VOLT_MAX * 0.85;  // V
 constexpr float TAKEBACK = 0.01;               // unitless
 constexpr float CURRENT_MAX = 20;  // A
+constexpr float VELO_MAX = VOLT_MAX / (KB * RATIO);  // rad/s
 
 #endif
 
@@ -131,5 +132,3 @@ constexpr float KSTATIC = (UK * RA) / (KT * RATIO);  // A
 constexpr float KV = KB * RATIO;                     // V-s/rad
 constexpr float KA = J / (KT * RATIO);               // A-s^2/rad
 constexpr float KVISC = C / (KT * RATIO);            // A-s/rad
-
-//constexpr float VELO_MAX = VOLT_MAX / (KB * RATIO);  // rad/s

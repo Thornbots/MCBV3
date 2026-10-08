@@ -64,7 +64,7 @@ float YawController::calculate(float currentPosition, float currentVelocity, flo
     pastOutput = RA * targetCurrent + KV * targetRelativeVelocity;
     pastTorque = targetCurrent*KT;
 
-#if defined(OLDINFANTRY)
+#if defined(ENGINEER)
     return std::clamp(pastOutput, -VOLT_MAX, VOLT_MAX);
 #else
     return 0.8192f * targetCurrent;

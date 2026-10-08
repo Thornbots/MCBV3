@@ -15,3 +15,6 @@ baseline to hide regressions. Syntax errors always fail.
 Use GCC 14 for hosted builds (`compiler-suffix=-14`, `CXX=g++-14`) and
 Ubuntu 24.04 ARM GCC 13. Warnings are errors; fix sources, not flags.
 Preserve the generated-vendor compatibility patches described in README.md.
+
+Engineer replaces oldinfantry/oldstandard and stays out of CI until its
+indexer homing offset and drivetrain torque scaling are calibrated.

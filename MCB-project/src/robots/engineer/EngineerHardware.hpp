@@ -1,3 +1,4 @@
+#pragma once
 #include "tap/architecture/periodic_timer.hpp"
 #include "tap/board/board.hpp"
 #include "tap/motor/dji_motor.hpp"
@@ -10,11 +11,11 @@ using namespace tap::can;
 
 namespace robots
 {
-//class for standard robot. This has hardware and subsystems that are robot specific. This means we can have multiple StandardControl for different control schemes
-class InfantryHardware
+// Legacy hardware assignments retained for the engineer target pending calibration.
+class EngineerHardware
 {
 public:
-    InfantryHardware(src::Drivers* drivers) : drivers(drivers) {}
+    explicit EngineerHardware(src::Drivers* drivers) : drivers(drivers) {}
 
     //drivers
     src::Drivers* drivers;
