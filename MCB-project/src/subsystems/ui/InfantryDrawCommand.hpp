@@ -15,7 +15,6 @@
 #include "objects/Reticle.hpp"
 #include "objects/SupercapChargeIndicator.hpp"
 #include "objects/PeekingLines.hpp"
-#include "objects/HopperLidIndicator.hpp"
 #include "objects/HitRing.hpp"
 #include "objects/PredictedRemainingShotsIndicator.hpp"
 #include "objects/AllRobotHealthNumbers.hpp"
@@ -43,7 +42,6 @@ public:
         addGraphicsObject(&supercap);
         addGraphicsObject(&orient);
         addGraphicsObject(&peek);
-        addGraphicsObject(&lid);
         addGraphicsObject(&reticle);
         addGraphicsObject(&ring);
         addGraphicsObject(&remain);
@@ -60,7 +58,6 @@ public:
         supercap.update();
         orient.update();
         peek.update();
-        lid.update();
         reticle.update();
         ring.update();
         remain.update();
@@ -92,7 +89,6 @@ private:
     SupercapChargeIndicator supercap{drivetrain};
     ChassisOrientationIndicator orient{true, drivers, gimbal, drivetrain};
     PeekingLines peek{drivetrain, gimbal};
-    HopperLidIndicator lid{servo};
     Reticle reticle{drivers, gimbal, indexer};
     HitRing ring{drivers, gimbal};
     PredictedRemainingShotsIndicator remain{drivers, indexer};
