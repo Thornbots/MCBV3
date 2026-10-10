@@ -2,7 +2,7 @@ name: Firmware build and tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, nightly]
   pull_request:
   workflow_dispatch:
 
@@ -50,7 +50,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-14 g++-14 libgtest-dev
-          python3 -m pip install scons==4.11.1 pyelftools==0.32 Jinja2==3.1.6 pytest==8.3.5
+          python3 -m pip install scons==4.11.1 pyelftools==0.32 Jinja2==3.1.6
           git submodule update --init taproot-scripts
       - name: Run package C++ tests
         env:
@@ -67,16 +67,19 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Thornbots/sim
-          ref: 124f526bb9e8947b9cf10eaced32166bc47acaee
+          ref: 236ad33743caa54b3028cbc052c272c4c8efc578
           path: uart-fixture
       - name: Exercise the compiled firmware over UART
         env:
-          PYTHONPATH: ${{ github.workspace }}/uart-fixture
           MCB_FIRMWARE_BINARY: ${{ github.workspace }}/MCB-project/build/sim/scons-release/MCB-project.elf
-          MCB_REFEREE_RFID_SCHEMA: '2025'
         run: |
           test -x "$MCB_FIRMWARE_BINARY"
-          python3 -m pytest uart-fixture/test/mcb/test_mcb_protocol.py uart-fixture/test/mcb/test_mcb_firmware.py -q -o addopts='' --junitxml=uart-results.xml
+          g++-14 -std=c++17 -Wall -Wextra -Werror -Iuart-fixture/include \
+            uart-fixture/src/mcb_protocol.cpp \
+            uart-fixture/test/cpp/test_mcb_protocol.cpp \
+            uart-fixture/test/cpp/test_mcb_firmware.cpp \
+            -lgtest_main -lgtest -pthread -lutil -o uart-tests
+          ./uart-tests --gtest_output=xml:uart-results.xml
           python3 - <<'PY'
           import xml.etree.ElementTree as ET
           suites = ET.parse('uart-results.xml').getroot().iter('testsuite')
