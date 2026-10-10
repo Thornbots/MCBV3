@@ -59,11 +59,12 @@ These arguments will work for `scons build` too!
 ## Continuous integration
 
 GitHub Actions compiles ARM firmware for `infantry`, `hero`, and `sentry`
-on main pushes and pull requests, including all four system identification modes. Each build uploads its ELF file for
+on main/nightly pushes and pull requests, including all four system identification modes. Each build uploads its ELF file for
 inspection; CI never flashes a board. The hosted sentry job runs the package's
 geometry and chassis GoogleTests, then builds real firmware and exercises its
 UART parser, referee gates, aiming, firing, and driving through the pinned
-`Thornbots/sim` fixture. A missing executable or skipped UART test fails CI.
+current C++ `Thornbots/sim` fixture. A missing executable, empty test report,
+or skipped UART test fails CI.
 
 Run the C++ tests in a Linux terminal with GCC 14 and GoogleTest installed:
 
@@ -93,8 +94,8 @@ for a calibrated build.
 `main` preserves its regenerated Taproot IMU API in radians and radians per
 second. The hosted fixture uses the same units. Its referee schema uses the
 2025 Taproot RFID fields: resupply outside/inside exchange at bits 19/20 and
-central buff at bit 23. CI selects that schema explicitly and tests the UART
-encoding; these checks do not measure robot calibration or field RFID placement.
+central buff at bit 23. The C++ fixture encodes this current layout directly;
+these checks do not measure robot calibration or field RFID placement.
 
 ## GCC compatibility
 
