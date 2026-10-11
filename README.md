@@ -56,6 +56,11 @@ scons run robot=<ROBOT_TYPE> sysid=<SYSID_TYPE>
 
 These arguments will work for `scons build` too!
 
+The Jetson `CV_TARGET` wire format is documented in the bridge's
+[UART protocol reference](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#cv_target-id1--aim-point-and-fire-decision).
+Bit 3 marks a point from Jetson patrol and is currently ignored by firmware;
+bit 1 remains the separate permission for firmware patrol.
+
 ## Continuous integration
 
 GitHub Actions compiles ARM firmware for `infantry`, `hero`, and `sentry`
