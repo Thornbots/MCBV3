@@ -10,7 +10,6 @@ namespace subsystems {
 using namespace tap::communication::serial;
 float encoderOffsetOdo = ODO_OFFSET;
 OdometrySubsystem::OdometrySubsystem(src::Drivers* drivers, tap::motor::DjiMotor* odo) : tap::control::Subsystem(drivers), drivers(drivers), motorOdo(odo) {
-    gen = std::mt19937(rd());
     distOdo = std::uniform_int_distribution<>(-ODO_DIST_RANGE, ODO_DIST_RANGE);
 }
 

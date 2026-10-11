@@ -113,6 +113,9 @@ joint's boot zero. Sim applies motor forces inside gz's 1 ms step; its
 The external hosted drive mode passes sim route velocities through the real
 drivetrain controller. The Jetson UART format is unchanged. Hosted execution
 still bypasses board boot/calibration and cannot establish STM32 timing.
+Sim's optional [Type C board backend](../../sim/README.md#type-c-board-execution-with-renode)
+executes the normal hardware release ELF through its peripheral drivers;
+its maintained model limits and build instructions live there.
 
 Motor feedback uses Taproot's encoder interface: positions and velocities are
 in radians and radians per second. Flywheel and legacy indexer PID inputs are
@@ -120,6 +123,12 @@ explicitly converted to RPM. UART timeouts use the boot millisecond clock and
 unsigned subtraction so they survive its 32-bit rollover.
 
 The bare board has no POSIX files, process control, or entropy source.
+Gimbal and odometry system-identification generators are constructed in place
+with `std::mt19937::default_seed`. Their sequences are reproducible; normal
+robot builds do not consume them. Assigning a temporary generator in these
+global constructors exceeded the board's 3 KiB startup stack during the
+Type C emulator boot investigation. No control gains, offsets, or command
+selection change with this initialization fix.
 Package-owned newlib hooks return failure with `ENOSYS`; `_getpid` identifies
 the single firmware process. Hardware I/O still goes through Taproot.
 These hooks let modern newlib link without its warning-bearing nosys fallbacks.

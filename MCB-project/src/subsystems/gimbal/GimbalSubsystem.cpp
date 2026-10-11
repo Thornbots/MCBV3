@@ -14,7 +14,6 @@ float encoderOffset = YAW_OFFSET;
 static constexpr float hostedYawHome = YAW_OFFSET;
 #endif
 GimbalSubsystem::GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* yaw, tap::motor::DjiMotor* pitch) : tap::control::Subsystem(drivers), drivers(drivers), motorYaw(yaw), motorPitch(pitch) {
-    gen = std::mt19937(rd());
     distYaw = std::uniform_int_distribution<>(-YAW_DIST_RANGE, YAW_DIST_RANGE);
     distPitch = std::uniform_int_distribution<>(-PITCH_DIST_RANGE, PITCH_DIST_RANGE);
 }
