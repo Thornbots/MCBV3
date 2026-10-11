@@ -23,7 +23,9 @@ bool useController = false;
 void OdometrySubsystem::refresh() {
     bool blue = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId);
     if (blue != isBlue) {
-        // a new start; a relocalize made against the old one no longer applies
+        // A new start: raw aim (fromStart) jumps between team starts, 9.25 m red to blue,
+        // and the old navigation offset no longer applies. Jetson consumers must not
+        // interpolate across this step (UART_PROTOCOL.md, message types).
         isBlue = blue;
         offsetX = 0.0f;
         offsetY = 0.0f;

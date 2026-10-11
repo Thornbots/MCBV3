@@ -66,7 +66,7 @@ void AutoAimAndFireCommand::execute() {
     // set variables that ui debug can use
     targeting = allowGimbal&&!cvTargetValidTimeout.isStopped()&&!(needToTurnToHit||turningToHit);
     if(isManualControl) targeting &= shootFlag&&drivers->remote.getMouseR();
-    // cvTarget and raw aim odometry share the field frame. The gimbal's world yaw is
+    // cvTarget and getAim* share the raw aim frame, never relocalized. The gimbal's world yaw is
     // the IMU's, counterclockwise and zero at power-on, so take the start's yaw off
     Vector2d deltaXY{cvTarget.x - odo->getAimX(), cvTarget.y - odo->getAimY()};
     deltaX = deltaXY.getX();
