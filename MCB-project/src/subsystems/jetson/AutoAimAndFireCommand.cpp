@@ -68,7 +68,7 @@ void AutoAimAndFireCommand::execute() {
     if(isManualControl) targeting &= shootFlag&&drivers->remote.getMouseR();
     // cvTarget and the odometry are both in the field frame. The gimbal's world yaw is
     // the IMU's, counterclockwise and zero at power-on, so take the start's yaw off
-    Vector2d deltaXY{cvTarget.x - odo->getX(), cvTarget.y - odo->getY()};
+    Vector2d deltaXY{cvTarget.x - odo->getAimX(), cvTarget.y - odo->getAimY()};
     deltaX = deltaXY.getX();
     deltaY = deltaXY.getY();
     deltaZ = cvTarget.z-Projections::OFFSET_Z_ROBOT_TO_PITCH_PIVOT;

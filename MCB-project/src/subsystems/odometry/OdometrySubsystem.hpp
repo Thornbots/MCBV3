@@ -62,6 +62,10 @@ public:  // Public Methods
     
     // gives y accounting for relocalize offset
     float getY();
+
+    // Continuous field-aligned pod odometry for POSE and aim; never relocalized.
+    float getAimX();
+    float getAimY();
     
     float getXVel();
     float getYVel();

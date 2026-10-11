@@ -8,6 +8,8 @@
 #include "tap/control/command_mapping.hpp"
 #include "tap/control/command.hpp"
 #include "modm/container/deque.hpp"
+#include "subsystems/odometry/OdometrySubsystem.hpp"
+#include "subsystems/odometry/OdometrySubsystemConstants.hpp"
 
 namespace {
 class Drivers : public tap::Drivers {
@@ -28,6 +30,33 @@ public:
         : CommandMapping(nullptr, commands, {}) {}
     void executeCommandMapping(const tap::control::RemoteMapState&) override {}
 };
+}
+
+TEST(OdometryFramesTest, RelocalizationChangesNavigationButPreservesRawAim) {
+    static src::Drivers drivers;
+    hosted::sensors = {};
+    subsystems::OdometrySubsystem odometry(&drivers, nullptr);
+    const float rawX = odometry.getAimX();
+    const float rawY = odometry.getAimY();
+    EXPECT_FLOAT_EQ(rawX, -odo::START_X);
+    EXPECT_FLOAT_EQ(rawY, odo::START_Y);
+    odometry.relocalizeTo(1.25f, -0.75f);
+    EXPECT_FLOAT_EQ(odometry.getX(), 1.25f);
+    EXPECT_FLOAT_EQ(odometry.getY(), -0.75f);
+    EXPECT_FLOAT_EQ(odometry.getAimX(), rawX);
+    EXPECT_FLOAT_EQ(odometry.getAimY(), rawY);
+    hosted::sensors.podX = 0.3f;
+    hosted::sensors.podY = 0.5f;
+    EXPECT_NEAR(odometry.getAimX(), rawX + 0.5f, 1e-6f);
+    EXPECT_NEAR(odometry.getAimY(), rawY - 0.3f, 1e-6f);
+    EXPECT_NEAR(odometry.getX(), 1.75f, 1e-6f);
+    EXPECT_NEAR(odometry.getY(), -1.05f, 1e-6f);
+    odometry.relocalizeTo(-2.0f, 3.0f);
+    EXPECT_FLOAT_EQ(odometry.getX(), -2.0f);
+    EXPECT_FLOAT_EQ(odometry.getY(), 3.0f);
+    EXPECT_NEAR(odometry.getAimX(), rawX + 0.5f, 1e-6f);
+    EXPECT_NEAR(odometry.getAimY(), rawY - 0.3f, 1e-6f);
+    hosted::sensors = {};
 }
 
 TEST(CommandMappingTest, RemovesNullCommandsAndPreservesOrder) {

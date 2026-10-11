@@ -105,6 +105,19 @@ these checks do not measure robot calibration or field RFID placement.
 
 ## GCC compatibility
 
+### Aim and navigation odometry
+
+`OdometrySubsystem::getAimX/getAimY` expose field-aligned raw pod odometry.
+POSE and `AutoAimAndFireCommand` use these accessors. `getX/getY` add the
+navigation offset and remain the input to navigation controllers.
+RELOCALIZE replaces only that offset; raw POSE and held CV_TARGET aim remain
+continuous as the pods move. Frame conventions and payload semantics are
+owned by the workspace's [UART protocol](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#message-types).
+Deploy matching firmware and Jetson packages together: unchanged payload
+sizes cannot detect a frame-semantic mismatch.
+
+### Hosted hardware fixture
+
 The hosted `MCB2` hardware pipe carries ten DJI CAN feedback packets and
 returns raw motor command words. Gimbal encoders and velocities use the same
 Taproot decoder as the board; only the hosted yaw home is fixed to the sim

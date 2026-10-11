@@ -94,10 +94,16 @@ void OdometrySubsystem::relocalizeTo(float newX, float newY) {
     //off + raw = new
 }
 float OdometrySubsystem::getX() {
-    return offsetX + fromStart(getRawY(), -getRawX()).getX();
+    return offsetX + getAimX();
 }
 float OdometrySubsystem::getY() {
-    return offsetY + fromStart(getRawY(), -getRawX()).getY();
+    return offsetY + getAimY();
+}
+float OdometrySubsystem::getAimX() {
+    return fromStart(getRawY(), -getRawX()).getX();
+}
+float OdometrySubsystem::getAimY() {
+    return fromStart(getRawY(), -getRawX()).getY();
 }
 float OdometrySubsystem::getXVel() {
     return Vector2d(drivers->i2c.odom.getYVel(), -drivers->i2c.odom.getXVel()).rotate(getStartYaw()).getX();

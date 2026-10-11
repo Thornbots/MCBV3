@@ -153,7 +153,7 @@ public:  // Public Methods
 
     void refresh() override;
     
-    // check if jetson sent a relocalize message. If it did, overwrite where odo thinks it is
+    // Apply a navigation fix without changing raw POSE or gimbal aim odometry.
     void checkApplyRelocalize();
 
     bool updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d* jetsonExpectedPosition);

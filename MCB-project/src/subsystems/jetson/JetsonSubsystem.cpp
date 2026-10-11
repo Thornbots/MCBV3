@@ -30,8 +30,8 @@ void JetsonSubsystem::refresh() {
         // 9 poses, 1 ref sys msg
         if (messageCount < 10 && odo != nullptr) {
             Pose p{
-                odo->getX(),
-                odo->getY(),
+                odo->getAimX(),
+                odo->getAimY(),
                 odo->getXVel(),
                 odo->getYVel(),
                 gimbal->getPitchEncoderValue(),
