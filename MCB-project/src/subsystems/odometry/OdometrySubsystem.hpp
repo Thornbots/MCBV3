@@ -52,10 +52,9 @@ public:  // Public Methods
 
     void initialize();
 
-    // getX, getY, their velocities and relocalizeTo are in the field frame (REP-105,
-    // (0, 0) at the centre, x toward blue's base, OdometrySubsystemConstants.hpp), what the
-    // Jetson speaks. The pods are x right, y forward of the heading at power-on, which is
-    // the team's start.
+    // getX/getY include the navigation offset replaced by relocalizeTo. Raw
+    // getAimX/getAimY are the field-aligned pod coordinates sent in POSE.
+    // Team selection initializes the raw field origin and startup heading.
 
     // gives x accounting for relocalize offset
     float getX();
