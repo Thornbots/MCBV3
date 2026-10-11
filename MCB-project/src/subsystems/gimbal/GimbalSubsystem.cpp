@@ -9,6 +9,10 @@ float velocity;
 namespace subsystems {
 using namespace tap::communication::serial;
 float encoderOffset = YAW_OFFSET;
+#ifdef MCB_HOSTED
+// The hosted fixture starts with the yaw shaft homed to the simulated joint.
+static constexpr float hostedYawHome = YAW_OFFSET;
+#endif
 GimbalSubsystem::GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* yaw, tap::motor::DjiMotor* pitch) : tap::control::Subsystem(drivers), drivers(drivers), motorYaw(yaw), motorPitch(pitch) {
     gen = std::mt19937(rd());
     distYaw = std::uniform_int_distribution<>(-YAW_DIST_RANGE, YAW_DIST_RANGE);
@@ -182,16 +186,13 @@ int GimbalSubsystem::getPitchVoltage(
 
 float GimbalSubsystem::getYawEncoderValue() {
 #ifdef MCB_HOSTED
-    return std::fmod(hosted::sensors.jointYaw, 2 * PI);
+    return std::fmod(motorYaw->getEncoder()->getPosition().getUnwrappedValue() / YAW_TOTAL_RATIO + encoderOffset - hostedYawHome, 2 * PI);
 #else
     return std::fmod(motorYaw->getEncoder()->getPosition().getUnwrappedValue() / YAW_TOTAL_RATIO + encoderOffset, 2 * PI);
 #endif
 }
 
 float GimbalSubsystem::getPitchEncoderValue() { //more like get pitch relative to frame
-#ifdef MCB_HOSTED
-    return hosted::sensors.jointPitch;
-#else
     float temp = std::fmod(motorPitch->getEncoder()->getPosition().getWrappedValue() / PITCH_RATIO - PITCH_OFFSET, 2 * PI);
     #if defined(HERO) //wraparound fix  
     return (temp > (1.3 * PI/PITCH_RATIO)) ? temp - 2 * PI/PITCH_RATIO : temp;
@@ -200,21 +201,12 @@ float GimbalSubsystem::getPitchEncoderValue() { //more like get pitch relative t
     #else
     return (temp > PI) ? temp - 2 * PI : temp;
     #endif
-#endif
 }
 float GimbalSubsystem::getYawVel() {
-#ifdef MCB_HOSTED
-    return hosted::sensors.jointYawRate;
-#else
     return motorYaw->getEncoder()->getVelocity() / YAW_TOTAL_RATIO;
-#endif
 }
 float GimbalSubsystem::getPitchVel() {
-#ifdef MCB_HOSTED
-    return hosted::sensors.jointPitchRate * PITCH_RATIO;
-#else
     return motorPitch->getEncoder()->getVelocity();
-#endif
 }
 float GimbalSubsystem::getYawAngleRelativeWorld() { return yawController.estimatedPosition; }
 
