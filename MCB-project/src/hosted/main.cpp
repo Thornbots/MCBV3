@@ -14,16 +14,19 @@ struct Input {
     uint32_t cycles;
     float pods[4], yaw, yawRate, jointYaw, jointYawRate, jointPitch, jointPitchRate;
     uint32_t refereeBytes, mode; // 0 stop, 1 simple, 2 auto; bit 2 disables auto fire
+    uint8_t motors[10][8]; // yaw, pitch, index, odo, flywheel 1/2, drive 1..4
+    float externalRight, externalForward, externalSpin;
 };
 struct Output {
     float yaw, pitch, right, forward, spin;
     uint32_t shots, timeMs;
+    int16_t motors[10];
 };
-static_assert(sizeof(Input) == 52 && sizeof(Output) == 28);
+static_assert(sizeof(Input) == 144 && sizeof(Output) == 48);
 
-void feedback(tap::motor::DjiMotor& motor) {
+void feedback(tap::motor::DjiMotor& motor, const uint8_t data[8]) {
     modm::can::Message msg(motor.getMotorIdentifier(), 8);
-    for (auto& byte : msg.data) byte = 0;
+    for (int i = 0; i < 8; ++i) msg.data[i] = data[i];
     motor.processMessage(msg);
 }
 
@@ -43,14 +46,13 @@ int main() {
     drivers.recal.setIsFirstCalibrating();
     drivers.recal.setIsDoneCalibrating();
     control.initialize();
-    std::fwrite("MCB1", 1, 4, stdout);
+    std::fwrite("MCB2", 1, 4, stdout);
     const float start[2] = {odo::START_X, odo::START_Y};
     std::fwrite(start, sizeof(float), 2, stdout);
     std::fflush(stdout);
     Input in;
     while (std::fread(&in, sizeof(in), 1, stdin) == 1) {
-        if (in.cycles == 0 || in.cycles > 100 || in.refereeBytes > 4096 || in.mode > 6 ||
-                (in.mode & 3) == 3) return 2;
+        if (in.cycles == 0 || in.cycles > 100 || in.refereeBytes > 4096 || in.mode > 7) return 2;
         std::vector<uint8_t> ref(in.refereeBytes);
         if (!ref.empty() && std::fread(ref.data(), 1, ref.size(), stdin) != ref.size()) return 2;
         hosted::queueUart(tap::communication::serial::Uart::Uart6, ref.data(), ref.size());
@@ -71,9 +73,10 @@ int main() {
                 drivers.uart.updateSerial();
             }
             auto& h = control.hardware;
+            unsigned motorIndex = 0;
             for (auto* motor : {&h.yawMotor, &h.pitchMotor, &h.indexMotor, &h.odoMotor,
                     &h.flywheelMotor1, &h.flywheelMotor2, &h.driveMotor1, &h.driveMotor2,
-                    &h.driveMotor3, &h.driveMotor4}) feedback(*motor);
+                    &h.driveMotor3, &h.driveMotor4}) feedback(*motor, in.motors[motorIndex++]);
             const float before = control.indexer.getTotalNumBallsShot();
             drivers.commandScheduler.run();
             drivers.hitTracker.update();
@@ -81,6 +84,8 @@ int main() {
             if ((in.mode & 3) != 1) drivers.commandScheduler.removeCommand(&control.simpleAutoDrive, true);
             if ((in.mode & 3) == 2 && !drivers.commandScheduler.isCommandScheduled(&control.autoDrive))
                 drivers.commandScheduler.addCommand(&control.autoDrive);
+            if ((in.mode & 3) == 3)
+                control.drivetrain.setTargetTranslation(Pose2d(in.externalRight, in.externalForward, in.externalSpin), false);
             if (in.mode & 4) drivers.commandScheduler.removeCommand(&control.autoFire, true);
             if (control.indexer.getTotalNumBallsShot() > before) shots.push_back(hosted::timeMs);
             ++hosted::timeMs;
@@ -88,7 +93,12 @@ int main() {
         Pose2d drive = control.drivetrain.getHostedTargetVelocity();
         Output out{control.gimbal.getHostedTargetYaw(), control.gimbal.getPrevTargetPitch(),
                    drive.getX(), drive.getY(), drive.getRotation(),
-                   static_cast<uint32_t>(shots.size()), hosted::timeMs};
+                   static_cast<uint32_t>(shots.size()), hosted::timeMs, {}};
+        auto& h = control.hardware;
+        unsigned motorIndex = 0;
+        for (auto* motor : {&h.yawMotor, &h.pitchMotor, &h.indexMotor, &h.odoMotor,
+                &h.flywheelMotor1, &h.flywheelMotor2, &h.driveMotor1, &h.driveMotor2,
+                &h.driveMotor3, &h.driveMotor4}) out.motors[motorIndex++] = motor->getOutputDesired();
         std::fwrite(&out, sizeof(out), 1, stdout);
         if (!shots.empty()) std::fwrite(shots.data(), sizeof(uint32_t), shots.size(), stdout);
         std::fflush(stdout);

@@ -99,6 +99,15 @@ these checks do not measure robot calibration or field RFID placement.
 
 ## GCC compatibility
 
+The hosted `MCB2` hardware pipe carries ten DJI CAN feedback packets and
+returns raw motor command words. Gimbal encoders and velocities use the same
+Taproot decoder as the board; only the hosted yaw home is fixed to the sim
+joint's boot zero. Sim applies motor forces inside gz's 1 ms step; its
+[MCB emulator](../../sim/README.md#mcb-emulator) owns the plant and its limits.
+The external hosted drive mode passes sim route velocities through the real
+drivetrain controller. The Jetson UART format is unchanged. Hosted execution
+still bypasses board boot/calibration and cannot establish STM32 timing.
+
 Motor feedback uses Taproot's encoder interface: positions and velocities are
 in radians and radians per second. Flywheel and legacy indexer PID inputs are
 explicitly converted to RPM. UART timeouts use the boot millisecond clock and
