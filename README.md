@@ -31,7 +31,7 @@ Once finished, congratulations! You're ready to start coding!
 
 ## Writing and Flashing Code
 
-All code is written in `MCB-Project/src/`. If you understand typical C++
+All code is written in `MCB-project/src/`. If you understand typical C++
 and taproot, this should be relatively intuitive. 
 
 To flash code, you'll need to be in the pipenv shell. If it's not running, use the following command to start it.
@@ -48,7 +48,7 @@ Don't forget, you should be in the `MCBV3/MCB-project` directory when running an
 scons run
 ```
 
-This command will build the robot code, prepping it to flash, then will proceed to flash it using `openocd`. Alternatively, you can run `scons build` to just build the code. You'll notice that this code will default to compiling the standard project. You can specify the robot type and the system identificaton enable using the command below:
+This command will build the robot code, prepping it to flash, then will proceed to flash it using `openocd`. Alternatively, you can run `scons build` to just build the code. Without `robot=`, the build warns and defaults to `ENGINEER` (see [CI](#continuous-integration)); pass `robot=` explicitly. You can specify the robot type and the system identificaton enable using the command below:
 
 ```
 scons run robot=<ROBOT_TYPE> sysid=<SYSID_TYPE>
@@ -59,7 +59,8 @@ These arguments will work for `scons build` too!
 ## Continuous integration
 
 GitHub Actions compiles ARM firmware for `infantry`, `hero`, and `sentry`
-on main/nightly pushes and pull requests, including all four system identification modes. Each build uploads its ELF file for
+on nightly/main pushes and pull requests into `main`, including all four system identification modes.
+Pull requests into `nightly` skip the ARM jobs. Each build uploads its ELF file for
 inspection; CI never flashes a board. The hosted sentry job runs the package's
 geometry and chassis GoogleTests, then builds real firmware and exercises its
 UART parser, referee gates, aiming, firing, and driving through the pinned
