@@ -61,6 +61,20 @@ The Jetson `CV_TARGET` wire format is documented in the bridge's
 Bit 3 marks a point from Jetson patrol and is currently ignored by firmware;
 bit 1 remains the separate permission for firmware patrol.
 
+## Automatic indexer recovery
+
+Automatic aiming returns its indexer to idle when referee state allows shooting,
+and stops it while shooting is forbidden. This releases the stop flag left by
+calibration or pre-game SETUP; previously the firmware could request a shot
+while its physical indexer stayed stopped. Heat, power, projectile-presence and
+shot-spacing checks still decide whether a request is allowed. Manual aiming
+does not take ownership of the indexer.
+
+The simulator's compiled-firmware regression checks both a requested shot and
+nonzero CAN motor output after SETUP becomes IN_GAME. A hosted shot counter
+alone is not evidence that the physical indexer moved; board execution and
+modeled exits are documented at [sim](../../sim/README.md#type-c-board-execution-with-renode).
+
 ## Continuous integration
 
 GitHub Actions compiles ARM firmware for `infantry`, `hero`, and `sentry`
