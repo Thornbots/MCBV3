@@ -15,7 +15,16 @@ public:
 
     void initialize() override {};
 
-    void execute() override {drivetrain->stopMotors();}
+    void execute() override {
+        using Ref = RefSerialData;
+        const bool powered = static_cast<bool>(drivers->refSerial.getRobotData().robotPower &
+            Ref::Rx::RobotPower::CHASSIS_HAS_POWER);
+        if (powered && drivers->refSerial.getGameData().gameStage == Ref::Rx::GameStage::IN_GAME) {
+            drivetrain->setTargetTranslation(Pose2d{}, false);
+        } else {
+            drivetrain->stopMotors();
+        }
+    }
 
     void end(bool) override {};
 

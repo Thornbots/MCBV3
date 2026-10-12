@@ -116,6 +116,17 @@ heading. Frame conventions and payload semantics are owned by the workspace's
 Deploy matching firmware and Jetson packages together: unchanged payload
 sizes cannot detect a frame-semantic mismatch.
 
+The parked drivetrain command uses the wheel-velocity controller at a zero
+setpoint while chassis power is available in game, opposing gimbal reaction
+and residual wheel motion. Outside that state it cuts motor current.
+
+The gimbal controller uses the main scheduler's 1 ms interval. Its 8 ms yaw
+predictor integrates geared output torque and the configured viscous/static
+friction; the torque history starts at zero. Simulator sensor age must match
+this predictor. The sentry ballistic solver assumes 24 m/s; this is a model
+constant, not a new physical measurement. Calibration evidence lives in the
+[sim accuracy investigation](../../sim/docs/aim-accuracy-2026-10-12.md).
+
 ## GCC compatibility
 
 ### Hosted hardware fixture

@@ -4,7 +4,8 @@ Constants file for all robots subsystem constants
 */
 constexpr static float PI_CONST = 3.14159;
 constexpr static int YAW_MOTOR_MAX_VOLTAGE = 24000;  // Should be the voltage of the battery. Unless the motor maxes out below that.
-static constexpr float dt = 0.002f;
+// main.cpp and the hosted scheduler refresh controls every 1 ms.
+static constexpr float dt = 0.001f;
 // for sysid
 static constexpr int PITCH_DIST_RANGE = 0;
 
