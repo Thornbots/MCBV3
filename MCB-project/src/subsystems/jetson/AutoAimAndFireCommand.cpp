@@ -127,7 +127,9 @@ void AutoAimAndFireCommand::execute() {
     }
 
     if(!isManualControl){
-        if(!allowShooting){
+        if(allowShooting){
+            indexer->idle();
+        } else {
             indexer->stopIndex();
         }
         if(allowGimbal) {

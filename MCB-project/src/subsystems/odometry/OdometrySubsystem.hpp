@@ -40,8 +40,7 @@ private:  // Private Variables
     bool isBlue = false;
 
     // for sysid
-    std::random_device rd;
-    std::mt19937 gen;
+    std::mt19937 gen{std::mt19937::default_seed};
     std::uniform_int_distribution<int> distOdo;
     Vector2d odoOffset = Vector2d(0, 0);
 

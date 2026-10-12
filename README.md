@@ -61,6 +61,20 @@ The Jetson `CV_TARGET` wire format is documented in the bridge's
 Bit 3 marks a point from Jetson patrol and is currently ignored by firmware;
 bit 1 remains the separate permission for firmware patrol.
 
+## Automatic indexer recovery
+
+Automatic aiming returns its indexer to idle when referee state allows shooting,
+and stops it while shooting is forbidden. This releases the stop flag left by
+calibration or pre-game SETUP; previously the firmware could request a shot
+while its physical indexer stayed stopped. Heat, power, projectile-presence and
+shot-spacing checks still decide whether a request is allowed. Manual aiming
+does not take ownership of the indexer.
+
+The simulator's compiled-firmware regression checks both a requested shot and
+nonzero CAN motor output after SETUP becomes IN_GAME. A hosted shot counter
+alone is not evidence that the physical indexer moved; board execution and
+modeled exits are documented at [sim](../../sim/README.md#type-c-board-execution-with-renode).
+
 ## Continuous integration
 
 GitHub Actions compiles ARM firmware for `infantry`, `hero`, and `sentry`
@@ -118,7 +132,9 @@ sizes cannot detect a frame-semantic mismatch.
 
 The parked drivetrain command uses the wheel-velocity controller at a zero
 setpoint while chassis power is available in game, opposing gimbal reaction
-and residual wheel motion. Outside that state it cuts motor current.
+and residual wheel motion. Outside that state it cuts motor current. All
+drive commands also cut wheel current when referee chassis power is off;
+centered manual drive remains a velocity hold when powered.
 
 The gimbal controller uses the main scheduler's 1 ms interval. Its 8 ms yaw
 predictor integrates geared output torque and the configured viscous/static
@@ -131,21 +147,34 @@ constant, not a new physical measurement. Calibration evidence lives in the
 
 ### Hosted hardware fixture
 
-The hosted `MCB2` hardware pipe carries ten DJI CAN feedback packets and
+The hosted `MCB3` hardware pipe carries ten DJI CAN feedback packets and
 returns raw motor command words. Gimbal encoders and velocities use the same
 Taproot decoder as the board; only the hosted yaw home is fixed to the sim
 joint's boot zero. Sim applies motor forces inside gz's 1 ms step; its
 [MCB emulator](../../sim/README.md#mcb-emulator) owns the plant and its limits.
-The external hosted drive mode passes sim route velocities through the real
-drivetrain controller. The Jetson UART format is unchanged. Hosted execution
+The hosted remote switches follow stop/simple drive and automatic aim/fire
+selections, including arming after startup. The private pipe also carries
+three-axis gyro/specific force for the board adapter; the native fixture keeps
+its direct sensor interfaces. External velocity and NAV_GOAL drive remain
+explicit hosted fixture modes. E2E stages select the firmware waypoint command.
+The Jetson UART format is unchanged. Hosted execution
 still bypasses board boot/calibration and cannot establish STM32 timing.
+Sim's optional [Type C board backend](../../sim/README.md#type-c-board-execution-with-renode)
+executes the normal hardware release ELF through its peripheral drivers;
+its maintained model limits and build instructions live there.
 
 Motor feedback uses Taproot's encoder interface: positions and velocities are
 in radians and radians per second. Flywheel and legacy indexer PID inputs are
 explicitly converted to RPM. UART timeouts use the boot millisecond clock and
 unsigned subtraction so they survive its 32-bit rollover.
 
-The bare board has no POSIX files, process control, or entropy source.
+The firmware provides no POSIX files, process control, or wired entropy source.
+Gimbal and odometry system-identification generators are constructed in place
+with `std::mt19937::default_seed`. Their sequences are reproducible; normal
+robot builds do not consume them. Assigning a temporary generator in these
+global constructors exceeded the board's 3 KiB startup stack during the
+Type C emulator boot investigation. No control gains, offsets, or command
+selection change with this initialization fix.
 Package-owned newlib hooks return failure with `ENOSYS`; `_getpid` identifies
 the single firmware process. Hardware I/O still goes through Taproot.
 These hooks let modern newlib link without its warning-bearing nosys fallbacks.

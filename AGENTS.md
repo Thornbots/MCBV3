@@ -9,4 +9,5 @@ and [GCC compatibility](README.md#gcc-compatibility) before firmware changes.
 - Keep `engineer` out of CI until homing offset and power-limiter torque scaling
   are calibrated. Always select the intended robot explicitly.
 - Hosted motor feedback and board-execution limits: [README](README.md#gcc-compatibility).
-  STM32 peripheral emulation remains [workspace track I](../../ROADMAP.md#i-mcb-emulator).
+  [Board-stage verification](../../sim/docs/mcb-auto-drive-2026-10-12.md);
+  model limits belong to [sim's Type C backend](../../sim/README.md#type-c-board-execution-with-renode).

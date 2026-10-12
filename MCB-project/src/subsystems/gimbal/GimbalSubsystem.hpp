@@ -44,8 +44,7 @@ private:  // Private Variables
     float positionHistory[LATENCY_Q_SIZE];
 
     // for sysid
-    std::random_device rd;
-    std::mt19937 gen;
+    std::mt19937 gen{std::mt19937::default_seed};
     std::uniform_int_distribution<int> distYaw;
     std::uniform_int_distribution<int> distPitch;
 
