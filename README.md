@@ -140,7 +140,7 @@ in radians and radians per second. Flywheel and legacy indexer PID inputs are
 explicitly converted to RPM. UART timeouts use the boot millisecond clock and
 unsigned subtraction so they survive its 32-bit rollover.
 
-The bare board has no POSIX files, process control, or entropy source.
+The firmware provides no POSIX files, process control, or wired entropy source.
 Gimbal and odometry system-identification generators are constructed in place
 with `std::mt19937::default_seed`. Their sequences are reproducible; normal
 robot builds do not consume them. Assigning a temporary generator in these
