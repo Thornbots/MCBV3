@@ -16,13 +16,14 @@ struct Input {
     uint32_t refereeBytes, mode; // 0 stop, 1 simple, 2 auto; bit 2 disables auto fire
     uint8_t motors[10][8]; // yaw, pitch, index, odo, flywheel 1/2, drive 1..4
     float externalRight, externalForward, externalSpin;
+    float imu[6]; // board adapter: local gyro rad/s, specific force in g
 };
 struct Output {
     float yaw, pitch, right, forward, spin;
     uint32_t shots, timeMs;
     int16_t motors[10];
 };
-static_assert(sizeof(Input) == 144 && sizeof(Output) == 48);
+static_assert(sizeof(Input) == 168 && sizeof(Output) == 48);
 
 void feedback(tap::motor::DjiMotor& motor, const uint8_t data[8]) {
     modm::can::Message msg(motor.getMotorIdentifier(), 8);
@@ -46,7 +47,7 @@ int main() {
     drivers.recal.setIsFirstCalibrating();
     drivers.recal.setIsDoneCalibrating();
     control.initialize();
-    std::fwrite("MCB2", 1, 4, stdout);
+    std::fwrite("MCB3", 1, 4, stdout);
     const float start[2] = {odo::START_X, odo::START_Y};
     std::fwrite(start, sizeof(float), 2, stdout);
     std::fflush(stdout);
@@ -63,8 +64,10 @@ int main() {
         hosted::sensors.jointPitch = in.jointPitch; hosted::sensors.jointPitchRate = in.jointPitchRate;
         std::vector<uint32_t> shots;
         for (uint32_t i = 0; i < in.cycles; ++i) {
-            // Centred sticks, both switches up: decoded by the real DBUS driver.
-            const uint8_t remote[18] = {0, 4, 32, 0, 1, 0x58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4};
+            // Match the board fixture's physical DBUS switch selection.
+            const uint8_t switches = 8 | ((in.mode & 3) == 1 ? 1 : 3) << 4 |
+                                      ((in.mode & 4) ? 3 : 1) << 6;
+            const uint8_t remote[18] = {0, 4, 32, 0, 1, switches, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4};
             hosted::queueUart(tap::communication::serial::Uart::Uart3, remote, sizeof(remote));
             drivers.remote.read();
             // main.cpp polls I/O every 5 us between the 1 ms scheduler ticks.
