@@ -119,13 +119,17 @@ these checks do not measure robot calibration or field RFID placement.
 
 ## GCC compatibility
 
-The hosted `MCB2` hardware pipe carries ten DJI CAN feedback packets and
+The hosted `MCB3` hardware pipe carries ten DJI CAN feedback packets and
 returns raw motor command words. Gimbal encoders and velocities use the same
 Taproot decoder as the board; only the hosted yaw home is fixed to the sim
 joint's boot zero. Sim applies motor forces inside gz's 1 ms step; its
 [MCB emulator](../../sim/README.md#mcb-emulator) owns the plant and its limits.
-The external hosted drive mode passes sim route velocities through the real
-drivetrain controller. The Jetson UART format is unchanged. Hosted execution
+The hosted remote switches follow stop/simple drive and automatic aim/fire
+selections, including arming after startup. The private pipe also carries
+three-axis gyro/specific force for the board adapter; the native fixture keeps
+its direct sensor interfaces. External velocity and NAV_GOAL drive remain
+explicit hosted fixture modes. E2E stages select the firmware waypoint command.
+The Jetson UART format is unchanged. Hosted execution
 still bypasses board boot/calibration and cannot establish STM32 timing.
 Sim's optional [Type C board backend](../../sim/README.md#type-c-board-execution-with-renode)
 executes the normal hardware release ELF through its peripheral drivers;
@@ -136,7 +140,7 @@ in radians and radians per second. Flywheel and legacy indexer PID inputs are
 explicitly converted to RPM. UART timeouts use the boot millisecond clock and
 unsigned subtraction so they survive its 32-bit rollover.
 
-The bare board has no POSIX files, process control, or entropy source.
+The firmware provides no POSIX files, process control, or wired entropy source.
 Gimbal and odometry system-identification generators are constructed in place
 with `std::mt19937::default_seed`. Their sequences are reproducible; normal
 robot builds do not consume them. Assigning a temporary generator in these
