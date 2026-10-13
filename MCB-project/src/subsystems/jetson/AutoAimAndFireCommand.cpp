@@ -1,6 +1,8 @@
 #include "AutoAimAndFireCommand.hpp"
 #include "JetsonSubsystemConstants.hpp"
 
+#include <algorithm>
+
 
 namespace commands {
 using namespace tap::communication::serial;
@@ -53,7 +55,8 @@ void AutoAimAndFireCommand::execute() {
     if(jetson->getCvTarget(&cvTarget)) {
         receivedCvTargetEver = true;
         cvTargetValidTimeout.restart(TARGET_VALID_TIME);
-        startShotTimeout.restart(cvTarget.delay_ms-FIRING_LATENCY_TIME);
+        // Shorter than the physical indexing latency means request immediately.
+        startShotTimeout.restart(std::max(0, static_cast<int>(cvTarget.delay_ms) - FIRING_LATENCY_TIME));
     }
     if(cvTargetValidTimeout.isExpired()) cvTargetValidTimeout.stop();
     float angleToTurnForSentry = drivers->hitTracker.getAngleToTurnForSentry();

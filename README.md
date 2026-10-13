@@ -130,11 +130,26 @@ heading. Frame conventions and payload semantics are owned by the workspace's
 Deploy matching firmware and Jetson packages together: unchanged payload
 sizes cannot detect a frame-semantic mismatch.
 
-The parked drivetrain command uses the wheel-velocity controller at a zero
-setpoint while chassis power is available in game, opposing gimbal reaction
-and residual wheel motion. Outside that state it cuts motor current. All
-drive commands also cut wheel current when referee chassis power is off;
-centered manual drive remains a velocity hold when powered.
+The sentry parked and centered manual commands latch a raw aim-odometry
+position while chassis power is available in game, opposing gimbal reaction
+and residual wheel motion through the position and wheel-velocity controllers.
+RELOCALIZE cannot move that hold point; a raw-start jump over 25 cm in one
+control tick reanchors it. Other drive commands clear the latch. Outside the
+powered in-game state the stop command cuts motor current; all drive commands
+cut current when referee chassis power is off. Keyboard peek release is gated
+on keyboard mode so it cannot override the centered DBUS mode at startup.
+
+The wire fire delay includes indexer latency and an additional alignment wait.
+`AutoAimAndFireCommand` clamps the indexing wait to zero below its calibrated sentry
+latency estimate. Jetson must include that estimate when sending a scheduled
+exit. The hosted chamber-exit replay measured 94 ms; hardware
+indexing and UART delay still need measurement.
+
+Absolute aim points use a filtered angular-rate estimate over the 1 ms
+controller ticks: a 40 Hz point update must not become a one-tick velocity
+impulse. The estimator wraps yaw differences, treats jumps above 0.25 rad as
+target handoffs, and resets when leaving absolute aiming. Manual incremental
+commands retain their rate semantics.
 
 The gimbal controller uses the main scheduler's 1 ms interval. Its 8 ms yaw
 predictor integrates geared output torque and the configured viscous/static
