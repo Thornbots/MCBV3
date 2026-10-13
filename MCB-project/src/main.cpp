@@ -1,3 +1,4 @@
+#include "tap/architecture/clock.hpp"
 #include "tap/architecture/periodic_timer.hpp"
 #include "tap/architecture/profiler.hpp"
 #include "tap/communication/sensors/buzzer/buzzer.hpp"
@@ -58,7 +59,12 @@ static void initializeIo(src::Drivers *drivers) {
 
     //if controller is on when the robot turns on, wait for it to be off.
     //This is to prevent the shredding of wires
-    modm::delay_ms(3000);
+    // SysTick is active after Board::initialize(); sleep between ticks instead
+    // of spending the entire power-on guard polling the DWT register.
+    const uint32_t powerOnStartUs = tap::arch::clock::getTimeMicroseconds();
+    while (static_cast<uint32_t>(tap::arch::clock::getTimeMicroseconds() - powerOnStartUs) < 3000000U) {
+        __WFI();
+    }
     drivers->leds.set(tap::gpio::Leds::Red, true);
     int i = 0;
     while(i < 5000){

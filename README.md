@@ -139,6 +139,12 @@ powered in-game state the stop command cuts motor current; all drive commands
 cut current when referee chassis power is off. Keyboard peek release is gated
 on keyboard mode so it cannot override the centered DBUS mode at startup.
 
+Board startup preserves the three-second remote power-on guard using the
+already initialized SysTick clock and `WFI` between interrupts. The former
+DWT busy wait spent the whole guard repeatedly reading a peripheral register
+in Renode. The following remote-disconnected guard and IMU calibration still
+execute normally; no simulator hook skips firmware initialization.
+
 The wire fire delay includes indexer latency and an additional alignment wait.
 `AutoAimAndFireCommand` clamps the indexing wait to zero below its calibrated sentry
 latency estimate. Jetson must include that estimate when sending a scheduled
