@@ -19,6 +19,7 @@
 #include "objects/Countdown.hpp"
 #include "objects/LinearVelocityIndicator.hpp"
 #include "objects/ImuRecalibrationIndicator.hpp"
+#include "objects/TorqueIndicator.hpp"
 #include "drivers.hpp"
 
 namespace commands {
@@ -26,13 +27,17 @@ using subsystems::UISubsystem;
 
 class HeroDrawCommand : public tap::control::Command, GraphicsContainer {
 public:
-    HeroDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, HeroIndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain)
+    HeroDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, HeroIndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain, tap::motor::DjiMotor* motorFlywheel1, tap::motor::DjiMotor* motorFlywheel2, tap::motor::DjiMotor* motorFlywheel3, tap::motor::DjiMotor* motorFlywheel4)
         : drivers(drivers),
           ui(ui),
           gimbal(gimbal),
           flywheel(flywheel),
           indexer(indexer),
-          drivetrain(drivetrain) {
+          drivetrain(drivetrain),
+          motorFlywheel1(motorFlywheel1),
+          motorFlywheel2(motorFlywheel2),
+          motorFlywheel3(motorFlywheel3),
+          motorFlywheel4(motorFlywheel4) {
         addSubsystemRequirement(ui);
 
         addGraphicsObject(&lane);
@@ -45,6 +50,10 @@ public:
         addGraphicsObject(&countdown);
         addGraphicsObject(&velo);
         addGraphicsObject(&recal);
+        addGraphicsObject(&ind1);
+        addGraphicsObject(&ind2);
+        addGraphicsObject(&ind3);
+        addGraphicsObject(&ind4);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
@@ -60,7 +69,10 @@ public:
         countdown.update();
         velo.update();
         recal.update();
-        // logo doesn't need updating
+        ind1.update();
+        ind2.update();
+        ind3.update();
+        ind4.update();
     };
 
     //ui subsystem won't do anything until its top level container is set, so we are ok to add objects to the command in the constructor
@@ -77,6 +89,10 @@ private:
     FlywheelSubsystem* flywheel;
     HeroIndexerSubsystem* indexer;
     DrivetrainSubsystem* drivetrain;
+    tap::motor::DjiMotor* motorFlywheel1;
+    tap::motor::DjiMotor* motorFlywheel2;
+    tap::motor::DjiMotor* motorFlywheel3;
+    tap::motor::DjiMotor* motorFlywheel4;
 
     // add top level graphics objects here and in the constructor
     LaneAssistLines lane{gimbal};
@@ -89,5 +105,9 @@ private:
     Countdown countdown{drivers};
     LinearVelocityIndicator velo{drivetrain};
     ImuRecalibrationIndicator recal{drivers};
+    TorqueIndicator ind1{drivers, motorFlywheel1, 1};
+    TorqueIndicator ind2{drivers, motorFlywheel2, 2};
+    TorqueIndicator ind3{drivers, motorFlywheel3, 3};
+    TorqueIndicator ind4{drivers, motorFlywheel4, 4};
 };
 }  // namespace commands

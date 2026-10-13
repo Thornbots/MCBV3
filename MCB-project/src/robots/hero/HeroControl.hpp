@@ -123,14 +123,14 @@ public:
     // Subsystems
     subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
-    subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
-    subsystems::FlywheelSubsystem flywheel2{drivers, &hardware.flywheelMotor3, &hardware.flywheelMotor4};
+    subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2, 0.5};
+    subsystems::FlywheelSubsystem flywheel2{drivers, &hardware.flywheelMotor3, &hardware.flywheelMotor4, 1};
     subsystems::HeroIndexerSubsystem indexer{drivers, &hardware.indexTopMotor, &hardware.indexBottomMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::JetsonSubsystem jetson{drivers, &gimbal, nullptr};
     // //commands
 
-    commands::HeroDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};
+    commands::HeroDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &hardware.flywheelMotor1, &hardware.flywheelMotor2, &hardware.flywheelMotor3, &hardware.flywheelMotor4};
     // commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr};
 
 

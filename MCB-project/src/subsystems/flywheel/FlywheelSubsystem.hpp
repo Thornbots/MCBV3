@@ -25,6 +25,8 @@ src::Drivers* drivers;
 tap::motor::DjiMotor* motorFlywheel1;
 tap::motor::DjiMotor* motorFlywheel2;
 
+float speedmult;
+
 tap::algorithms::SmoothPid flywheelPIDController1{PID_CONF_FLYWHEEL};
 tap::algorithms::SmoothPid flywheelPIDController2{PID_CONF_FLYWHEEL};
 
@@ -37,7 +39,7 @@ int startupCounter; //used to disable the random shooting on startup
 bool robotDisabled = false;
 
 public:  // Public Methods 
-    FlywheelSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* flywheel1, tap::motor::DjiMotor* flywheel2);
+    FlywheelSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* flywheel1, tap::motor::DjiMotor* flywheel2, float speedmult);
 
     ~FlywheelSubsystem() {}  // Intentionally left blank
 
