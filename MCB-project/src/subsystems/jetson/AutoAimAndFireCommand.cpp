@@ -1,6 +1,8 @@
 #include "AutoAimAndFireCommand.hpp"
 #include "JetsonSubsystemConstants.hpp"
 
+#include <algorithm>
+
 
 namespace commands {
 using namespace tap::communication::serial;
@@ -53,7 +55,8 @@ void AutoAimAndFireCommand::execute() {
     if(jetson->getCvTarget(&cvTarget)) {
         receivedCvTargetEver = true;
         cvTargetValidTimeout.restart(TARGET_VALID_TIME);
-        startShotTimeout.restart(cvTarget.delay_ms-FIRING_LATENCY_TIME);
+        // Shorter than the physical indexing latency means request immediately.
+        startShotTimeout.restart(std::max(0, static_cast<int>(cvTarget.delay_ms) - FIRING_LATENCY_TIME));
     }
     if(cvTargetValidTimeout.isExpired()) cvTargetValidTimeout.stop();
     float angleToTurnForSentry = drivers->hitTracker.getAngleToTurnForSentry();
@@ -66,9 +69,9 @@ void AutoAimAndFireCommand::execute() {
     // set variables that ui debug can use
     targeting = allowGimbal&&!cvTargetValidTimeout.isStopped()&&!(needToTurnToHit||turningToHit);
     if(isManualControl) targeting &= shootFlag&&drivers->remote.getMouseR();
-    // cvTarget and the odometry are both in the field frame. The gimbal's world yaw is
+    // cvTarget and getAim* share the raw aim frame, never relocalized. The gimbal's world yaw is
     // the IMU's, counterclockwise and zero at power-on, so take the start's yaw off
-    Vector2d deltaXY{cvTarget.x - odo->getX(), cvTarget.y - odo->getY()};
+    Vector2d deltaXY{cvTarget.x - odo->getAimX(), cvTarget.y - odo->getAimY()};
     deltaX = deltaXY.getX();
     deltaY = deltaXY.getY();
     deltaZ = cvTarget.z-Projections::OFFSET_Z_ROBOT_TO_PITCH_PIVOT;

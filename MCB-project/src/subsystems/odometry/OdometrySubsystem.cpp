@@ -22,7 +22,9 @@ bool useController = false;
 void OdometrySubsystem::refresh() {
     bool blue = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId);
     if (blue != isBlue) {
-        // a new start; a relocalize made against the old one no longer applies
+        // A new start: raw aim (fromStart) jumps between team starts, 9.25 m red to blue,
+        // and the old navigation offset no longer applies. Jetson consumers must not
+        // interpolate across this step (UART_PROTOCOL.md, message types).
         isBlue = blue;
         offsetX = 0.0f;
         offsetY = 0.0f;
@@ -93,10 +95,16 @@ void OdometrySubsystem::relocalizeTo(float newX, float newY) {
     //off + raw = new
 }
 float OdometrySubsystem::getX() {
-    return offsetX + fromStart(getRawY(), -getRawX()).getX();
+    return offsetX + getAimX();
 }
 float OdometrySubsystem::getY() {
-    return offsetY + fromStart(getRawY(), -getRawX()).getY();
+    return offsetY + getAimY();
+}
+float OdometrySubsystem::getAimX() {
+    return fromStart(getRawY(), -getRawX()).getX();
+}
+float OdometrySubsystem::getAimY() {
+    return fromStart(getRawY(), -getRawX()).getY();
 }
 float OdometrySubsystem::getXVel() {
     return Vector2d(drivers->i2c.odom.getYVel(), -drivers->i2c.odom.getXVel()).rotate(getStartYaw()).getX();

@@ -117,7 +117,56 @@ second. The hosted fixture uses the same units. Its referee schema uses the
 central buff at bit 23. The C++ fixture encodes this current layout directly;
 these checks do not measure robot calibration or field RFID placement.
 
+## Aim and navigation odometry
+
+`OdometrySubsystem::getAimX/getAimY` expose field-aligned raw pod odometry.
+POSE and `AutoAimAndFireCommand` use these accessors. `getX/getY` add the
+navigation offset and remain the input to navigation controllers.
+RELOCALIZE replaces only that offset; raw POSE and held CV_TARGET aim remain
+continuous as the pods move. Boot/team selection can reanchor raw aim: a red
+to blue start changes the field origin by about 9.25 m and changes startup
+heading. Frame conventions and payload semantics are owned by the workspace's
+[UART protocol](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#message-types).
+Deploy matching firmware and Jetson packages together: unchanged payload
+sizes cannot detect a frame-semantic mismatch.
+
+The sentry parked and centered manual commands latch a raw aim-odometry
+position while chassis power is available in game, opposing gimbal reaction
+and residual wheel motion through the position and wheel-velocity controllers.
+RELOCALIZE cannot move that hold point; a raw-start jump over 25 cm in one
+control tick reanchors it. Other drive commands clear the latch. Outside the
+powered in-game state the stop command cuts motor current; all drive commands
+cut current when referee chassis power is off. Keyboard peek release is gated
+on keyboard mode so it cannot override the centered DBUS mode at startup.
+
+Board startup preserves the three-second remote power-on guard using the
+already initialized SysTick clock and `WFI` between interrupts. The former
+DWT busy wait spent the whole guard repeatedly reading a peripheral register
+in Renode. The following remote-disconnected guard and IMU calibration still
+execute normally; no simulator hook skips firmware initialization.
+
+The wire fire delay includes indexer latency and an additional alignment wait.
+`AutoAimAndFireCommand` clamps the indexing wait to zero below its calibrated sentry
+latency estimate. Jetson must include that estimate when sending a scheduled
+exit. The hosted chamber-exit replay measured 94 ms; hardware
+indexing and UART delay still need measurement.
+
+Absolute aim points use a filtered angular-rate estimate over the 1 ms
+controller ticks: a 40 Hz point update must not become a one-tick velocity
+impulse. The estimator wraps yaw differences, treats jumps above 0.25 rad as
+target handoffs, and resets when leaving absolute aiming. Manual incremental
+commands retain their rate semantics.
+
+The gimbal controller uses the main scheduler's 1 ms interval. Its 8 ms yaw
+predictor integrates geared output torque and the configured viscous/static
+friction; the torque history starts at zero. Simulator sensor age must match
+this predictor. The sentry ballistic solver assumes 24 m/s; this is a model
+constant, not a new physical measurement. Calibration evidence lives in the
+[sim accuracy investigation](../../sim/docs/aim-accuracy-2026-10-12.md).
+
 ## GCC compatibility
+
+### Hosted hardware fixture
 
 The hosted `MCB3` hardware pipe carries ten DJI CAN feedback packets and
 returns raw motor command words. Gimbal encoders and velocities use the same

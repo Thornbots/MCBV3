@@ -78,7 +78,12 @@ private:
     tap::arch::MilliTimeout cvTargetValidTimeout{};
     tap::arch::MilliTimeout startShotTimeout{}; //ideally we don't have to queue up multiple shots
     static constexpr int TARGET_VALID_TIME = 200; //ms, perhaps the new version of PERSISTANCE after the last shot
-    static constexpr int FIRING_LATENCY_TIME = 80; //ms. When we tell the indexer to shoot, how long until that happens. Needs to be tested.
+    // Sentry chamber-exit calibration; hardware indexing remains unmeasured.
+#if defined(SENTRY)
+    static constexpr int FIRING_LATENCY_TIME = 94;
+#else
+    static constexpr int FIRING_LATENCY_TIME = 80;
+#endif
     
 
     

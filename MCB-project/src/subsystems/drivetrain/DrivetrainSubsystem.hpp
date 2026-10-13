@@ -20,6 +20,8 @@ private:                                            // Private Variables
     tap::motor::DjiMotor* motorArray[4];
 
     Pose2d lastDrive;
+    bool holdingPosition = false;
+    Vector2d heldPosition{}, previousHoldPosition{};
 
     float motorCurrent[4] = {0.0f,0.0f,0.0f,0.0f};
 
@@ -70,6 +72,8 @@ public:  // Public Methods
     void setTargetTranslation(Pose2d drive, bool boost);
 
     void setTargetPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity);
+    // Raw field odometry only; navigation corrections cannot move this hold.
+    void holdRawPosition(Pose2d currentPosition);
     /*
      * Call this function to set all DriveTrain motors to 0 desired RPM.
      */
@@ -78,6 +82,7 @@ public:  // Public Methods
     float calculateRotationPID(float error);
 
 private:  // Private Methods
+    void applyTargetPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity);
     
 
 };

@@ -8,6 +8,8 @@ mkdir -p build/unit-tests
     -Isrc -Itaproot/src -Itaproot/sim-modm/hosted-linux/modm/src \
     -Itaproot/modm/ext/cmsis/dsp -Itaproot/modm/ext/cmsis/core \
     test/FirmwareRegressionTest.cpp src/communication/UARTCommunication.cpp src/hosted/uart.cpp \
+    src/subsystems/odometry/OdometrySubsystem.cpp \
+    src/subsystems/odometry/controllers/OdoController.cpp \
     build/sim/scons-release/libtaproot.a build/sim/scons-release/modm/libmodm.a \
     -lgtest_main -lgtest -pthread -o build/unit-tests/firmware-regression-tests
 build/unit-tests/firmware-regression-tests "$@"

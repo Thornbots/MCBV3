@@ -10,6 +10,7 @@
 #include "tap/motor/dji_motor.hpp"
 
 #include "controllers/PitchController.hpp"
+#include "controllers/AngleSetpointRate.hpp"
 #include "controllers/YawController.hpp"
 #include "drivers.hpp"
 #include "GimbalSubsystemConstants.hpp"
@@ -31,6 +32,8 @@ private:  // Private Variables
 
     YawController yawController;  // default constructor
     PitchController pitchController;
+    AngleSetpointRate absoluteYawRate;
+    void applyYawSetpoint(float changeInTargetYaw, float targetPitch, float targetYawRate);
 
     float pitchMotorVoltage, yawMotorVoltage;
 

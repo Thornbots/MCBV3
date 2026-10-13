@@ -1,5 +1,7 @@
 #include "GimbalSubsystem.hpp"
 
+#include <cmath>
+
 #include "tap/communication/serial/ref_serial_data.hpp"
 
 #include "GimbalSubsystemConstants.hpp"
@@ -58,10 +60,16 @@ void GimbalSubsystem::refresh() {
 }
 
 void GimbalSubsystem::setAngles(float yawAngle, float pitchAngle) {
-    updateMotors(yawAngle-targetYawAngleWorld, pitchAngle);
+    const float change = std::remainder(yawAngle - targetYawAngleWorld, 2 * PI);
+    applyYawSetpoint(change, pitchAngle, absoluteYawRate.update(yawAngle, dt));
 }
 
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
+    absoluteYawRate.reset();
+    applyYawSetpoint(changeInTargetYaw, targetPitch, changeInTargetYaw / dt);
+}
+
+void GimbalSubsystem::applyYawSetpoint(float changeInTargetYaw, float targetPitch, float targetYawRate) {
     resetEncoderIfGainPower();
     float pitchVel = getPitchVel();
     float pitch = getPitchEncoderValue();
@@ -77,7 +85,7 @@ void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {
     yawEncoderCache = driveTrainEncoder;
     targetYawAngleWorld += changeInTargetYaw;
     pitchMotorVoltage = getPitchVoltage(targetPitch, pitch, pitchVel, dt);
-    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, changeInTargetYaw / dt, dt);
+    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld, yawAngularVelocity, targetYawAngleWorld, targetYawRate, dt);
 }
 
 float GimbalSubsystem::getPrevTargetPitch() {
@@ -86,6 +94,7 @@ float GimbalSubsystem::getPrevTargetPitch() {
 
 // alternate version of update motors to use with CV
 void GimbalSubsystem::updateMotorsAndVelocity(float changeInTargetYaw, float targetPitch, float targetYawVel, float targetPitchVel) {
+    absoluteYawRate.reset();
     float pitch = getPitchEncoderValue();
 
     prevTargetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
@@ -129,12 +138,14 @@ void GimbalSubsystem::stopMotors() {
 }
 
 void GimbalSubsystem::clearBuildup() {
+    absoluteYawRate.reset();
     pitchController.clearBuildup();
     yawController.clearBuildup();
     yawController.estimateYawPos(yawAngleRelativeWorld, yawAngularVelocity, driveTrainAngularVelocity);
 }
     
 void GimbalSubsystem::reZeroYaw() {
+    absoluteYawRate.reset();
     yawAngleRelativeWorld = 0.0;
     targetYawAngleWorld = 0.0;
 }
