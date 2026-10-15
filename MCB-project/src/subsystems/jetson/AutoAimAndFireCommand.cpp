@@ -63,7 +63,7 @@ void AutoAimAndFireCommand::execute() {
     bool turnToHitFlag =        (cvTarget.flags & CV_TARGET_FLAG_TURN_TO_HIT)>0;
     bool typeCBasedPatrolFlag = (cvTarget.flags & CV_TARGET_FLAG_TYPE_C_BASED_PATROL)>0;
     bool shootFlag =            (cvTarget.flags & CV_TARGET_FLAG_FIRE)>0;
-    bool needToTurnToHit = turnToHitFlag && drivers->hitTracker.isHit;
+    bool needToTurnToHit = turnToHitFlag && drivers->hitTracker.didHitThisControlCycle();
     turningToHit &= turnToHitFlag;
     
     // set variables that ui debug can use

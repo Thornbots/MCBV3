@@ -5,6 +5,7 @@
 
 namespace hit_orientation {
 constexpr float TWO_PI = 6.2831853071795864769f;
+constexpr float NO_HIT_ANGLE = 123.0f;
 
 constexpr float armorOffset(uint8_t damagedArmorId)
 {
