@@ -62,7 +62,7 @@ void JetsonSubsystem::refresh() {
                     robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::CHASSIS_HAS_POWER) << 1 |
                     robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::GIMBAL_HAS_POWER))};
             // needToSendRefData = !
-            sendMsg(&r);
+            if (sendMsg(&r)) drivers->hitTracker.consumeReportedHit();
             messageCount = 0;
         }
     }

@@ -102,7 +102,7 @@ struct RefSys
     uint16_t stage_time_remaining;
     uint16_t robot_hp;
     uint8_t robot_id; //if was on red team, so hero will always be 1 and not 101
-    float delta_angle_got_hit_in; // chassis-relative hit bearing, radians, positive counterclockwise; 123 means no hit this cycle
+    float delta_angle_got_hit_in; // current chassis-relative bearing, radians, CCW positive; 123 means none since last REF_SYS
 
     uint8_t booleans;
     // bool isOnBlueTeam;

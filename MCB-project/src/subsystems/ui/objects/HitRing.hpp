@@ -59,10 +59,10 @@ public:
         if (allSlotsUnused) nextIndex = 0;
 
         // check for a new hit
-        if (drivers->hitTracker.isHit) {
+        if (drivers->hitTracker.didHitThisControlCycle()) {
             // took some sort of damage and we think we took panel damage
 
-            hitOrientations[nextIndex] = drivers->hitTracker.hitOrientation / PI * 180.0;
+            hitOrientations[nextIndex] = drivers->hitTracker.getHitOrientation() / PI * 180.0;
             rings[nextIndex].show();
             expirationTimeouts[nextIndex].restart(RECENT_TIME + EXPIRATION_TIME);
             rings[nextIndex].color = UISubsystem::Color::WHITE;
