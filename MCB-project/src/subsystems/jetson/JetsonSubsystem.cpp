@@ -43,13 +43,14 @@ void JetsonSubsystem::refresh() {
 
             tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
             tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-            angleToTurnForSentry = drivers->hitTracker.getAngleToTurnForSentry();
+            const float chassisWorldYaw = drivers->bmi088.getYaw() - gimbal->getYawEncoderValue();
+            const float deltaAngleGotHitIn = drivers->hitTracker.getAngleForRefSys(chassisWorldYaw);
             RefSys r{
                 (uint8_t)gameData.gameStage,
                 (uint16_t)gameData.stageTimeRemaining,
                 (uint16_t)robotData.currentHp,
                 static_cast<uint8_t>(static_cast<uint8_t>(robotData.robotId) % 100),  // blue hero is 101, we want to send 1
-                angleToTurnForSentry,
+                deltaAngleGotHitIn,
                 // 12.34,
                 static_cast<uint8_t>(drivers->refSerial.isBlueTeam(robotData.robotId) << 7 | (robotData.robotBuffStatus.recoveryBuff > 0) << 6 |
                     (robotData.rfidStatus.any(

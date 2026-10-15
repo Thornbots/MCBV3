@@ -1,80 +1,64 @@
 #pragma once
+
 #include <functional>
 
 #include "tap/communication/serial/ref_serial_data.hpp"
-
+#include "util/HitOrientation.hpp"
 
 #define RefSerialData tap::communication::serial::RefSerialData
 
-class HitTracker 
+class HitTracker
 {
-    public:
-        float hitOrientation; // Hit Direction in Radians
-        bool isHit = false;
-        uint16_t previousHp;
-        
-        static constexpr float PLACEHOLDER_ANGLE = 123;  // a special value for telling jetson that you weren't hit
+public:
+    float hitOrientation{0.0f};
+    bool isHit{false};
+    uint16_t previousHp{0};
 
+    static constexpr float PLACEHOLDER_ANGLE = 123.0f;
 
+    explicit HitTracker(tap::Drivers* drivers) : drivers(drivers) {}
 
-        HitTracker(tap::Drivers* drivers) : drivers(drivers)
-        {
-        }
+    void setGetYawEncoderFunction(std::function<float()> func)
+    {
+        getYawEncoderValue_func = func;
+    }
 
+    void addHit()
+    {
+        const float yawEncoder = getYawEncoderValue_func();
+        const float headWorldYaw = drivers->bmi088.getYaw();
+        const uint8_t damagedArmorId = static_cast<uint8_t>(drivers->refSerial.getRobotData().damagedArmorId);
+        hitOrientation = hit_orientation::worldYaw(headWorldYaw, yawEncoder, damagedArmorId);
+        isHit = true;
+    }
 
-        // Gimbal Function - Get Yaw Encoder
-        // ------------------------------------------
-        // Provide the ability to run the function without causing a circular dependency
-        
-        // Lambda Implementation
-        void setGetYawEncoderFunction(std::function<float()> func)
-        {
-            this->getYawEncoderValue_func = func;
-        }
+    void update()
+    {
+        isHit = false;
 
-        // Function to append a hit if the code structure already identifies a strike
-        void addHit()
-        {
-            float encoder = getYawEncoderValue_func();
-            float imu = drivers->bmi088.getYaw() / 180.0f * PI;
-
-            // damagedArmorId==0 is forward, add 0*90 degrees
-            // 1 is left, add 1*(pi/2) Radians
-            // 2 is back, add 2*(pi/2) Radians
-            // 3 is right, add 3*(pi/2) Radians
-            // 4 is top, don't care because we don't have panels on top (yet?)
-            
-            hitOrientation = -encoder + imu + ((PI/2) * ((uint16_t)drivers->refSerial.getRobotData().damagedArmorId));
-            isHit = true;
-        }
-
-        // Detect if a hit occurs -- appends the hit orientation
-        void update() 
-        {
-            isHit = false;
-
-            // check for a new hit
-            if (drivers->refSerial.getRefSerialReceivingData() && getYawEncoderValue_func) {
-                const RefSerialData::Rx::RobotData &robotData = drivers->refSerial.getRobotData();
-                if (previousHp > robotData.currentHp && (robotData.damageType == RefSerialData::Rx::DamageType::ARMOR_DAMAGE || robotData.damageType == RefSerialData::Rx::DamageType::COLLISION)) {
-                    // took some sort of damage and we think we took panel damage
-                    addHit();
-                }
-
-                previousHp = robotData.currentHp;
+        if (drivers->refSerial.getRefSerialReceivingData() && getYawEncoderValue_func) {
+            const RefSerialData::Rx::RobotData& robotData = drivers->refSerial.getRobotData();
+            if (previousHp > robotData.currentHp &&
+                (robotData.damageType == RefSerialData::Rx::DamageType::ARMOR_DAMAGE ||
+                 robotData.damageType == RefSerialData::Rx::DamageType::COLLISION)) {
+                addHit();
             }
+
+            previousHp = robotData.currentHp;
         }
- 
-        // Return angle in radians for the sentry to turn to
-        float getAngleToTurnForSentry() {
-            if (isHit) return hitOrientation;
+    }
 
-            return PLACEHOLDER_ANGLE;
-        }
+    float getAngleToTurnForSentry() const
+    {
+        return isHit ? hitOrientation : PLACEHOLDER_ANGLE;
+    }
 
-    private:
-        tap::Drivers* drivers;
+    float getAngleForRefSys(float currentChassisWorldYaw) const
+    {
+        return isHit ? hit_orientation::relativeYaw(hitOrientation, currentChassisWorldYaw) : PLACEHOLDER_ANGLE;
+    }
 
-        // Access gimbal yaw encoder value without causing circular dependency
-        std::function<float()> getYawEncoderValue_func;
+private:
+    tap::Drivers* drivers;
+    std::function<float()> getYawEncoderValue_func;
 };
