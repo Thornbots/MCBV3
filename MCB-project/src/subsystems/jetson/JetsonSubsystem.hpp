@@ -102,7 +102,7 @@ struct RefSys
     uint16_t stage_time_remaining;
     uint16_t robot_hp;
     uint8_t robot_id; //if was on red team, so hero will always be 1 and not 101
-    float delta_angle_got_hit_in; //if we are looking in a certain direction and get hit in the left, this would be PI/2
+    float delta_angle_got_hit_in; // chassis-relative hit bearing, radians, positive counterclockwise; 123 means no hit this cycle
 
     uint8_t booleans;
     // bool isOnBlueTeam;
@@ -187,7 +187,5 @@ private:  // Private Methods
     }
     
     
-    float angleToTurnForSentry;
-
 };
 }  // namespace subsystems

@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/../MCB-project"
 mkdir -p build/unit-tests
 "${CXX:-g++}" -std=c++20 -Wall -Wextra -Werror -DSENTRY -Isrc \
-    test/PoseTest.cpp test/ChassisControllerTest.cpp test/NewlibSyscallsTest.cpp test/YawControllerTest.cpp \
+    test/PoseTest.cpp test/ChassisControllerTest.cpp test/NewlibSyscallsTest.cpp test/YawControllerTest.cpp test/HitTrackerTest.cpp \
     src/platform/newlib_syscalls.cpp src/subsystems/drivetrain/ChassisController.cpp \
     src/subsystems/gimbal/controllers/YawController.cpp \
     -lgtest_main -lgtest -pthread -o build/unit-tests/mcb-tests

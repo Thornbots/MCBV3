@@ -97,12 +97,10 @@ void AutoAimAndFireCommand::execute() {
         if(isManualControl){
             MouseMoveCommand::executeWith(drivers, gimbal);
         } else if (allowGimbal){ //automatic movement
-            // getAngleToTurnForSentry() returns HitRing::PLACEHOLDER_ANGLE except on the single
-            // cycle right after a hit is registered, when it returns (headYaw - hitDirection) in
-            // world radians. Latch that one-shot value into an absolute world-yaw target and hold
-            // it, otherwise it is lost the instant patrol resumes and the turret never turns.
+            // getAngleToTurnForSentry() returns a world-frame hit bearing for one control cycle.
+            // Preserve that bearing as an absolute yaw target while the turret turns toward it.
             if (needToTurnToHit) {
-                // Face the hit: target heading = current heading minus the returned offset.
+                // The tracker already expressed the hit bearing in the gimbal's world-yaw frame.
                 hitTargetYaw = angleToTurnForSentry;
                 turningToHit = true;
                 hitTurnStartTime = tap::arch::clock::getTimeMilliseconds();
