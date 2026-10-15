@@ -6,7 +6,7 @@
 #include "util/HitOrientation.hpp"
 #include "util/HitEventState.hpp"
 
-#define RefSerialData tap::communication::serial::RefSerialData
+using RefSerialData = tap::communication::serial::RefSerialData;
 
 class HitTracker
 {
