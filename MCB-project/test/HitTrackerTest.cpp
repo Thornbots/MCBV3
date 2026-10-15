@@ -16,7 +16,7 @@ TEST(HitTrackerTest, ReportsPositiveCounterclockwiseRadiansRelativeToCurrentChas
     EXPECT_NEAR(hit_orientation::relativeYaw(hitWorldYaw, chassisWorldYaw + 0.3f), pi / 2.0f - 0.3f, 1e-6f);
 }
 
-TEST(HitTrackerTest, RightPanelIsNegativeAndNoCurrentHitUsesPlaceholder)
+TEST(HitTrackerTest, RightPanelIsNegativeRelativeToChassisYaw)
 {
     constexpr float pi = 3.14159265358979323846f;
     constexpr float headWorldYaw = 2.0f;
