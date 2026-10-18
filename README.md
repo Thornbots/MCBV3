@@ -133,7 +133,9 @@ sizes cannot detect a frame-semantic mismatch.
 The sentry drivetrain matches main, whose hold is confirmed on the real robot:
 the default stop command cuts wheel current, and centered manual drive keeps a
 zero wheel-velocity setpoint through the velocity controller. Neither latches
-a pod position.
+a pod position. Every drive command cuts wheel current while the referee
+reports chassis power off. Releasing keyboard peeks selects beyblade only in
+keyboard mode, so it cannot override the DBUS drive mode at boot.
 
 Board startup preserves the three-second remote power-on guard using the
 already initialized SysTick clock and `WFI` between interrupts. The former

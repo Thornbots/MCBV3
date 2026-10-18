@@ -240,7 +240,9 @@ public:
     // peeking
     Trigger peekLeftButton{drivers, Remote::Key::Q};
     Trigger peekRightButton{drivers, Remote::Key::E};
-    Trigger peekNoneButton = !(peekLeftButton | peekRightButton);
+    // Releasing keyboard peeks must not override the DBUS drive mode at boot.
+    Trigger peekNoneButton = (!(peekLeftButton | peekRightButton)) &
+        [this] { return drivetrain.isInKeyboardMode; };
 
     // controller driving
     Trigger autoDriveTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};
