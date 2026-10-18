@@ -20,14 +20,39 @@
 
 ## How to deploy to the MCB
 
-- Download the weekly build artifact from the develop branch (see [here](https://docs.gitlab.com/ee/ci/pipelines/job_artifacts.html#downloading-the-latest-artifacts) if you don't know how to do this). This artifact includes this readme as well as `openocd.cfg` and a number of `.elf` files.
-- In a terminal (bash or windows based), navigate to the folder containing the downloaded artifacts.
-- Type the following:
+- Get an `.elf`: a [CI artifact](#ci-artifacts) or [your own build](#creating-an-elf-file).
+- Get [`openocd.cfg`](openocd.cfg) from this directory; artifacts do not include it.
+- In a terminal (bash or Windows), run:
     ```
-    openocd -f "./openocd.cfg" -c "modm_program path/to/elf/file/elf-file-name.elf"
+    openocd -f path/to/openocd.cfg -c "modm_program path/to/MCB-project.elf"
     ```
-   where `path/to/elf/file` is a valid path to an `.elf` file (either absolute or relative to where you are in the terminal), `elf-file-name.elf` is a valid `.elf` file (presumably one of the ones you downloaded from the build artifact), and `./openocd.cfg` is the file you downloaded in the first step. You should replace `./openocd.cfg` with the actual name of the file you downloaded if the `.cfg` file has been changed.
+
+## CI artifacts
+
+GitHub Actions' "Firmware build and tests" workflow
+([`firmware.yml`](../.github/workflows/firmware.yml)) uploads one release ELF
+per robot and sysid mode, named `firmware-<robot>-<sysid>`, from pushes to
+`main`/`nightly` and pull requests into `main`; see
+[CI](../README.md#continuous-integration). Each artifact holds only
+`MCB-project.elf`. Download it from the run's page under the repo's Actions
+tab, or with the GitHub CLI:
+
+```
+gh run list -R Thornbots/MCBV3 -w firmware.yml -b nightly -e push -s success -L 1
+gh run download <run-id> -R Thornbots/MCBV3 -n firmware-sentry-none
+```
+
+Check that the run's commit is the one you mean to flash.
 
 ## Creating an elf file
 
-To get a `.elf` file, you must build the codebase. Refer to [the main repo](#how-to-build-code-and-program-the-mcb) if you are confused about how to build. If you don't have the build environment set up but need a new build, ask on slack for someone to send you a `.elf` file. If you do have the environment but want to deploy using this technique, once you have a build, find the file in the build directory `build/hardware/<debug/hardware>/MCB-project.elf`. This is the `.elf` file you will want to use while deploying to the MCB.
+Set up and build as in [Writing and Flashing Code](../README.md#writing-and-flashing-code),
+naming the robot explicitly:
+
+```
+cd MCB-project
+scons build robot=sentry profile=release
+```
+
+The ELF is `MCB-project/build/hardware/scons-release/MCB-project.elf`
+(`scons-<profile>` for other profiles).
