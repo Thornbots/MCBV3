@@ -130,14 +130,12 @@ heading. Frame conventions and payload semantics are owned by the workspace's
 Deploy matching firmware and Jetson packages together: unchanged payload
 sizes cannot detect a frame-semantic mismatch.
 
-The sentry parked and centered manual commands latch a raw aim-odometry
-position while chassis power is available in game, opposing gimbal reaction
-and residual wheel motion through the position and wheel-velocity controllers.
-RELOCALIZE cannot move that hold point; a raw-start jump over 25 cm in one
-control tick reanchors it. Other drive commands clear the latch. Outside the
-powered in-game state the stop command cuts motor current; all drive commands
-cut current when referee chassis power is off. Keyboard peek release is gated
-on keyboard mode so it cannot override the centered DBUS mode at startup.
+The default drivetrain stop command cuts wheel current, as on main. Centered
+manual drive keeps main's zero wheel-velocity setpoint through the velocity
+controller; it does not latch pod position. Referee chassis-power gates and
+the keyboard-mode gate on peek release remain. The user confirmed this
+controller-on hold on the real robot; simulated chassis drift belongs to the
+sim wheel/motor/friction model, not a firmware position-hold workaround.
 
 Board startup preserves the three-second remote power-on guard using the
 already initialized SysTick clock and `WFI` between interrupts. The former

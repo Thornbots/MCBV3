@@ -8,12 +8,17 @@
 namespace {
 int jetsonFd = -1;
 std::array<std::deque<uint8_t>, 3> incoming;
+std::array<std::deque<uint8_t>, 3> afterDiscard;
 }
 namespace hosted {
 void setJetsonFd(int fd) { jetsonFd = fd; }
 void queueUart(tap::communication::serial::Uart::UartPort port, const uint8_t* data, size_t n) {
     if (n == 0) return;
     incoming.at(port).insert(incoming.at(port).end(), data, data + n);
+}
+void queueUartAfterDiscard(tap::communication::serial::Uart::UartPort port, const uint8_t* data, size_t n) {
+    if (n == 0) return;
+    afterDiscard.at(port).insert(afterDiscard.at(port).end(), data, data + n);
 }
 }
 namespace tap::communication::serial {
@@ -36,6 +41,7 @@ size_t Uart::read(UartPort port, uint8_t* data, size_t n) {
 size_t Uart::discardReceiveBuffer(UartPort port) {
     size_t n = incoming.at(port).size();
     incoming.at(port).clear();
+    incoming.at(port).swap(afterDiscard.at(port));
     return n;
 }
 bool Uart::write(UartPort port, uint8_t data) { return write(port, &data, 1) == 1; }

@@ -71,7 +71,6 @@ void DrivetrainSubsystem::refresh() {
 }
 
 void DrivetrainSubsystem::setTargetTranslation(Pose2d drive, [[maybe_unused]] bool shouldBoost) {
-    holdingPosition = false;
     if (drivers->refSerial.getRefSerialReceivingData() &&
         !drivers->refSerial.getRobotData().robotPower.any(RefSerialData::Rx::RobotPower::CHASSIS_HAS_POWER)) {
         stopMotors();
@@ -105,11 +104,6 @@ void DrivetrainSubsystem::setTargetTranslation(Pose2d drive, [[maybe_unused]] bo
 }
 
 void DrivetrainSubsystem::setTargetPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity) {
-    holdingPosition = false;
-    applyTargetPosition(targetPosition, currentPosition, inputVelocity);
-}
-
-void DrivetrainSubsystem::applyTargetPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity) {
     if (drivers->refSerial.getRefSerialReceivingData() &&
         !drivers->refSerial.getRobotData().robotPower.any(RefSerialData::Rx::RobotPower::CHASSIS_HAS_POWER)) {
         stopMotors();
@@ -126,20 +120,8 @@ void DrivetrainSubsystem::applyTargetPosition(Vector2d targetPosition, Pose2d cu
     }
 }
 
-void DrivetrainSubsystem::holdRawPosition(Pose2d currentPosition) {
-    // More than 25 cm in one control tick is a raw-start reanchor, not motion.
-    if (!holdingPosition || (currentPosition.vec() - previousHoldPosition).magnitude() > .25f) {
-        heldPosition = currentPosition.vec();
-        controller.resetPositionIntegral();
-        holdingPosition = true;
-    }
-    previousHoldPosition = currentPosition.vec();
-    applyTargetPosition(heldPosition, currentPosition, Pose2d{});
-}
-
 // fix function
 void DrivetrainSubsystem::stopMotors() {
-    holdingPosition = false;
 #ifdef MCB_HOSTED
     controller.hostedTargetVelocity = Pose2d{};
 #endif
