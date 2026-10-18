@@ -32,6 +32,7 @@ enum UartMessage : uint8_t{
     // outgoing
     POSE = 2,
     REF_SYS = 3,
+    MCB_DATA = 6,
     
     // bidirectional
     PING = 5,
@@ -140,7 +141,7 @@ private:  // Private Variables
 
     static constexpr int TIME_FOR_REF_DATA = 200; //send at 5hz
     tap::arch::PeriodicMilliTimer refDataSendingTimeout{TIME_FOR_REF_DATA};
-    tap::arch::PeriodicMilliTimer poseDataTimeout{10}; //for sending pose data at 100hz
+    uint32_t nextTelemetry = drivers->uart.getCurrentTime() + 10;
     // bool needToSendRefData = false;
 
 
@@ -180,7 +181,7 @@ private:  // Private Methods
 
     template<class msg_type> 
     inline bool sendMsg(msg_type* msg){
-        bool status = drivers->uart.isFinishedWriting(); //TODO: this is not necessary because uart has a buffer?
+        bool status = drivers->uart.isFinishedWriting();
         if(status)
             return drivers->uart.sendMsg((uint8_t*)msg, StructToMessageType<msg_type>::value, sizeof(msg_type));
         return false;

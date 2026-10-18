@@ -75,6 +75,23 @@ nonzero CAN motor output after SETUP becomes IN_GAME. A hosted shot counter
 alone is not evidence that the physical indexer moved; board execution and
 modeled exits are documented at [sim](../../sim/README.md#type-c-board-execution-with-renode).
 
+## On-demand firmware data
+
+Use `drivers->uart.mcbLog(channel, ptr, length)` from the main scheduler context;
+it copies the bytes into a bounded queue and returns false on rejection. The
+`mcbLog(channel, value)` helper accepts trivially copyable structs that fit.
+Define serialization explicitly: native struct padding/endianness are part of
+what a raw struct sends, so packed structs or explicit byte encoding are preferable.
+`drivers->uart.mcbText("value=%u", value)` is the bounded text convenience,
+replacing the unused broken `PRINT` macro. Neither API is ISR/thread safe.
+`droppedData()` exposes rejected records locally, with transport reports also
+sent on the reserved channel.
+
+The [wire contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#mcb_data-id6--firmware-owned-opaque-data)
+owns channel reservations, bounds, scheduling and stamps. The
+[firmware data workflow](../../ros2_dji_serial_bridge/README.md#firmware-data-over-wifi)
+explains live Foxglove viewing and copying/decoding recorded bags over WiFi.
+
 ## Continuous integration
 
 GitHub Actions compiles ARM firmware for `infantry`, `hero`, and `sentry`

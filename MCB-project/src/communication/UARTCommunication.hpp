@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <cstring>
+#include <type_traits>
+#include "McbDataQueue.hpp"
 
 #include "tap/algorithms/crc.hpp"
 #include "tap/communication/serial/dji_serial.hpp"
@@ -46,7 +48,20 @@ public:
 
     bool isConnected() const;
 
-    bool isFinishedWriting() const { return drivers->uart.isWriteFinished(port); }
+    bool isFinishedWriting() const {
+        return (!wireStarted || static_cast<int32_t>(getCurrentTime() - wireBusyUntil) >= 0) && drivers->uart.isWriteFinished(port);
+    }
+
+    // Copies opaque bytes; false means rejected or queue full. Scheduler context only.
+    bool mcbLog(uint8_t channel, const void* data, size_t length) { return dataQueue.enqueue(channel, data, length); }
+    template<typename T> bool mcbLog(uint8_t channel, const T& data) {
+        static_assert(std::is_trivially_copyable_v<T> && sizeof(T) <= McbDataQueue::MAX_DATA);
+        return mcbLog(channel, &data, sizeof(T));
+    }
+    bool mcbText(const char* format, ...) __attribute__((format(printf, 2, 3)));
+    uint32_t droppedData() const { return dataQueue.dropped(); }
+    void queuePing(uint8_t number) { pendingPing = number; hasPendingPing = true; }
+    void sendIdle(uint32_t telemetryDeadline);
 
     inline bool hasNewMessage() { return hasNewData; }
 
@@ -56,6 +71,11 @@ public:
     tap::communication::serial::Uart::UartPort getPort() const;
 
 private:
+    McbDataQueue dataQueue;
+    uint32_t wireBusyUntil = 0;
+    bool wireStarted = false;
+    uint8_t pendingPing = 0;
+    bool hasPendingPing = false;
     bool hasNewData;
     uint32_t lastReceivedTime;
 
