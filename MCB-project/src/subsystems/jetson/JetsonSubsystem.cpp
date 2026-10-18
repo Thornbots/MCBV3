@@ -21,10 +21,12 @@ void JetsonSubsystem::refresh() {
     
     Ping ping{};
     if(getMsg(&ping)){
-        sendMsg(&ping);
+        drivers->uart.queuePing(ping.number);
     }
 
-    if (poseDataTimeout.execute()) {
+    const uint32_t now = drivers->uart.getCurrentTime();
+    if (static_cast<int32_t>(now - nextTelemetry) >= 0) {
+        nextTelemetry += ((now - nextTelemetry) / 10 + 1) * 10;
         messageCount++;
 
         // 9 poses, 1 ref sys msg
@@ -66,6 +68,7 @@ void JetsonSubsystem::refresh() {
             messageCount = 0;
         }
     }
+    drivers->uart.sendIdle(nextTelemetry);
 }
 
 void JetsonSubsystem::checkApplyRelocalize() {
