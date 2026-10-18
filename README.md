@@ -135,8 +135,10 @@ position while chassis power is available in game, opposing gimbal reaction
 and residual wheel motion through the position and wheel-velocity controllers.
 RELOCALIZE cannot move that hold point; a raw-start jump over 25 cm in one
 control tick reanchors it. Other drive commands clear the latch. Outside the
-powered in-game state the stop command cuts motor current; all drive commands
-cut current when referee chassis power is off. Keyboard peek release is gated
+powered in-game state the stop command cuts motor current. It also cuts current
+and clears the parked hold whenever the remote is disconnected, so reconnect
+latches the current position. All drive commands cut current when referee
+chassis power is off. Keyboard peek release is gated
 on keyboard mode so it cannot override the centered DBUS mode at startup.
 
 Board startup preserves the three-second remote power-on guard using the

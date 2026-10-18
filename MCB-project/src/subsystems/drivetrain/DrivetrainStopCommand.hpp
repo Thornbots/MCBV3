@@ -20,6 +20,10 @@ public:
     void initialize() override {};
 
     void execute() override {
+        if (!drivers->remote.isConnected()) {
+            drivetrain->stopMotors();
+            return;
+        }
         using Ref = RefSerialData;
         const bool powered = static_cast<bool>(drivers->refSerial.getRobotData().robotPower &
             Ref::Rx::RobotPower::CHASSIS_HAS_POWER);
