@@ -130,12 +130,10 @@ heading. Frame conventions and payload semantics are owned by the workspace's
 Deploy matching firmware and Jetson packages together: unchanged payload
 sizes cannot detect a frame-semantic mismatch.
 
-The default drivetrain stop command cuts wheel current, as on main. Centered
-manual drive keeps main's zero wheel-velocity setpoint through the velocity
-controller; it does not latch pod position. Referee chassis-power gates and
-the keyboard-mode gate on peek release remain. The user confirmed this
-controller-on hold on the real robot; simulated chassis drift belongs to the
-sim wheel/motor/friction model, not a firmware position-hold workaround.
+The sentry drivetrain matches main, whose hold is confirmed on the real robot:
+the default stop command cuts wheel current, and centered manual drive keeps a
+zero wheel-velocity setpoint through the velocity controller. Neither latches
+a pod position.
 
 Board startup preserves the three-second remote power-on guard using the
 already initialized SysTick clock and `WFI` between interrupts. The former
