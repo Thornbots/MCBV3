@@ -35,7 +35,12 @@ public:
             number.x = 660;
             number.y = 670;
         }
+
+        for (int i = 0; i < graphelements; i++)
+        {addGraphicsObject(&graph[i]);}
     }
+
+    bool previousL = false;
 
     void update() {
         int16_t curvalue = motor->getTorque();
@@ -49,9 +54,48 @@ public:
         
         if(abscur>absmax) maxvalue = curvalue;
         
-        number._float = maxvalue;
+        //number._float = maxvalue;
         
         number.color = motor->isMotorOnline() ? UISubsystem::Color::GREEN : UISubsystem::Color::PINK;
+
+
+        // Left Click Pressed - fired reset average
+        bool currentL = drivers->remote.getMouseL();
+        if(!currentL) previousL = false;
+
+        if(currentL && !previousL){
+            previousL = true;
+            averageRPM = 0;
+            numberofMeasurements = 0;
+            graphindex = 0;
+        }
+        // Continue Averaging
+        else
+        {
+            averageRPM =+ motor->getShaftRPM();
+            numberofMeasurements++;
+            number._float = (float)averageRPM/(float)numberofMeasurements;
+        }
+
+
+        // Plot Values
+        if (graphindex < graphelements)
+        {
+            if (graph_yheight < 257)
+            {graph_yheight = 848;}
+
+            graph[graphindex].x = 464 + 100*(graphindex/15);
+            graph[graphindex].y = graph_yheight;
+
+            graph[graphindex].height = 40;
+            graph[graphindex].thickness = 4;
+
+            graph[graphindex]._float = motor->getShaftRPM();
+
+            graph_yheight =+ 40;
+        }
+
+        
     }
 
 private:
@@ -60,8 +104,20 @@ private:
     uint8_t index;
     int16_t maxvalue = 0;
 
+
+    int16_t averageRPM = 0;
+    int numberofMeasurements = 0;
+
+
     static constexpr uint16_t X_POSITION = 1680; //pixels, all numbers at the same y level on screen
     static constexpr uint16_t Y_POSITION = 610; //pixels, all numbers at the same y level on screen
 
     FloatGraphic number{UISubsystem::Color::GREEN, 0, 0, 0, 60, 3};
+
+    // Graph Flywheel Speed
+    int graph_yheight = 0;
+
+    int graphindex = 0;
+    static constexpr int graphelements = 60;
+    FloatGraphic graph[graphelements];
 };
