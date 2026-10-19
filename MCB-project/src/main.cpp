@@ -5,6 +5,7 @@
 #include "robots/RobotControl.hpp"
 
 #include "drivers.hpp"
+#include "communication/spi_master_2.hpp"
 
 static constexpr int RECALIBRATION_THRESHOLD_TIME = 15; //s, when there are fewer than this many seconds remaining in the game stage, run scheduled recalibrations
 static constexpr int AUTORECALIBRATION_THRESHOLD_TIME = 60*3000; //ms, set to 3 min. if the controller has been off for this long, recalibrate
@@ -69,6 +70,35 @@ static void initializeIo(src::Drivers *drivers) {
             i++;
         modm::delay_us(10);
     }
+    
+    
+    GpioInputB14::configure(Gpio::InputType::PullUp);
+    SpiMaster2::connect<GpioOutputB15::Mosi, GpioOutputB13::Sck, GpioInputB14::Miso>();
+    SpiMaster2::initialize<Board::SystemClock, 1312500>(); //2625000, 1312500, 656250, 328125, 164062
+    SpiMaster2::setDataMode(SpiMaster2::DataMode::Mode0);
+    modm::delay_us(10);
+    
+    uint8_t sendBuffer[13] { "data to send" };
+    uint8_t receiveBuffer[13] {"abc"};
+
+    // send out 12 bytes, read in 12 bytes
+    GpioOutputB12::setOutput(modm::Gpio::Low);
+    SpiMaster2::transferBlocking(sendBuffer, receiveBuffer, 12);
+    GpioOutputB12::setOutput(modm::Gpio::High);
+    
+    if(0==strncmp((char*) receiveBuffer, "send to data", 12)) {
+        // turn the green led on for 3 seconds before it turns blue to recal imu
+        drivers->leds.set(tap::gpio::Leds::Green, true);
+    }
+    
+    modm::delay_ms(3000);
+    
+    // send their response back
+    GpioOutputB12::setOutput(modm::Gpio::Low);
+    SpiMaster2::transferBlocking(receiveBuffer, sendBuffer, 12);
+    GpioOutputB12::setOutput(modm::Gpio::High);
+    drivers->leds.set(tap::gpio::Leds::Green, false);
+    
 
     drivers->leds.set(tap::gpio::Leds::Blue, true);
 
@@ -83,7 +113,6 @@ static void initializeIo(src::Drivers *drivers) {
     drivers->uart.initialize();
 
 
-    // drivers->terminalSerial.initialize(); //interferes with jetson because uses the same uart port. Previously believed to be necessary for ui to work, turns out it isn't
     drivers->schedulerTerminalHandler.init();
     drivers->djiMotorTerminalSerialHandler.init();
 
@@ -132,7 +161,6 @@ int main() {
 
         if (refreshTimer.execute()) {
             
-            // adctest = drivers.adc1_pa6_read(); //adc read is slow, this gets read in GimbalSubsystem when the yaw motor turns on again
             // tap::buzzer::playNote(&(drivers.pwm), 493);
             
             checkAutoRecalibrate(); //would make drivers.recal.isForcingRecalibration() return true
@@ -167,7 +195,7 @@ int main() {
                 drivers.recal.setIsDoneCalibrating();
                 drivers.leds.set(tap::gpio::Leds::Blue, false);
                 if(drivers.recal.isAfterSecondCalibration())
-                    control.resumeAfterImuRecal(); //when it turned on, it flipped 180
+                    control.resumeAfterImuRecal();
             }
             if(drivers.recal.getIsImuReady()){
                 drivers.commandScheduler.run();
@@ -176,8 +204,6 @@ int main() {
             }
 
             drivers.djiMotorTxHandler.encodeAndSendCanData();
-
-            // drivers.terminalSerial.update();
         }
         // prevent looping too fast
         modm::delay_us(5);
