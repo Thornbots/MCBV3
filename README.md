@@ -79,7 +79,8 @@ modeled exits are documented at [sim](../../sim/README.md#type-c-board-execution
 
 GitHub Actions compiles ARM firmware for `infantry`, `hero`, and `sentry`
 on nightly/main pushes and pull requests into `main`, including all four system identification modes.
-Pull requests into `nightly` skip the ARM jobs. Each build uploads its ELF file for
+Pull requests into `nightly` run no CI; run the checks in
+[CI](../../docs/CI.md#local-checks-for-prs-into-nightly) locally first. Each build uploads its ELF file for
 inspection; CI never flashes a board. The hosted sentry job runs the package's
 geometry and chassis GoogleTests, then builds real firmware and exercises its
 UART parser, referee gates, aiming, firing, and driving through the pinned
