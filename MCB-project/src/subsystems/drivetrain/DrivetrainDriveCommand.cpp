@@ -83,14 +83,7 @@ void DrivetrainDriveCommand::execute() {
         boost = true;
 
     }
-    if (odometry && x == 0 && y == 0 && r == 0 &&
-        drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
-        const float heading = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld() -
-                              odometry->getStartYaw();
-        drivetrain->holdRawPosition({odometry->getAimX(), odometry->getAimY(), heading});
-    } else {
-        drivetrain->setTargetTranslation(drive.rotate(referenceAngle), boost);
-    }
+    drivetrain->setTargetTranslation(drive.rotate(referenceAngle), boost);
 }
 
 bool DrivetrainDriveCommand::isFinished() const { return !drivers->remote.isConnected(); }

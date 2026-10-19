@@ -215,9 +215,9 @@ public:
     commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::CONTROLLER};
     commands::DrivetrainDriveCommand beybladeJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE, commands::ControlMode::CONTROLLER};
     commands::DrivetrainDriveCommand beybladeKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER, &odo};
+    commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
 
-    commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain, &gimbal, &odo};
+    commands::DrivetrainStopCommand stopDriveCommand{drivers, &drivetrain};
 
     // mappings
 
@@ -240,9 +240,7 @@ public:
     // peeking
     Trigger peekLeftButton{drivers, Remote::Key::Q};
     Trigger peekRightButton{drivers, Remote::Key::E};
-    // Releasing keyboard peeks must not override the DBUS drive mode at boot.
-    Trigger peekNoneButton = (!(peekLeftButton | peekRightButton)) &
-        [this] { return drivetrain.isInKeyboardMode; };
+    Trigger peekNoneButton = !(peekLeftButton | peekRightButton);
 
     // controller driving
     Trigger autoDriveTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};

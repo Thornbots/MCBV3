@@ -5,7 +5,6 @@
 
 #include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
-#include "subsystems/odometry/OdometrySubsystem.hpp"
 
 #include "drivers.hpp"
 
@@ -20,13 +19,12 @@ enum ControlMode { KEYBOARD, CONTROLLER, DISABLED  };
 
 class DrivetrainDriveCommand : public tap::control::Command {
 public:
-    DrivetrainDriveCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, DriveMode driveMode, ControlMode controlMode, subsystems::OdometrySubsystem* odometry = nullptr)
+    DrivetrainDriveCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, DriveMode driveMode, ControlMode controlMode)
         : drivers(drivers),
           drivetrain(drive),
           gimbal(gimbal),
           driveMode(driveMode),
-          controlMode(controlMode),
-          odometry(odometry) {
+          controlMode(controlMode) {
         addSubsystemRequirement(drive);
     }
 
@@ -52,7 +50,6 @@ private:
     GimbalSubsystem* gimbal;
     DriveMode driveMode;
     ControlMode controlMode;
-    subsystems::OdometrySubsystem* odometry;
     float x, y, r;
     bool boost;
     bool autoBoost;

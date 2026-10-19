@@ -49,11 +49,8 @@ void DrivetrainSubsystem::initialize() {
 
 // guaranteed to be called
 void DrivetrainSubsystem::refresh() {
-    if (drivers->refSerial.getRefSerialReceivingData() &&
-        !drivers->refSerial.getRobotData().robotPower.any(RefSerialData::Rx::RobotPower::CHASSIS_HAS_POWER)) {
-        stopMotors();
-        return;
-    }
+    // if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getRobotData().robotPower & RefSerialData::Rx::RobotPower::CHASSIS_HAS_POWER) {
+    // need to actually fix this yay
     imuAngle = drivers->bmi088.getYaw() - PI;
 
     uint16_t minLimit = 240;
@@ -68,15 +65,10 @@ void DrivetrainSubsystem::refresh() {
         motorVel[i] = motorArray[i]->getEncoder()->getVelocity();  // in rad/s
     }
     angularVel = controller.estVelWorld.getRotation();
+    // }
 }
 
 void DrivetrainSubsystem::setTargetTranslation(Pose2d drive, [[maybe_unused]] bool shouldBoost) {
-    holdingPosition = false;
-    if (drivers->refSerial.getRefSerialReceivingData() &&
-        !drivers->refSerial.getRobotData().robotPower.any(RefSerialData::Rx::RobotPower::CHASSIS_HAS_POWER)) {
-        stopMotors();
-        return;
-    }
     lastDrive = drive;
 
 #if defined(drivetrain_sysid)
@@ -105,16 +97,6 @@ void DrivetrainSubsystem::setTargetTranslation(Pose2d drive, [[maybe_unused]] bo
 }
 
 void DrivetrainSubsystem::setTargetPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity) {
-    holdingPosition = false;
-    applyTargetPosition(targetPosition, currentPosition, inputVelocity);
-}
-
-void DrivetrainSubsystem::applyTargetPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity) {
-    if (drivers->refSerial.getRefSerialReceivingData() &&
-        !drivers->refSerial.getRobotData().robotPower.any(RefSerialData::Rx::RobotPower::CHASSIS_HAS_POWER)) {
-        stopMotors();
-        return;
-    }
     throttle = (drivers->refSerial.getRobotData().chassis.powerBuffer <= 10) ? 10.0f : 0.0f;
 
     controller.followPosition(targetPosition, currentPosition, inputVelocity, powerLimit - throttle, imuAngle, motorVel, motorCurrent);
@@ -126,20 +108,8 @@ void DrivetrainSubsystem::applyTargetPosition(Vector2d targetPosition, Pose2d cu
     }
 }
 
-void DrivetrainSubsystem::holdRawPosition(Pose2d currentPosition) {
-    // More than 25 cm in one control tick is a raw-start reanchor, not motion.
-    if (!holdingPosition || (currentPosition.vec() - previousHoldPosition).magnitude() > .25f) {
-        heldPosition = currentPosition.vec();
-        controller.resetPositionIntegral();
-        holdingPosition = true;
-    }
-    previousHoldPosition = currentPosition.vec();
-    applyTargetPosition(heldPosition, currentPosition, Pose2d{});
-}
-
 // fix function
 void DrivetrainSubsystem::stopMotors() {
-    holdingPosition = false;
 #ifdef MCB_HOSTED
     controller.hostedTargetVelocity = Pose2d{};
 #endif
