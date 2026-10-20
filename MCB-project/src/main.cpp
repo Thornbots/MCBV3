@@ -75,7 +75,7 @@ static void initializeIo(src::Drivers *drivers) {
     GpioInputB14::configure(Gpio::InputType::PullUp);
     SpiMaster2::connect<GpioOutputB15::Mosi, GpioOutputB13::Sck, GpioInputB14::Miso>();
     SpiMaster2::initialize<Board::SystemClock, 1312500>(); //2625000, 1312500, 656250, 328125, 164062
-    SpiMaster2::setDataMode(SpiMaster2::DataMode::Mode0);
+    SpiMaster2::setDataMode(SpiMaster2::DataMode::Mode1);
     modm::delay_us(10);
     
     uint8_t sendBuffer[13] { "data to send" };
