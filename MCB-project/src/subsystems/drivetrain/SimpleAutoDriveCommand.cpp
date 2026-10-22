@@ -6,7 +6,7 @@ namespace commands {
         : drivers(drivers),
           odo(odo),
           mode(mode),
-          positionCommand(drivers, drive, gimbal, odo, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, 0.5f) {
+          positionCommand(drivers, drive, gimbal, odo, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, WAYPOINT_TOLERANCE) {
         // always need to start where the robot starts from; setupMap puts it in the field frame
         // should be the reload/heal zone
         targets.push_back({{0.0f, 0.0f}, {0.0f, 0.0f}});
@@ -165,8 +165,9 @@ namespace commands {
             case TargetMode::ARCC_ROUGH_PATH:
                 // coordinates for red team
                 changedInitialPoint = at(-TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET);
-                targets.push_back({at(0.5f, -m*2.236f), vel(0.0f, 0.0f)});                                        // right forward diagonal: before wall
-                targets.push_back({at(1.224f, -m*2.236f), vel(0.0f, 0.0f)});                                      // forward: past wall
+                // the wall leg keeps the spinning chassis (0.42 m sweep) 0.1 m clear of the wall end, 1.81 m right of the start
+                targets.push_back({at(0.5f, -m*2.5f), vel(0.0f, 0.0f)});                                          // right forward diagonal: before wall
+                targets.push_back({at(1.4f, -m*2.5f), vel(0.0f, 0.0f)});                                          // forward: past wall
                 targets.push_back({at(4.125f + TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET), vel(0.0f, 0.0f)});  // left forward diagonal: to center
                 return;
         }  // end switch

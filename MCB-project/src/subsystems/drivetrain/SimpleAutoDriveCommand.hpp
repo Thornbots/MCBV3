@@ -71,6 +71,10 @@ private:
     static constexpr float TOWARDS_ZONE_OFFSET = 0.5f;  // meters, how far (x and y distance) into a zone (reload or center) to be. 0 would stay at a corner.
 
     tap::arch::MilliTimeout stuckTimer{};
+    // meters; a waypoint counts as reached this close. Larger values cut corners: at 0.5 the
+    // rough path's wall leg clipped the wall end and could wedge the chassis there.
+    static constexpr float WAYPOINT_TOLERANCE = 0.2f;
+
     static constexpr int STUCK_TIMER_AMOUNT = 15 * 1000;  // ms, how long to wait between points
 
     MoveToPositionCommand positionCommand;
