@@ -8,6 +8,9 @@ mkdir -p build/unit-tests
     -Isrc -Itaproot/src -Itaproot/sim-modm/hosted-linux/modm/src \
     -Itaproot/modm/ext/cmsis/dsp -Itaproot/modm/ext/cmsis/core \
     test/FirmwareRegressionTest.cpp test/DrivetrainStopCommandTest.cpp \
+    test/SimpleAutoDriveCommandTest.cpp \
+    src/subsystems/drivetrain/SimpleAutoDriveCommand.cpp \
+    src/subsystems/drivetrain/MoveToPositionCommand.cpp \
     src/communication/UARTCommunication.cpp src/hosted/uart.cpp \
     src/subsystems/drivetrain/DrivetrainSubsystem.cpp src/subsystems/drivetrain/ChassisController.cpp \
     src/subsystems/gimbal/GimbalSubsystem.cpp \
