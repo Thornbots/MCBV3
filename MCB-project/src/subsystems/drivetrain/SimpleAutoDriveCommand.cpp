@@ -6,7 +6,7 @@ namespace commands {
         : drivers(drivers),
           odo(odo),
           mode(mode),
-          positionCommand(drivers, drive, gimbal, odo, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, 0.5f) {
+          positionCommand(drivers, drive, gimbal, odo, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, WAYPOINT_TOLERANCE) {
         // always need to start where the robot starts from; setupMap puts it in the field frame
         // should be the reload/heal zone
         targets.push_back({{0.0f, 0.0f}, {0.0f, 0.0f}});
@@ -52,7 +52,7 @@ namespace commands {
                         
                         if (needToApplyInitialPointChange) {
                             needToApplyInitialPointChange = false;
-                            targets[0].first = changedInitialPoint;
+                            targets[0].position = changedInitialPoint;
                         }
                     } else {
                         // at endpoint (center)
@@ -75,8 +75,10 @@ namespace commands {
             // haven't reached a target yet
             // set it
             float inputSpin = fasterSpinning ? SPIN_VELOCITY : commands::MoveToPositionCommand::MOVE_TO_POS_SPIN_VELO;
-            positionCommand.targetPosition = {targets[targetIndex].first.first, targets[targetIndex].first.second, 0};
-            positionCommand.inputVelocity = {direction * targets[targetIndex].second.first, direction * targets[targetIndex].second.second, inputSpin};
+            positionCommand.targetPosition = {targets[targetIndex].position.first, targets[targetIndex].position.second, 0};
+            positionCommand.inputVelocity = {direction * targets[targetIndex].velocity.first, direction * targets[targetIndex].velocity.second, inputSpin};
+
+            positionCommand.setTolerance(targets[targetIndex].tolerance);
 
             // do movement
             positionCommand.execute();
@@ -104,7 +106,7 @@ namespace commands {
 
         // Each waypoint is (forward, left) from the team's start, along the heading at power-on;
         // at() and vel() turn them into the field frame (OdometrySubsystemConstants.hpp)
-        // first pair is position, second pair is velocity (nonzero doesn't work well right now, so use 0, 0)
+        // velocity is normally zero; tolerance defaults to WAYPOINT_TOLERANCE
         auto at = [this](float forward, float left) {
             Vector2d p = odo->fromStart(forward, left);
             return std::pair<float, float>{p.getX(), p.getY()};
@@ -113,7 +115,7 @@ namespace commands {
             Vector2d v = Vector2d(forward, left).rotate(odo->getStartYaw());
             return std::pair<float, float>{v.getX(), v.getY()};
         };
-        targets[0].first = at(0.0f, 0.0f);  // the start, added in the constructor
+        targets[0].position = at(0.0f, 0.0f);  // the start, added in the constructor
         switch (mode) {
             case TargetMode::TEST:
                 targets.push_back({at(1.0f, 0.0f), vel(0.0f, 0.0f)});     // forward
@@ -165,8 +167,9 @@ namespace commands {
             case TargetMode::ARCC_ROUGH_PATH:
                 // coordinates for red team
                 changedInitialPoint = at(-TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET);
-                targets.push_back({at(0.5f, -m*2.236f), vel(0.0f, 0.0f)});                                        // right forward diagonal: before wall
-                targets.push_back({at(1.224f, -m*2.236f), vel(0.0f, 0.0f)});                                      // forward: past wall
+                // the wall leg keeps the spinning chassis (0.42 m sweep) 0.1 m clear of the wall end, 1.81 m right of the start
+                targets.push_back({at(0.5f, -m*2.5f), vel(0.0f, 0.0f), WALL_LEG_TOLERANCE});                                          // right forward diagonal: before wall
+                targets.push_back({at(1.4f, -m*2.5f), vel(0.0f, 0.0f), WALL_LEG_TOLERANCE});                                          // forward: past wall
                 targets.push_back({at(4.125f + TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET), vel(0.0f, 0.0f)});  // left forward diagonal: to center
                 return;
         }  // end switch

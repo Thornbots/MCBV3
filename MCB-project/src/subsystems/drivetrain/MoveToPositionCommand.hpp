@@ -38,6 +38,8 @@ public:
 
     bool isFinished() const override;
 
+    void setTolerance(float arrivalTolerance) { tolerance = arrivalTolerance; }
+
     const char* getName() const override { return "move to position command"; }
     DrivetrainSubsystem* getDrivetrain() {return drivetrain;}
 
