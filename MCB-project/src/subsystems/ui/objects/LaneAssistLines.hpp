@@ -16,6 +16,7 @@ public:
     LaneAssistLines(GimbalSubsystem* gimbal) : gimbal(gimbal) {
         addGraphicsObject(&left);
         addGraphicsObject(&right);
+        addGraphicsObject(&number);
     }
 
     void update() {
@@ -53,6 +54,8 @@ public:
         
         left.x2 = leftBottom2.getX();
         left.y2 = leftBottom2.getY();
+
+        number._float = gimbal->getPitchEncoderValue();
     }
 
 
@@ -67,6 +70,7 @@ private:
 
     Line left{UISubsystem::Color::CYAN, 0, 0, 0, 0, THICKNESS};
     Line right{UISubsystem::Color::CYAN, 0, 0, 0, 0, THICKNESS};
+    FloatGraphic number{UISubsystem::Color::CYAN, 0,635,540,60,3};
 
     Vector2d project(Vector3d in, float pitch){
         Vector3d temp;
