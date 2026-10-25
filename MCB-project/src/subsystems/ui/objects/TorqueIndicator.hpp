@@ -11,7 +11,7 @@
 #include "tap/motor/dji_motor.hpp"
 #include "tap/motor/servo.hpp"
 #include "tap/control/subsystem.hpp"
-
+#include "time.h"
 
 using namespace subsystems;
 
@@ -88,11 +88,11 @@ public:
         if (graphindex < graphelements)
         {
             // Reset row to top once it reaches the bottom of the screen
-            if (graph_yheight < 257)
+            if (graph_yheight < 250)
             {graph_yheight = 848;}
 
             // 15 rows, shift it over if it's past 15 rows
-            graph[graphindex].x = 464 + 100*(graphindex/15);
+            graph[graphindex].x = 500 + 100*(floor(graphindex/15.0));
             graph[graphindex].y = graph_yheight;
 
             graph[graphindex].height = 40;
@@ -101,6 +101,8 @@ public:
             graph[graphindex]._float = motor->getShaftRPM();
 
             graph_yheight =- 40;
+
+            graphindex++;
         }
 
         
@@ -115,6 +117,7 @@ private:
 
     int16_t averageRPM = 0;
     int numberofMeasurements = 0;
+    //int startTime = 0;
 
 
     static constexpr uint16_t X_POSITION = 1680; 

@@ -54,6 +54,8 @@ public:
         addGraphicsObject(&countdown);
         addGraphicsObject(&velo);
         addGraphicsObject(&recal);
+        addGraphicsObject(&ind1);
+        addGraphicsObject(&ind2);
     };
 
     void initialize() override { ui->setTopLevelContainer(this); };
