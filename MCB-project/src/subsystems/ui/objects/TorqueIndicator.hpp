@@ -69,7 +69,9 @@ public:
             numberofMeasurements = 0;
             graphindex = 0;
         }
-        // Continue Averaging
+        
+        // Display Average RPM value
+        // Compare value with a projectile and without to determine if there's a noticable difference in the flywheel's rpm
         else
         {
             averageRPM =+ motor->getShaftRPM();
@@ -79,11 +81,14 @@ public:
 
 
         // Plot Values
+        // view rpm values as the flywheel shoots a projectile
         if (graphindex < graphelements)
         {
+            // Reset row to top once it reaches the bottom of the screen
             if (graph_yheight < 257)
             {graph_yheight = 848;}
 
+            // 15 rows, shift it over if it's past 15 rows
             graph[graphindex].x = 464 + 100*(graphindex/15);
             graph[graphindex].y = graph_yheight;
 
@@ -92,7 +97,7 @@ public:
 
             graph[graphindex]._float = motor->getShaftRPM();
 
-            graph_yheight =+ 40;
+            graph_yheight =- 40;
         }
 
         
@@ -109,8 +114,8 @@ private:
     int numberofMeasurements = 0;
 
 
-    static constexpr uint16_t X_POSITION = 1680; //pixels, all numbers at the same y level on screen
-    static constexpr uint16_t Y_POSITION = 610; //pixels, all numbers at the same y level on screen
+    static constexpr uint16_t X_POSITION = 1680; 
+    static constexpr uint16_t Y_POSITION = 610; 
 
     FloatGraphic number{UISubsystem::Color::GREEN, 0, 0, 0, 60, 3};
 
