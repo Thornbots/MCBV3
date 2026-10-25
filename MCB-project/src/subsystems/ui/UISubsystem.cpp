@@ -6,7 +6,7 @@ namespace subsystems {
 uint32_t UISubsystem::currGraphicName = 0;
 int8_t UISubsystem::currLayer = 1; //layer 0 is where most stuff is, so asking for a layer gets you 1 or higher (or -1 if there aren't any more layers)
 
-UISubsystem::UISubsystem(tap::Drivers* drivers) : tap::control::Subsystem(drivers), drivers(drivers), refSerialTransmitter(drivers) {
+UISubsystem::UISubsystem(src::Drivers* drivers) : tap::control::Subsystem(drivers), drivers(drivers), refSerialTransmitter(drivers) {
     // assume all layers had something on them from a previous team, so all need cleared
     for(int i=0; i<NUM_LAYERS; i++)
         layersState[i] = 2;
@@ -64,7 +64,7 @@ bool UISubsystem::run() { //run has to do with prototheads
     // drivers->leds.set(tap::gpio::Leds::Red, false);
     // drivers->leds.set(tap::gpio::Leds::Green, false);
 
-    PT_WAIT_UNTIL(drivers->refSerial.getRefSerialReceivingData());
+    PT_WAIT_UNTIL(drivers->refWrapper.connectedToServer());
 
     needToClearAllLayers = true;
     layerToClear = -1;

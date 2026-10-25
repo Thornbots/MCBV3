@@ -9,7 +9,7 @@ using namespace subsystems;
 
 class AllRobotHealthNumbers : public GraphicsContainer {
 public:
-    AllRobotHealthNumbers(tap::Drivers* drivers) : drivers(drivers) {
+    AllRobotHealthNumbers(src::Drivers* drivers) : drivers(drivers) {
         for(int i=0; i<6; i++){
             numbers[i].y = Y_POSITION;
             numbers[i].height = LINE_HEIGHT;
@@ -19,110 +19,100 @@ public:
             expirationTimeouts[i].stop();        // timers might be initialized started, we need them to be stopped until we get hit
             canTakeDamage[i] = false;
         }
+        addGraphicsObject(&cool);
+        cool.integer=5;
     }
 
 
     void update() {
+        //set numbers
+        numbers[0].integer = drivers->refWrapper.getRedSentryHp();
+        numbers[1].integer = drivers->refWrapper.getRedStandardHp();
+        numbers[2].integer = drivers->refWrapper.getRedHeroHp();
 
-        if (drivers->refSerial.getRefSerialReceivingData()) {
-            //set numbers
-            RefSerialData::Rx::RobotHpData data = drivers->refSerial.getRobotData().allRobotHp;
-            numbers[0].integer = data.red.sentry7;
-            numbers[1].integer = data.red.standard3;
-            numbers[2].integer = data.red.hero1;
-
-            numbers[3].integer = data.blue.hero1;
-            numbers[4].integer = data.blue.standard3;
-            numbers[5].integer = data.blue.sentry7;
+        numbers[3].integer = drivers->refWrapper.getBlueHeroHp();
+        numbers[4].integer = drivers->refWrapper.getBlueStandardHp();
+        numbers[5].integer = drivers->refWrapper.getBlueSentryHp();
 
 
-            //if in countdown, remove numbers because their robot icons disappear
-            if(drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN){
+        //if in countdown, remove numbers because their robot icons disappear
+        if(drivers->refWrapper.inCountdown()){
 
-                uint16_t x_i = INITIAL_X_OFFSET;
-                uint16_t x_j = UISubsystem::SCREEN_WIDTH - INITIAL_X_OFFSET;
-                for(int i=0; i<3; i++){
-                    int j = 5-i; //if i is 0, j is 5; 1 and 4; 2 and 3
-
-                    bool iIsHidden = numbers[i].integer == 0;
-                    bool jIsHidden = numbers[j].integer == 0;
-
-                    numbers[i].setHidden(iIsHidden);
-                    numbers[j].setHidden(jIsHidden);
-
-                    centerXs[i] = x_i;
-                    centerXs[j] = x_j;
-                    if(!iIsHidden){
-                        x_i+=SUBSEQUENT_X_OFFSET;
-                        canTakeDamage[i] = true;
-                    }
-                    if(!jIsHidden){
-                        x_j-=SUBSEQUENT_X_OFFSET;
-                        canTakeDamage[j] = true;
-                    }
-                }
-            }
-
-            //reset colors
+            uint16_t x_i = INITIAL_X_OFFSET;
+            uint16_t x_j = UISubsystem::SCREEN_WIDTH - INITIAL_X_OFFSET;
             for(int i=0; i<3; i++){
-                numbers[i].color = UISubsystem::Color::PINK;
-                numbers[i+3].color = UISubsystem::Color::CYAN;
-            }
+                int j = 5-i; //if i is 0, j is 5; 1 and 4; 2 and 3
 
-            for(int i=0; i<6; i++){
-                //highlight own robot
-                if(drivers->refSerial.getRobotData().robotId == ids[i])
-                    numbers[i].color = UISubsystem::Color::RED_AND_BLUE;
+                bool iIsHidden = numbers[i].integer == 0;
+                bool jIsHidden = numbers[j].integer == 0;
 
-                //highlight robots taking damage by turning the number white and doubling the size for one frame
-                // if(numbers[i].integerChanged()){
-                //     numbers[i].color = UISubsystem::Color::WHITE;
-                //     numbers[i].y = Y_POSITION-LINE_HEIGHT;
-                //     numbers[i].height = 2*LINE_HEIGHT;
-                // } else {
-                //     numbers[i].y = Y_POSITION;
-                //     numbers[i].height = LINE_HEIGHT;
-                // }
+                numbers[i].setHidden(iIsHidden);
+                numbers[j].setHidden(jIsHidden);
 
-                //calulate width and center the numbers
-                numbers[i].calculateNumbers();
-                numbers[i].x = centerXs[i] - numbers[i].width/2;
-
-
-                // make dead robots black, invinible robots green
-                if(numbers[i].integer==0 && canTakeDamage[i]){//if dead and don't know about it yet
-                    canTakeDamage[i] = false;
-                }
-
-
-
-                // done being invincible
-                if (expirationTimeouts[i].isExpired()) {
-                    expirationTimeouts[i].stop();
+                centerXs[i] = x_i;
+                centerXs[j] = x_j;
+                if(!iIsHidden){
+                    x_i+=SUBSEQUENT_X_OFFSET;
                     canTakeDamage[i] = true;
                 }
+                if(!jIsHidden){
+                    x_j-=SUBSEQUENT_X_OFFSET;
+                    canTakeDamage[j] = true;
+                }
+            }
+        }
 
-                if(!canTakeDamage[i]){
-                    if(numbers[i].integer==0){
-                        numbers[i].color = UISubsystem::Color::BLACK;
+        //reset colors
+        for(int i=0; i<3; i++){
+            numbers[i].color = UISubsystem::Color::PINK;
+            numbers[i+3].color = UISubsystem::Color::CYAN;
+        }
+
+        for(int i=0; i<6; i++){
+            //highlight own robot
+            if(drivers->refWrapper.getId() == ids[i])
+                numbers[i].color = UISubsystem::Color::RED_AND_BLUE;
+
+            //calulate width and center the numbers
+            numbers[i].calculateNumbers();
+            numbers[i].x = centerXs[i] - numbers[i].width/2;
+
+
+            // make dead robots black, invinible robots green
+            if(numbers[i].integer==0 && canTakeDamage[i]){//if dead and don't know about it yet
+                canTakeDamage[i] = false;
+            }
+
+
+
+            // done being invincible
+            if (expirationTimeouts[i].isExpired()) {
+                expirationTimeouts[i].stop();
+                canTakeDamage[i] = true;
+            }
+
+            if(!canTakeDamage[i]){
+                if(numbers[i].integer==0){
+                    numbers[i].color = UISubsystem::Color::BLACK;
+                } else {
+                    if(expirationTimeouts[i].isStopped()) {
+                        // start of invicibility
+                        expirationTimeouts[i].restart(INVINICIBLE_TIME);
                     } else {
-                        if(expirationTimeouts[i].isStopped()) {
-                            // start of invicibility
-                            expirationTimeouts[i].restart(INVINICIBLE_TIME);
-                        } else {
-                            // still invincible
-                            numbers[i].color = UISubsystem::Color::GREEN;
-                        }
+                        // still invincible
+                        numbers[i].color = UISubsystem::Color::GREEN;
                     }
                 }
-
-
             }
+
+        }
+        if(drivers->remote.keyPressed(Remote::Key::CTRL)){
+        cool.integer=drivers->refWrapper.connectedToServer();
         }
     }
 
 private:
-    tap::Drivers* drivers;
+    src::Drivers* drivers;
 
     static constexpr uint16_t Y_POSITION = 850; //pixels, all numbers at the same y level on screen
     static constexpr uint16_t LINE_HEIGHT = 20; //pixels, all numbers at the same size
@@ -137,6 +127,9 @@ private:
     bool canTakeDamage[6]; //starts at 0
     RefSerialData::RobotId ids[6] = {RefSerialData::RobotId::RED_SENTINEL, RefSerialData::RobotId::RED_SOLDIER_1, RefSerialData::RobotId::RED_HERO, RefSerialData::RobotId::BLUE_HERO, RefSerialData::RobotId::BLUE_SOLDIER_1, RefSerialData::RobotId::BLUE_SENTINEL};
     IntegerGraphic numbers[6];
+
+    IntegerGraphic cool{UISubsystem::Color::CYAN, 0, 600, 550, 80, 4};
+
 
     uint16_t centerXs[6];
 };

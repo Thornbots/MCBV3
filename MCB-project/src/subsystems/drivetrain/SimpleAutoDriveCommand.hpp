@@ -67,12 +67,9 @@ public:
             // set direction
             setDirection();
             bool fasterSpinning = false;
-            bool isBlue = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId);
-            
-            tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-            tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
-            
-            bool healZone = robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE) || robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE);
+            bool isBlue = drivers->refWrapper.isBlue();
+            bool healZone = drivers->refWrapper.isInHealZone();
+            bool isAtCenter = drivers->refWrapper.isAtCenter();
             
             if(relocalizeState == RfidRelocalizeState::STUCK_WAITING_FOR_RESUPPLY || relocalizeState == RfidRelocalizeState::WAITING_FOR_RESUPPLY) {
                 if(healZone){
@@ -88,14 +85,14 @@ public:
             }
             
             // if full health and in rfid and !needtoapplyinit...
-            if(!needToApplyInitialPointChange && robotData.currentHp==robotData.maxHp && setLocalization){
+            if(!needToApplyInitialPointChange && drivers->refWrapper.isFullHp() && setLocalization){
                 if(healZone){
                     odo->relocalizeTo(xForLocalization + (isBlue ? 0.688 : -0.688), yForLocalization - 0.05 ); //assume jetson knows what it is doing (if it told me any relocalization messages)
                 }
             }
             
             if(relocalizeState == RfidRelocalizeState::WAITING_FOR_CENTER){
-                if(robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::CENTRAL_BUFF)){
+                if(isAtCenter){
                     //allow relocalizing again
                     relocalizeState = RfidRelocalizeState::WAITING_FOR_RESUPPLY;
                     timesRetriedRelocalize=0;
@@ -107,9 +104,9 @@ public:
                 bool allowAdvancing = true;
                 int size = targets.size();
 
-                // if in 3v3 match, wait for match to start before moving
-                if (drivers->refSerial.getRefSerialReceivingData() && (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
-                    allowAdvancing = allowAdvancing && drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME;
+                // if connected to the server and in game, wait for match to start before moving
+                if (drivers->refWrapper.connectedToServer()) {
+                    allowAdvancing = allowAdvancing && drivers->refWrapper.inGame();
                 }
 
                 // if not moving, don't think you are stuck
@@ -120,7 +117,7 @@ public:
                     stuckTimer.restart(STUCK_TIMER_AMOUNT);
                     if (targetIndex<size-1) {
                         // there is somewhere to go
-                        if(gameData.gameStage == RefSerialData::Rx::GameStage::IN_GAME)  //comment this out to test withoug a server
+                        if(!drivers->refWrapper.connectedToServer() || drivers->refWrapper.inGame())  //comment this out to test withoug a server
                             targetIndex++;
                         
                         if (needToApplyInitialPointChange) {
@@ -181,7 +178,7 @@ public:
 private:
     void setupMap() {
         bool flipXIfBlue = false;
-        bool isBlue = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId);
+        bool isBlue = drivers->refWrapper.isBlue();
         int m = isBlue ? -1 : 1;
 
         // 0,0 starting point added in constructor
@@ -196,7 +193,7 @@ private:
                 targets.push_back({{m*0.0f, 0.0f}, {0.0f, 0.0f}});   // right
                 return;
             case TargetMode::PURDUE2V2:
-                if (drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId)) {
+                if (isBlue) {
                     targets.push_back({{-1.5f, 0.0f}, {0.0f, 0.0f}});
                     targets.push_back({{-1.5f, 1.5f}, {0.0f, 0.0f}});  // should be at center
                     targets.push_back({{0.5f, 3.5f}, {0.0f, 0.0f}});   // should be at center
@@ -251,20 +248,15 @@ private:
         
         switch (mode) {
             case TargetMode::TEST:  // change direction on hit
-                if (drivers->refSerial.getRefSerialReceivingData()) {
-                    static uint16_t oldHealth = drivers->refSerial.getRobotData().currentHp;
-                    if (drivers->refSerial.getRobotData().currentHp != oldHealth) {
-                        direction = -direction;
-                        oldHealth = drivers->refSerial.getRobotData().currentHp;
-                    }
+                static uint16_t oldHealth = drivers->refWrapper.getCurrentHp();
+                if (drivers->refWrapper.getCurrentHp() != oldHealth) {
+                    direction = -direction;
+                    oldHealth = drivers->refWrapper.getCurrentHp();
                 }
                 return;
             default:                                                   // change direction on low health
-                if (drivers->refSerial.getRefSerialReceivingData()) {  // 221 hp gate
-                    float ratio = drivers->refSerial.getRobotData().currentHp * 1.0 / drivers->refSerial.getRobotData().maxHp;
-                    if (ratio > 0.99) direction = 1;
-                    if (ratio <= 0.5525) direction = -1;  // 0.5 or equal to try to avoid hero 1-shot-kills
-                }
+                if (drivers->refWrapper.isFullHp()) direction = 1;
+                if (drivers->refWrapper.getCurrentHp()<221) direction = -1;
                 return;
         }
     }

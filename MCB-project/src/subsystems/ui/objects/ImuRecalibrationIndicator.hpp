@@ -55,7 +55,7 @@ public:
             line2.setString("might move on startup!");
             line1.color = colorRecalibrating;
             line2.color = colorRecalibrating;
-        } else if (drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_SECOND_CALIBRATION && !(drivers->refSerial.getRefSerialReceivingData() && drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::COUNTDOWN)) {
+        } else if (drivers->recal.getState() == src::ImuRecalibration::ImuRecalibrationState::AFTER_SECOND_CALIBRATION && !(drivers->refWrapper.inCountdown())) {
             line1.setString("Done Recalibrating");
             line2.setString("Good Luck");
             line1.color = colorDoneRecalibrating;
@@ -97,6 +97,6 @@ private:
     bool ignoreKeyPresses = false;
 
     bool isInPrematch() {
-        return drivers->refSerial.getRefSerialReceivingData() && (drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::SETUP || drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::PREMATCH);
+        return drivers->refWrapper.isInPrematch();
     }
 };

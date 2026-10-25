@@ -134,8 +134,7 @@ public:
         }
 
         // if we don't have ref uart or we aren't in a match or we aren't currently in game, we are able to stop flywheels by buttons
-        if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getGameData().gameType != RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3 ||
-            drivers->refSerial.getGameData().gameStage != RefSerialData::Rx::GameStage::IN_GAME) {
+        if (!drivers->refWrapper.inGame()) {
             stopFlywheelTrigger.update();
         }
     }

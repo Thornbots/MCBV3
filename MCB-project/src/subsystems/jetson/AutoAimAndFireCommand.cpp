@@ -13,24 +13,9 @@ void AutoAimAndFireCommand::execute() {
     bool allowShooting = true;
     bool allowGimbal = true;
 
-    if (drivers->refSerial.getRefSerialReceivingData() && 
-       (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
-
-        allowShooting = false;
+    if (drivers->refWrapper.isBeforeGame()) {
         allowGimbal = false;
-
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
-            // allow both
-            allowShooting = true;
-            allowGimbal = true;
-        }
-
-        //don't spin before match
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
-            // countdown, only allow gimbal
-            allowGimbal = true;
-        }
-
+        allowShooting=false;
     }
 
 
@@ -40,8 +25,7 @@ void AutoAimAndFireCommand::execute() {
     float currentpitchvel = gimbal->getPitchVel(); //did add this for the actual CV stuff can make this 0 if we want
     cv->update(currentYaw, currentPitch, yawvel, currentpitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
 
-    tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
-    bool inRfid = robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE) || robotData.rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE);
+    bool inRfid = drivers->refWrapper.isInHealZone();
     if(inRfid && allowGimbal){ //am i over the rfid
         gimbal->setAngles(0, 0);
     } else if (shoot != -1) {

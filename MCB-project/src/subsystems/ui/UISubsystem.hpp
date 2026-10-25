@@ -23,7 +23,7 @@ public:
     static constexpr uint16_t HALF_SCREEN_HEIGHT = SCREEN_HEIGHT / 2;  // pixels
 
 private:  // Private Variables
-    tap::Drivers* drivers;
+    src::Drivers* drivers;
     RefSerialTransmitter refSerialTransmitter;
     tap::arch::MilliTimeout delayTimeout;  // for not sending things too fast and dropping packets
 
@@ -54,7 +54,7 @@ private:  // Private Variables
     int layersState[NUM_LAYERS]; //0 is clear, 1 is not clear, 2 is needs cleared
 
 public:  // Public Methods
-    UISubsystem(tap::Drivers* driver);
+    UISubsystem(src::Drivers* drivers);
     ~UISubsystem() {}  // Intentionally blank
 
     /*

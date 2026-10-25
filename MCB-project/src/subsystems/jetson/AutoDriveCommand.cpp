@@ -23,39 +23,7 @@ void AutoDriveCommand::execute() {
     bool allowMoving = true;
     bool allowRelocalize = false;
 
-    if (drivers->refSerial.getRefSerialReceivingData() && 
-       (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
-
-        allowSpinning = false;
-        allowMoving = false;
-
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
-            // allow both
-            allowSpinning = true;
-            allowMoving = true;
-            allowRelocalize = true;
-        }
-
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
-            // countdown, only allow spinning
-            allowSpinning = true;
-        }
-
-    }
-    // allowMoving = false;
-
     float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
-
-    // crude autodrive implementation
-    // count++;
-
-    // if (count > 400) {
-    //     count = 0;
-    // } else if (count > 200) {
-    //     targetPosition = Pose2d(0.05, 0, 0);
-    // } else {
-    //     targetPosition = Pose2d(0, 0, 0);
-    // }
 
     bool result = jetson->updateROS(&targetPosition, &targetVelocity, &jetsonExpectedPosition);
 
@@ -65,10 +33,6 @@ void AutoDriveCommand::execute() {
     //midpoint is chaos, walls get bumped into, don't trust that jetson knows where it is 
     if(allowRelocalize && jetsonExpectedPosition != nullptr){
         Vector2d deviance = jetsonExpectedPosition - currentPosition;
-        // if(deviance.magnitude()>DISTANCE_THRESHOLD){
-            // drivers->i2c.odom.offsetX = deviance.getX();
-            // drivers->i2c.odom.offsetY = deviance.getY();
-        // }
     }   
 
     float posX = targetPosition.getX();

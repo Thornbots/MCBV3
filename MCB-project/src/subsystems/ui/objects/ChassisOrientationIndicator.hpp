@@ -18,7 +18,7 @@ using namespace subsystems;
 // panels if there are 2 arcs, if there are 4 then they are all four panels
 class ChassisOrientationIndicator : public GraphicsContainer {
 public:
-    ChassisOrientationIndicator(bool showPlsSpin, tap::Drivers* drivers, GimbalSubsystem* gimbal, DrivetrainSubsystem* drivetrain) : showPlsSpin(showPlsSpin), drivers(drivers), gimbal(gimbal), drivetrain(drivetrain) {
+    ChassisOrientationIndicator(bool showPlsSpin, src::Drivers* drivers, GimbalSubsystem* gimbal, DrivetrainSubsystem* drivetrain) : showPlsSpin(showPlsSpin), drivers(drivers), gimbal(gimbal), drivetrain(drivetrain) {
         addGraphicsObject(&front);
         addGraphicsObject(&side);
 
@@ -58,9 +58,10 @@ public:
 
 
         //set side color to pink if on red team, cyan if on blue team
-        if (drivers->refSerial.getRefSerialReceivingData()) {
-            side.color = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId) ? UISubsystem::Color::CYAN : UISubsystem::Color::PINK;
-        }
+        if(drivers->refWrapper.isBlue())
+            side.color = UISubsystem::Color::CYAN;
+        else
+            UISubsystem::Color::PINK;
 
         if(showPlsSpin){
             plsSpinText.setHidden(drivetrain->isPeeking || drivetrain->isBeyblading);
@@ -78,7 +79,7 @@ public:
 
 private:
     bool showPlsSpin;
-    tap::Drivers* drivers;
+    src::Drivers* drivers;
     GimbalSubsystem* gimbal;
     DrivetrainSubsystem* drivetrain;
 
