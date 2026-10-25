@@ -76,7 +76,7 @@ void HeroIndexerSubsystem::finishStopIndex() {
 
 
 bool HeroIndexerSubsystem::isProjectileAtBeam(){
-    return !Board::DigitalInPinB12::read(); // Assuming PF0 is the break beam sensor
+    return !Board::DigitalInPinB12::read(); // Assuming the CS pin on the type c is the break beam sensor
 }
 
 bool HeroIndexerSubsystem::tryShootOnce() { 

@@ -5,7 +5,6 @@
 #include "robots/RobotControl.hpp"
 
 #include "drivers.hpp"
-#include "communication/spi_master_2.hpp"
 
 static constexpr int RECALIBRATION_THRESHOLD_TIME = 15; //s, when there are fewer than this many seconds remaining in the game stage, run scheduled recalibrations
 static constexpr int AUTORECALIBRATION_THRESHOLD_TIME = 60*3000; //ms, set to 3 min. if the controller has been off for this long, recalibrate
@@ -70,35 +69,6 @@ static void initializeIo(src::Drivers *drivers) {
             i++;
         modm::delay_us(10);
     }
-    
-    
-    GpioInputB14::configure(Gpio::InputType::PullUp);
-    SpiMaster2::connect<GpioOutputB15::Mosi, GpioOutputB13::Sck, GpioInputB14::Miso>();
-    SpiMaster2::initialize<Board::SystemClock, 1312500>(); //2625000, 1312500, 656250, 328125, 164062
-    SpiMaster2::setDataMode(SpiMaster2::DataMode::Mode1);
-    modm::delay_us(10);
-    
-    uint8_t sendBuffer[13] { "data to send" };
-    uint8_t receiveBuffer[13] {"abc"};
-
-    // send out 12 bytes, read in 12 bytes
-    GpioOutputB12::setOutput(modm::Gpio::Low);
-    SpiMaster2::transferBlocking(sendBuffer, receiveBuffer, 12);
-    GpioOutputB12::setOutput(modm::Gpio::High);
-    
-    if(0==strncmp((char*) receiveBuffer, "send to data", 12)) {
-        // turn the green led on for 3 seconds before it turns blue to recal imu
-        drivers->leds.set(tap::gpio::Leds::Green, true);
-    }
-    
-    modm::delay_ms(3000);
-    
-    // send their response back
-    GpioOutputB12::setOutput(modm::Gpio::Low);
-    SpiMaster2::transferBlocking(receiveBuffer, sendBuffer, 12);
-    GpioOutputB12::setOutput(modm::Gpio::High);
-    drivers->leds.set(tap::gpio::Leds::Green, false);
-    
 
     drivers->leds.set(tap::gpio::Leds::Blue, true);
 
@@ -111,6 +81,7 @@ static void initializeIo(src::Drivers *drivers) {
     //try waiting 9 clock pulses?
     drivers->i2c.refresh();
     drivers->uart.initialize();
+    drivers->spi.initialize();
 
 
     drivers->schedulerTerminalHandler.init();
@@ -160,6 +131,7 @@ int main() {
         drivers.uart.updateSerial();
 
         if (refreshTimer.execute()) {
+            drivers.spi.doTransfer();
             
             // tap::buzzer::playNote(&(drivers.pwm), 493);
             

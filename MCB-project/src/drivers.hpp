@@ -23,6 +23,7 @@
 
 #include "tap/drivers.hpp"
 
+#include "communication/spi/SPICommunication.hpp"
 #include "communication/I2CCommunication.hpp"
 #include "communication/UARTCommunication.hpp"
 
@@ -141,6 +142,7 @@ class Drivers : public tap::Drivers {
 public:
     Drivers() : tap::Drivers(), uart(this, tap::communication::serial::Uart::Uart1, true) {}
 
+    communication::SPICommunication spi{this};
     communication::I2CCommunication i2c;
     communication::UARTCommunication uart;
     ImuRecalibration recal;
