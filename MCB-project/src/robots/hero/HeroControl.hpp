@@ -35,27 +35,29 @@ public:
     // functions we are using
     void initialize() override {
         // Initialize subsystems
-        gimbal.initialize();
+        // gimbal.initialize();
         flywheel.initialize();
-        indexer.initialize();
-        drivetrain.initialize();
+        flywheel2.initialize();
+        // indexer.initialize();
+        // drivetrain.initialize();
         ui.initialize();
         jetson.initialize();
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
         flywheel.setDefaultCommand(&shooterStop);
+        flywheel2.setDefaultCommand(&shooterStop2);
         drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerIdle);
 
 
         // Mouse and Keyboard mappings
         unjamKey.whileTrue(&indexerUnjam);
-        shootKey.onTrue(&indexerSemi)->onTrue(&shooterStart);
+        shootKey.onTrue(&indexerSemi)->onTrue(&shooterStart)->onTrue(&shooterStart2);
         unjamButton.whileTrue(&indexerUnjam);
-        shootButton.onTrue(&indexerSemi)->onTrue(&shooterStart);
-        stopFlywheelTrigger.onTrue(&shooterStop);
-        autoAimKey.onTrue(&shooterStart);
+        shootButton.onTrue(&indexerSemi)->onTrue(&shooterStart)->onTrue(&shooterStart2);
+        stopFlywheelTrigger.onTrue(&shooterStop)->onTrue(&shooterStop2);
+        autoAimKey.onTrue(&shooterStart)->onTrue(&shooterStart2);
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
@@ -97,6 +99,7 @@ public:
     void stopForImuRecal() override {
         drivers->commandScheduler.addCommand(&stopGimbal);
         drivers->commandScheduler.addCommand(&shooterStop);
+        drivers->commandScheduler.addCommand(&shooterStop2);
         drivers->commandScheduler.addCommand(&stopDriveCommand);
         drivers->commandScheduler.addCommand(&indexerStop);
         isStopped = true;
@@ -120,13 +123,14 @@ public:
     // Subsystems
     subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
-    subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
+    subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2, 1};
+    subsystems::FlywheelSubsystem flywheel2{drivers, &hardware.flywheelMotor3, &hardware.flywheelMotor4, 1};
     subsystems::HeroIndexerSubsystem indexer{drivers, &hardware.indexTopMotor, &hardware.indexBottomMotor};
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::JetsonSubsystem jetson{drivers, &gimbal, nullptr};
     // //commands
 
-    commands::HeroDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};
+    commands::HeroDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &hardware.flywheelMotor1, &hardware.flywheelMotor2, &hardware.flywheelMotor3, &hardware.flywheelMotor4};
     // commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr};
 
 
@@ -136,7 +140,9 @@ public:
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
 
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
+    commands::ShooterStartCommand shooterStart2{drivers, &flywheel2};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
+    commands::ShooterStopCommand shooterStop2{drivers, &flywheel2};
 
     commands::IndexerNBallsCommand indexerSemi{drivers, &indexer, 1, 20}; //semiauto, each click is one shot [Hero ignores the 20, need to fix this]
     commands::IndexerNBallsCommand indexerAuto{drivers, &indexer, -1, 2};//full auto, holding the wheel it the forward position shoots as long as it is held

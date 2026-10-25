@@ -31,7 +31,8 @@ void SingleIndexerSubsystem::finishRefresh() {
             if(isManualUnjamming){
                 shouldIndexNearest = true; //when we stop unjamming, index nearest
                 unit.velocityControl(UNJAM_BALL_PER_SECOND);
-            } else if (isStopped){
+            } else if (isStopped || !refPoweringIndex()){
+                shouldIndexNearest = false;
                 unit.oldVelocityControl(0);
             } else {
                 if(!isStopped&&shouldIndexNearest){

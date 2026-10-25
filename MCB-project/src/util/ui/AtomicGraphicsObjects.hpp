@@ -351,6 +351,8 @@ private:
 
 class FloatGraphic : public AtomicGraphicsObject, public TextSizer {
 public:
+    FloatGraphic() : FloatGraphic(RefSerialData::Tx::GraphicColor::WHITE, 0, 0, 0, 0, 1) {};
+
     FloatGraphic(float newFloat, UnfilledRectangle* rect) : AtomicGraphicsObject(rect->color), TextSizer(floatLen(newFloat)), thickness(rect->thickness), _float(newFloat) { inputRect(rect); }
 
     FloatGraphic(RefSerialData::Tx::GraphicColor color, float newFloat, uint16_t x, uint16_t y, uint16_t height, uint16_t thickness)
@@ -361,15 +363,14 @@ public:
     virtual void finishConfigGraphicData(RefSerialData::Tx::GraphicData* graphicData) final {
         setLen(floatLen(_float));
         calculateNumbers();
-        // the 3 is decimal precision, need to see what changing it does
+        // the 3 is decimal precision, changing it does nothing
         RefSerialTransmitter::configFloatingNumber(fontSize, 3, thickness, textX, textY, _float, graphicData);
-
-        if (_float < 0)
-        {
+        
+        // probably the part that taproot says is broken: have to handle negative values specially
+        if(_float<0){
             graphicData->value = _float*-1000;
             graphicData->value = -graphicData->value;
         }
-
         setPrev();
     }
 
