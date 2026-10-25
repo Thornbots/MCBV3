@@ -25,6 +25,10 @@ public:
         if(index == 1){
             number.x = 1070;
             number.y = 360;
+
+            // Only display rpm of one flywheel
+            for (int i = 0; i < graphelements; i++)
+            {addGraphicsObject(&graph[i]);}
         } else if(index == 2){
             number.x = 660;
             number.y = 360;
@@ -36,8 +40,7 @@ public:
             number.y = 670;
         }
 
-        for (int i = 0; i < graphelements; i++)
-        {addGraphicsObject(&graph[i]);}
+        
     }
 
     bool previousL = false;

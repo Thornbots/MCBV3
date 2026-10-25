@@ -22,6 +22,7 @@
 #include "objects/Countdown.hpp"
 #include "objects/LinearVelocityIndicator.hpp"
 #include "objects/ImuRecalibrationIndicator.hpp"
+#include "objects/TorqueIndicator.hpp"
 #include "drivers.hpp"
 
 namespace commands {
@@ -29,13 +30,15 @@ using subsystems::UISubsystem;
 
 class InfantryDrawCommand : public tap::control::Command, GraphicsContainer {
 public:
-    InfantryDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain, ServoSubsystem* servo)
+    InfantryDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain, ServoSubsystem* servo, tap::motor::DjiMotor* motorFlywheel1, tap::motor::DjiMotor* motorFlywheel2)
         : drivers(drivers),
           ui(ui),
           gimbal(gimbal),
           flywheel(flywheel),
           indexer(indexer),
           drivetrain(drivetrain),
+          motorFlywheel1(motorFlywheel1),
+          motorFlywheel2(motorFlywheel2),
           servo(servo) {
         addSubsystemRequirement(ui);
 
@@ -68,6 +71,8 @@ public:
         countdown.update();
         velo.update();
         recal.update();
+        ind1.update();
+        ind2.update();
         // logo doesn't need updating
     };
 
@@ -86,6 +91,8 @@ private:
     IndexerSubsystem* indexer;
     DrivetrainSubsystem* drivetrain;
     ServoSubsystem* servo;
+    tap::motor::DjiMotor* motorFlywheel1;
+    tap::motor::DjiMotor* motorFlywheel2;
 
     // add top level graphics objects here and in the constructor
     LaneAssistLines lane{gimbal};
@@ -100,5 +107,7 @@ private:
     Countdown countdown{drivers};
     LinearVelocityIndicator velo{drivetrain};
     ImuRecalibrationIndicator recal{drivers};
+    TorqueIndicator ind1{drivers, motorFlywheel1, 1};
+    TorqueIndicator ind2{drivers, motorFlywheel2, 2};
 };
 }  // namespace commands

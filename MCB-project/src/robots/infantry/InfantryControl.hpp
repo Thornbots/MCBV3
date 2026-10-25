@@ -140,7 +140,7 @@ public:
 
 
     // //commands
-    commands::InfantryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &servo};
+    commands::InfantryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &servo, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
     // commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr}; //Need to implement drivetrain odo for standard cv
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
