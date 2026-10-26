@@ -263,9 +263,8 @@ namespace
 		modm::delay_us(10);
 	
 		// ---------------- Clear driver state ----------------
-		::transaction = nullptr;
-		writing.length = 0;
-		reading.length = 0;
+		// Detach active AND queued clients before discarding ownership.
+		modm::platform::I2cMaster2::reset();
 		modm::platform::I2cMaster2::needsReinit = true;
         
 	}
@@ -275,36 +274,22 @@ namespace
 	callStarting()
 	{
 		uint_fast32_t deadlockPreventer = 100'000;
-		while ((I2C2->CR1 & I2C_CR1_STOP) and (deadlockPreventer-- > 0))
-			;
-		    ;
-		if (deadlockPreventer == 0)
+		while ((I2C2->CR1 & I2C_CR1_STOP) && deadlockPreventer > 0)
+			--deadlockPreventer;
+		if (I2C2->CR1 & I2C_CR1_STOP)
 		{
-			DEBUG_STREAM("STOP condition timeout, trying recovery");
 			recoverStuckBus();
-			error = modm::I2cMaster::Error::BusBusy;
-			MODM_ISR_CALL(I2C2_ER);
 			return;
 		}
 
-		// If the bus is busy during a starting condition, we generate an error and detach the transaction
-		// Before a restart condition the clock line is pulled low, and this check would trigger falsely.
-		if ((I2C2->SR2 & I2C_SR2_BUSY) and (nextOperation != modm::I2c::Operation::Restart))
+		if ((I2C2->SR2 & I2C_SR2_BUSY) && nextOperation != modm::I2c::Operation::Restart)
 		{
-			// we wait a short amount of time for the bus to become free.
 			deadlockPreventer = 10'000;
-			while ((I2C2->SR2 & I2C_SR2_BUSY) and (deadlockPreventer-- > 0))
-				;
-
-				DEBUG_STREAM("Bus stuck, trying recovery");
-				recoverStuckBus();
+			while ((I2C2->SR2 & I2C_SR2_BUSY) && deadlockPreventer > 0)
+				--deadlockPreventer;
 			if (I2C2->SR2 & I2C_SR2_BUSY)
 			{
-				// either SDA or SCL is low, which leads to irrecoverable deadlock.
-				// Call error handler manually to detach the transaction object and resolve the deadlock.
-				// Further transactions may not succeed either, but will not lead to a deadlock.
-				error = modm::I2cMaster::Error::BusBusy;
-				MODM_ISR_CALL(I2C2_ER);
+				recoverStuckBus();
 				return;
 			}
 		}
@@ -333,14 +318,12 @@ namespace
 		{
 			// wait until the stop condition has been generated
 			uint_fast32_t deadlockPreventer = 100'000;
-			while (I2C2->CR1 & I2C_CR1_STOP && deadlockPreventer-- > 0)
-				;
-			if (deadlockPreventer == 0)
+			while ((I2C2->CR1 & I2C_CR1_STOP) && deadlockPreventer > 0)
+				--deadlockPreventer;
+			if (I2C2->CR1 & I2C_CR1_STOP)
 			{
 				DEBUG_STREAM("STOP condition timeout, trying recovery");
 				recoverStuckBus();
-				error = modm::I2cMaster::Error::BusBusy;
-				MODM_ISR_CALL(I2C2_ER);
 				return;
 			}
 
@@ -457,14 +440,12 @@ MODM_ISR(I2C2_EV)
 
 			DEBUG_STREAM("waiting for stop");
 			uint_fast32_t deadlockPreventer = 100'000;
-			while (I2C2->CR1 & I2C_CR1_STOP && deadlockPreventer-- > 0)
-				;
-			if (deadlockPreventer == 0)
+			while ((I2C2->CR1 & I2C_CR1_STOP) && deadlockPreventer > 0)
+				--deadlockPreventer;
+			if (I2C2->CR1 & I2C_CR1_STOP)
 			{
 				DEBUG_STREAM("STOP condition timeout, trying recovery");
 				recoverStuckBus();
-				error = modm::I2cMaster::Error::BusBusy;
-				MODM_ISR_CALL(I2C2_ER);
 				return;
 			}
 
@@ -548,8 +529,14 @@ MODM_ISR(I2C2_EV)
 
 			DEBUG_STREAM("waiting for stop");
 			uint_fast32_t deadlockPreventer = 100'000;
-			while (I2C2->CR1 & I2C_CR1_STOP && deadlockPreventer-- > 0)
-				;
+			while ((I2C2->CR1 & I2C_CR1_STOP) && deadlockPreventer > 0)
+				--deadlockPreventer;
+
+			if (I2C2->CR1 & I2C_CR1_STOP)
+			{
+				recoverStuckBus();
+				return;
+			}
 
 			DEBUG_STREAM("reading data2");
 			dr = I2C2->DR;
@@ -703,8 +690,16 @@ modm::platform::I2cMaster2::initializeWithPrescaler(uint8_t peripheralFrequency,
 void
 modm::platform::I2cMaster2::reset()
 {
+	modm::atomic::Lock lock;
+	NVIC_DisableIRQ(I2C2_EV_IRQn);
+	NVIC_DisableIRQ(I2C2_ER_IRQn);
+	I2C2->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITBUFEN | I2C_CR2_ITERREN);
+	NVIC_ClearPendingIRQ(I2C2_EV_IRQn);
+	NVIC_ClearPendingIRQ(I2C2_ER_IRQn);
 	reading.length = 0;
 	writing.length = 0;
+	nextOperation = modm::I2c::Operation::Stop;
+	checkNextOperation = CheckNextOperation::NO;
 	error = Error::SoftwareReset;
 	if (transaction) transaction->detaching(DetachCause::ErrorCondition);
 	transaction = nullptr;
@@ -722,6 +717,7 @@ bool
 modm::platform::I2cMaster2::start(I2cTransaction *transaction, ConfigurationHandler handler)
 {
 	modm::atomic::Lock lock;
+	if (needsReinit) return false;
 	// if we have a place in the queue and the transaction object is valid
 	if (queue.isNotFull() && transaction)
 	{

@@ -515,7 +515,8 @@ TEST(OdomI2cLogTest, FreshnessFlagsLatchesWithinThresholdAndClearsOnSuccess) {
     }
     // NACK latch: one failed read at 1000 ms, then no attempts; stuck read: no attempts.
     log.attempt(1000000, 1000, 2, payload, 0, 0);
-    EXPECT_TRUE(log.succeededWithin(999 + staleMs, staleMs));
+    EXPECT_TRUE(log.succeededWithin(998 + staleMs, staleMs));
+    EXPECT_FALSE(log.succeededWithin(999 + staleMs, staleMs));
     EXPECT_FALSE(log.succeededWithin(1000 + staleMs, staleMs));
     log.attempt(2000000, 2000, 0, payload, 0, 0);
     EXPECT_TRUE(log.succeededWithin(2000, staleMs));

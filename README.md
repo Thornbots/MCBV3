@@ -99,8 +99,9 @@ On `sentry`, `LocalizationPico` logs each I2C read of the Pico (`0x55`, one
 `result` is `modm::I2cMaster::Error`, latched when the transaction detaches:
 0 NoError, 1 SoftwareReset (bus reinit), 2 AddressNack, 3 DataNack,
 4 ArbitrationLost, 5 BusCondition, 6 BusBusy (includes stuck-bus timeouts), 7 Unknown.
-modm has no transaction timeout: a read that never completes produces no
-records, only a growing `ms_since_attempt` in the summary.
+The [Pico watchdog](#pico-i2c-health) records a 10 ms attach/completion timeout
+as BusBusy (6), then requests bus reinitialization. Sequence/attempt age refer
+to completed or timed-out polls, not the instant an I2C START was issued.
 
 Channel 16, one record per attempt, 36 bytes:
 
@@ -138,11 +139,34 @@ failures are only lost if more than 16 wait, and are always counted.
 POSE/REF_SYS timing is unchanged (`OdomI2cLogTest`). The hosted firmware
 fixture emits records only when `MCB_ODOM_I2C_LOG` is set.
 
-POSE `odom_status` is 2 (`ODOM_I2C_DEAD`) after `POD_STALE_MS` (50 ms) without a
-successful Pico read, and 0 again on the next one
-([wire contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#pose-id2--chassis-pose-and-gimbal-angles)).
+See [Pico I2C health](#pico-i2c-health) for POSE status and recovery. The
+[wire contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#pose-id2--chassis-pose-and-gimbal-angles)
+owns the existing POSE layout.
 The hosted fixture injects a latched NACK or a stuck read with
 `MCB_POD_FAULT=nack@MS` or `stuck@MS`.
+
+### Pico I2C health
+
+On `sentry`, POSE uses the existing `odom_status` byte: 0 while a Pico read
+has succeeded less than 50 ms ago, 2 (`ODOM_I2C_DEAD`) at 50 ms or later.
+It reports 2 until the first success and returns to 0 on the next success.
+This measures read health, not whether encoder values change. Other robots
+continue to send 0; there is no drivetrain fallback or wire-layout change.
+
+`LocalizationPico` bounds both attach and completion waits at 10 ms and
+requests shared I2C2 reinitialization on timeout. `I2CCommunication::refresh`
+resets the master before polling again. STM32 stuck-bus recovery detaches
+active and queued transactions before discarding pointers, leaves interrupts
+disabled until reinitialization, and refuses new work while reinit is pending.
+Both Pico and MT6701 clear modm's sticky transaction Error state before retrying.
+A persistent electrical fault still reports 2; recovery cannot repair wiring.
+
+`LocalizationPicoTest` runs the real poll class against a controllable master,
+including a hung first read, a startup orphan, rejected attachment, sticky
+Error, and clock rollover. Hosted sensor fixtures bypass STM32 registers;
+these tests cannot certify physical bus recovery or interrupt timing.
+See the [startup stall investigation](docs/investigations/2026-10-26-pico-i2c.md)
+for evidence, shared defects and the deciding hardware observation.
 
 ## Continuous integration
 

@@ -32,10 +32,21 @@ public:
         PT_BEGIN();
         // auto rez = this->ping();
         while (true) {
+            // modm refuses to attach an Error transaction until explicitly reset.
+            this->transaction.resetState();
             buffer2[0] = uint8_t(static_cast<uint8_t>(odom_x)); //uint8_t(ANGLE_ADDR);
-            
-            PT_WAIT_UNTIL(this->startWriteRead(buffer2, 1, (uint8_t*)buffer, sizeof(float)*4));
-            PT_WAIT_WHILE(this->isTransactionRunning());
+
+            waitSinceMs = tap::arch::clock::getTimeMilliseconds();
+            PT_WAIT_UNTIL(this->startWriteRead(buffer2, 1, (uint8_t*)buffer, sizeof(float)*4) || expired());
+            if (expired()) {
+                requestRecovery();
+                PT_RESTART();
+            }
+            PT_WAIT_UNTIL(!this->isTransactionRunning() || expired());
+            if (this->isTransactionRunning()) {
+                requestRecovery();
+                PT_RESTART();
+            }
 
             success = this->wasTransactionSuccessful();
             if (success) {
@@ -85,6 +96,17 @@ public:
     OdomI2cLog log;
 
 private:
+    static constexpr uint32_t TRANSACTION_TIMEOUT_MS = 10;
+    uint32_t waitSinceMs = 0;
+    bool expired() const {
+        return tap::arch::clock::getTimeMilliseconds() - waitSinceMs >= TRANSACTION_TIMEOUT_MS;
+    }
+    // refresh() resets/detaches the shared master before the next run().
+    void requestRecovery() {
+        I2cMaster::needsReinit = true;
+        log.attempt(tap::arch::clock::getTimeMicroseconds(), tap::arch::clock::getTimeMilliseconds(),
+                    static_cast<uint8_t>(modm::I2cMaster::Error::BusBusy), buffer, getX(), getY());
+    }
     bool success = false;
     float odom_x = 0;
     float odom_y = 0;
@@ -94,7 +116,7 @@ private:
     static const uint8_t ADDRESS = 0x55;
     static const uint8_t ANGLE_ADDR = 0x55;
 
-    float buffer[4]; //TODO: make buffer type float[4]
+    float buffer[4]{}; //TODO: make buffer type float[4]
 
     uint8_t buffer2[4];
     bool online = false;
