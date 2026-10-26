@@ -5,7 +5,7 @@ namespace communication {
 class I2CCommunication {
 public:
     void initialize() {}
-    void refresh() {}
+    void refresh() { odom.poll(); }
     hosted::Encoder encoder;
     hosted::Pods odom;
 };
