@@ -32,6 +32,7 @@ enum UartMessage : uint8_t{
     // outgoing
     POSE = 2,
     REF_SYS = 3,
+    MCB_DATA = 6,
     
     // bidirectional
     PING = 5,
@@ -45,6 +46,10 @@ enum OdomStatus : uint8_t{
     ODOM_I2C_DEAD = 2,              // I2C bus dead, no pod data, no fallback
     ODOM_I2C_DEAD_DRIVETRAIN = 3    // I2C bus dead, drivetrain odometry instead
 };
+// POSE reports ODOM_I2C_DEAD after this long without a successful Pico read (sentry).
+// Reads succeed at ~1-2 kHz and POSE runs every 10 ms: 50 ms is many missed reads and
+// five POSE periods, so one NACK never flags. Codes 1/3 are unused (no drivetrain fallback).
+static constexpr uint32_t POD_STALE_MS = 50;
 
 // Every x/y and yaw on the wire is in the field frame: REP-105, (0, 0) at the field
 // centre, x toward blue's base (OdometrySubsystemConstants.hpp), like OdometrySubsystem.
@@ -140,7 +145,7 @@ private:  // Private Variables
 
     static constexpr int TIME_FOR_REF_DATA = 200; //send at 5hz
     tap::arch::PeriodicMilliTimer refDataSendingTimeout{TIME_FOR_REF_DATA};
-    tap::arch::PeriodicMilliTimer poseDataTimeout{10}; //for sending pose data at 100hz
+    uint32_t nextTelemetry = drivers->uart.getCurrentTime() + 10;
     // bool needToSendRefData = false;
 
 
@@ -180,7 +185,7 @@ private:  // Private Methods
 
     template<class msg_type> 
     inline bool sendMsg(msg_type* msg){
-        bool status = drivers->uart.isFinishedWriting(); //TODO: this is not necessary because uart has a buffer?
+        bool status = drivers->uart.isFinishedWriting();
         if(status)
             return drivers->uart.sendMsg((uint8_t*)msg, StructToMessageType<msg_type>::value, sizeof(msg_type));
         return false;

@@ -2,6 +2,9 @@
 
 #include "tap/architecture/clock.hpp"
 #include <cstring>
+#include <algorithm>
+#include <cstdarg>
+#include <cstdio>
 
 namespace communication {
 UARTCommunication::UARTCommunication(tap::Drivers* drivers, tap::communication::serial::Uart::UartPort _port, bool isRxCRCEnforcementEnabled)
@@ -57,7 +60,7 @@ const UARTCommunication::uartMsg UARTCommunication::getLastMsg() { return mostRe
 bool UARTCommunication::sendMsg(uint8_t* dataToBeSent, uint16_t messageType, uint16_t dataLen) {
     // Update the timestamp before sending.
     // output.timestamp = getCurrentTime();
-    if (dataLen > SERIAL_RX_BUFF_SIZE) {
+    if (!isFinishedWriting() || dataLen > SERIAL_RX_BUFF_SIZE) {
         // RAISE_ERROR(drivers, "received message length longer than allowed max");
         return false;
     }
@@ -69,7 +72,35 @@ bool UARTCommunication::sendMsg(uint8_t* dataToBeSent, uint16_t messageType, uin
 
     int bytesWritten = drivers->uart.write(port, reinterpret_cast<uint8_t*>(&msg), frameLen);
 
+    if (bytesWritten > 0) {
+        wireStarted = true;
+        wireBusyUntil = getCurrentTime() + McbDataQueue::wireMilliseconds(bytesWritten);
+    }
     return bytesWritten == static_cast<int>(frameLen);
+}
+
+bool UARTCommunication::mcbText(const char* format, ...) {
+    char text[McbDataQueue::MAX_DATA + 1];
+    va_list args;
+    va_start(args, format);
+    const int length = std::vsnprintf(text, sizeof(text), format, args);
+    va_end(args);
+    if (length < 0) return false;
+    return mcbLog(McbDataQueue::TEXT_CHANNEL, text, std::min<size_t>(length, McbDataQueue::MAX_DATA));
+}
+
+void UARTCommunication::sendIdle(uint32_t telemetryDeadline) {
+    if (!isFinishedWriting()) return;
+    const uint32_t now = getCurrentTime();
+    // Echoes use the same deadline guard as data; a new PING replaces a pending echo.
+    if (hasPendingPing && McbDataQueue::fitsBefore(now, telemetryDeadline, 10)) {
+        if (sendMsg(&pendingPing, 5, 1)) hasPendingPing = false;
+        return;
+    }
+    McbDataQueue::Packet packet;
+    if (dataQueue.peek(packet) && McbDataQueue::fitsBefore(now, telemetryDeadline, packet.size + 9)) {
+        if (sendMsg(packet.bytes.data(), 6, packet.size)) dataQueue.consume(packet);
+    }
 }
 
 bool UARTCommunication::isConnected() const { return ((getCurrentTime() - lastReceivedTime) <= CONNECTION_TIMEOUT); }

@@ -75,6 +75,99 @@ nonzero CAN motor output after SETUP becomes IN_GAME. A hosted shot counter
 alone is not evidence that the physical indexer moved; board execution and
 modeled exits are documented at [sim](../../sim/README.md#type-c-board-execution-with-renode).
 
+## On-demand firmware data
+
+Use `drivers->uart.mcbLog(channel, ptr, length)` from the main scheduler context;
+it copies the bytes into a bounded queue and returns false on rejection. The
+`mcbLog(channel, value)` helper accepts trivially copyable structs that fit.
+Define serialization explicitly: native struct padding/endianness are part of
+what a raw struct sends, so packed structs or explicit byte encoding are preferable.
+`drivers->uart.mcbText("value=%u", value)` is the bounded text convenience,
+replacing the unused broken `PRINT` macro. Neither API is ISR/thread safe.
+`droppedData()` exposes rejected records locally, with transport reports also
+sent on the reserved channel.
+
+The [wire contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#mcb_data-id6--firmware-owned-opaque-data)
+owns channel reservations, bounds, scheduling and stamps. The
+[firmware data workflow](../../ros2_dji_serial_bridge/README.md#firmware-data-over-wifi)
+explains live Foxglove viewing and copying/decoding recorded bags over WiFi.
+
+### Odometry I2C diagnostics
+
+On `sentry`, `LocalizationPico` logs each I2C read of the Pico (`0x55`, one
+16-byte reply) on two channels. All fields are little-endian, packed, no padding.
+`result` is `modm::I2cMaster::Error`, latched when the transaction detaches:
+0 NoError, 1 SoftwareReset (bus reinit), 2 AddressNack, 3 DataNack,
+4 ArbitrationLost, 5 BusCondition, 6 BusBusy (includes stuck-bus timeouts), 7 Unknown.
+The [Pico watchdog](#pico-i2c-health) records a 10 ms attach/completion timeout
+as BusBusy (6), then requests bus reinitialization. Sequence/attempt age refer
+to completed or timed-out polls, not the instant an I2C START was issued.
+
+Channel 16, one record per attempt, 36 bytes:
+
+| Off | Type | Field | Meaning |
+| --- | --- | --- | --- |
+| 0 | u32 | `time_us` | MCB clock when the attempt completed |
+| 4 | u32 | `seq` | Attempt number since boot, from 1; gaps are unlogged attempts |
+| 8 | u8 | `result` | Error code above |
+| 9 | u8 | `flags` | bit 0 success (held values updated); bit 1 bus reinit before this attempt |
+| 10 | u16 | `pending` | Failure records waiting on the MCB when this one was made |
+| 12 | 4×f32 | `enc1_pos, enc2_pos, enc1_speed, enc2_speed` | Receive buffer after the attempt; on failure, stale or partial, not used |
+| 28 | f32 | `held_x` | `getRawX()` after the attempt |
+| 32 | f32 | `held_y` | `getRawY()` after the attempt (field forward) |
+
+Channel 17, about 1 Hz summary, 48 bytes:
+
+| Off | Type | Field | Meaning |
+| --- | --- | --- | --- |
+| 0 | u32 | `time_us` | MCB clock when queued |
+| 4 | u32 | `last_seq` | Last attempt number |
+| 8 | 8×u16 | `results[0..7]` | Attempts per result code since the previous summary, saturating |
+| 24 | u32 | `lost_failures` | Failure records not logged since boot (16-entry buffer full) |
+| 28 | u32 | `decimated_successes` | Success records replaced before sending, since boot |
+| 32 | u32 | `fifo_drops` | `droppedData()` for all channels since boot |
+| 36 | u32 | `ms_since_success` | `UINT32_MAX` if never |
+| 40 | u32 | `ms_since_attempt` | Since the last completed attempt; `UINT32_MAX` if never |
+| 44 | u16 | `bus_reinits` | `I2CCommunication` bus resets since boot |
+| 46 | u16 | reserved | 0 |
+
+The Pico is polled as fast as the bus allows (about 1–2 kHz); the link fits
+about one 46-byte data frame per 10 ms POSE cycle. Records wait in the logger,
+not the MCB data FIFO: summaries first, then failures, then the latest success
+at most every 20 ms while a FIFO slot stays spare. Successes are decimated;
+failures are only lost if more than 16 wait, and are always counted.
+POSE/REF_SYS timing is unchanged (`OdomI2cLogTest`). The hosted firmware
+fixture emits records only when `MCB_ODOM_I2C_LOG` is set.
+
+See [Pico I2C health](#pico-i2c-health) for POSE status and recovery. The
+[wire contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#pose-id2--chassis-pose-and-gimbal-angles)
+owns the existing POSE layout.
+The hosted fixture injects a latched NACK or a stuck read with
+`MCB_POD_FAULT=nack@MS` or `stuck@MS`.
+
+### Pico I2C health
+
+On `sentry`, POSE uses the existing `odom_status` byte: 0 while a Pico read
+has succeeded less than 50 ms ago, 2 (`ODOM_I2C_DEAD`) at 50 ms or later.
+It reports 2 until the first success and returns to 0 on the next success.
+This measures read health, not whether encoder values change. Other robots
+continue to send 0; there is no drivetrain fallback or wire-layout change.
+
+`LocalizationPico` bounds both attach and completion waits at 10 ms and
+requests shared I2C2 reinitialization on timeout. `I2CCommunication::refresh`
+resets the master before polling again. STM32 stuck-bus recovery detaches
+active and queued transactions before discarding pointers, leaves interrupts
+disabled until reinitialization, and refuses new work while reinit is pending.
+Both Pico and MT6701 clear modm's sticky transaction Error state before retrying.
+A persistent electrical fault still reports 2; recovery cannot repair wiring.
+
+`LocalizationPicoTest` runs the real poll class against a controllable master,
+including a hung first read, a startup orphan, rejected attachment, sticky
+Error, and clock rollover. Hosted sensor fixtures bypass STM32 registers;
+these tests cannot certify physical bus recovery or interrupt timing.
+See the [startup stall investigation](docs/investigations/2026-10-26-pico-i2c.md)
+for evidence, shared defects and the deciding hardware observation.
+
 ## Continuous integration
 
 GitHub Actions compiles ARM firmware for `infantry`, `hero`, and `sentry`

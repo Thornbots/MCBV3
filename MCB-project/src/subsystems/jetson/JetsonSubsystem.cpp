@@ -1,6 +1,7 @@
 #include "JetsonSubsystem.hpp"
 
 #include "JetsonSubsystemConstants.hpp"
+#include "tap/architecture/clock.hpp"
 #include "subsystems/drivetrain/SimpleAutoDriveCommand.hpp"
 
 namespace subsystems {
@@ -21,10 +22,12 @@ void JetsonSubsystem::refresh() {
     
     Ping ping{};
     if(getMsg(&ping)){
-        sendMsg(&ping);
+        drivers->uart.queuePing(ping.number);
     }
 
-    if (poseDataTimeout.execute()) {
+    const uint32_t now = drivers->uart.getCurrentTime();
+    if (static_cast<int32_t>(now - nextTelemetry) >= 0) {
+        nextTelemetry += ((now - nextTelemetry) / 10 + 1) * 10;
         messageCount++;
 
         // 9 poses, 1 ref sys msg
@@ -36,7 +39,11 @@ void JetsonSubsystem::refresh() {
                 odo->getYVel(),
                 gimbal->getPitchEncoderValue(),
                 std::fmod(gimbal->getYawAngleRelativeWorld() + odo->getStartYaw(), 2 * PI),  // field yaw
+#if defined(SENTRY)
+                drivers->i2c.odom.isFresh(now, POD_STALE_MS) ? OdomStatus::ODOM_PODS : OdomStatus::ODOM_I2C_DEAD
+#else
                 OdomStatus::ODOM_PODS
+#endif
             };
             sendMsg(&p);
         } else {  // if(drivers->refSerial.getRefSerialReceivingData()) {
@@ -66,6 +73,11 @@ void JetsonSubsystem::refresh() {
             messageCount = 0;
         }
     }
+#if defined(SENTRY)
+    // Queues Pico I2C diagnostics; sendIdle keeps them out of telemetry slots.
+    drivers->i2c.odom.log.drain(drivers->uart, tap::arch::clock::getTimeMicroseconds());
+#endif
+    drivers->uart.sendIdle(nextTelemetry);
 }
 
 void JetsonSubsystem::checkApplyRelocalize() {

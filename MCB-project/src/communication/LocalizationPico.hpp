@@ -3,23 +3,53 @@
 #include "modm/architecture/interface/i2c_device.hpp"
 #include "modm/math/geometry/angle.hpp"
 #include "modm/processing/protothread/protothread.hpp"
+#include "tap/architecture/clock.hpp"
+#include "OdomI2cLog.hpp"
 
 namespace communication {
+// Latches the master's error when detaching: a queued transaction clears it on start.
 template <class I2cMaster>
-class LocalizationPico : public modm::I2cDevice<I2cMaster, 1>, public modm::pt::Protothread {
+class ErrorLatchingTransaction : public modm::I2cWriteReadTransaction {
 public:
-    LocalizationPico() : modm::I2cDevice<I2cMaster, 1>(ADDRESS) {};
+    using modm::I2cWriteReadTransaction::I2cWriteReadTransaction;
+    modm::I2cMaster::Error error = modm::I2cMaster::Error::NoError;
+
+protected:
+    void detaching(modm::I2c::DetachCause cause) override {
+        error = cause == modm::I2c::DetachCause::NormalStop ? modm::I2cMaster::Error::NoError : I2cMaster::getErrorState();
+        if (cause != modm::I2c::DetachCause::NormalStop && error == modm::I2cMaster::Error::NoError)
+            error = modm::I2cMaster::Error::Unknown;
+        modm::I2cWriteReadTransaction::detaching(cause);
+    }
+};
+
+template <class I2cMaster>
+class LocalizationPico : public modm::I2cDevice<I2cMaster, 1, ErrorLatchingTransaction<I2cMaster>>, public modm::pt::Protothread {
+public:
+    LocalizationPico() : modm::I2cDevice<I2cMaster, 1, ErrorLatchingTransaction<I2cMaster>>(ADDRESS) {};
 
     bool run() {
         PT_BEGIN();
         // auto rez = this->ping();
         while (true) {
+            // modm refuses to attach an Error transaction until explicitly reset.
+            this->transaction.resetState();
             buffer2[0] = uint8_t(static_cast<uint8_t>(odom_x)); //uint8_t(ANGLE_ADDR);
-            
-            PT_WAIT_UNTIL(this->startWriteRead(buffer2, 1, (uint8_t*)buffer, sizeof(float)*4));
-            PT_WAIT_WHILE(this->isTransactionRunning());
 
-            if (this->wasTransactionSuccessful()) {
+            waitSinceMs = tap::arch::clock::getTimeMilliseconds();
+            PT_WAIT_UNTIL(this->startWriteRead(buffer2, 1, (uint8_t*)buffer, sizeof(float)*4) || expired());
+            if (expired()) {
+                requestRecovery();
+                PT_RESTART();
+            }
+            PT_WAIT_UNTIL(!this->isTransactionRunning() || expired());
+            if (this->isTransactionRunning()) {
+                requestRecovery();
+                PT_RESTART();
+            }
+
+            success = this->wasTransactionSuccessful();
+            if (success) {
                 // s.printf("i2c result: %d %d %d %d\n", buffer[0], buffer[1], buffer[2], buffer[3]); 
                 // float *rez = (float*)buffer;
                 // static_cast<float>(buffer);
@@ -48,6 +78,8 @@ public:
                 //     angle |= (static_cast<uint16_t>(buffer[0]) >> 2);
                 // }
             }
+            log.attempt(tap::arch::clock::getTimeMicroseconds(), tap::arch::clock::getTimeMilliseconds(),
+                        success ? 0 : static_cast<uint8_t>(this->transaction.error), buffer, getX(), getY());
         }
         PT_END();
     }
@@ -57,11 +89,25 @@ public:
     float getY() { return (odom_y + offsetY); }  
     float getXVel() { return odom_x_vel; }  
     float getYVel() { return odom_y_vel; }  
+    bool isFresh(uint32_t nowMs, uint32_t maxAgeMs) const { return log.succeededWithin(nowMs, maxAgeMs); }
     
     float offsetX = 0;
     float offsetY = 0;
+    OdomI2cLog log;
 
 private:
+    static constexpr uint32_t TRANSACTION_TIMEOUT_MS = 10;
+    uint32_t waitSinceMs = 0;
+    bool expired() const {
+        return tap::arch::clock::getTimeMilliseconds() - waitSinceMs >= TRANSACTION_TIMEOUT_MS;
+    }
+    // refresh() resets/detaches the shared master before the next run().
+    void requestRecovery() {
+        I2cMaster::needsReinit = true;
+        log.attempt(tap::arch::clock::getTimeMicroseconds(), tap::arch::clock::getTimeMilliseconds(),
+                    static_cast<uint8_t>(modm::I2cMaster::Error::BusBusy), buffer, getX(), getY());
+    }
+    bool success = false;
     float odom_x = 0;
     float odom_y = 0;
     float odom_x_vel = 0;
@@ -70,7 +116,7 @@ private:
     static const uint8_t ADDRESS = 0x55;
     static const uint8_t ANGLE_ADDR = 0x55;
 
-    float buffer[4]; //TODO: make buffer type float[4]
+    float buffer[4]{}; //TODO: make buffer type float[4]
 
     uint8_t buffer2[4];
     bool online = false;

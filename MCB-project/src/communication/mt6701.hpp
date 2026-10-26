@@ -13,6 +13,8 @@ public:
     bool run() {
         PT_BEGIN();
         while (true) {
+            // modm refuses to attach an Error transaction until explicitly reset.
+            this->transaction.resetState();
             buffer[0] = uint8_t(ANGLE_ADDR);
             PT_WAIT_UNTIL(this->startWriteRead(buffer, 1, buffer, 1));
             PT_WAIT_WHILE(this->isTransactionRunning());

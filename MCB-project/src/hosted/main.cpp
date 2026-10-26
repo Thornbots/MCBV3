@@ -51,6 +51,7 @@ int main() {
     const float start[2] = {odo::START_X, odo::START_Y};
     std::fwrite(start, sizeof(float), 2, stdout);
     std::fflush(stdout);
+    const bool dataTestLoad = std::getenv("MCB_DATA_TEST_LOAD") != nullptr;
     Input in;
     while (std::fread(&in, sizeof(in), 1, stdin) == 1) {
         if (in.cycles == 0 || in.cycles > 100 || in.refereeBytes > 4096 || in.mode > 7) return 2;
@@ -81,6 +82,11 @@ int main() {
                     &h.flywheelMotor1, &h.flywheelMotor2, &h.driveMotor1, &h.driveMotor2,
                     &h.driveMotor3, &h.driveMotor4}) feedback(*motor, in.motors[motorIndex++]);
             const float before = control.indexer.getTotalNumBallsShot();
+            if (dataTestLoad) {
+                const uint8_t sample[] = {0x00, 0xA5, 0xFF, 0x2A};
+                drivers.uart.mcbLog(42, sample, sizeof(sample));
+            }
+            drivers.i2c.refresh();
             drivers.commandScheduler.run();
             drivers.hitTracker.update();
             control.update();
