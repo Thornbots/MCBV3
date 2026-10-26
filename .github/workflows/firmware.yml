@@ -2,8 +2,9 @@ name: Firmware build and tests
 
 on:
   push:
-    branches: [main, nightly]
+    branches: [main]
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -15,8 +16,6 @@ concurrency:
 
 jobs:
   hardware:
-    # PRs into nightly stay cheap; nightly pushes and PRs into main run this.
-    if: github.event_name != 'pull_request' || github.base_ref != 'nightly'
     name: ARM / ${{ matrix.robot }} / ${{ matrix.sysid }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -69,7 +68,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Thornbots/sim
-          ref: 518f6869985d1c4aff914d0cea7e09d167be3e13
+          ref: 6189322bc32432e765266ba63246a352a4a52ad4
           path: uart-fixture
       - name: Exercise the compiled firmware over UART
         env:

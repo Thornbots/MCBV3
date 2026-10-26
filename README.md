@@ -95,8 +95,10 @@ explains live Foxglove viewing and copying/decoding recorded bags over WiFi.
 ## Continuous integration
 
 GitHub Actions compiles ARM firmware for `infantry`, `hero`, and `sentry`
-on nightly/main pushes and pull requests into `main`, including all four system identification modes.
-Pull requests into `nightly` skip the ARM jobs. Each build uploads its ELF file for
+on `main` pushes and pull requests into `main`, including all four system identification modes.
+`nightly` runs no CI on pushes or pull requests: run the checks in
+[CI](../../docs/CI.md#local-checks-for-prs-into-nightly) locally first, and the
+[nightly tests](../../docs/CI.md#nightly-tests) cover its hosted firmware build. Each build uploads its ELF file for
 inspection; CI never flashes a board. The hosted sentry job runs the package's
 geometry and chassis GoogleTests, then builds real firmware and exercises its
 UART parser, referee gates, aiming, firing, and driving through the pinned
@@ -147,14 +149,10 @@ heading. Frame conventions and payload semantics are owned by the workspace's
 Deploy matching firmware and Jetson packages together: unchanged payload
 sizes cannot detect a frame-semantic mismatch.
 
-The sentry parked and centered manual commands latch a raw aim-odometry
-position while chassis power is available in game, opposing gimbal reaction
-and residual wheel motion through the position and wheel-velocity controllers.
-RELOCALIZE cannot move that hold point; a raw-start jump over 25 cm in one
-control tick reanchors it. Other drive commands clear the latch. Outside the
-powered in-game state the stop command cuts motor current; all drive commands
-cut current when referee chassis power is off. Keyboard peek release is gated
-on keyboard mode so it cannot override the centered DBUS mode at startup.
+The sentry drivetrain matches main, whose hold is confirmed on the real robot:
+the default stop command cuts wheel current, and centered manual drive keeps a
+zero wheel-velocity setpoint through the velocity controller. Neither latches
+a pod position.
 
 Board startup preserves the three-second remote power-on guard using the
 already initialized SysTick clock and `WFI` between interrupts. The former

@@ -53,6 +53,7 @@ public:
     const char* getName() const override { return "simple auto drive command"; }
     
 private:
+    friend class SimpleAutoDriveCommandTest;
     src::Drivers* drivers;
     OdometrySubsystem* odo;
     TargetMode mode;
@@ -71,14 +72,20 @@ private:
     static constexpr float TOWARDS_ZONE_OFFSET = 0.5f;  // meters, how far (x and y distance) into a zone (reload or center) to be. 0 would stay at a corner.
 
     tap::arch::MilliTimeout stuckTimer{};
+    static constexpr float WAYPOINT_TOLERANCE = 0.5f;  // meters, default arrival radius
+    static constexpr float WALL_LEG_TOLERANCE = 0.2f;  // meters, prevent corner cutting
+
     static constexpr int STUCK_TIMER_AMOUNT = 15 * 1000;  // ms, how long to wait between points
 
     MoveToPositionCommand positionCommand;
 
-    std::vector<std::pair<
-        std::pair<float, float>,  // position (x, y)
-        std::pair<float, float>>>
-        targets;  // velocity (x, y)
+    struct Waypoint {
+        std::pair<float, float> position;
+        std::pair<float, float> velocity;
+        float tolerance = WAYPOINT_TOLERANCE;
+    };
+    std::vector<Waypoint> targets;
+
 };
 
 
