@@ -503,3 +503,24 @@ TEST(OdomI2cLogTest, LogsEveryFailureItCanAndKeepsTelemetrySlots) {
     EXPECT_GT(last.lostFailures, 0u);
     EXPECT_GT(last.decimatedSuccesses, 0u);
 }
+
+TEST(OdomI2cLogTest, FreshnessFlagsLatchesWithinThresholdAndClearsOnSuccess) {
+    constexpr uint32_t staleMs = 50;
+    communication::OdomI2cLog log;
+    const float payload[4]{};
+    EXPECT_FALSE(log.succeededWithin(0, staleMs));  // no read yet
+    for (uint32_t ms = 0; ms < 1000; ++ms) {
+        log.attempt(ms * 1000, ms, 0, payload, 0, 0);
+        EXPECT_TRUE(log.succeededWithin(ms, staleMs)) << ms;
+    }
+    // NACK latch: one failed read at 1000 ms, then no attempts; stuck read: no attempts.
+    log.attempt(1000000, 1000, 2, payload, 0, 0);
+    EXPECT_TRUE(log.succeededWithin(999 + staleMs, staleMs));
+    EXPECT_FALSE(log.succeededWithin(1000 + staleMs, staleMs));
+    log.attempt(2000000, 2000, 0, payload, 0, 0);
+    EXPECT_TRUE(log.succeededWithin(2000, staleMs));
+    // Wrap-safe across the 2^32 ms clock rollover.
+    log.attempt(0, UINT32_MAX - 10, 0, payload, 0, 0);
+    EXPECT_TRUE(log.succeededWithin(20, staleMs));
+    EXPECT_FALSE(log.succeededWithin(40, staleMs));
+}

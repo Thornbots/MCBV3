@@ -138,6 +138,12 @@ failures are only lost if more than 16 wait, and are always counted.
 POSE/REF_SYS timing is unchanged (`OdomI2cLogTest`). The hosted firmware
 fixture emits records only when `MCB_ODOM_I2C_LOG` is set.
 
+POSE `odom_status` is 2 (`ODOM_I2C_DEAD`) after `POD_STALE_MS` (50 ms) without a
+successful Pico read, and 0 again on the next one
+([wire contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#pose-id2--chassis-pose-and-gimbal-angles)).
+The hosted fixture injects a latched NACK or a stuck read with
+`MCB_POD_FAULT=nack@MS` or `stuck@MS`.
+
 ## Continuous integration
 
 GitHub Actions compiles ARM firmware for `infantry`, `hero`, and `sentry`

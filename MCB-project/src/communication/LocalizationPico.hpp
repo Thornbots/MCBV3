@@ -78,6 +78,7 @@ public:
     float getY() { return (odom_y + offsetY); }  
     float getXVel() { return odom_x_vel; }  
     float getYVel() { return odom_y_vel; }  
+    bool isFresh(uint32_t nowMs, uint32_t maxAgeMs) const { return log.succeededWithin(nowMs, maxAgeMs); }
     
     float offsetX = 0;
     float offsetY = 0;

@@ -58,6 +58,10 @@ public:
         }
     }
     bool enabled = true;  // hosted fixtures opt in; firmware always sends
+    // A successful read within maxAgeMs of nowMs (same millisecond clock, wrap-safe).
+    bool succeededWithin(uint32_t nowMs, uint32_t maxAgeMs) const {
+        return everSucceeded && nowMs - lastSuccessMs <= maxAgeMs;
+    }
 
     void noteReinit() {
         reinitPending = true;

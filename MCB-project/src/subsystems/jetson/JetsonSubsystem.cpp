@@ -39,7 +39,11 @@ void JetsonSubsystem::refresh() {
                 odo->getYVel(),
                 gimbal->getPitchEncoderValue(),
                 std::fmod(gimbal->getYawAngleRelativeWorld() + odo->getStartYaw(), 2 * PI),  // field yaw
+#if defined(SENTRY)
+                drivers->i2c.odom.isFresh(now, POD_STALE_MS) ? OdomStatus::ODOM_PODS : OdomStatus::ODOM_I2C_DEAD
+#else
                 OdomStatus::ODOM_PODS
+#endif
             };
             sendMsg(&p);
         } else {  // if(drivers->refSerial.getRefSerialReceivingData()) {
