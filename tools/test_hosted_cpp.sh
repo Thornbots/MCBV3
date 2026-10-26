@@ -6,8 +6,9 @@ mkdir -p build/unit-tests
 "${CXX:-g++}" -std=c++20 -Wall -Wextra -Werror -funsigned-char -funsigned-bitfields \
     -DSENTRY -DPLATFORM_HOSTED -DMCB_HOSTED \
     -Isrc -Itaproot/src -Itaproot/sim-modm/hosted-linux/modm/src \
+    -Itaproot/modm/src \
     -Itaproot/modm/ext/cmsis/dsp -Itaproot/modm/ext/cmsis/core \
-    test/FirmwareRegressionTest.cpp test/DrivetrainStopCommandTest.cpp \
+    test/LocalizationPicoTest.cpp test/FirmwareRegressionTest.cpp test/DrivetrainStopCommandTest.cpp \
     test/SimpleAutoDriveCommandTest.cpp \
     src/subsystems/drivetrain/SimpleAutoDriveCommand.cpp \
     src/subsystems/drivetrain/MoveToPositionCommand.cpp \

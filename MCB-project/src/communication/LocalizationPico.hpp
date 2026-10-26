@@ -1,5 +1,7 @@
 #pragma once
 
+#include "tap/architecture/clock.hpp"
+
 #include "modm/architecture/interface/i2c_device.hpp"
 #include "modm/math/geometry/angle.hpp"
 #include "modm/processing/protothread/protothread.hpp"
@@ -20,6 +22,8 @@ public:
             PT_WAIT_WHILE(this->isTransactionRunning());
 
             if (this->wasTransactionSuccessful()) {
+                lastSuccessMs = tap::arch::clock::getTimeMilliseconds();
+                everSucceeded = true;
                 // s.printf("i2c result: %d %d %d %d\n", buffer[0], buffer[1], buffer[2], buffer[3]); 
                 // float *rez = (float*)buffer;
                 // static_cast<float>(buffer);
@@ -58,10 +62,16 @@ public:
     float getXVel() { return odom_x_vel; }  
     float getYVel() { return odom_y_vel; }  
     
+    bool isFresh(uint32_t nowMs, uint32_t maxAgeMs) const {
+        return everSucceeded && static_cast<uint32_t>(nowMs - lastSuccessMs) < maxAgeMs;
+    }
+
     float offsetX = 0;
     float offsetY = 0;
 
 private:
+    uint32_t lastSuccessMs = 0;
+    bool everSucceeded = false;
     float odom_x = 0;
     float odom_y = 0;
     float odom_x_vel = 0;

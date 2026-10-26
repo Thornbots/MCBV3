@@ -138,6 +138,7 @@ private:  // Private Variables
     OdometrySubsystem* odo;
     HitRing hitRing{drivers, gimbal};
 
+    static constexpr uint32_t POD_STALE_MS = 50;
     static constexpr int TIME_FOR_REF_DATA = 200; //send at 5hz
     tap::arch::PeriodicMilliTimer refDataSendingTimeout{TIME_FOR_REF_DATA};
     tap::arch::PeriodicMilliTimer poseDataTimeout{10}; //for sending pose data at 100hz
