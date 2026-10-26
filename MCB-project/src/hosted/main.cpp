@@ -86,6 +86,7 @@ int main() {
                 const uint8_t sample[] = {0x00, 0xA5, 0xFF, 0x2A};
                 drivers.uart.mcbLog(42, sample, sizeof(sample));
             }
+            drivers.i2c.refresh();
             drivers.commandScheduler.run();
             drivers.hitTracker.update();
             control.update();

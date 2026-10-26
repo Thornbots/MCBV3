@@ -1,6 +1,7 @@
 #include "JetsonSubsystem.hpp"
 
 #include "JetsonSubsystemConstants.hpp"
+#include "tap/architecture/clock.hpp"
 #include "subsystems/drivetrain/SimpleAutoDriveCommand.hpp"
 
 namespace subsystems {
@@ -68,6 +69,10 @@ void JetsonSubsystem::refresh() {
             messageCount = 0;
         }
     }
+#if defined(SENTRY)
+    // Queues Pico I2C diagnostics; sendIdle keeps them out of telemetry slots.
+    drivers->i2c.odom.log.drain(drivers->uart, tap::arch::clock::getTimeMicroseconds());
+#endif
     drivers->uart.sendIdle(nextTelemetry);
 }
 

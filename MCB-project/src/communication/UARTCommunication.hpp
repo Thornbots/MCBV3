@@ -60,6 +60,7 @@ public:
     }
     bool mcbText(const char* format, ...) __attribute__((format(printf, 2, 3)));
     uint32_t droppedData() const { return dataQueue.dropped(); }
+    size_t mcbFreeSlots() const { return dataQueue.freeSlots(); }
     void queuePing(uint8_t number) { pendingPing = number; hasPendingPing = true; }
     void sendIdle(uint32_t telemetryDeadline);
 

@@ -92,6 +92,52 @@ owns channel reservations, bounds, scheduling and stamps. The
 [firmware data workflow](../../ros2_dji_serial_bridge/README.md#firmware-data-over-wifi)
 explains live Foxglove viewing and copying/decoding recorded bags over WiFi.
 
+### Odometry I2C diagnostics
+
+On `sentry`, `LocalizationPico` logs each I2C read of the Pico (`0x55`, one
+16-byte reply) on two channels. All fields are little-endian, packed, no padding.
+`result` is `modm::I2cMaster::Error`, latched when the transaction detaches:
+0 NoError, 1 SoftwareReset (bus reinit), 2 AddressNack, 3 DataNack,
+4 ArbitrationLost, 5 BusCondition, 6 BusBusy (includes stuck-bus timeouts), 7 Unknown.
+modm has no transaction timeout: a read that never completes produces no
+records, only a growing `ms_since_attempt` in the summary.
+
+Channel 16, one record per attempt, 36 bytes:
+
+| Off | Type | Field | Meaning |
+| --- | --- | --- | --- |
+| 0 | u32 | `time_us` | MCB clock when the attempt completed |
+| 4 | u32 | `seq` | Attempt number since boot, from 1; gaps are unlogged attempts |
+| 8 | u8 | `result` | Error code above |
+| 9 | u8 | `flags` | bit 0 success (held values updated); bit 1 bus reinit before this attempt |
+| 10 | u16 | `pending` | Failure records waiting on the MCB when this one was made |
+| 12 | 4×f32 | `enc1_pos, enc2_pos, enc1_speed, enc2_speed` | Receive buffer after the attempt; on failure, stale or partial, not used |
+| 28 | f32 | `held_x` | `getRawX()` after the attempt |
+| 32 | f32 | `held_y` | `getRawY()` after the attempt (field forward) |
+
+Channel 17, about 1 Hz summary, 48 bytes:
+
+| Off | Type | Field | Meaning |
+| --- | --- | --- | --- |
+| 0 | u32 | `time_us` | MCB clock when queued |
+| 4 | u32 | `last_seq` | Last attempt number |
+| 8 | 8×u16 | `results[0..7]` | Attempts per result code since the previous summary, saturating |
+| 24 | u32 | `lost_failures` | Failure records not logged since boot (16-entry buffer full) |
+| 28 | u32 | `decimated_successes` | Success records replaced before sending, since boot |
+| 32 | u32 | `fifo_drops` | `droppedData()` for all channels since boot |
+| 36 | u32 | `ms_since_success` | `UINT32_MAX` if never |
+| 40 | u32 | `ms_since_attempt` | Since the last completed attempt; `UINT32_MAX` if never |
+| 44 | u16 | `bus_reinits` | `I2CCommunication` bus resets since boot |
+| 46 | u16 | reserved | 0 |
+
+The Pico is polled as fast as the bus allows (about 1–2 kHz); the link fits
+about one 46-byte data frame per 10 ms POSE cycle. Records wait in the logger,
+not the MCB data FIFO: summaries first, then failures, then the latest success
+at most every 20 ms while a FIFO slot stays spare. Successes are decimated;
+failures are only lost if more than 16 wait, and are always counted.
+POSE/REF_SYS timing is unchanged (`OdomI2cLogTest`). The hosted firmware
+fixture emits records only when `MCB_ODOM_I2C_LOG` is set.
+
 ## Continuous integration
 
 GitHub Actions compiles ARM firmware for `infantry`, `hero`, and `sentry`

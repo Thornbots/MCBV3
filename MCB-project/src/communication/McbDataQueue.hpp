@@ -56,6 +56,7 @@ public:
         }
     }
     uint32_t dropped() const { return drops; }
+    size_t freeSlots() const { return CAPACITY - count; }
     static constexpr uint32_t wireMilliseconds(size_t frameBytes) {
         return static_cast<uint32_t>((frameBytes * 10000 + 115199) / 115200);
     }

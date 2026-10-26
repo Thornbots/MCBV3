@@ -5,7 +5,7 @@ namespace communication {
 class I2CCommunication {
 public:
     void initialize() {}
-    void refresh() {}
+    void refresh() { odom.poll(); }
     hosted::Encoder encoder;
     hosted::Pods odom;
 };
@@ -35,6 +35,9 @@ public:
 
     void refresh() { 
         if (I2cMaster2::needsReinit == true) {
+            #if defined(SENTRY)
+            odom.log.noteReinit();
+            #endif
             I2cMaster2::reset();
             I2cMaster2::connect<Board::DigitalInPinPF0::Sda, Board::DigitalInPinPF1::Scl>(I2cMaster2::PullUps::Internal);
             I2cMaster2::initialize<Board::SystemClock, 400'000>();

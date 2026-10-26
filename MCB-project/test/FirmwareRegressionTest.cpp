@@ -5,11 +5,14 @@
 #include <fcntl.h>
 #include <iterator>
 #include <limits>
+#include <map>
+#include <set>
 #include <string>
 #include <sys/socket.h>
 #include <type_traits>
 #include <unistd.h>
 #include <vector>
+#include "communication/OdomI2cLog.hpp"
 #include "communication/UARTCommunication.hpp"
 #include "hosted/clock.hpp"
 #include "hosted/uart.hpp"
@@ -397,4 +400,106 @@ TEST(UARTCommunicationTest, TelemetryAndPingKeepTheirSlotsUnderContinuousDataLoa
         if (event.frame.type == 2) { EXPECT_EQ(event.frame.payload.size(), 25u); }
         if (event.frame.type == 3) { EXPECT_EQ(event.frame.payload.size(), 11u); }
     }
+}
+
+namespace {
+struct OdomRun {
+    std::vector<EmittedFrame> telemetry;
+    std::vector<communication::OdomI2cLog::Record> records;
+    std::vector<communication::OdomI2cLog::Summary> summaries;
+    std::set<uint32_t> failedSeqs;
+    uint32_t attempts = 0;
+};
+
+// Two Pico reads per 1 ms tick with JetsonSubsystem's POSE/REF_SYS schedule. Failures:
+// a short AddressNack burst, one DataNack and a 100 ms BusBusy outage.
+OdomRun runOdomSchedule(bool logEnabled) {
+    UartPipe pipe;
+    EXPECT_TRUE(pipe.valid());
+    hosted::timeMs = 0;
+    Drivers drivers;
+    communication::UARTCommunication uart(&drivers, tap::communication::serial::Uart::Uart1, true);
+    communication::OdomI2cLog log;
+    OdomRun run;
+    uint32_t nextTelemetry = 10, messageCount = 0;
+    for (uint32_t tick = 0; tick < 3100; ++tick) {
+        hosted::timeMs = tick;
+        for (int i = 0; i < 2; ++i) {
+            uint8_t result = 0;
+            if (tick >= 500 && tick < 503) result = 2;
+            if (tick == 1500 && i == 1) result = 3;
+            if (tick >= 2000 && tick < 2100) result = 6;
+            const float payload[4] = {0.001f * tick, result ? 0.0f : 0.002f * tick, 0, 0};
+            log.attempt(tick * 1000 + i * 500, tick, result, payload, payload[0], payload[1]);
+            ++run.attempts;
+            if (result) run.failedSeqs.insert(run.attempts);
+        }
+        if (static_cast<int32_t>(tick - nextTelemetry) >= 0) {
+            nextTelemetry += 10;
+            uint8_t telemetry[25]{};
+            const uint16_t type = ++messageCount < 10 ? 2 : 3;
+            if (type == 3) messageCount = 0;
+            EXPECT_TRUE(uart.sendMsg(telemetry, type, type == 2 ? 25 : 11));
+        }
+        if (logEnabled) log.drain(uart, tick * 1000);
+        uart.sendIdle(nextTelemetry);
+        for (auto& frame : decodeFrames(pipe.readAvailable())) {
+            if (frame.type == 2 || frame.type == 3) run.telemetry.push_back({tick, frame});
+            if (frame.type != 6) continue;
+            if (frame.payload[0] == communication::OdomI2cLog::RECORD_CHANNEL) {
+                EXPECT_EQ(frame.payload.size(), 1 + sizeof(communication::OdomI2cLog::Record));
+                communication::OdomI2cLog::Record r;
+                std::memcpy(&r, frame.payload.data() + 1, sizeof(r));
+                run.records.push_back(r);
+            } else if (frame.payload[0] == communication::OdomI2cLog::SUMMARY_CHANNEL) {
+                EXPECT_EQ(frame.payload.size(), 1 + sizeof(communication::OdomI2cLog::Summary));
+                communication::OdomI2cLog::Summary summary;
+                std::memcpy(&summary, frame.payload.data() + 1, sizeof(summary));
+                run.summaries.push_back(summary);
+            }
+        }
+    }
+    EXPECT_EQ(uart.droppedData(), 0u);
+    return run;
+}
+}  // namespace
+
+TEST(OdomI2cLogTest, LogsEveryFailureItCanAndKeepsTelemetrySlots) {
+    const OdomRun baseline = runOdomSchedule(false);
+    const OdomRun logged = runOdomSchedule(true);
+    ASSERT_EQ(baseline.telemetry.size(), 309u);
+    ASSERT_EQ(logged.telemetry.size(), baseline.telemetry.size());
+    for (size_t i = 0; i < baseline.telemetry.size(); ++i) {
+        EXPECT_EQ(logged.telemetry[i].time, baseline.telemetry[i].time);
+        EXPECT_EQ(logged.telemetry[i].frame.type, baseline.telemetry[i].frame.type);
+    }
+    EXPECT_TRUE(baseline.records.empty());
+
+    std::set<uint32_t> loggedFailures;
+    uint32_t successes = 0, lastSuccessTime = 0;
+    for (const auto& r : logged.records) {
+        if (r.flags & communication::OdomI2cLog::FLAG_SUCCESS) {
+            EXPECT_EQ(r.result, 0);
+            if (successes++) { EXPECT_GE(r.timeUs - lastSuccessTime, 15000u); }
+            lastSuccessTime = r.timeUs;
+        } else {
+            EXPECT_NE(r.result, 0);
+            EXPECT_TRUE(logged.failedSeqs.count(r.seq));
+            loggedFailures.insert(r.seq);
+        }
+    }
+    EXPECT_GT(successes, 50u);
+    // Short bursts are logged in full; the outage overflows and is counted.
+    for (uint32_t seq : logged.failedSeqs)
+        if (seq < 4000) { EXPECT_TRUE(loggedFailures.count(seq)) << seq; }
+    ASSERT_GE(logged.summaries.size(), 2u);
+    std::map<uint8_t, uint32_t> counts;
+    for (const auto& s : logged.summaries)
+        for (uint8_t i = 0; i < communication::OdomI2cLog::RESULT_COUNT; ++i) counts[i] += s.results[i];
+    EXPECT_EQ(counts[2], 6u);
+    EXPECT_EQ(counts[3], 1u);
+    const auto& last = logged.summaries.back();
+    EXPECT_EQ(last.fifoDrops, 0u);
+    EXPECT_GT(last.lostFailures, 0u);
+    EXPECT_GT(last.decimatedSuccesses, 0u);
 }
