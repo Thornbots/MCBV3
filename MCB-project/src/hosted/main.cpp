@@ -73,6 +73,7 @@ int main() {
             // main.cpp polls I/O every 5 us between the 1 ms scheduler ticks.
             for (int poll = 0; poll < 200; ++poll) {
                 drivers.refSerial.updateSerial();
+                drivers.i2c.refresh();
                 drivers.uart.updateSerial();
             }
             auto& h = control.hardware;

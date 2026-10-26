@@ -45,6 +45,10 @@ enum OdomStatus : uint8_t{
     ODOM_I2C_DEAD = 2,              // I2C bus dead, no pod data, no fallback
     ODOM_I2C_DEAD_DRIVETRAIN = 3    // I2C bus dead, drivetrain odometry instead
 };
+// POSE reports ODOM_I2C_DEAD after this long without a successful Pico read (sentry).
+// Reads succeed at ~1-2 kHz and POSE runs every 10 ms: 50 ms is many missed reads and
+// five POSE periods, so one NACK never flags. Codes 1/3 are unused (no drivetrain fallback).
+static constexpr uint32_t POD_STALE_MS = 50;
 
 // Every x/y and yaw on the wire is in the field frame: REP-105, (0, 0) at the field
 // centre, x toward blue's base (OdometrySubsystemConstants.hpp), like OdometrySubsystem.

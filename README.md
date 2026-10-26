@@ -75,6 +75,29 @@ nonzero CAN motor output after SETUP becomes IN_GAME. A hosted shot counter
 alone is not evidence that the physical indexer moved; board execution and
 modeled exits are documented at [sim](../../sim/README.md#type-c-board-execution-with-renode).
 
+### Pico I2C health
+
+On `sentry`, POSE uses the existing `odom_status` byte: 0 while a Pico read
+has succeeded less than 50 ms ago, 2 (`ODOM_I2C_DEAD`) at 50 ms or later.
+It reports 2 until the first success and returns to 0 on the next success.
+This measures read health, not whether encoder values change. Other robots
+continue to send 0; there is no drivetrain fallback or wire-layout change.
+
+`LocalizationPico` bounds both attach and completion waits at 10 ms and
+requests shared I2C2 reinitialization on timeout. `I2CCommunication::refresh`
+resets the master before polling again. STM32 stuck-bus recovery detaches
+active and queued transactions before discarding pointers, leaves interrupts
+disabled until reinitialization, and refuses new work while reinit is pending.
+Both Pico and MT6701 clear modm's sticky transaction Error state before retrying.
+A persistent electrical fault still reports 2; recovery cannot repair wiring.
+
+`LocalizationPicoTest` runs the real poll class against a controllable master,
+including a hung first read, a startup orphan, rejected attachment, sticky
+Error, and clock rollover. Hosted sensor fixtures bypass STM32 registers;
+these tests cannot certify physical bus recovery or interrupt timing.
+See the [startup stall investigation](docs/investigations/2026-10-26-pico-i2c.md)
+for evidence, shared defects and the deciding hardware observation.
+
 ## Continuous integration
 
 GitHub Actions compiles ARM firmware for `infantry`, `hero`, and `sentry`
