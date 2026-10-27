@@ -101,10 +101,10 @@ void GimbalSubsystem::updateMotorsAndVelocityWithLatencyCompensation(float chang
 
 void GimbalSubsystem::resetEncoderIfGainPower() {
     if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
+        //Temporary standard doesn't use analog yaw encoder
+        #if !defined(INFANTRY)
         encoderOffset = drivers->adc1_pa6_read() * (-2*PI/4096) + YAW_OFFSET; //adc read is blocking right now.
-        //#else //others use i2c
-        //encoderOffset = drivers->i2c.encoder.getAngle() + YAW_OFFSET;
-        //#endif
+        #endif
         motorYaw->resetEncoderValue();
     }
 }
@@ -113,9 +113,8 @@ void GimbalSubsystem::stopMotors() {
     pitchMotorVoltage = 0;
     yawMotorVoltage = 0;
     
-    // #if defined(INFANTRY) or defined(HERO) or defined(SENTRY)  //all robots with 3508 turrets
+    //all robots with 3508 turrets
     resetEncoderIfGainPower();
-    // #endif
     targetYawAngleWorld = yawAngleRelativeWorld;
 
     clearBuildup();
@@ -188,14 +187,8 @@ int GimbalSubsystem::getPitchVoltage(float targetAngle, float pitchAngleRelative
 float GimbalSubsystem::getYawEncoderValue() { return std::fmod(motorYaw->getPositionUnwrapped() / YAW_TOTAL_RATIO + encoderOffset, 2 * PI); }
 
 float GimbalSubsystem::getPitchEncoderValue() { //more like get pitch relative to frame
-    float temp = std::fmod(motorPitch->getPositionWrapped() / PITCH_RATIO - PITCH_OFFSET, 2 * PI);
-    #if defined(HERO) //wraparound fix  
-    return (temp > (1.3 * PI/PITCH_RATIO)) ? temp - 2 * PI/PITCH_RATIO : temp;
-    #elif defined(SENTRY) //wraparound fix  
-    return (temp > (1.3 * PI/PITCH_RATIO)) ? temp - 2 * PI/PITCH_RATIO : temp;
-    #else
-    return (temp > PI) ? temp - 2 * PI : temp;
-    #endif
+    float temp = std::fmod(motorPitch->getPositionUnwrapped() / PITCH_RATIO - PITCH_OFFSET, 2 * PI);
+    return temp;
 }
 float GimbalSubsystem::getYawVel() { return motorYaw->getShaftRPM() * PI / 30 / YAW_TOTAL_RATIO; }
 float GimbalSubsystem::getPitchVel() { return motorPitch->getShaftRPM() * PI / 30; }
