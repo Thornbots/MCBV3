@@ -121,6 +121,14 @@ these checks do not measure robot calibration or field RFID placement.
 
 ## Aim and navigation odometry
 
+Sentry POSE `odom_status` is 0 (`ODOM_PODS`) while the last successful Pico
+I2C read is less than 500 ms old, and 2 (`ODOM_I2C_DEAD`) before the first
+success or at age >=500 ms. On the sentry the Pico values update about every
+260 ms (2026-10-26), so 50 ms flagged healthy pods stale 80% of the time. The
+next transmitted POSE carries the change;
+this flag does not alter pod polling, bus recovery, or odometry values.
+Successful reads containing frozen values still report 0.
+
 `OdometrySubsystem::getAimX/getAimY` expose field-aligned raw pod odometry.
 POSE and `AutoAimAndFireCommand` use these accessors. `getX/getY` add the
 navigation offset and remain the input to navigation controllers.
