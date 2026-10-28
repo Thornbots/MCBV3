@@ -59,7 +59,7 @@ public:
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
-        // drivers->commandScheduler.addCommand(&draw);
+        drivers->commandScheduler.addCommand(&draw);
 
         // drive commands and also enable mouse looking
 
