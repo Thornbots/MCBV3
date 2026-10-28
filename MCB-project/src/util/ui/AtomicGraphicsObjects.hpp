@@ -363,6 +363,13 @@ public:
         calculateNumbers();
         // the 3 is decimal precision, need to see what changing it does
         RefSerialTransmitter::configFloatingNumber(fontSize, 3, thickness, textX, textY, _float, graphicData);
+
+        if (_float < 0)
+        {
+            graphicData->value = _float*-1000;
+            graphicData->value = -graphicData->value;
+        }
+
         setPrev();
     }
 

@@ -16,6 +16,7 @@ public:
     LaneAssistLines(GimbalSubsystem* gimbal) : gimbal(gimbal) {
         addGraphicsObject(&left);
         addGraphicsObject(&right);
+        addGraphicsObject(&number);
     }
 
     void update() {
@@ -29,7 +30,8 @@ public:
         Vector2d rightTop2 = project(rightTop3, pitch);
         if(rightTop2.getY()<0){
             //if top line is off the bottom of the screen, don't project the other points and draw nothing
-            this->hide(); //hide all the lines I contain
+            left.hide();
+            right.hide();
             return;
         }
 
@@ -53,6 +55,15 @@ public:
         
         left.x2 = leftBottom2.getX();
         left.y2 = leftBottom2.getY();
+
+        // test stuff
+        // record this drawn value when the head is manually placed pointed horizontally for two different PITCH_OFFSET's
+        // then do a linear regression to find the PITCH_OFFSET you need 
+        number._float = gimbal->getPitchEncoderValue();
+        
+        // read yaw encoder (analog) (this is blocking, will degrade the performance of other things)
+        // needs gimbal to set it's private variables to public
+        // number._float = gimbal->drivers->adc1_pa6_read() * (-2*PI/4096) + YAW_OFFSET;
     }
 
 
@@ -67,6 +78,7 @@ private:
 
     Line left{UISubsystem::Color::CYAN, 0, 0, 0, 0, THICKNESS};
     Line right{UISubsystem::Color::CYAN, 0, 0, 0, 0, THICKNESS};
+    FloatGraphic number{UISubsystem::Color::CYAN, 0, 1630, 340, 60, 4};
 
     Vector2d project(Vector3d in, float pitch){
         Vector3d temp;
