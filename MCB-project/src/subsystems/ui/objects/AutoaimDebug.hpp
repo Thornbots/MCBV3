@@ -19,16 +19,20 @@ public:
 
     void update() {
         yawdiff._float = gimbal->getYawAngleRelativeWorld()-aaafc->targetYaw;
+        if(yawdiff._float>PI) yawdiff._float-=2*PI;
         pitchdiff._float = gimbal->getPitchEncoderValue()-aaafc->targetPitch;
         
-        Vector2d xy = {aaafc->deltaX, aaafc->deltaY};
-        xy.rotate(-gimbal->getYawAngleRelativeWorld());
-        Vector3d position = {xy.getX(), xy.getY(), aaafc->deltaZ};
-        Vector3d position2 = Projections::robotSpaceToPivotSpace(position);
-        position = Projections::pivotSpaceToVtmSpace(position2);
-        Vector2d screenPosition = Projections::vtmSpaceToScreenSpace(position);
-        point.cx = screenPosition.getX();
-        point.cy = screenPosition.getY();
+        // Vector2d xy = {aaafc->deltaX, aaafc->deltaY};
+        // xy.rotate(-gimbal->getYawAngleRelativeWorld());
+        // Vector3d position = {xy.getX(), xy.getY(), aaafc->deltaZ};
+        // Vector3d position2 = Projections::robotSpaceToPivotSpace(position);
+        // position = Projections::pivotSpaceToVtmSpace(position2);
+        // Vector2d screenPosition = Projections::vtmSpaceToScreenSpace(position);
+        // point.cx = screenPosition.getX();
+        // point.cy = screenPosition.getY();
+        
+        point.cx = UISubsystem::HALF_SCREEN_WIDTH;
+        point.cy = (aaafc->deltaZ*100)+UISubsystem::HALF_SCREEN_HEIGHT;
         
         point.setHidden((aaafc->cvTarget.flags & CV_TARGET_FLAG_FIRE)==0 || !aaafc->receivedCvTargetEver);
         pitchdiff.setHidden(!aaafc->receivedCvTargetEver);
@@ -41,5 +45,5 @@ private:
 
     FloatGraphic yawdiff{UISubsystem::Color::GREEN, 0.0f, 870, 360, 80, 4};
     FloatGraphic pitchdiff{UISubsystem::Color::GREEN, 0.0f, 1070, 620, 80, 4};
-    UnfilledCircle point{UISubsystem::Color::GREEN, 0, 0, 10, 1};
+    UnfilledCircle point{UISubsystem::Color::ORANGE, 0, 0, 10, 1};
 };
