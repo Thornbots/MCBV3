@@ -22,6 +22,8 @@ AutoAimAndFireCommand::AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsys
         addSubsystemRequirement(indexer);
         addSubsystemRequirement(flywheel);
     }
+    startShotTimeout.stop();
+    cvTargetValidTimeout.stop();
 }
 
 void AutoAimAndFireCommand::initialize() {
@@ -32,33 +34,33 @@ void AutoAimAndFireCommand::execute() {
     bool allowGimbal = true;
 
     // if automatic, check if we are in a game, and if we are before it starts, don't allow aiming or shooting
-    if (!isManualControl && drivers->refSerial.getRefSerialReceivingData() && 
-       (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
+    // if (!isManualControl && drivers->refSerial.getRefSerialReceivingData() && 
+    //    (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
 
-        allowShooting = false;
-        allowGimbal = false;
+    //     allowShooting = false;
+    //     allowGimbal = false;
 
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
-            // allow both
-            allowShooting = true;
-            allowGimbal = true;
-        }
+    //     if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
+    //         // allow both
+    //         allowShooting = true;
+    //         allowGimbal = true;
+    //     }
 
-        //don't spin before match
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
-            // countdown, only allow gimbal
-            allowGimbal = true;
-        }
+    //     //don't spin before match
+    //     if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
+    //         // countdown, only allow gimbal
+    //         allowGimbal = true;
+    //     }
 
-    }
+    // }
     
-    if(jetson->getCvTarget(&cvTarget)) {
+    if(cvTargetValidTimeout.isExpired()) cvTargetValidTimeout.stop();
+    if(startShotTimeout.isStopped() && jetson->getCvTarget(&cvTarget)) {
         receivedCvTargetEver = true;
         cvTargetValidTimeout.restart(TARGET_VALID_TIME);
         // Shorter than the physical indexing latency means request immediately.
         startShotTimeout.restart(std::max(0, static_cast<int>(cvTarget.delay_ms) - FIRING_LATENCY_TIME));
     }
-    if(cvTargetValidTimeout.isExpired()) cvTargetValidTimeout.stop();
     float angleToTurnForSentry = drivers->hitTracker.getAngleToTurnForSentry();
     bool turnToHitFlag =        (cvTarget.flags & CV_TARGET_FLAG_TURN_TO_HIT)>0;
     bool typeCBasedPatrolFlag = (cvTarget.flags & CV_TARGET_FLAG_TYPE_C_BASED_PATROL)>0;
@@ -72,9 +74,12 @@ void AutoAimAndFireCommand::execute() {
     // cvTarget and getAim* share the raw aim frame, never relocalized. The gimbal's world yaw is
     // the IMU's, counterclockwise and zero at power-on, so take the start's yaw off
     Vector2d deltaXY{cvTarget.x - odo->getAimX(), cvTarget.y - odo->getAimY()};
-    deltaX = deltaXY.getX();
-    deltaY = deltaXY.getY();
-    deltaZ = cvTarget.z-Projections::OFFSET_Z_ROBOT_TO_PITCH_PIVOT;
+    Vector3d deltasUnadjusted{deltaXY.getX(), deltaXY.getY(), cvTarget.z};
+    Vector3d deltasAdjusted = Projections::robotSpaceToPivotSpace(deltasUnadjusted);
+    deltaXY = {deltasAdjusted.getX(), deltasAdjusted.getY()};
+    deltaX = deltasAdjusted.getX();
+    deltaY = deltasAdjusted.getY();
+    deltaZ = deltasAdjusted.getZ();
     targetYaw = deltaXY.angle() - odo->getStartYaw();
     targetPitch = Reticle::solveForPitch(deltaXY.magnitude(), deltaZ); //gimbal subsystem will clamp the pitch. If it gets clamped, maybe don't shoot?
     
@@ -90,8 +95,10 @@ void AutoAimAndFireCommand::execute() {
 
         // Note that for gimbal subsystem, positive pitch is downward.
         gimbal->setAngles(targetYaw, targetPitch);
-        if(startShotTimeout.execute() && allowShooting && shootFlag){
-            indexer->tryShootOnce();
+        if(startShotTimeout.execute()){
+            if(allowShooting && shootFlag)
+                indexer->tryShootOnce();
+            startShotTimeout.stop();
         }
     } else {
         if(isManualControl){
@@ -144,6 +151,8 @@ void AutoAimAndFireCommand::execute() {
 
 void AutoAimAndFireCommand::end(bool) {
     isScheduled = false;
+    startShotTimeout.stop();
+    cvTargetValidTimeout.stop();
 }
 
 bool AutoAimAndFireCommand::getIsScheduled() { return isScheduled; }

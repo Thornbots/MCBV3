@@ -35,7 +35,7 @@ constexpr static float GEAR_RATIO = 36.0f; //need to check if it is 36 exactly o
 constexpr static float REV_PER_BALL = GEAR_RATIO / NUM_CHAMBERS; // revolutions per ball = ratio / chambers
 constexpr static float UNJAM_BALL_PER_SECOND = -1.0f; // in unjam mode, spin backwards at 1 balls per second (this is a guess)
 constexpr static tap::algorithms::SmoothPidConfig PID_CONF_INDEX = {5, 0, 0, 0, 8000, 1, 0, 1, 0, 10, 0};
-constexpr static float INITIAL_INDEX_OFFSET = 0.49f; //shots, 0.5 is barely too much
+constexpr static float INITIAL_INDEX_OFFSET = 0.20f; //shots
 #else
 constexpr static int NUM_CHAMBERS = 7;
 constexpr static float GEAR_RATIO = 36.0f; //need to check if it is 36 exactly or 36ish

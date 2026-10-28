@@ -43,7 +43,7 @@ static constexpr float cameraYoffset = 0.1;
 static constexpr float cameraZoffset = 54.791/1000; //pretty sure z is up down (stedman)
 
 
-static constexpr float initialShotVelocity = 24.0;           // Shot velocity
+static constexpr float initialShotVelocity = 21.5;           // Shot velocity
 
 static constexpr float l = 0.02;           // Combined camera + Jetson latency
 static constexpr float deltaTime = 0.0166;  // Frame time

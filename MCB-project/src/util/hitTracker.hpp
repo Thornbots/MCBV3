@@ -5,6 +5,10 @@
 #include "tap/communication/serial/ref_serial_data.hpp"
 #include "util/HitOrientation.hpp"
 #include "util/HitEventState.hpp"
+#include "tap/communication/sensors/buzzer/buzzer.hpp"
+
+// true makes the robot beep when it gets hit, false means it silently endures it
+#define FEELS_PAIN false
 
 using RefSerialData = tap::communication::serial::RefSerialData;
 
@@ -46,11 +50,18 @@ public:
 
         if (drivers->refSerial.getRefSerialReceivingData() && getYawEncoderValue_func) {
             const RefSerialData::Rx::RobotData& robotData = drivers->refSerial.getRobotData();
-            if (hasPreviousHp && previousHp > robotData.currentHp &&
-                (robotData.damageType == RefSerialData::Rx::DamageType::ARMOR_DAMAGE ||
-                 robotData.damageType == RefSerialData::Rx::DamageType::COLLISION)) {
+            if (hasPreviousHp && previousHp > robotData.currentHp) {
                 addHit();
+#if FEELS_PAIN
+                tap::buzzer::playNote(&(drivers->pwm), 4000);
+                painTimeout.restart(250);
+#endif
             }
+
+#if FEELS_PAIN
+            if(painTimeout.execute())
+                tap::buzzer::silenceBuzzer(&(drivers->pwm));
+#endif
 
             previousHp = robotData.currentHp;
             hasPreviousHp = true;
@@ -87,4 +98,8 @@ private:
     std::function<float()> getYawEncoderValue_func;
     bool hasPreviousHp{false};
     HitEventState hitState;
+    
+#if FEELS_PAIN
+    tap::arch::MilliTimeout painTimeout;
+#endif
 };
