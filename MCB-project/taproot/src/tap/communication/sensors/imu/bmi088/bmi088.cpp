@@ -69,6 +69,7 @@ void Bmi088::initialize(float sampleFrequency, float mahonyKp, float mahonyKi)
     initializeGyro();
 
     imuHeater.initialize();
+    setTargetTemperature(BMI088_TARGET_TEMP);
 }
 
 void Bmi088::initializeAcc()
@@ -152,6 +153,11 @@ void Bmi088::periodicIMUUpdate()
 
 bool Bmi088::read()
 {
+    if (!readTimeout.execute())
+    {
+        return false;
+    }
+
     uint8_t rxBuff[6] = {};
 
     Bmi088Hal::bmi088AccReadMultiReg(Acc::ACC_X_LSB, rxBuff, 6);
@@ -170,12 +176,14 @@ bool Bmi088::read()
     float rawGyroZ = bigEndianInt16ToFloat(rxBuff + 4);
     imuData.gyroRaw = tap::algorithms::transforms::Vector(rawGyroX, rawGyroY, rawGyroZ);
 
+    applyMountingTransformToRaw(imuData);
+
     Bmi088Hal::bmi088AccReadMultiReg(Acc::TEMP_MSB, rxBuff, 2);
     imuData.temperature = parseTemp(rxBuff[0], rxBuff[1]);
 
-    imuData.gyroDegPerSec = (imuData.gyroRaw - imuData.gyroOffsetRaw) * GYRO_DS_PER_GYRO_COUNT;
+    imuData.gyroRadPerSec =
+        (imuData.gyroRaw - imuData.gyroOffsetRaw) * GYRO_RAD_PER_S_PER_GYRO_COUNT;
     imuData.accG = (imuData.accRaw - imuData.accOffsetRaw) * ACC_G_PER_ACC_COUNT;
-
     return true;
 }
 

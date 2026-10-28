@@ -20,11 +20,12 @@ using tap::communication::serial::Remote;
 
 class AutoDriveCommand : public tap::control::Command {
 public:
-    AutoDriveCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, JetsonSubsystem* jetson)
+    AutoDriveCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, JetsonSubsystem* jetson, OdometrySubsystem* odo)
         : drivers(drivers),
           jetson(jetson),
           drivetrain(drive),
-          gimbal(gimbal) {
+          gimbal(gimbal),
+          odo(odo) {
         addSubsystemRequirement(drive);
     }
 
@@ -54,6 +55,7 @@ private:
     JetsonSubsystem* jetson;
     DrivetrainSubsystem* drivetrain;
     GimbalSubsystem* gimbal;
+    OdometrySubsystem* odo;
 
     Pose2d targetPosition;
     Pose2d targetVelocity;

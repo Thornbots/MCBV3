@@ -1,4 +1,5 @@
-#include "tap/architecture/periodic_timer.hpp"
+#pragma once
+ #include "tap/architecture/periodic_timer.hpp"
 #include "tap/board/board.hpp"
 #include "tap/motor/dji_motor.hpp"
 #include "tap/motor/servo.hpp"

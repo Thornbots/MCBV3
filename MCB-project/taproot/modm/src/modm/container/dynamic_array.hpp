@@ -259,12 +259,17 @@ namespace modm
 		/**
 		 * \brief	Forward iterator
 		 */
-		class iterator : public std::iterator<std::forward_iterator_tag, T>
+		class iterator
 		{
 			friend class DynamicArray;
 			friend class const_iterator;
 
 		public:
+			using iterator_category = std::forward_iterator_tag;
+			using value_type = T;
+			using difference_type = std::ptrdiff_t;
+			using pointer = T*;
+			using reference = T&;
 			/// Default constructor
 			iterator();
 			iterator(const iterator& other);
@@ -289,11 +294,16 @@ namespace modm
 		/**
 		 * \brief	forward const iterator
 		 */
-		class const_iterator : public std::iterator<std::forward_iterator_tag, T>
+		class const_iterator
 		{
 			friend class DynamicArray;
 
 		public:
+			using iterator_category = std::forward_iterator_tag;
+			using value_type = T;
+			using difference_type = std::ptrdiff_t;
+			using pointer = const T*;
+			using reference = const T&;
 			/// Default constructor
 			const_iterator();
 

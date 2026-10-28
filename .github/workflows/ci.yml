@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    uses: Thornbots/thornbots_workspace/.github/workflows/quality.yml@1d85c773b3c056b92ab717fba42188db11533717
+    with:
+      tooling-ref: 1d85c773b3c056b92ab717fba42188db11533717

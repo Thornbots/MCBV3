@@ -226,17 +226,17 @@ namespace
 		// Clock out 9 pulses to free SDA
 		for (int i = 0; i < 9 && !modm::platform::I2cMaster2::readSda_(); ++i) {
 			modm::platform::I2cMaster2::sclSet_();
-			modm::delayMicroseconds(10);
+			modm::delay_us(10);
 			modm::platform::I2cMaster2::sclReset_();
-			modm::delayMicroseconds(10);
+			modm::delay_us(10);
 		}
 
 		modm::platform::I2cMaster2::sdaReset_();
-		modm::delayMicroseconds(10);
+		modm::delay_us(10);
 		modm::platform::I2cMaster2::sclSet_();
-		modm::delayMicroseconds(10);
+		modm::delay_us(10);
 		modm::platform::I2cMaster2::sdaSet_();
-		modm::delayMicroseconds(10);
+		modm::delay_us(10);
 	
 		// ---------------- Software reset ----------------
 		// Disable peripheral
@@ -260,7 +260,7 @@ namespace
 		I2C2->CR1 |= I2C_CR1_PE;
 	
 		// Optional: small stabilization delay
-		modm::delayMicroseconds(10);
+		modm::delay_us(10);
 	
 		// ---------------- Clear driver state ----------------
 		::transaction = nullptr;

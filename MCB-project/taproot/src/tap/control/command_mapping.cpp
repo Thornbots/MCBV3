@@ -39,9 +39,11 @@ CommandMapping::CommandMapping(
       mappedCommands(cmds),
       drivers(drivers)
 {
-    std::remove_if(mappedCommands.begin(), mappedCommands.end(), [](Command *c) {
-        return c == nullptr;
-    });
+    mappedCommands.erase(
+        std::remove_if(mappedCommands.begin(), mappedCommands.end(), [](Command *c) {
+            return c == nullptr;
+        }),
+        mappedCommands.end());
 }
 
 bool operator==(const CommandMapping &cm1, const CommandMapping &cm2)

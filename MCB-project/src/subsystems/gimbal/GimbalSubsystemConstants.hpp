@@ -4,7 +4,8 @@ Constants file for all robots subsystem constants
 */
 constexpr static float PI_CONST = 3.14159;
 constexpr static int YAW_MOTOR_MAX_VOLTAGE = 24000;  // Should be the voltage of the battery. Unless the motor maxes out below that.
-static constexpr float dt = 0.002f;
+// main.cpp and the hosted scheduler refresh controls every 1 ms.
+static constexpr float dt = 0.001f;
 // for sysid
 static constexpr int PITCH_DIST_RANGE = 0;
 
@@ -49,7 +50,7 @@ static constexpr float YAW_OFFSET = 7*PI/4;
 //0.0f   = 0.52
 static constexpr float PITCH_OFFSET = 0.52f;  // to make gimbal horizontal when told to go to 0
 
-static constexpr float SECOND_PITCH_OFFSET = 0;  //unused, here for compiling
+static constexpr float SECOND_PITCH_OFFSET = 0.1f;
 
 static constexpr float YAW_TOTAL_RATIO = 32319.0f / 748.0f;  // unitless, ratio of encoder counts to degrees of rotation
 

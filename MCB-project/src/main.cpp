@@ -1,3 +1,4 @@
+#include "tap/architecture/clock.hpp"
 #include "tap/architecture/periodic_timer.hpp"
 #include "tap/architecture/profiler.hpp"
 #include "tap/communication/sensors/buzzer/buzzer.hpp"
@@ -6,8 +7,8 @@
 
 #include "drivers.hpp"
 
-const int RECALIBRATION_THRESHOLD_TIME = 15; //s, when there are fewer than this many seconds remaining in the game stage, run scheduled recalibrations
-const int AUTORECALIBRATION_THRESHOLD_TIME = 60*3000; //ms, set to 3 min. if the controller has been off for this long, recalibrate
+static constexpr int RECALIBRATION_THRESHOLD_TIME = 15; //s, when there are fewer than this many seconds remaining in the game stage, run scheduled recalibrations
+static constexpr int AUTORECALIBRATION_THRESHOLD_TIME = 60*3000; //ms, set to 3 min. if the controller has been off for this long, recalibrate
 
 src::Drivers drivers;
 RobotControl control{&drivers};
@@ -52,13 +53,18 @@ static void initializeIo(src::Drivers *drivers) {
 
     //things we need to check controller
     drivers->remote.initialize();
-    drivers->analog.init();
+    // drivers->analog.init(); //not sure if necessary, need to see if the robots don't work
     drivers->digital.init();
     drivers->leds.init();
 
     //if controller is on when the robot turns on, wait for it to be off.
     //This is to prevent the shredding of wires
-    modm::delay_ms(3000);
+    // SysTick is active after Board::initialize(); sleep between ticks instead
+    // of spending the entire power-on guard polling the DWT register.
+    const uint32_t powerOnStartUs = tap::arch::clock::getTimeMicroseconds();
+    while (static_cast<uint32_t>(tap::arch::clock::getTimeMicroseconds() - powerOnStartUs) < 3000000U) {
+        __WFI();
+    }
     drivers->leds.set(tap::gpio::Leds::Red, true);
     int i = 0;
     while(i < 5000){
@@ -74,7 +80,7 @@ static void initializeIo(src::Drivers *drivers) {
 
     drivers->pwm.init();
     drivers->can.initialize();
-    drivers->errorController.init();
+    // drivers->errorController.init(); //not sure if necessary, need to see if the robots don't work
     drivers->refSerial.initialize();
 
     drivers->i2c.initialize();
@@ -84,8 +90,8 @@ static void initializeIo(src::Drivers *drivers) {
 
 
     // drivers->terminalSerial.initialize(); //interferes with jetson because uses the same uart port. Previously believed to be necessary for ui to work, turns out it isn't
-    drivers->schedulerTerminalHandler.init();
-    drivers->djiMotorTerminalSerialHandler.init();
+    // drivers->schedulerTerminalHandler.init(); //not sure if necessary, need to see if the robots don't work
+    // drivers->djiMotorTerminalSerialHandler.init(); //not sure if necessary, need to see if the robots don't work
 
 
 
@@ -171,6 +177,7 @@ int main() {
             }
             if(drivers.recal.getIsImuReady()){
                 drivers.commandScheduler.run();
+                drivers.hitTracker.update();
                 control.update();
             }
 
