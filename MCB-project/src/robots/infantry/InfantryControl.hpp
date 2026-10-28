@@ -1,9 +1,9 @@
 #include "robots/RobotControl.hpp"
 
-#if defined(INFANTRY)
-#include "robots/infantry/InfantryHardware.hpp"
+#if defined(ENGINEER)
+#include "robots/engineer/EngineerHardware.hpp"
 #else
-#include "robots/infantry/MechInfantryHardware.hpp"
+#include "robots/infantry/InfantryHardware.hpp"
 #endif
 
 #include "subsystems/ui/UISubsystem.hpp"
@@ -36,8 +36,13 @@ int rawEncoder = 0;
 namespace robots {
 class InfantryControl : public ControlInterface {
 public:
+#if defined(ENGINEER)
+    using Hardware = EngineerHardware;
+#else
+    using Hardware = InfantryHardware;
+#endif
     // pass drivers back to root robotcontrol to store
-    InfantryControl(src::Drivers *drivers) : drivers(drivers), hardware(InfantryHardware{drivers}) {}
+    InfantryControl(src::Drivers *drivers) : drivers(drivers), hardware(Hardware{drivers}) {}
     // functions we are using
     void initialize() override {
         // Initialize subsystems (registration is internal)
@@ -62,11 +67,10 @@ public:
 
         stopFlywheelTrigger.onTrue(&shooterStop);
         
-        autoFireTrigger.onTrue(&autoFire)->onFalse(&lookJoystick);
+        // autoFireTrigger.onTrue(&autoFire)->onFalse(&lookJoystick);
 
         // Mouse and Keyboard mappings
         unjamKey.whileTrue(&indexerUnjam)->onTrue(&openServo);
-        onlyCloseLidKey.onTrue(&closeServo);
         shootRegKey.onTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
         shootFastKey.whileTrue(&indexer20Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
         autoAimKey.onTrue(&shooterStart)->onTrue(&closeServo);
@@ -126,7 +130,7 @@ public:
     bool isStopped = true;
 
     src::Drivers *drivers;
-    InfantryHardware hardware;
+    Hardware hardware;
 
 
     // Subsystems
@@ -141,7 +145,7 @@ public:
 
     // //commands
     commands::InfantryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &servo};
-    commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr};
+    // commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr}; //Need to implement drivetrain odo for standard cv
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::MouseMoveCommand lookMouse{drivers, &gimbal};

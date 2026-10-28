@@ -31,6 +31,12 @@ ignored_dirs = []
 
 if args["TARGET_ENV"] == "tests":
     ignored_files.extend(IGNORED_FILES_WHILE_TESTING)
+if args["TARGET_ENV"] == "sim":
+    ignored_files.append("main.cpp")
+    if args["ROBOT_TYPE"] == "SENTRY":
+        ignored_files.append("subsystems/indexer/HeroIndexerSubsystem.cpp")
+else:
+    ignored_dirs.append("hosted")
 
 env_cpy = env.Clone()
 

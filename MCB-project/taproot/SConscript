@@ -16,6 +16,7 @@
 # along with Taproot.  If not, see <https://www.gnu.org/licenses/>.
 
 import shutil
+import os
 from os.path import abspath
 import platform
 import sys
@@ -49,10 +50,7 @@ def _get_sim_modm_instance_path():
 # Set up target environment-specific modm paths and compiler
 if args["TARGET_ENV"] == "tests" or args["TARGET_ENV"] == "sim":
     modm_path = _get_sim_modm_instance_path()
-    if env.Detect(["gcc-11", "gcc-10"]) is not None:
-        env["COMPILERSUFFIX"] = env.Detect(["gcc-11", "gcc-10"])[3:]
-    else:
-        print("No gcc-10 or gcc-11 found, using default gcc")
+    env["COMPILERSUFFIX"] = ARGUMENTS.get("compiler-suffix", "")
 elif args["TARGET_ENV"] == "hardware":
     modm_path = HARDWARE_MODM_PATH
     env["COMPILERSUFFIX"] = ""
@@ -145,7 +143,8 @@ if args["PROFILING"] == "true":
 
 # Add target-specific flags
 if args["TARGET_ENV"] == "sim":
-    env.AppendUnique(CPPFLAGS=["-DPLATFORM_HOSTED"])
+    env.AppendUnique(CPPFLAGS=["-DPLATFORM_HOSTED", "-DMCB_HOSTED"])
+    env.PrependUnique(CPPPATH=[abspath("../src")])
     env.AppendUnique(LIBS=HOSTED_LIBS)
     env.AppendUnique(CPPPATH=[
         abspath(r"modm/ext/cmsis/dsp"),
@@ -174,7 +173,7 @@ else:  # hardware target env
     env["LINKFLAGS"].remove("-Tmodm/link/linkerscript.ld")
     env.AppendUnique(LINKFLAGS=["-T" + LINKERSCRIPT_FILE])
 
-env.AppendUnique(CCFLAGS=["-Wno-misleading-indentation"])
+env.AppendUnique(CCFLAGS=["-Werror"])
 
 # Add any additional flags the user chooses specify
 if "additional-ccflags" in ARGUMENTS:
@@ -188,11 +187,15 @@ if args["TARGET_ENV"] == "tests":
     env.AppendUnique(CPPPATH=[abspath("test")])
 
 # Build external library, external SConscript should be ran before any of the build code defined below
-env.SConscript(dirs=["ext"], exports=["env"])
+if os.path.exists("ext"):
+    env.SConscript(dirs=["ext"], exports=["env"])
 
 # Find all files that need to be built with the library (files in src and ext, files
 # in test if target environment is tests)
 files = env.FindSourceFiles("src")
+if args["TARGET_ENV"] == "sim":
+    # The hosted UART supplies the physical link; keep DJISerial and all parsers.
+    files = [f for f in files if not str(f).endswith("communication/serial/uart.cpp")]
 
 if args["TARGET_ENV"] == "tests" or args["TARGET_ENV"] == "sim":
     # Cross compile CMSIS arm matrix to be able to use it on the hosted platform

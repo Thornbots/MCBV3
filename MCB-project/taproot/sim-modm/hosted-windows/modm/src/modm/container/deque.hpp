@@ -190,11 +190,16 @@ namespace modm
 		 *
 		 * \todo	check if a simpler implementation is possible
 		 */
-		class const_iterator : public std::iterator<std::bidirectional_iterator_tag, T>
+		class const_iterator
 		{
 			friend class BoundedDeque;
 
 		public:
+			using iterator_category = std::bidirectional_iterator_tag;
+			using value_type = T;
+			using difference_type = std::ptrdiff_t;
+			using pointer = const T*;
+			using reference = const T&;
 			const_iterator();
 			const_iterator(const const_iterator& other);
 

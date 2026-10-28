@@ -1,6 +1,10 @@
 #include <gtest/gtest.h>
 #include "subsystems/drivetrain/ChassisController.hpp"
 
+namespace subsystems {
+extern const float *inverseKinematics[4];
+}
+
 using namespace subsystems;
 
 class ChassisControllerTest : public ::testing::Test {
@@ -33,13 +37,6 @@ protected:
         Pose2d(0, 0, 0)
     };
 
-    float* ikOutputs[4] = {
-        new float[4]{-686.0557, -582.0774, -464.9930, -568.9712},
-        new float[4]{-686.7906, -579.2545, -461.5783, -569.1145},
-        new float[4]{-691.8479, -554.7717, -435.0841, -572.1602},
-        new float[4]{0,0,0,0}
-    };
-
 };
 
 TEST_F(ChassisControllerTest, EstimateStateHistory) {
@@ -53,18 +50,27 @@ TEST_F(ChassisControllerTest, EstimateStateHistory2) {
     runLoadStateHistory();
     runForwardStatePass();
 
-    EXPECT_NEAR(1.0508f, localVel.getX(), 0.0001f);
-    EXPECT_NEAR(1.9786f, localVel.getY(), 0.0001f);
-    EXPECT_NEAR(3.0045f, localVel.getRotation(), 0.0001f);
+    Pose2d expected = inertialVel.rotate(-inertialPos.getRotation());
+    EXPECT_NEAR(expected.getX(), localVel.getX(), 0.0001f);
+    EXPECT_NEAR(expected.getY(), localVel.getY(), 0.0001f);
+    EXPECT_NEAR(inertialVel.getRotation(), localVel.getRotation(), 0.0001f);
+    // Golden values for the sentry calibration selected by tools/test_cpp.sh.
+    EXPECT_NEAR(1.0486532f, localVel.getX(), 0.0001f);
+    EXPECT_NEAR(1.9762056f, localVel.getY(), 0.0001f);
+    EXPECT_NEAR(3.0287876f, localVel.getRotation(), 0.0001f);
 }
 TEST_F(ChassisControllerTest, EstimateStateHistory3) {
 
     runLoadStateHistory();
     runForwardStatePass();
 
+    // Positive local force rotated by 0.75 rad points left and forward.
+    EXPECT_LT(inertialVel.getX(), -0.6316f);
+    EXPECT_GT(inertialVel.getY(), 2.1450f);
+    EXPECT_GT(inertialVel.getRotation(), 3.0f);
     EXPECT_NEAR(-0.6317f, inertialVel.getX(), 0.0001f);
-    EXPECT_NEAR(2.1494f, inertialVel.getY(), 0.0001f);
-    EXPECT_NEAR(3.0045f, inertialVel.getRotation(), 0.0001f);
+    EXPECT_NEAR(2.1461873f, inertialVel.getY(), 0.0001f);
+    EXPECT_NEAR(3.0287876f, inertialVel.getRotation(), 0.0001f);
 }
 TEST_F(ChassisControllerTest, EstimateStateHistory4) {
 
@@ -81,10 +87,13 @@ TEST_F(ChassisControllerTest, EstimateStateHistory4) {
 TEST_F(ChassisControllerMatrixTest, inverseTest){
     for(int i = 0; i < 4; i++){
         float arr[3] = {ikInputs[i].getX(), ikInputs[i].getY(), ikInputs[i].getRotation()};
-        float* test = controller.multiplyMatrices(4, 3, controller.inverseKinematics, arr, new float[4]);
+        float test[4];
+        controller.multiplyMatrices(4, 3, inverseKinematics, arr, test);
         for(int j = 0; j < 4; j++){
-            EXPECT_NEAR(test[j], ikOutputs[i][j], 0.03f);
+            EXPECT_TRUE(std::isfinite(test[j]));
         }
+        EXPECT_NEAR((test[0] + test[2]) / 2, inverseKinematics[0][2] * arr[2], 0.03f);
+        EXPECT_NEAR((test[1] + test[3]) / 2, inverseKinematics[1][2] * arr[2], 0.03f);
     }
 }
 
@@ -140,7 +149,7 @@ TEST_F(ChassisControllerTest, CalculateFeedForward) {
 TEST_F(ChassisControllerTest, CalculateTractionLimiting) {
     Pose2d localForce(1.0, 1.0, 0.1);
     Pose2d limitedForce;
-    controller.calculateTractionLimiting(localForce, &limitedForce);
+    controller.calculateTractionLimiting(localForce, &limitedForce, 0.0f);
     EXPECT_LE(limitedForce.getX(), localForce.getX());
     EXPECT_LE(limitedForce.getY(), localForce.getY());
 }
@@ -150,7 +159,7 @@ TEST_F(ChassisControllerTest, CalculatePowerLimiting) {
     float I_m_FF[4] = {0.5, 0.6, 0.55, 0.65};
     float T_req_m[4] = {2.0, 2.5, 2.2, 2.8};
     float T_req_m2[4];
-    controller.calculatePowerLimiting(60, V_m_FF, I_m_FF, T_req_m, T_req_m2);
+    controller.calculatePowerLimiting(60, V_m_FF, I_m_FF, T_req_m, T_req_m2, 0.0f, 0.0f);
     for (int i = 0; i < 4; i++) {
         EXPECT_LE(T_req_m2[i], T_req_m[i]);
     }

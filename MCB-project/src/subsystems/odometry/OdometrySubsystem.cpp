@@ -10,23 +10,29 @@ namespace subsystems {
 using namespace tap::communication::serial;
 float encoderOffsetOdo = ODO_OFFSET;
 OdometrySubsystem::OdometrySubsystem(src::Drivers* drivers, tap::motor::DjiMotor* odo) : tap::control::Subsystem(drivers), drivers(drivers), motorOdo(odo) {
-    gen = std::mt19937(rd());
     distOdo = std::uniform_int_distribution<>(-ODO_DIST_RANGE, ODO_DIST_RANGE);
 }
 
 void OdometrySubsystem::initialize() {
     motorOdo->initialize();
 
-    // targetOdoAngleWorld = odoAngleRelativeWorld;
     drivers->commandScheduler.registerSubsystem(this);
 }
 bool useController = false;
 void OdometrySubsystem::refresh() {
+    bool blue = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId);
+    if (blue != isBlue) {
+        // A new start: raw aim (fromStart) jumps between team starts, 9.25 m red to blue,
+        // and the old navigation offset no longer applies. Jetson consumers must not
+        // interpolate across this step (UART_PROTOCOL.md, message types).
+        isBlue = blue;
+        offsetX = 0.0f;
+        offsetY = 0.0f;
+    }
 
     if(!useController){
         motorOdo->setDesiredOutput(odoMotorVoltage);
     }
-    // odoAngleRelativeWorld = PI / 180 * drivers->bmi088.getYaw() - getOdoEncoderValue();
 }
 
 void OdometrySubsystem::updateMotor(float targetOdo, float odoAngleRelativeWorld, float odoVelRelativeWorld, float driveTrainAngularVelocity) {
@@ -45,7 +51,13 @@ void OdometrySubsystem::stopMotors() {
 
 
 // assume odoAngleRelativeWorld is in radians, not sure
-int OdometrySubsystem::getOdoVoltage(float driveTrainAngularVelocity, float odoAngleRelativeWorld, float odoAngularVelocity, float desiredAngleWorld, float inputVel, float dt) {
+int OdometrySubsystem::getOdoVoltage(
+    [[maybe_unused]] float driveTrainAngularVelocity,
+    [[maybe_unused]] float odoAngleRelativeWorld,
+    [[maybe_unused]] float odoAngularVelocity,
+    [[maybe_unused]] float desiredAngleWorld,
+    [[maybe_unused]] float inputVel,
+    [[maybe_unused]] float dt) {
 #if defined(odo_sysid)
     voltageOdo = distOdo(gen);
     velocityOdo = odoAngularVelocity;
@@ -57,9 +69,9 @@ int OdometrySubsystem::getOdoVoltage(float driveTrainAngularVelocity, float odoA
 #endif
 }
 
-float OdometrySubsystem::getOdoEncoderValue() { return std::fmod(motorOdo->getPositionUnwrapped() + encoderOffsetOdo, 2 * PI); }
+float OdometrySubsystem::getOdoEncoderValue() { return std::fmod(motorOdo->getEncoder()->getPosition().getUnwrappedValue() + encoderOffsetOdo, 2 * PI); }
 
-float OdometrySubsystem::getOdoVel() { return motorOdo->getShaftRPM() * PI / 30; }
+float OdometrySubsystem::getOdoVel() { return motorOdo->getEncoder()->getVelocity(); }
 
 float OdometrySubsystem::getRawX() {
     return drivers->i2c.odom.getX();
@@ -67,23 +79,38 @@ float OdometrySubsystem::getRawX() {
 float OdometrySubsystem::getRawY() {
     return drivers->i2c.odom.getY();
 }
+float OdometrySubsystem::getStartYaw() {
+    return isBlue ? PI : 0.0f;
+}
+Vector2d OdometrySubsystem::fromStart(float forward, float left) {
+    Vector2d start(isBlue ? START_X : -START_X, START_Y);
+    return start + Vector2d(forward, left).rotate(getStartYaw());
+}
+// the pods are x right, y forward of the start: forward is raw y, left is raw -x
 void OdometrySubsystem::relocalizeTo(float newX, float newY) {
-    offsetX = newX - getRawX();
-    offsetY = newY - getRawY();
+    Vector2d p = fromStart(getRawY(), -getRawX());
+    offsetX = newX - p.getX();
+    offsetY = newY - p.getY();
     //off       = new - raw
     //off + raw = new
 }
 float OdometrySubsystem::getX() {
-    return offsetX + getRawX();
+    return offsetX + getAimX();
 }
 float OdometrySubsystem::getY() {
-    return offsetY + getRawY();
+    return offsetY + getAimY();
+}
+float OdometrySubsystem::getAimX() {
+    return fromStart(getRawY(), -getRawX()).getX();
+}
+float OdometrySubsystem::getAimY() {
+    return fromStart(getRawY(), -getRawX()).getY();
 }
 float OdometrySubsystem::getXVel() {
-    return drivers->i2c.odom.getXVel();
+    return Vector2d(drivers->i2c.odom.getYVel(), -drivers->i2c.odom.getXVel()).rotate(getStartYaw()).getX();
 }
 float OdometrySubsystem::getYVel() {
-    return drivers->i2c.odom.getYVel();
+    return Vector2d(drivers->i2c.odom.getYVel(), -drivers->i2c.odom.getXVel()).rotate(getStartYaw()).getY();
 }
 
 }  // namespace subsystems

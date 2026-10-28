@@ -50,13 +50,14 @@ public:
 
     inline bool hasNewMessage() { return hasNewData; }
 
-    uint64_t getCurrentTime() const;
+    // Milliseconds since boot, wrapping every 2^32 ms.
+    uint32_t getCurrentTime() const;
 
     tap::communication::serial::Uart::UartPort getPort() const;
 
 private:
     bool hasNewData;
-    uint64_t lastReceivedTime;
+    uint32_t lastReceivedTime;
 
     // TODO: maybe implement cicular queue one day to prevent starving of msg
     //  static constexpr int queueLength = 5;
@@ -64,7 +65,6 @@ private:
     uartMsg mostRecentMessage;
 
     const tap::communication::serial::Uart::UartPort port;
-    bool rxCRCEnforcementEnabled;
 
     static constexpr uint32_t CONNECTION_TIMEOUT = 1000;  // Timeout in ms
     

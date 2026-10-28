@@ -28,7 +28,8 @@ void MoveToPositionCommand::execute() {
             targetVelocity = inputVelocity; //let simpleautodrive control spin velo too [this should be merged with IN_GAME case]
 
 
-    float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
+    // minus the chassis' field heading: the IMU's zero is the start's heading
+    float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld() - odo->getStartYaw();
 
 
     // Vector2d targetPositionAdjusted = targetPosition.vec() + startPosition;

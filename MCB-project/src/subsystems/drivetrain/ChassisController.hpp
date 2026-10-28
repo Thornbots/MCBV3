@@ -32,6 +32,9 @@ private:
     
 
 public:
+#ifdef MCB_HOSTED
+    Pose2d hostedTargetVelocity{};
+#endif
     Pose2d estPosWorld{}, estVelWorld{}, lastForceLocal{};
     float *targetVelocityHistory;  // For storing target velocity magnitudes
     Pose2d *forceHistory;          // history of past chassis forces

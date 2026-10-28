@@ -27,7 +27,7 @@ public:
 
 }
 
-//gaslights the compiler to think that RobotControl is one of these three based on the defines
+// Select the robot control implementation for the build target.
 #if defined(HERO)
 #include "robots/hero/HeroControl.hpp"
 using RobotControl = robots::HeroControl;
@@ -40,8 +40,10 @@ using RobotControl = robots::SentryControl;
 #include "robots/infantry/InfantryControl.hpp"
 using RobotControl = robots::InfantryControl;
 
-#else //for standard
+#elif defined(ENGINEER)
 #include "robots/infantry/InfantryControl.hpp"
 using RobotControl = robots::InfantryControl;
 
+#else
+#error "Select HERO, SENTRY, INFANTRY, or ENGINEER."
 #endif
