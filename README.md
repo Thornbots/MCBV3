@@ -114,6 +114,16 @@ Hosted GoogleTests cover the transition matrix, duplicate/failing UART traffic,
 retry timing and rollover, joystick caps and sentry restrictions. The hosted
 test runner links the actual firmware objects built by `build-sim`.
 
+The hosted executable optionally accepts `MCB_MMM_CONTROL_FD`, a private
+nonblocking `SOCK_SEQPACKET` fixture channel defined in
+`src/hosted/mapping_control.hpp`. It invokes the same start/save APIs and
+supplies DBUS joystick channels, returning state, Ready beep timing, UART write
+failures and measured execution time per simulated 1 ms loop. It changes no
+UART payload or board input binding. The hardware source graph excludes
+`hosted/`, and `tools/test_cpp.sh` verifies both that exclusion and the empty
+control header without `MCB_HOSTED`. The [sim MMM suite](../../sim/README.md#run-the-tests)
+exercises the compiled executable against the real Jetson node and save service.
+
 ## Automatic indexer recovery
 
 Automatic aiming returns its indexer to idle when referee state allows shooting,

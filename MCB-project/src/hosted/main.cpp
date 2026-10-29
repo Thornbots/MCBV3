@@ -5,6 +5,10 @@
 #include <cstdlib>
 #include <fcntl.h>
 #include <vector>
+#include <algorithm>
+#include <chrono>
+#include <sys/socket.h>
+#include "hosted/mapping_control.hpp"
 #include "hosted/sensors.hpp"
 #include "hosted/uart.hpp"
 #include "robots/RobotControl.hpp"
@@ -37,6 +41,10 @@ int main() {
     int fd = std::atoi(fdText);
     if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0) return 2;
     hosted::setJetsonFd(fd);
+    const char* controlFdText = std::getenv("MCB_MMM_CONTROL_FD");
+    const int controlFd = controlFdText ? std::atoi(controlFdText) : -1;
+    hosted::MappingInput mappingInput{};
+    uint32_t transitions = 0;
     // Match main.cpp's static storage (zero-initialized before construction).
     static src::Drivers drivers;
     static robots::SentryControl control(&drivers);
@@ -52,7 +60,20 @@ int main() {
     std::fwrite(start, sizeof(float), 2, stdout);
     std::fflush(stdout);
     Input in;
+    auto previousLoop = std::chrono::steady_clock::now();
     while (std::fread(&in, sizeof(in), 1, stdin) == 1) {
+        if (controlFd >= 0) {
+            hosted::MappingInput command{};
+            const auto count = recv(controlFd, &command, sizeof(command), MSG_DONTWAIT);
+            if (count == sizeof(command)) {
+                if (!std::isfinite(command.right) || !std::isfinite(command.forward) ||
+                    !std::isfinite(command.spin)) return 2;
+                mappingInput = command;
+                if (command.action == 1) drivers.mapping.requestStart();
+                if (command.action == 3) drivers.mapping.requestSave();
+            } else if (count > 0) { return 2; }
+        }
+        const auto started = std::chrono::steady_clock::now();
         if (in.cycles == 0 || in.cycles > 100 || in.refereeBytes > 4096 || in.mode > 7) return 2;
         std::vector<uint8_t> ref(in.refereeBytes);
         if (!ref.empty() && std::fread(ref.data(), 1, ref.size(), stdin) != ref.size()) return 2;
@@ -63,11 +84,22 @@ int main() {
         hosted::sensors.jointYaw = in.jointYaw; hosted::sensors.jointYawRate = in.jointYawRate;
         hosted::sensors.jointPitch = in.jointPitch; hosted::sensors.jointPitchRate = in.jointPitchRate;
         std::vector<uint32_t> shots;
+        float periodUs = 0;
         for (uint32_t i = 0; i < in.cycles; ++i) {
+            const auto loopStarted = std::chrono::steady_clock::now();
+            periodUs += std::chrono::duration<float, std::micro>(loopStarted - previousLoop).count();
+            previousLoop = loopStarted;
             // Match the board fixture's physical DBUS switch selection.
             const uint8_t switches = 8 | ((in.mode & 3) == 1 ? 1 : 3) << 4 |
                                       ((in.mode & 4) ? 3 : 1) << 6;
-            const uint8_t remote[18] = {0, 4, 32, 0, 1, switches, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4};
+            uint8_t remote[18] = {0, 4, 32, 0, 1, switches, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4};
+            const float sticks[] = {mappingInput.spin, 0, mappingInput.right, mappingInput.forward};
+            uint64_t bits = static_cast<uint64_t>(switches & 0xF0) << 40;
+            for (int channel = 0; channel < 4; ++channel) {
+                const auto value = static_cast<uint16_t>(1024 + 660 * std::clamp(sticks[channel], -1.0f, 1.0f));
+                bits |= static_cast<uint64_t>(value) << (11 * channel);
+            }
+            for (int byte = 0; byte < 6; ++byte) remote[byte] = bits >> (8 * byte);
             hosted::queueUart(tap::communication::serial::Uart::Uart3, remote, sizeof(remote));
             drivers.remote.read();
             // main.cpp polls I/O every 5 us between the 1 ms scheduler ticks.
@@ -94,6 +126,21 @@ int main() {
             if (in.mode & 4) drivers.commandScheduler.removeCommand(&control.autoFire, true);
             if (control.indexer.getTotalNumBallsShot() > before) shots.push_back(hosted::timeMs);
             ++hosted::timeMs;
+            static auto previousState = src::MappingMachine::State::Main;
+            if (drivers.mapping.getState() != previousState) {
+                ++transitions;
+                previousState = drivers.mapping.getState();
+            }
+        }
+        if (controlFd >= 0) {
+            const float loopUs = std::chrono::duration<float, std::micro>(
+                std::chrono::steady_clock::now() - started).count() / in.cycles;
+            const hosted::MappingStatus status{static_cast<uint32_t>(drivers.mapping.getState()),
+                hosted::timeMs, transitions, hosted::failedUartWrites(),
+                drivers.mapping.readyBeep(hosted::timeMs), loopUs, periodUs / in.cycles,
+                std::remainder(control.gimbal.getHostedTargetYaw() - drivers.bmi088.getYaw() +
+                    control.gimbal.getYawEncoderValue(), 2 * PI)};
+            if (send(controlFd, &status, sizeof(status), MSG_DONTWAIT | MSG_NOSIGNAL) != sizeof(status)) return 2;
         }
         Pose2d drive = control.drivetrain.getHostedTargetVelocity();
         Output out{control.gimbal.getHostedTargetYaw(), control.gimbal.getPrevTargetPitch(),
