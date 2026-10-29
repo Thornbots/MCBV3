@@ -67,10 +67,14 @@ The sentry's Drivers-owned `mapping` object exposes `requestStart()` and
 `requestSave()` for operator-input integration. No switch, key or gesture is
 bound. Other robot builds do not connect MMM to UART or control hooks.
 Start acts only in Main and immediately enters Setup. PING 2 moves Setup or
-Mapping to Ready; PING 4 moves Ready to Mapping. Save in Ready immediately
+Mapping to Ready; PING 4 moves Ready or Done to Mapping. PING 6 (fail) moves
+Setup to Done and cancels start retries. Save in Ready immediately
 enters Done. Save in Mapping sends the incomplete-save request and stays in
 Mapping. Other source states ignore these requests. Main is restored only by
-restarting the firmware.
+restarting the firmware. A failed final save can return Done to Mapping with
+PING 4, restoring manual drive under Mapping's restrictions. This cancels any
+pending save request, queued save or final save echo; only a fresh operator save
+can send another save request.
 
 Setup and Done stop drive. Ready and Mapping use chassis-relative manual
 joysticks: left horizontal/right, left vertical/forward, right horizontal/turn.
@@ -92,7 +96,7 @@ commands. The scheduler and IMU calibration mechanism are not suspended or
 re-zeroed by MMM. The hosted fixture also gates its direct drive overrides.
 
 PING keeps id 5 and its one-byte number. Zero echoes only in Main; unknown
-numbers are ignored. Every received 2 or 4 queues an echo, even from an illegal
+numbers are ignored. Every received 2, 4 or 6 queues an echo, even from an illegal
 source state; only legal state changes apply. Requests 1 and 3 retry at least
 0.5 s after their last successful same-number send until acknowledged. Their
 first matching ACK queues one final echo; all later echoes are ignored,

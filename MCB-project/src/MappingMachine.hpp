@@ -38,13 +38,23 @@ public:
         nowMs = now;
         if (number == 0) {
             if (state == State::Main) ++echoes[0];
-        } else if (number == 2 || number == 4) {
+        } else if (number == 2 || number == 4 || number == 6) {
             ++echoes[number];
             if (number == 2 && (state == State::Setup || state == State::Mapping)) {
                 state = State::Ready;
                 readySince = now;
-            } else if (number == 4 && state == State::Ready) {
+            } else if (number == 4 && (state == State::Ready || state == State::Done)) {
+                if (state == State::Done) {
+                    // A failed final save must not resume an old save transaction.
+                    queuedSaves = 0;
+                    odd[1].awaiting = false;
+                    odd[1].sentForRequest = false;
+                    echoes[3] = 0;
+                }
                 state = State::Mapping;
+            } else if (number == 6 && state == State::Setup) {
+                state = State::Done;
+                odd[0].awaiting = false;
             }
         } else if (number == 1 || number == 3) {
             auto& request = odd[number / 2];
@@ -106,7 +116,7 @@ private:
     uint32_t nowMs = 0;
     uint32_t readySince = 0;
     uint32_t queuedSaves = 0;
-    std::array<uint32_t, 5> echoes{};
+    std::array<uint32_t, 7> echoes{};
     std::array<OddRequest, 2> odd{};
 };
 }  // namespace src

@@ -91,6 +91,29 @@ TEST_F(MappingControlTest, PersistentRestrictionsSurviveTriggersAndStateChanges)
     EXPECT_EQ(drivers.mapping.getState(), src::MappingMachine::State::Done);
     expectRestricted();
     EXPECT_FLOAT_EQ(control.drivetrain.getHostedTargetVelocity().magnitude(), 0);
+    hosted::sensors.yaw = 1.7f;
+    control.gimbal.refresh();
+    drivers.mapping.receivePing(4, hosted::timeMs);
+    tick();
+    EXPECT_EQ(drivers.mapping.getState(), src::MappingMachine::State::Mapping);
+    expectRestricted();
+    drive = control.drivetrain.getHostedTargetVelocity();
+    EXPECT_NEAR(drive.magnitude(), 0.4f, 1e-6f);
+    EXPECT_LE(std::abs(drive.getRotation()), 0.5f);
+    const float chassisYaw = drivers.bmi088.getYaw() - control.gimbal.getYawEncoderValue();
+    EXPECT_NEAR(std::remainder(control.gimbal.getHostedTargetYaw() - chassisYaw, 2 * PI), 0, 1e-5f);
+}
+
+TEST_F(MappingControlTest, SetupFailKeepsDoneStoppedAndHeadForward) {
+    drivers.mapping.requestStart();
+    tick();
+    drivers.mapping.receivePing(6, hosted::timeMs);
+    tick();
+    EXPECT_EQ(drivers.mapping.getState(), src::MappingMachine::State::Done);
+    expectRestricted();
+    EXPECT_FLOAT_EQ(control.drivetrain.getHostedTargetVelocity().magnitude(), 0);
+    const float chassisYaw = drivers.bmi088.getYaw() - control.gimbal.getYawEncoderValue();
+    EXPECT_NEAR(std::remainder(control.gimbal.getHostedTargetYaw() - chassisYaw, 2 * PI), 0, 1e-5f);
 }
 
 TEST_F(MappingControlTest, DisconnectStopsDriveAndReconnectRestoresRestrictions) {

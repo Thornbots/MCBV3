@@ -49,7 +49,7 @@ struct JetsonPeer {
 }
 
 TEST(MappingMachineTest, AlwaysAckJetsonTerminatesWithAnySingleFrameDropped) {
-    for (uint8_t number : {1, 2, 3, 4}) {
+    for (uint8_t number : {1, 2, 3, 4, 6}) {
         for (int drop = -1; drop < 6; ++drop) {
             SCOPED_TRACE(::testing::Message() << "number=" << +number << " drop=" << drop);
             Machine machine;
@@ -131,12 +131,13 @@ TEST(MappingMachineTest, CloseDistinctSavesAreAckedButJetsonSuppressesWorkUntilQ
 
 TEST(MappingMachineTest, EveryStateAndInputTransition) {
     for (auto state : states) {
-        for (uint8_t input : {0, 1, 2, 3, 4, 5, 255}) {
+        for (uint8_t input : {0, 1, 2, 3, 4, 5, 6, 7, 255}) {
             auto machine = inState(state);
             machine.receivePing(input, 100);
             auto expected = state;
             if (input == 2 && (state == State::Setup || state == State::Mapping)) expected = State::Ready;
-            if (input == 4 && state == State::Ready) expected = State::Mapping;
+            if (input == 4 && (state == State::Ready || state == State::Done)) expected = State::Mapping;
+            if (input == 6 && state == State::Setup) expected = State::Done;
             EXPECT_EQ(machine.getState(), expected) << static_cast<int>(state) << ":" << +input;
         }
         auto start = inState(state);
@@ -194,11 +195,11 @@ TEST(MappingMachineTest, EvenEchoesAreUnconditionalInEveryState) {
     for (auto state : states) {
         auto machine = inState(state);
         for (int i = 0; i < 5; ++i) machine.tick(0, [](uint8_t) { return true; });
-        for (uint8_t number : {2, 2, 4, 4}) machine.receivePing(number, 1);
+        for (uint8_t number : {2, 2, 4, 4, 6, 6}) machine.receivePing(number, 1);
         std::vector<uint8_t> sent;
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < 6; ++i)
             machine.tick(1, [&](uint8_t n) { sent.push_back(n); return true; });
-        EXPECT_EQ(sent, (std::vector<uint8_t>{2, 2, 4, 4}));
+        EXPECT_EQ(sent, (std::vector<uint8_t>{2, 2, 4, 4, 6, 6}));
     }
 }
 
@@ -225,6 +226,76 @@ TEST(MappingMachineTest, OddRetriesWaitHalfSecondFromSuccessfulSendAndCompleteOn
     EXPECT_EQ(sent, (std::vector<uint8_t>{1, 1, 1}));
     EXPECT_EQ(machine.getState(), State::Setup);
     EXPECT_FALSE(machine.hasPendingPing());
+}
+
+TEST(MappingMachineTest, DoneToMappingCancelsEveryKindOfPendingSaveWork) {
+    for (int pending = 0; pending < 4; ++pending) {
+        SCOPED_TRACE(pending);
+        Machine machine;
+        machine.requestStart();
+        machine.tick(0, [](uint8_t) { return true; });
+        machine.receivePing(1, 0);
+        machine.receivePing(2, 0);
+        for (int i = 0; i < 3; ++i) machine.tick(0, [](uint8_t) { return true; });
+        if (pending == 3) {
+            machine.receivePing(4, 1);
+            machine.requestSave();  // Queue incomplete save before the final save.
+            machine.receivePing(2, 1);
+        }
+        machine.requestSave();
+        ASSERT_EQ(machine.getState(), State::Done);
+        if (pending == 1 || pending == 2) machine.tick(10, [](uint8_t) { return true; });
+        if (pending == 2) machine.receivePing(3, 11);  // Final echo is still pending.
+        machine.receivePing(4, 12);
+        ASSERT_EQ(machine.getState(), State::Mapping);
+        EXPECT_TRUE(machine.canDrive());
+        std::vector<uint8_t> sent;
+        auto send = [&](uint8_t n) { sent.push_back(n); return true; };
+        machine.tick(12, [](uint8_t) { return false; });
+        machine.receivePing(3, 13);  // Late save ACK must not resurrect the transaction.
+        for (uint32_t now = 13; now < 2000; ++now) machine.tick(now, send);
+        EXPECT_EQ(std::count(sent.begin(), sent.end(), 3), 0);
+        EXPECT_GE(std::count(sent.begin(), sent.end(), 4), 1);
+        EXPECT_FALSE(machine.hasPendingPing());
+        machine.requestSave();
+        machine.tick(2000, send);
+        EXPECT_EQ(sent.back(), 3);  // A new operator save still works.
+    }
+}
+
+TEST(MappingMachineTest, FailInSetupCancelsUnsentOrAwaitingStartAndStopsRetries) {
+    for (bool sentStart : {false, true}) {
+        Machine machine;
+        machine.requestStart();
+        if (sentStart) machine.tick(0, [](uint8_t) { return true; });
+        machine.receivePing(6, 1);
+        EXPECT_EQ(machine.getState(), State::Done);
+        EXPECT_FALSE(machine.canDrive());
+        EXPECT_FALSE(machine.readyBeep(1));
+        machine.tick(1, [](uint8_t) { return false; });
+        EXPECT_TRUE(machine.hasPendingPing());
+        machine.receivePing(1, 2);  // Late start ACK is no longer awaited.
+        machine.receivePing(6, 2);
+        std::vector<uint8_t> sent;
+        for (uint32_t now = 2; now < 2000; ++now)
+            machine.tick(now, [&](uint8_t n) { sent.push_back(n); return true; });
+        EXPECT_EQ(sent, (std::vector<uint8_t>{6, 6}));
+        EXPECT_FALSE(machine.hasPendingPing());
+    }
+}
+
+TEST(MappingMachineTest, FailEchoesWithoutStateChangeOutsideSetup) {
+    for (auto state : {State::Main, State::Ready, State::Mapping, State::Done}) {
+        auto machine = inState(state);
+        for (int i = 0; i < 5; ++i) machine.tick(0, [](uint8_t) { return true; });
+        std::vector<uint8_t> sent;
+        for (int i = 0; i < 2; ++i) {
+            machine.receivePing(6, 1);
+            EXPECT_EQ(machine.getState(), state);
+            machine.tick(1, [&](uint8_t n) { sent.push_back(n); return true; });
+        }
+        EXPECT_EQ(sent, (std::vector<uint8_t>{6, 6}));
+    }
 }
 
 TEST(MappingMachineTest, SaveIncompleteIsImmediateAndCannotOverlapOrRepeatWorkOnAck) {
