@@ -94,13 +94,15 @@ re-zeroed by MMM. The hosted fixture also gates its direct drive overrides.
 PING keeps id 5 and its one-byte number. Zero echoes only in Main; unknown
 numbers are ignored. Every received 2 or 4 queues an echo, even from an illegal
 source state; only legal state changes apply. Requests 1 and 3 retry at least
-10 s after their last successful same-number send until acknowledged. Their
-first matching ACK queues a final echo; duplicate ACKs may queue that final
-echo again without repeating a transition. Failed sends retain pending work,
+0.5 s after their last successful same-number send until acknowledged. Their
+first matching ACK queues one final echo; all later echoes are ignored,
+including the Jetson's ACK of that final leg. Distinct saves can be sent
+inside five seconds: the Jetson ACKs them but suppresses work until there
+has been a five-second same-number receive gap. Failed sends retain pending work,
 which has priority over periodic POSE/REF_SYS telemetry. Legal save API calls
 always apply their state transition immediately. Additional save transmissions
-queue behind the preceding ACK/final leg and its 10 s same-number quiet
-interval to prevent overlapping indistinguishable requests. ACK means receipt,
+queue behind the preceding ACK/final leg and its 0.5 s send interval
+to prevent overlapping indistinguishable requests. ACK means receipt,
 not durable storage; Done
 can precede completion of Jetson's asynchronous save.
 

@@ -9,7 +9,7 @@ namespace src {
 class MappingMachine {
 public:
     enum class State { Main, Setup, Ready, Mapping, Done };
-    static constexpr uint32_t RETRY_MS = 10000;
+    static constexpr uint32_t RETRY_MS = 500;
     static constexpr uint32_t BEEP_PERIOD_MS = 1000;
     static constexpr uint32_t BEEP_LENGTH_MS = 100;
 
@@ -50,9 +50,6 @@ public:
             auto& request = odd[number / 2];
             if (request.awaiting && request.sentForRequest) {
                 request.awaiting = false;
-                request.completed = true;
-                ++echoes[number];
-            } else if (request.completed) {
                 ++echoes[number];
             }
         }
@@ -68,7 +65,6 @@ public:
             --queuedSaves;
             save.awaiting = true;
             save.sentForRequest = false;
-            save.completed = false;
         }
         for (uint8_t number = 0; number < echoes.size(); ++number) {
             if (echoes[number] == 0) continue;
@@ -100,7 +96,6 @@ private:
         bool awaiting = false;
         bool sent = false;
         bool sentForRequest = false;
-        bool completed = false;
         uint32_t lastSend = 0;
     };
     static void recordSend(OddRequest& request, uint32_t now) {

@@ -1,6 +1,7 @@
 // Copyright 2026 Thornbots. SPDX-License-Identifier: GPL-3.0-or-later
 #include <gtest/gtest.h>
 #include <algorithm>
+#include <deque>
 #include <limits>
 #include <vector>
 #include "MappingMachine.hpp"
@@ -22,6 +23,110 @@ Machine inState(State state) {
     return machine;
 }
 constexpr State states[] = {State::Main, State::Setup, State::Ready, State::Mapping, State::Done};
+
+// Jetson ACKs every odd frame; its sliding quiet window gates only work.
+struct JetsonPeer {
+    std::array<int, 2> work{};
+    std::array<int64_t, 2> lastReceive{-10000, -10000};
+    bool awaiting = false;
+    bool started = false;
+    template<typename Send>
+    void receive(uint8_t number, uint32_t now, Send send) {
+        if (number == 1 || number == 3) {
+            send(number);
+            auto i = number / 2;
+            if (now - lastReceive[i] >= 5000 && (number != 1 || !started)) {
+                ++work[i];
+                if (number == 1) started = true;
+            }
+            lastReceive[i] = now;
+        } else if (awaiting) {
+            awaiting = false;
+            send(number);
+        }
+    }
+};
+}
+
+TEST(MappingMachineTest, AlwaysAckJetsonTerminatesWithAnySingleFrameDropped) {
+    for (uint8_t number : {1, 2, 3, 4}) {
+        for (int drop = -1; drop < 6; ++drop) {
+            SCOPED_TRACE(::testing::Message() << "number=" << +number << " drop=" << drop);
+            Machine machine;
+            JetsonPeer jetson;
+            if (number != 1) {
+                machine.requestStart();
+                machine.tick(0, [](uint8_t) { return true; });
+                machine.receivePing(1, 0);
+                machine.tick(0, [](uint8_t) { return true; });
+            }
+            if (number == 3 || number == 4) {
+                machine.receivePing(2, 0);
+                machine.tick(0, [](uint8_t) { return true; });
+            }
+            const auto before = machine.getState();
+            int transitions = 0;
+            int frames = 0;
+            struct Frame { bool toJetson; uint8_t number; };
+            std::deque<Frame> wire;
+            auto emit = [&](bool toJetson, uint8_t n) {
+                if (frames++ != drop) wire.push_back({toJetson, n});
+                return true;
+            };
+            if (number == 1) machine.requestStart();
+            else if (number == 3) machine.requestSave();
+            else { jetson.awaiting = true; emit(false, number); }
+            auto previous = before;
+            for (uint32_t now = 0; now < 6000 && frames <= 8; ++now) {
+                if (machine.getState() != previous) {
+                    ++transitions;
+                    previous = machine.getState();
+                }
+                if (jetson.awaiting && now != 0 && now % 500 == 0) emit(false, number);
+                if (!wire.empty()) {
+                    const auto frame = wire.front();
+                    wire.pop_front();
+                    if (frame.toJetson) jetson.receive(frame.number, now,
+                        [&](uint8_t n) { emit(false, n); });
+                    else machine.receivePing(frame.number, now);
+                }
+                machine.tick(now, [&](uint8_t n) { return emit(true, n); });
+            }
+            EXPECT_LE(frames, 6);
+            EXPECT_TRUE(wire.empty());
+            EXPECT_FALSE(machine.hasPendingPing());
+            EXPECT_FALSE(jetson.awaiting);
+            EXPECT_EQ(transitions, 1);
+            EXPECT_EQ(jetson.work[0], number == 1 ? 1 : 0);
+            EXPECT_EQ(jetson.work[1], number == 3 ? 1 : 0);
+        }
+    }
+}
+
+TEST(MappingMachineTest, CloseDistinctSavesAreAckedButJetsonSuppressesWorkUntilQuiet) {
+    auto machine = inState(State::Mapping);
+    for (int i = 0; i < 5; ++i) machine.tick(0, [](uint8_t) { return true; });
+    JetsonPeer jetson;
+    int saves = 0;
+    for (uint32_t start : {10, 600, 5602}) {
+        machine.requestSave();
+        for (uint32_t now = start; now < start + 3; ++now) {
+            std::vector<uint8_t> sent;
+            machine.tick(now, [&](uint8_t n) {
+                sent.push_back(n);
+                return true;
+            });
+            for (auto n : sent) {
+                if (n != 3) continue;
+                ++saves;
+                jetson.receive(n, now, [&](uint8_t ack) { machine.receivePing(ack, now); });
+            }
+        }
+        EXPECT_FALSE(machine.hasPendingPing());
+        EXPECT_EQ(machine.getState(), State::Mapping);
+    }
+    EXPECT_EQ(saves, 6);  // Three requests and their final legs, with no retry loop.
+    EXPECT_EQ(jetson.work[1], 2);
 }
 
 TEST(MappingMachineTest, EveryStateAndInputTransition) {
@@ -97,7 +202,7 @@ TEST(MappingMachineTest, EvenEchoesAreUnconditionalInEveryState) {
     }
 }
 
-TEST(MappingMachineTest, OddRetriesWaitTenSecondsFromSuccessfulSendAndCompleteOnce) {
+TEST(MappingMachineTest, OddRetriesWaitHalfSecondFromSuccessfulSendAndCompleteOnce) {
     Machine machine;
     machine.requestStart();
     std::vector<uint8_t> sent;
@@ -106,18 +211,18 @@ TEST(MappingMachineTest, OddRetriesWaitTenSecondsFromSuccessfulSendAndCompleteOn
     EXPECT_TRUE(machine.hasPendingPing());
     machine.receivePing(1, 1);  // Unsolicited ACK before any accepted send.
     machine.tick(50, send);
-    machine.tick(10049, send);
+    machine.tick(549, send);
     EXPECT_EQ(sent.size(), 1u);
-    machine.tick(10050, send);
+    machine.tick(550, send);
     EXPECT_EQ(sent, (std::vector<uint8_t>{1, 1}));
-    machine.receivePing(1, 10051);
-    machine.tick(10051, [](uint8_t) { return false; });
+    machine.receivePing(1, 551);
+    machine.tick(551, [](uint8_t) { return false; });
     EXPECT_TRUE(machine.hasPendingPing());
-    machine.tick(10052, send);
-    machine.receivePing(1, 10053);
-    machine.tick(10053, send);
+    machine.tick(552, send);
+    machine.receivePing(1, 553);
+    machine.tick(553, send);
     machine.tick(100000, send);
-    EXPECT_EQ(sent, (std::vector<uint8_t>{1, 1, 1, 1}));
+    EXPECT_EQ(sent, (std::vector<uint8_t>{1, 1, 1}));
     EXPECT_EQ(machine.getState(), State::Setup);
     EXPECT_FALSE(machine.hasPendingPing());
 }
@@ -136,12 +241,12 @@ TEST(MappingMachineTest, SaveIncompleteIsImmediateAndCannotOverlapOrRepeatWorkOn
     machine.receivePing(3, 11);
     machine.tick(11, send);
     machine.tick(11, send);
-    machine.tick(10010, send);
+    machine.tick(510, send);
     EXPECT_EQ(std::count(sent.begin(), sent.end(), 3), 2);
-    machine.tick(10011, send);
-    machine.tick(10011, send);
+    machine.tick(511, send);
+    machine.tick(511, send);
     EXPECT_EQ(std::count(sent.begin(), sent.end(), 3), 3);
-    machine.receivePing(3, 10012);
+    machine.receivePing(3, 512);
     EXPECT_EQ(machine.getState(), State::Done);
 }
 
@@ -155,9 +260,9 @@ TEST(MappingMachineTest, OddRetryAndReadyCadenceSurviveClockRollover) {
     int sends = 0;
     auto send = [&](uint8_t n) { if (n == 3) ++sends; return true; };
     machine.tick(start, send);
-    machine.tick(start + 9999, send);
+    machine.tick(start + 499, send);
     EXPECT_EQ(sends, 1);
-    machine.tick(start + 10000, send);
+    machine.tick(start + 500, send);
     EXPECT_EQ(sends, 2);
     machine.receivePing(2, start);
     EXPECT_TRUE(machine.readyBeep(start + 1000));
