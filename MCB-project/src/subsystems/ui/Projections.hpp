@@ -28,7 +28,7 @@ static constexpr float OFFSET_X_PITCH_PIVOT_TO_VTM = 0; //meters, side to side d
 static constexpr float OFFSET_Y_PITCH_PIVOT_TO_VTM = 0.1212; //meters, forward distance from pitch rotate point to vtm, positive means vtm is in front of pitch pivot point
 static constexpr float OFFSET_Z_PITCH_PIVOT_TO_VTM = 0.0882; //meters, vertical distance from pitch rotate point to vtm, positive means vtm is above the pitch pivot point
 
-static constexpr float OFFSET_X_PITCH_PIVOT_TO_BARREL = -0.0128; //meters, like OFFSET_X_PITCH_PIVOT_TO_VTM but for where shots exit (sentry_v2 CAD: between the flywheels, 12.8 mm left of the yaw axis). Exit velocity is in JetsonSubsystemConstants.hpp, as J
+static constexpr float OFFSET_X_PITCH_PIVOT_TO_BARREL = -0.0019; //meters, like OFFSET_X_PITCH_PIVOT_TO_VTM but for where shots exit (2026-10-26 low-res CAD bore: 1.9 mm left of the yaw axis). Exit velocity is in JetsonSubsystemConstants.hpp, as J
 static constexpr float OFFSET_Y_PITCH_PIVOT_TO_BARREL = 0.068; //meters
 static constexpr float OFFSET_Z_PITCH_PIVOT_TO_BARREL = 0; //meters
 #elif defined(INFANTRY)  // todo
