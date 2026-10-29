@@ -140,6 +140,12 @@ heading. Frame conventions and payload semantics are owned by the workspace's
 Deploy matching firmware and Jetson packages together: unchanged payload
 sizes cannot detect a frame-semantic mismatch.
 
+`AutoAimAndFireCommand` turns the barrel's line, not the yaw axis, through
+the CV_TARGET point: it adds `asin(OFFSET_X_PITCH_PIVOT_TO_BARREL / range)` to
+the bearing. The sentry's -12.8 mm (barrel left of the yaw axis, sentry_v2
+CAD) removed 12 mm of a 19 mm leftward hosted-sim bias at about 1.2 m; the rest
+there is gimbal settling error, left to tuning on the robot.
+
 The sentry drivetrain matches main, whose hold is confirmed on the real robot:
 the default stop command cuts wheel current, and centered manual drive keeps a
 zero wheel-velocity setpoint through the velocity controller. Neither latches

@@ -2,6 +2,7 @@
 #include "JetsonSubsystemConstants.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 
 namespace commands {
@@ -75,7 +76,10 @@ void AutoAimAndFireCommand::execute() {
     deltaX = deltaXY.getX();
     deltaY = deltaXY.getY();
     deltaZ = cvTarget.z-Projections::OFFSET_Z_ROBOT_TO_PITCH_PIVOT;
-    targetYaw = deltaXY.angle() - odo->getStartYaw();
+    // The barrel sits OFFSET_X_PITCH_PIVOT_TO_BARREL right of the yaw axis; turn so its line,
+    // not the axis's, passes through the target.
+    const float range = std::max(deltaXY.magnitude(), std::abs(Projections::OFFSET_X_PITCH_PIVOT_TO_BARREL) + 1e-3f);
+    targetYaw = deltaXY.angle() + std::asin(Projections::OFFSET_X_PITCH_PIVOT_TO_BARREL / range) - odo->getStartYaw();
     targetPitch = Reticle::solveForPitch(deltaXY.magnitude(), deltaZ); //gimbal subsystem will clamp the pitch. If it gets clamped, maybe don't shoot?
     
     if (targeting) { //do position-based aiming
