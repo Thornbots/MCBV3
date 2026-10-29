@@ -140,6 +140,11 @@ heading. Frame conventions and payload semantics are owned by the workspace's
 Deploy matching firmware and Jetson packages together: unchanged payload
 sizes cannot detect a frame-semantic mismatch.
 
+`AutoAimAndFireCommand` turns the barrel's line, not the yaw axis, through
+the CV_TARGET point: it adds `asin(OFFSET_X_PITCH_PIVOT_TO_BARREL / range)` to
+the bearing. The sentry's -1.9 mm is the bore centre in the team's
+2026-10-26 low-resolution CAD (the older export put it 12.8 mm left).
+
 The sentry drivetrain matches main, whose hold is confirmed on the real robot:
 the default stop command cuts wheel current, and centered manual drive keeps a
 zero wheel-velocity setpoint through the velocity controller. Neither latches
@@ -152,10 +157,14 @@ in Renode. The following remote-disconnected guard and IMU calibration still
 execute normally; no simulator hook skips firmware initialization.
 
 The wire fire delay includes indexer latency and an additional alignment wait.
-`AutoAimAndFireCommand` clamps the indexing wait to zero below its calibrated sentry
-latency estimate. Jetson must include that estimate when sending a scheduled
-exit. The hosted chamber-exit replay measured 94 ms; hardware
-indexing and UART delay still need measurement.
+`AutoAimAndFireCommand` requests the shot `delay_ms - FIRING_LATENCY_TIME`
+after receipt, at once when that is negative. The sentry's 20 ms is the
+request-to-exit delay timed on the robot (2026-10-28); Jetson includes it in
+each scheduled exit and never sends under 25 ms, so the request always waits.
+While a request is pending the command reads no newer CV_TARGET (ported from
+`newMain`'s cv tuning, #109): a following non-fire frame would otherwise
+cancel it. The pending timer is released once due even when the gimbal is no
+longer targeting, so CV targets keep flowing.
 
 Absolute aim points use a filtered angular-rate estimate over the 1 ms
 controller ticks: a 40 Hz point update must not become a one-tick velocity
@@ -166,8 +175,8 @@ commands retain their rate semantics.
 The gimbal controller uses the main scheduler's 1 ms interval. Its 8 ms yaw
 predictor integrates geared output torque and the configured viscous/static
 friction; the torque history starts at zero. Simulator sensor age must match
-this predictor. The sentry ballistic solver assumes 24 m/s; this is a model
-constant, not a new physical measurement. Calibration evidence lives in the
+this predictor. The sentry ballistic solver assumes 22 m/s, the shot speed the team set
+from the robot (2026-10-28); Jetson and sim use the same value. Calibration evidence lives in the
 [sim accuracy investigation](../../sim/docs/aim-accuracy-2026-10-12.md).
 
 ## GCC compatibility
