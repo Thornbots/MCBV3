@@ -176,8 +176,8 @@ commands retain their rate semantics.
 The gimbal controller uses the main scheduler's 1 ms interval. Its 8 ms yaw
 predictor integrates geared output torque and the configured viscous/static
 friction; the torque history starts at zero. Simulator sensor age must match
-this predictor. The sentry ballistic solver assumes 24 m/s; this is a model
-constant, not a new physical measurement. Calibration evidence lives in the
+this predictor. The sentry ballistic solver assumes 22 m/s, the shot speed the team set
+from the robot (2026-10-28); Jetson and sim use the same value. Calibration evidence lives in the
 [sim accuracy investigation](../../sim/docs/aim-accuracy-2026-10-12.md).
 
 ## GCC compatibility
