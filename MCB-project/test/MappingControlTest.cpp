@@ -6,6 +6,24 @@
 #include "hosted/uart.hpp"
 #include "robots/RobotControl.hpp"
 
+// Observe actual GPIO calls; Taproot's hosted GPIO implementation is a no-op.
+namespace {
+bool ledStates[3]{};
+float buzzerDuty = 0;
+}
+extern "C" void __wrap__ZN3tap4gpio4Leds3setENS1_6LedPinEb(
+    tap::gpio::Leds*, tap::gpio::Leds::LedPin pin, bool value) {
+    ledStates[pin] = value;
+}
+extern "C" void __wrap__ZN3tap6buzzer8playNoteEPNS_4gpio3PwmEj(
+    tap::gpio::Pwm*, uint32_t frequency) {
+    EXPECT_EQ(frequency, 1000U);
+    buzzerDuty = 0.5f;
+}
+extern "C" void __wrap__ZN3tap6buzzer13silenceBuzzerEPNS_4gpio3PwmE(tap::gpio::Pwm*) {
+    buzzerDuty = 0;
+}
+
 namespace {
 class MappingControlTest : public ::testing::Test {
 protected:
@@ -16,6 +34,8 @@ protected:
     void SetUp() override {
         hosted::timeMs = 0;
         hosted::sensors = {};
+        for (auto& led : ledStates) led = false;
+        buzzerDuty = 0;
         ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, sockets), 0);
         hosted::setJetsonFd(sockets[0]);
         drivers.remote.initialize();
@@ -138,18 +158,20 @@ TEST_F(MappingControlTest, PendingControlPingHasPriorityOverTelemetryAndRetriesB
     uint8_t fill[4096]{};
     while (write(sockets[0], fill, sizeof(fill)) > 0) {}
     drivers.mapping.receivePing(2, 0);
-    control.updateMapping();
+    control.jetson.refresh();
     EXPECT_TRUE(drivers.mapping.hasPendingPing());
     hosted::timeMs = 10;
     control.jetson.refresh();
     EXPECT_TRUE(drivers.mapping.hasPendingPing());
     uint8_t buffer[65536];
     while (read(sockets[1], buffer, sizeof(buffer)) > 0) {}
-    control.updateMapping();
+    hosted::timeMs = 10000;
+    control.jetson.refresh();
     ASSERT_FALSE(drivers.mapping.hasPendingPing());
-    ASSERT_EQ(read(sockets[1], buffer, sizeof(buffer)), 10);
+    ASSERT_GE(read(sockets[1], buffer, sizeof(buffer)), 20);
     EXPECT_EQ(buffer[5], subsystems::PING);
     EXPECT_EQ(buffer[7], 2);
+    EXPECT_TRUE(buffer[15] == subsystems::POSE || buffer[15] == subsystems::REF_SYS);
 }
 
 TEST_F(MappingControlTest, ExistingStoppedControlHasPrecedenceOverMappingRestrictions) {
@@ -190,4 +212,140 @@ TEST_F(MappingControlTest, StartWhileDisconnectedClearsOutputsLeftByMain) {
             &control.hardware.driveMotor3, &control.hardware.driveMotor4,
             &control.hardware.flywheelMotor1, &control.hardware.flywheelMotor2,
             &control.hardware.indexMotor}) EXPECT_EQ(motor->getOutputDesired(), 0);
+}
+
+TEST_F(MappingControlTest, PodsPointInEveryMappingStateEvenWithoutRemote) {
+    using State = src::MappingMachine::State;
+    for (bool disconnected : {false, true}) {
+        for (State state : {State::Setup, State::Ready, State::Mapping, State::Done}) {
+            SCOPED_TRACE(static_cast<int>(state));
+            SCOPED_TRACE(disconnected);
+            drivers.mapping = src::MappingMachine{};
+            drivers.mapping.requestStart();
+            if (state == State::Ready || state == State::Mapping)
+                drivers.mapping.receivePing(2, hosted::timeMs);
+            if (state == State::Mapping) drivers.mapping.receivePing(4, hosted::timeMs);
+            if (state == State::Done) drivers.mapping.receivePing(6, hosted::timeMs);
+            if (disconnected) {
+                hosted::timeMs += 101;
+                drivers.remote.read();
+                ASSERT_FALSE(drivers.remote.isConnected());
+            }
+            control.hardware.odoMotor.setDesiredOutput(0);
+            tick();
+            EXPECT_EQ(drivers.mapping.getState(), state);
+            expectRestricted();
+            EXPECT_NE(control.hardware.odoMotor.getOutputDesired(), 0);
+            EXPECT_EQ(ledStates[tap::gpio::Leds::Green], state == State::Ready);
+            EXPECT_FALSE(ledStates[tap::gpio::Leds::Red]);
+            EXPECT_FALSE(ledStates[tap::gpio::Leds::Blue]);
+            EXPECT_FALSE(drivers.commandScheduler.isCommandScheduled(&control.odoStop));
+            EXPECT_FALSE(drivers.commandScheduler.isCommandScheduled(&control.odoPointForwards));
+            const auto output = control.hardware.odoMotor.getOutputDesired();
+            control.mappingCommand.end(true);
+            EXPECT_EQ(control.hardware.odoMotor.getOutputDesired(), output);
+        }
+    }
+}
+
+TEST_F(MappingControlTest, CommandOwnsReadyIndicatorsAndEndClearsThem) {
+    drivers.mapping.requestStart();
+    tick();
+    EXPECT_FALSE(ledStates[tap::gpio::Leds::Green]);
+    EXPECT_FLOAT_EQ(buzzerDuty, 0);
+    drivers.mapping.receivePing(2, hosted::timeMs);
+    const auto readySince = hosted::timeMs;
+    for (uint32_t elapsed : {0u, 99u, 100u, 999u, 1000u, 1100u}) {
+        hosted::timeMs = readySince + elapsed;
+        drivers.remote.read();
+        connect(!drivers.remote.isConnected());
+        ledStates[tap::gpio::Leds::Red] = true;
+        ledStates[tap::gpio::Leds::Blue] = true;
+        tick();
+        EXPECT_TRUE(ledStates[tap::gpio::Leds::Green]);
+        EXPECT_FALSE(ledStates[tap::gpio::Leds::Red]);
+        EXPECT_FALSE(ledStates[tap::gpio::Leds::Blue]);
+        EXPECT_FLOAT_EQ(buzzerDuty, elapsed % 1000 < 100 ? 0.5f : 0.0f);
+    }
+    hosted::timeMs = readySince + 2000;
+    control.mappingCommand.execute();
+    EXPECT_FLOAT_EQ(buzzerDuty, 0.5f);
+    control.mappingCommand.end(true);
+    EXPECT_FALSE(ledStates[tap::gpio::Leds::Green]);
+    EXPECT_FLOAT_EQ(buzzerDuty, 0);
+    drivers.mapping.receivePing(4, hosted::timeMs);
+    tick();
+    EXPECT_FALSE(ledStates[tap::gpio::Leds::Green]);
+    EXPECT_FLOAT_EQ(buzzerDuty, 0);
+    drivers.mapping.receivePing(2, hosted::timeMs);
+    drivers.mapping.requestSave();
+    tick();
+    EXPECT_EQ(drivers.mapping.getState(), src::MappingMachine::State::Done);
+    EXPECT_FALSE(ledStates[tap::gpio::Leds::Green]);
+    EXPECT_FLOAT_EQ(buzzerDuty, 0);
+}
+
+TEST_F(MappingControlTest, JetsonServicesPingInMainAndEveryMappingState) {
+    using State = src::MappingMachine::State;
+    uint8_t buffer[4096];
+    const auto expectPing = [&](uint8_t number) {
+        control.jetson.refresh();
+        const auto count = read(sockets[1], buffer, sizeof(buffer));
+        ASSERT_GE(count, 10);
+        EXPECT_EQ(buffer[5], subsystems::PING);
+        EXPECT_EQ(buffer[7], number);
+    };
+    for (State state : {State::Main, State::Setup, State::Ready, State::Mapping, State::Done}) {
+        SCOPED_TRACE(static_cast<int>(state));
+        drivers.mapping = src::MappingMachine{};
+        if (state != State::Main) {
+            drivers.mapping.requestStart();
+            expectPing(1);
+            drivers.mapping.receivePing(1, hosted::timeMs);
+            expectPing(1);
+        } else {
+            drivers.mapping.receivePing(0, hosted::timeMs);
+            expectPing(0);
+        }
+        if (state == State::Ready || state == State::Mapping) {
+            drivers.mapping.receivePing(2, hosted::timeMs);
+            expectPing(2);
+        }
+        if (state == State::Mapping) {
+            drivers.mapping.receivePing(4, hosted::timeMs);
+            expectPing(4);
+        }
+        if (state == State::Done) {
+            drivers.mapping.receivePing(6, hosted::timeMs);
+            expectPing(6);
+        }
+        ASSERT_EQ(drivers.mapping.getState(), state);
+        for (uint8_t number : {2, 4, 6}) {
+            drivers.mapping.receivePing(number, hosted::timeMs);
+            expectPing(number);
+        }
+    }
+    drivers.mapping = src::MappingMachine{};
+    drivers.mapping.requestStart();
+    expectPing(1);
+    drivers.mapping.receivePing(2, hosted::timeMs);
+    expectPing(2);
+    drivers.mapping.requestSave();
+    expectPing(3);
+    drivers.mapping.receivePing(3, hosted::timeMs);
+    expectPing(3);
+}
+
+TEST_F(MappingControlTest, CalibrationFallbackServicesMainAndStartWithoutScheduler) {
+    drivers.recal.setIsFirstCalibrating();
+    ASSERT_FALSE(drivers.recal.getIsImuReady());
+    uint8_t buffer[64];
+    drivers.mapping.receivePing(0, hosted::timeMs);
+    control.updateMapping();
+    ASSERT_EQ(read(sockets[1], buffer, sizeof(buffer)), 10);
+    EXPECT_EQ(buffer[7], 0);
+    drivers.mapping.requestStart();
+    control.updateMapping();
+    ASSERT_EQ(read(sockets[1], buffer, sizeof(buffer)), 10);
+    EXPECT_EQ(buffer[7], 1);
 }

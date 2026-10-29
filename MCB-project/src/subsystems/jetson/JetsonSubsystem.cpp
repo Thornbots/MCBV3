@@ -12,6 +12,14 @@ void JetsonSubsystem::initialize() {
     // comm.initialize();
 }
 int messageCount = 0;
+#ifdef SENTRY
+void JetsonSubsystem::serviceMappingPing() {
+    drivers->mapping.tick(tap::arch::clock::getTimeMilliseconds(), [this](uint8_t number) {
+        return drivers->uart.isFinishedWriting() && drivers->uart.sendMsg(&number, PING, 1);
+    });
+}
+#endif
+
 void JetsonSubsystem::refresh() {
     if (odo != nullptr) checkApplyRelocalize();
 
@@ -20,6 +28,7 @@ void JetsonSubsystem::refresh() {
     hitRing.update();
     
 #ifdef SENTRY
+    serviceMappingPing();
     if (drivers->mapping.hasPendingPing()) return;
 #else
     Ping ping{};

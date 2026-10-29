@@ -154,6 +154,11 @@ public:  // Public Methods
     void initialize();
 
     void refresh() override;
+
+#ifdef SENTRY
+    // Also serviced while IMU calibration prevents scheduler refreshes.
+    void serviceMappingPing();
+#endif
     
     // Apply a navigation fix without changing raw POSE or gimbal aim odometry.
     void checkApplyRelocalize();

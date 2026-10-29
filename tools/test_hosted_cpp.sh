@@ -19,5 +19,8 @@ done
     test/LocalizationPicoTest.cpp test/FirmwareRegressionTest.cpp test/DrivetrainStopCommandTest.cpp \
     test/SimpleAutoDriveCommandTest.cpp test/MappingControlTest.cpp "${objects[@]}" \
     build/sim/scons-release/libtaproot.a build/sim/scons-release/modm/libmodm.a \
+    -Wl,--wrap=_ZN3tap4gpio4Leds3setENS1_6LedPinEb \
+    -Wl,--wrap=_ZN3tap6buzzer8playNoteEPNS_4gpio3PwmEj \
+    -Wl,--wrap=_ZN3tap6buzzer13silenceBuzzerEPNS_4gpio3PwmE \
     -lgtest_main -lgtest -pthread -o build/unit-tests/firmware-regression-tests
 build/unit-tests/firmware-regression-tests "$@"

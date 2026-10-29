@@ -14,7 +14,7 @@ public:
     MappingCommand(src::Drivers* drivers, subsystems::DrivetrainSubsystem* drive,
                    subsystems::GimbalSubsystem* gimbal, subsystems::FlywheelSubsystem* flywheel,
                    subsystems::IndexerSubsystem* indexer, subsystems::OdometrySubsystem* odo)
-        : drivers(drivers), drive(drive), gimbal(gimbal), flywheel(flywheel), indexer(indexer), odo(odo),
+        : drivers(drivers), drive(drive), gimbal(gimbal), flywheel(flywheel), indexer(indexer),
           pointOdo(drivers, odo, gimbal) {
         addSubsystemRequirement(drive);
         addSubsystemRequirement(gimbal);
@@ -24,7 +24,7 @@ public:
     }
 
     void initialize() override {
-        odo->stopMotors();
+        pointOdo.initialize();
         gimbal->clearBuildup();
         execute();
     }
@@ -32,6 +32,14 @@ public:
         flywheel->setTargetVelocity(0);
         flywheel->stopMotors();
         indexer->stopIndex();
+        const bool ready = drivers->mapping.getState() == src::MappingMachine::State::Ready;
+        drivers->leds.set(tap::gpio::Leds::Green, ready);
+        drivers->leds.set(tap::gpio::Leds::Red, false);
+        drivers->leds.set(tap::gpio::Leds::Blue, false);
+        if (drivers->mapping.readyBeep(tap::arch::clock::getTimeMilliseconds()))
+            tap::buzzer::playNote(&drivers->pwm, 1000);
+        else
+            tap::buzzer::silenceBuzzer(&drivers->pwm);
         using Remote = tap::communication::serial::Remote;
         if (drivers->mapping.canDrive() && drivers->remote.isConnected()) {
             drive->setTargetTranslation(mappingDrive(
@@ -51,6 +59,8 @@ public:
         flywheel->stopMotors();
         indexer->stopIndex();
         gimbal->stopMotors();
+        drivers->leds.set(tap::gpio::Leds::Green, false);
+        tap::buzzer::silenceBuzzer(&drivers->pwm);
     }
     bool isFinished() const override { return !drivers->mapping.isActive(); }
     const char* getName() const override { return "MCB mapping restrictions"; }
@@ -61,7 +71,6 @@ private:
     subsystems::GimbalSubsystem* gimbal;
     subsystems::FlywheelSubsystem* flywheel;
     subsystems::IndexerSubsystem* indexer;
-    subsystems::OdometrySubsystem* odo;
     commands::OdometryPointForwardsCommand pointOdo;
 };
 }  // namespace robots

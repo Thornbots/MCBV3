@@ -4,7 +4,7 @@ namespace subsystems {
 
 class OdoController {
 public:
-    float odoTorqueHistory[odo::Q_SIZE];
+    float odoTorqueHistory[odo::Q_SIZE]{};
     OdoController();
     //~OdoController();
     void estimateState(float *theta, float *thetadot, float tLast, float drivetrainVelocity);

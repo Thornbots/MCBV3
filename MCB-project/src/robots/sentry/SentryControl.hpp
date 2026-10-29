@@ -144,27 +144,9 @@ public:
     }
 
     void updateMapping() override {
-        drivers->mapping.tick(tap::arch::clock::getTimeMilliseconds(), [this](uint8_t number) {
-            return drivers->uart.isFinishedWriting() && drivers->uart.sendMsg(&number, subsystems::PING, 1);
-        });
+        // main skips the scheduler (and Jetson refresh) until the IMU is ready.
+        if (!drivers->recal.getIsImuReady()) jetson.serviceMappingPing();
         if (!drivers->mapping.isActive() || isStopped) return;
-        // The scheduler rejects commands while disconnected; clear latched outputs here.
-        if (!drivers->remote.isConnected()) {
-            drivetrain.stopMotors();
-            flywheel.stopMotors();
-            indexer.stopIndex();
-            hardware.flywheelMotor1.setDesiredOutput(0);
-            hardware.flywheelMotor2.setDesiredOutput(0);
-            hardware.indexMotor.setDesiredOutput(0);
-        }
-        const bool ready = drivers->mapping.getState() == src::MappingMachine::State::Ready;
-        drivers->leds.set(tap::gpio::Leds::Green, ready);
-        drivers->leds.set(tap::gpio::Leds::Red, false);
-        drivers->leds.set(tap::gpio::Leds::Blue, false);
-        if (drivers->mapping.readyBeep(tap::arch::clock::getTimeMilliseconds()))
-            tap::buzzer::playNote(&drivers->pwm, 1000);
-        else
-            tap::buzzer::silenceBuzzer(&drivers->pwm);
         if (!drivers->commandScheduler.isCommandScheduled(&mappingCommand))
             drivers->commandScheduler.addCommand(&mappingCommand);
     }

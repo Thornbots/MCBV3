@@ -81,16 +81,20 @@ joysticks: left horizontal/right, left vertical/forward, right horizontal/turn.
 Translation magnitude is capped at 0.4 m/s and rotation at 0.5 rad/s; tune
 `MAPPING_MAX_TRANSLATION_MPS` and `MAPPING_MAX_ROTATION_RADPS` in
 `src/robots/sentry/MappingDrive.hpp`. No boost or autonomous drive participates.
-Remote disconnect stops drive. Every active MMM state disables flywheels and
+Remote disconnect stops drive but keeps odometry pod pointing active in every
+MMM state. Every active MMM state disables flywheels and
 indexing, including indexer homing, and holds pitch level and yaw aligned with
 the chassis front. Done adds no head-down pose. Ready lights steady green and
 pulses the buzzer for 100 ms every second using wrapping millisecond timers.
 
 `src/util/MappingMachine.hpp` owns state, handshake timers and counted pending
 echoes without hardware dependencies. UART dispatches PING directly at receive
-time, before the shared latest-message mailbox. The sentry control hook ticks
-MMM before the scheduler and schedules `MappingCommand`, which persistently
-owns drive, gimbal, flywheels, indexer and odometry. Sentry trigger evaluation
+time, before the shared latest-message mailbox. `JetsonSubsystem::refresh()`
+services MMM pings before POSE/REF_SYS; the sentry control hook calls the same
+ping service while IMU calibration skips scheduler refreshes. The hook schedules
+`MappingCommand`, which persistently owns drive, gimbal, flywheels, indexer and
+odometry, including disconnected output restrictions and Ready LEDs/buzzer.
+Ending the command clears green and silences the buzzer. Sentry trigger evaluation
 returns immediately throughout MMM, so ordinary triggers cannot replace these
 commands. The scheduler and IMU calibration mechanism are not suspended or
 re-zeroed by MMM. The hosted fixture also gates its direct drive overrides.
