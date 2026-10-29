@@ -158,10 +158,14 @@ in Renode. The following remote-disconnected guard and IMU calibration still
 execute normally; no simulator hook skips firmware initialization.
 
 The wire fire delay includes indexer latency and an additional alignment wait.
-`AutoAimAndFireCommand` clamps the indexing wait to zero below its calibrated sentry
-latency estimate. Jetson must include that estimate when sending a scheduled
-exit. The hosted chamber-exit replay measured 94 ms; hardware
-indexing and UART delay still need measurement.
+`AutoAimAndFireCommand` requests the shot `delay_ms - FIRING_LATENCY_TIME`
+after receipt, at once when that is negative. The sentry's 20 ms is the
+request-to-exit delay timed on the robot (2026-10-28); Jetson includes it in
+each scheduled exit and never sends under 25 ms, so the request always waits.
+While a request is pending the command reads no newer CV_TARGET (ported from
+`newMain`'s cv tuning, #109): a following non-fire frame would otherwise
+cancel it. The pending timer is released once due even when the gimbal is no
+longer targeting, so CV targets keep flowing.
 
 Absolute aim points use a filtered angular-rate estimate over the 1 ms
 controller ticks: a 40 Hz point update must not become a one-tick velocity

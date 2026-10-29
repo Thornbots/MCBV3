@@ -23,6 +23,7 @@ AutoAimAndFireCommand::AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsys
         addSubsystemRequirement(indexer);
         addSubsystemRequirement(flywheel);
     }
+    startShotTimeout.stop();
 }
 
 void AutoAimAndFireCommand::initialize() {
@@ -53,12 +54,16 @@ void AutoAimAndFireCommand::execute() {
 
     }
     
-    if(jetson->getCvTarget(&cvTarget)) {
+    // A pending shot holds its target: a newer frame would cancel it (from newMain's cv tuning).
+    if(startShotTimeout.isStopped() && jetson->getCvTarget(&cvTarget)) {
         receivedCvTargetEver = true;
         cvTargetValidTimeout.restart(TARGET_VALID_TIME);
         // Shorter than the physical indexing latency means request immediately.
         startShotTimeout.restart(std::max(0, static_cast<int>(cvTarget.delay_ms) - FIRING_LATENCY_TIME));
     }
+    // Due once, then released whether or not this cycle can fire, so targets keep flowing.
+    const bool shotDue = startShotTimeout.execute();
+    if(shotDue) startShotTimeout.stop();
     if(cvTargetValidTimeout.isExpired()) cvTargetValidTimeout.stop();
     float angleToTurnForSentry = drivers->hitTracker.getAngleToTurnForSentry();
     bool turnToHitFlag =        (cvTarget.flags & CV_TARGET_FLAG_TURN_TO_HIT)>0;
@@ -94,7 +99,7 @@ void AutoAimAndFireCommand::execute() {
 
         // Note that for gimbal subsystem, positive pitch is downward.
         gimbal->setAngles(targetYaw, targetPitch);
-        if(startShotTimeout.execute() && allowShooting && shootFlag){
+        if(shotDue && allowShooting && shootFlag){
             indexer->tryShootOnce();
         }
     } else {
@@ -148,6 +153,7 @@ void AutoAimAndFireCommand::execute() {
 
 void AutoAimAndFireCommand::end(bool) {
     isScheduled = false;
+    startShotTimeout.stop();
 }
 
 bool AutoAimAndFireCommand::getIsScheduled() { return isScheduled; }
