@@ -29,8 +29,8 @@
 #include "communication/I2CCommunication.hpp"
 #include "communication/UARTCommunication.hpp"
 
-#include "util/hitTracker.hpp"
-#include "MappingMachine.hpp"
+#include "util/HitTracker.hpp"
+#include "util/MappingMachine.hpp"
 
 #define PRINT(msg_to_send ...) ({\
     char str[BUFSIZ]; \

@@ -4,7 +4,7 @@
 #include <deque>
 #include <limits>
 #include <vector>
-#include "MappingMachine.hpp"
+#include "util/MappingMachine.hpp"
 #include "robots/sentry/MappingDrive.hpp"
 
 namespace {

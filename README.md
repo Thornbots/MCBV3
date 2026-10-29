@@ -86,7 +86,7 @@ indexing, including indexer homing, and holds pitch level and yaw aligned with
 the chassis front. Done adds no head-down pose. Ready lights steady green and
 pulses the buzzer for 100 ms every second using wrapping millisecond timers.
 
-`src/MappingMachine.hpp` owns state, handshake timers and counted pending
+`src/util/MappingMachine.hpp` owns state, handshake timers and counted pending
 echoes without hardware dependencies. UART dispatches PING directly at receive
 time, before the shared latest-message mailbox. The sentry control hook ticks
 MMM before the scheduler and schedules `MappingCommand`, which persistently
