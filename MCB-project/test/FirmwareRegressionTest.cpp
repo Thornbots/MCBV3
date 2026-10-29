@@ -3,6 +3,7 @@
 #include <iterator>
 #include <limits>
 #include <type_traits>
+#include <vector>
 #include "communication/UARTCommunication.hpp"
 #include "hosted/clock.hpp"
 #include "tap/control/command_mapping.hpp"
@@ -33,7 +34,7 @@ public:
 }
 
 TEST(OdometryFramesTest, RelocalizationChangesNavigationButPreservesRawAim) {
-    static src::Drivers drivers;
+    src::Drivers drivers;
     hosted::sensors = {};
     subsystems::OdometrySubsystem odometry(&drivers, nullptr);
     const float rawX = odometry.getAimX();
@@ -102,6 +103,32 @@ TEST(UARTCommunicationTest, TimeoutSurvivesMillisecondClockRollover) {
     EXPECT_TRUE(uart.isConnected());
     ++hosted::timeMs;
     EXPECT_FALSE(uart.isConnected());
+}
+
+TEST(UARTCommunicationTest, MappingPingsSurviveLatestTelemetryAndFailedTransmit) {
+    hosted::timeMs = 0;
+    src::Drivers drivers;
+    communication::UARTCommunication::ReceivedSerialMessage message{};
+    message.messageType = 5;
+    message.header.dataLength = 1;
+    message.data[0] = 2;
+    drivers.uart.messageReceiveCallback(message);
+    message.data[0] = 4;
+    drivers.uart.messageReceiveCallback(message);
+    for (uint16_t type : {2, 3}) {
+        message.messageType = type;
+        message.header.dataLength = 11;
+        drivers.uart.messageReceiveCallback(message);
+    }
+    EXPECT_EQ(drivers.uart.getLastMsg().messageType, 3);
+    drivers.mapping.tick(0, [](uint8_t) { return false; });
+    EXPECT_TRUE(drivers.mapping.hasPendingPing());
+    std::vector<uint8_t> sent;
+    for (int i = 0; i < 3; ++i)
+        drivers.mapping.tick(1, [&](uint8_t n) { sent.push_back(n); return true; });
+    EXPECT_EQ(sent, (std::vector<uint8_t>{2, 4}));
+    EXPECT_FALSE(drivers.mapping.hasPendingPing());
+    EXPECT_EQ(drivers.mapping.getState(), src::MappingMachine::State::Main);
 }
 
 TEST(ModmIteratorTest, SupportsStandardAlgorithmsWithConstTraits) {

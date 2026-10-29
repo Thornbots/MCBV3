@@ -19,10 +19,12 @@ void JetsonSubsystem::refresh() {
 
     hitRing.update();
     
+#ifdef SENTRY
+    if (drivers->mapping.hasPendingPing()) return;
+#else
     Ping ping{};
-    if(getMsg(&ping)){
-        sendMsg(&ping);
-    }
+    if (getMsg(&ping)) sendMsg(&ping);
+#endif
 
     if (poseDataTimeout.execute()) {
         messageCount++;

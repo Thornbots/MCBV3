@@ -30,6 +30,7 @@
 #include "communication/UARTCommunication.hpp"
 
 #include "util/hitTracker.hpp"
+#include "MappingMachine.hpp"
 
 #define PRINT(msg_to_send ...) ({\
     char str[BUFSIZ]; \
@@ -142,11 +143,18 @@ bool pendingScheduledRecalibration = false;
 
 class Drivers : public tap::Drivers {
 public:
-    Drivers() : tap::Drivers(), uart(this, tap::communication::serial::Uart::Uart1, true) {}
+    Drivers() : tap::Drivers(), uart(this, tap::communication::serial::Uart::Uart1, true) {
+#ifdef SENTRY
+        uart.setPingHandler(&mapping, [](void* context, uint8_t number, uint32_t now) {
+            static_cast<MappingMachine*>(context)->receivePing(number, now);
+        });
+#endif
+    }
 
     communication::I2CCommunication i2c;
     communication::UARTCommunication uart;
     ImuRecalibration recal;
+    MappingMachine mapping;
     HitTracker hitTracker{this}; 
 
     

@@ -3,6 +3,7 @@
 
 #include "robots/RobotControl.hpp"
 #include "robots/sentry/SentryHardware.hpp"
+#include "robots/sentry/MappingCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainDriveCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainStopCommand.hpp"
 #include "subsystems/drivetrain/MoveToPositionCommand.hpp"
@@ -102,6 +103,7 @@ public:
     
     void update() override {
 
+        if (drivers->mapping.isActive()) return;
         if (isStopped) return;
 
         for (Trigger* trigger : triggers) {
@@ -139,6 +141,32 @@ public:
             drivers->refSerial.getGameData().gameStage != RefSerialData::Rx::GameStage::IN_GAME) {
             stopFlywheelTrigger.update();
         }
+    }
+
+    void updateMapping() override {
+        drivers->mapping.tick(tap::arch::clock::getTimeMilliseconds(), [this](uint8_t number) {
+            return drivers->uart.isFinishedWriting() && drivers->uart.sendMsg(&number, subsystems::PING, 1);
+        });
+        if (!drivers->mapping.isActive() || isStopped) return;
+        // The scheduler rejects commands while disconnected; clear latched outputs here.
+        if (!drivers->remote.isConnected()) {
+            drivetrain.stopMotors();
+            flywheel.stopMotors();
+            indexer.stopIndex();
+            hardware.flywheelMotor1.setDesiredOutput(0);
+            hardware.flywheelMotor2.setDesiredOutput(0);
+            hardware.indexMotor.setDesiredOutput(0);
+        }
+        const bool ready = drivers->mapping.getState() == src::MappingMachine::State::Ready;
+        drivers->leds.set(tap::gpio::Leds::Green, ready);
+        drivers->leds.set(tap::gpio::Leds::Red, false);
+        drivers->leds.set(tap::gpio::Leds::Blue, false);
+        if (drivers->mapping.readyBeep(tap::arch::clock::getTimeMilliseconds()))
+            tap::buzzer::playNote(&drivers->pwm, 1000);
+        else
+            tap::buzzer::silenceBuzzer(&drivers->pwm);
+        if (!drivers->commandScheduler.isCommandScheduled(&mappingCommand))
+            drivers->commandScheduler.addCommand(&mappingCommand);
     }
 
     void stopForImuRecal() override {
@@ -184,6 +212,7 @@ public:
     subsystems::JetsonSubsystem jetson{drivers, &gimbal, &odo};
 
     // commands
+    MappingCommand mappingCommand{drivers, &drivetrain, &gimbal, &flywheel, &indexer, &odo};
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     // commands::MouseMoveCommand lookMouse{drivers, &gimbal};

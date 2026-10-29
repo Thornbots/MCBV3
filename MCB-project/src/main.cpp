@@ -175,6 +175,7 @@ int main() {
                 if(drivers.recal.isAfterSecondCalibration())
                     control.resumeAfterImuRecal(); //when it turned on, it flipped 180
             }
+            control.updateMapping();
             if(drivers.recal.getIsImuReady()){
                 drivers.commandScheduler.run();
                 drivers.hitTracker.update();

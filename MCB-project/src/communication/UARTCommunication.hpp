@@ -50,12 +50,20 @@ public:
 
     inline bool hasNewMessage() { return hasNewData; }
 
+    using PingHandler = void (*)(void*, uint8_t, uint32_t);
+    void setPingHandler(void* context, PingHandler handler) {
+        pingContext = context;
+        pingHandler = handler;
+    }
+
     // Milliseconds since boot, wrapping every 2^32 ms.
     uint32_t getCurrentTime() const;
 
     tap::communication::serial::Uart::UartPort getPort() const;
 
 private:
+    void* pingContext = nullptr;
+    PingHandler pingHandler = nullptr;
     bool hasNewData;
     uint32_t lastReceivedTime;
 

@@ -18,6 +18,12 @@ void SingleIndexerSubsystem::finishInitialize() {
 }
 
 void SingleIndexerSubsystem::finishRefresh() {
+#ifdef SENTRY
+    if (drivers->mapping.isActive()) {
+        motorIndexer->setDesiredOutput(0);
+        return;
+    }
+#endif
     if(enableHoming){
         doHomingTransitions();
         if (homingState==HomingState::HOMING) {
@@ -124,4 +130,4 @@ void SingleIndexerSubsystem::indexNearest() {
 }
 
 
-} //namespace subsystems 
+}  // namespace subsystems

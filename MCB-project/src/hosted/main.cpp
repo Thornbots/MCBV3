@@ -81,13 +81,15 @@ int main() {
                     &h.flywheelMotor1, &h.flywheelMotor2, &h.driveMotor1, &h.driveMotor2,
                     &h.driveMotor3, &h.driveMotor4}) feedback(*motor, in.motors[motorIndex++]);
             const float before = control.indexer.getTotalNumBallsShot();
+            control.updateMapping();
             drivers.commandScheduler.run();
             drivers.hitTracker.update();
             control.update();
-            if ((in.mode & 3) != 1) drivers.commandScheduler.removeCommand(&control.simpleAutoDrive, true);
-            if ((in.mode & 3) == 2 && !drivers.commandScheduler.isCommandScheduled(&control.autoDrive))
+            if (!drivers.mapping.isActive() && (in.mode & 3) != 1)
+                drivers.commandScheduler.removeCommand(&control.simpleAutoDrive, true);
+            if (!drivers.mapping.isActive() && (in.mode & 3) == 2 && !drivers.commandScheduler.isCommandScheduled(&control.autoDrive))
                 drivers.commandScheduler.addCommand(&control.autoDrive);
-            if ((in.mode & 3) == 3)
+            if (!drivers.mapping.isActive() && (in.mode & 3) == 3)
                 control.drivetrain.setTargetTranslation(Pose2d(in.externalRight, in.externalForward, in.externalSpin), false);
             if (in.mode & 4) drivers.commandScheduler.removeCommand(&control.autoFire, true);
             if (control.indexer.getTotalNumBallsShot() > before) shots.push_back(hosted::timeMs);

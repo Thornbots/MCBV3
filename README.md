@@ -61,6 +61,53 @@ The Jetson `CV_TARGET` wire format is documented in the bridge's
 Bit 3 marks a point from Jetson patrol and is currently ignored by firmware;
 bit 1 remains the separate permission for firmware patrol.
 
+## MCB Mapping Machine (sentry)
+
+The sentry's Drivers-owned `mapping` object exposes `requestStart()` and
+`requestSave()` for operator-input integration. No switch, key or gesture is
+bound. Other robot builds do not connect MMM to UART or control hooks.
+Start acts only in Main and immediately enters Setup. PING 2 moves Setup or
+Mapping to Ready; PING 4 moves Ready to Mapping. Save in Ready immediately
+enters Done. Save in Mapping sends the incomplete-save request and stays in
+Mapping. Other source states ignore these requests. Main is restored only by
+restarting the firmware.
+
+Setup and Done stop drive. Ready and Mapping use chassis-relative manual
+joysticks: left horizontal/right, left vertical/forward, right horizontal/turn.
+Translation magnitude is capped at 0.4 m/s and rotation at 0.5 rad/s; tune
+`MAPPING_MAX_TRANSLATION_MPS` and `MAPPING_MAX_ROTATION_RADPS` in
+`src/robots/sentry/MappingDrive.hpp`. No boost or autonomous drive participates.
+Remote disconnect stops drive. Every active MMM state disables flywheels and
+indexing, including indexer homing, and holds pitch level and yaw aligned with
+the chassis front. Done adds no head-down pose. Ready lights steady green and
+pulses the buzzer for 100 ms every second using wrapping millisecond timers.
+
+`src/MappingMachine.hpp` owns state, handshake timers and counted pending
+echoes without hardware dependencies. UART dispatches PING directly at receive
+time, before the shared latest-message mailbox. The sentry control hook ticks
+MMM before the scheduler and schedules `MappingCommand`, which persistently
+owns drive, gimbal, flywheels, indexer and odometry. Sentry trigger evaluation
+returns immediately throughout MMM, so ordinary triggers cannot replace these
+commands. The scheduler and IMU calibration mechanism are not suspended or
+re-zeroed by MMM. The hosted fixture also gates its direct drive overrides.
+
+PING keeps id 5 and its one-byte number. Zero echoes only in Main; unknown
+numbers are ignored. Every received 2 or 4 queues an echo, even from an illegal
+source state; only legal state changes apply. Requests 1 and 3 retry at least
+10 s after their last successful same-number send until acknowledged. Their
+first matching ACK queues a final echo; duplicate ACKs may queue that final
+echo again without repeating a transition. Failed sends retain pending work,
+which has priority over periodic POSE/REF_SYS telemetry. Legal save API calls
+always apply their state transition immediately. Additional save transmissions
+queue behind the preceding ACK/final leg and its 10 s same-number quiet
+interval to prevent overlapping indistinguishable requests. ACK means receipt,
+not durable storage; Done
+can precede completion of Jetson's asynchronous save.
+
+Hosted GoogleTests cover the transition matrix, duplicate/failing UART traffic,
+retry timing and rollover, joystick caps and sentry restrictions. The hosted
+test runner links the actual firmware objects built by `build-sim`.
+
 ## Automatic indexer recovery
 
 Automatic aiming returns its indexer to idle when referee state allows shooting,
