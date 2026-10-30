@@ -56,7 +56,12 @@ void AutoAimAndFireCommand::execute() {
     }
     
     // A pending shot holds its target: a newer frame would cancel it (from newMain's cv tuning).
-    if(startShotTimeout.isStopped() && jetson->getCvTarget(&cvTarget)) {
+    CvTarget newCvTarget{};
+    //newerHasPriority if there is a newer target, current isn't shooting, and newer is shooting
+    bool newTarget = jetson->getCvTarget(&newCvTarget);
+    bool newerHasPriority = newTarget && (cvTarget.flags & CV_TARGET_FLAG_FIRE)==0 && (newCvTarget.flags & CV_TARGET_FLAG_FIRE)>0; 
+    if(newTarget&&(startShotTimeout.isStopped() || newerHasPriority)) { //if current is expired or newer has priority
+        cvTarget=newCvTarget;
         receivedCvTargetEver = true;
         cvTargetValidTimeout.restart(TARGET_VALID_TIME);
         // Shorter than the physical indexing latency means request immediately.
@@ -153,6 +158,11 @@ void AutoAimAndFireCommand::execute() {
             if(adc->getIsScheduled()) flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM/4);
         }
     }
+    
+    // blink the green led to show that the jetson sent a message that said to shoot
+    bool greenled = false;
+    if(newTarget) greenled = (newCvTarget.flags & CV_TARGET_FLAG_FIRE)>0;
+    drivers->leds.set(tap::gpio::Leds::Green, greenled);
 }
 
 void AutoAimAndFireCommand::end(bool) {
