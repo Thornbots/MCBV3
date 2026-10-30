@@ -1,10 +1,12 @@
 // Copyright 2026 Thornbots. SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "tap/architecture/timeout.hpp"
 #include "subsystems/jetson/MappingDrive.hpp"
 #include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 #include "subsystems/flywheel/FlywheelSubsystem.hpp"
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
+#include "subsystems/gimbal/GimbalSubsystemConstants.hpp"
 #include "subsystems/indexer/IndexerSubsystem.hpp"
 #include "subsystems/odometry/OdometryPointForwardsCommand.hpp"
 
@@ -26,6 +28,8 @@ public:
     void initialize() override {
         pointOdo.initialize();
         gimbal->clearBuildup();
+        saveArmed = false;
+        upForSaveTimeout.stop();
         execute();
     }
     void execute() override {
@@ -49,6 +53,7 @@ public:
         } else {
             drive->stopMotors();
         }
+        updateSaveHold();
         // Encoder yaw zero faces the chassis front; world yaw follows chassis turns.
         gimbal->setAngles(drivers->bmi088.getYaw() - gimbal->getYawEncoderValue(), 0);
         pointOdo.execute();
@@ -66,11 +71,32 @@ public:
     const char* getName() const override { return "MCB mapping restrictions"; }
 
 private:
+    // Right stick up for MAPPING_HOLD_TIME requests one save per hold. The start
+    // hold must be released first; holds outside Ready/Mapping are discarded.
+    void updateSaveHold() {
+        using Remote = tap::communication::serial::Remote;
+        const bool up = drivers->remote.isConnected() &&
+                        drivers->remote.getChannel(Remote::Channel::RIGHT_VERTICAL) > PITCH_MAPPING_THRESHOLD;
+        if (!up) saveArmed = true;
+        if (!up || !saveArmed || !drivers->mapping.canDrive()) {
+            upForSaveTimeout.stop();
+            return;
+        }
+        if (upForSaveTimeout.isStopped()) upForSaveTimeout.restart(MAPPING_HOLD_TIME);
+        if (upForSaveTimeout.execute()) {
+            drivers->mapping.requestSave();
+            saveArmed = false;
+            upForSaveTimeout.stop();
+        }
+    }
+
     src::Drivers* drivers;
     subsystems::DrivetrainSubsystem* drive;
     subsystems::GimbalSubsystem* gimbal;
     subsystems::FlywheelSubsystem* flywheel;
     subsystems::IndexerSubsystem* indexer;
     OdometryPointForwardsCommand pointOdo;
+    tap::arch::MilliTimeout upForSaveTimeout;
+    bool saveArmed = false;
 };
 }  // namespace commands

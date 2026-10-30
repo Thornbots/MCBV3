@@ -70,8 +70,12 @@ bit 1 remains the separate permission for firmware patrol.
 ## MCB Mapping Machine (sentry)
 
 The sentry's Drivers-owned `mapping` object exposes `requestStart()` and
-`requestSave()` for operator-input integration. No switch, key or gesture is
-bound. Other robot builds do not connect MMM to UART or control hooks.
+`requestSave()`. With the left switch down (offset joystick look), holding the
+right stick up past `PITCH_MAPPING_THRESHOLD` for `MAPPING_HOLD_TIME` (both in
+`GimbalSubsystemConstants.hpp`) starts mapping. Inside MMM the same hold, after
+a release, requests one save per hold; holds outside Ready and Mapping are
+discarded. No input leaves MMM. Other robot builds do not connect MMM to UART or
+control hooks.
 Start acts only in Main and immediately enters Setup. PING 2 moves Setup or
 Mapping to Ready; PING 4 moves Ready or Done to Mapping. PING 6 (fail) moves
 Setup to Done and cancels start retries. Save in Ready immediately
