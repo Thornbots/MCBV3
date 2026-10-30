@@ -26,7 +26,7 @@ public:
 
     void execute() override {odometry->stopMotors();};
 
-    void end(bool interrupted) override {};
+    void end(bool) override {};
 
     bool isFinished() const {return false;};
 

@@ -1,30 +1,25 @@
 #include "YawController.hpp"
 
 #include <cmath>
+#include <algorithm>
 #include <iostream>
 #include <string>
 
-#include "tap/algorithms/smooth_pid.hpp"
-#include "tap/architecture/periodic_timer.hpp"
-#include "tap/board/board.hpp"
-#include "tap/motor/dji_motor.hpp"
 
 namespace subsystems {
+constexpr float yawPi = 3.14159265358979323846f;
 YawController::YawController() {}
 
 float YawController::calculate(float currentPosition, float currentVelocity, float currentDrivetrainVelocity, float targetPosition, float inputVelocity, float deltaT) {
-
-    estimateState(&currentPosition, &currentVelocity, pastTorque, currentDrivetrainVelocity);
-
-    estimatedPosition = currentPosition;
+    estimateYawPos(currentPosition, currentVelocity, currentDrivetrainVelocity); //move to gimbalsubsystem's refresh for jetson to have a yaw value when remote is off
     // float positionError = std::fmod(targetPosition - currentPosition + PI, 2 * PI) - PI;  // wrap to [-PI, PI]
     float positionError = targetPosition - currentPosition;  // wrap to [-PI, PI]
 
-    while(positionError > PI) {
-        positionError -= 2 * PI;
+    while(positionError > yawPi) {
+        positionError -= 2 * yawPi;
     }
-    while (positionError < -PI) {
-        positionError += 2 * PI;
+    while (positionError < -yawPi) {
+        positionError += 2 * yawPi;
     } 
 
     //float choiceKDT = currentDrivetrainVelocity * positionError > 0 ? KDT : KDT_REV;  // check if turret is fighting drivetrain;
@@ -65,13 +60,19 @@ float YawController::calculate(float currentPosition, float currentVelocity, flo
     float targetCurrent = std::clamp(KVISC * targetRelativeVelocity + UK * signum(targetRelativeVelocity) + KA * targetAcceleration + KPV * velocityError + KIV * buildup, -20.0f, 20.0f);
 
     pastOutput = RA * targetCurrent + KV * targetRelativeVelocity;
-    pastTorque = targetCurrent*KT;
+    pastTorque = targetCurrent * KT * RATIO;
 
-#if defined(OLDINFANTRY)
+#if defined(ENGINEER)
     return std::clamp(pastOutput, -VOLT_MAX, VOLT_MAX);
 #else
     return 0.8192f * targetCurrent;
 #endif
+}
+
+void YawController::estimateYawPos(float& currentPosition, float& currentVelocity, float currentDrivetrainVelocity) {
+    estimateState(&currentPosition, &currentVelocity, pastTorque, currentDrivetrainVelocity);
+
+    estimatedPosition = currentPosition;
 }
 
 void YawController::estimateState(float* theta, float* thetadot, float tLast, float drivetrainVelocity) {
@@ -83,7 +84,7 @@ void YawController::estimateState(float* theta, float* thetadot, float tLast, fl
         torqueHistory[i] = (i > 0) ? torqueHistory[i - 1] : tLast;
 
         // Estimated angular velocity (theta_dot)
-        *thetadot += (torqueHistory[i] - C*(*thetadot - drivetrainVelocity) - signum(*thetadot - drivetrainVelocity)) * (DT/ J);
+        *thetadot += (torqueHistory[i] - C*(*thetadot - drivetrainVelocity) - UK * signum(*thetadot - drivetrainVelocity)) * (DT/ J);
 
         // Update velocity
         *theta += *thetadot * DT;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "tap/architecture/clock.hpp"
+
 #include "modm/architecture/interface/i2c_device.hpp"
 #include "modm/math/geometry/angle.hpp"
 #include "modm/processing/protothread/protothread.hpp"
@@ -20,6 +22,8 @@ public:
             PT_WAIT_WHILE(this->isTransactionRunning());
 
             if (this->wasTransactionSuccessful()) {
+                lastSuccessMs = tap::arch::clock::getTimeMilliseconds();
+                everSucceeded = true;
                 // s.printf("i2c result: %d %d %d %d\n", buffer[0], buffer[1], buffer[2], buffer[3]); 
                 // float *rez = (float*)buffer;
                 // static_cast<float>(buffer);
@@ -29,7 +33,7 @@ public:
                 odom_x = buffer[0]; 
                 odom_y = buffer[1];
                 odom_x_vel = buffer[2];
-                odom_x_vel = buffer[3];
+                odom_y_vel = buffer[3];
                 // s.printf("odom: %f\n", this->getX());
                 
 
@@ -53,15 +57,21 @@ public:
     }
     // i dont like this but it kinda works for old read. NEED TO CHANGE
     // float getAngle() { return 0.0000457891f * angle * angle - 0.0361289286f * angle + 3.4231706783f; }
-    float getX() { return odom_x + offsetX; }  
-    float getY() { return odom_y + offsetY; }  
+    float getX() { return (odom_x + offsetX); }  //wheel diameter changed, need to update pi pico code
+    float getY() { return (odom_y + offsetY); }  
     float getXVel() { return odom_x_vel; }  
     float getYVel() { return odom_y_vel; }  
     
+    bool isFresh(uint32_t nowMs, uint32_t maxAgeMs) const {
+        return everSucceeded && static_cast<uint32_t>(nowMs - lastSuccessMs) < maxAgeMs;
+    }
+
     float offsetX = 0;
     float offsetY = 0;
 
 private:
+    uint32_t lastSuccessMs = 0;
+    bool everSucceeded = false;
     float odom_x = 0;
     float odom_y = 0;
     float odom_x_vel = 0;

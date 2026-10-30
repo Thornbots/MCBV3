@@ -1,9 +1,9 @@
 #include "robots/RobotControl.hpp"
 
-#if defined(INFANTRY)
-#include "robots/infantry/InfantryHardware.hpp"
+#if defined(ENGINEER)
+#include "robots/engineer/EngineerHardware.hpp"
 #else
-#include "robots/infantry/MechInfantryHardware.hpp"
+#include "robots/infantry/InfantryHardware.hpp"
 #endif
 
 #include "subsystems/ui/UISubsystem.hpp"
@@ -19,11 +19,12 @@
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
 #include "subsystems/gimbal/GimbalStopCommand.hpp"
-#include "subsystems/jetson/AutoAimCommand.hpp"
 #include "subsystems/jetson/AutoAimAndFireCommand.hpp"
+#include "subsystems/indexer/SingleIndexerSubsystem.hpp"
 #include "subsystems/indexer/IndexerNBallsCommand.hpp"
 #include "subsystems/indexer/IndexerUnjamCommand.hpp"
 #include "subsystems/indexer/IndexerStopCommand.hpp"
+#include "subsystems/indexer/IndexerIdleCommand.hpp"
 #include "subsystems/servo/ServoSubsystem.hpp"
 #include "subsystems/servo/OpenServoCommand.hpp"
 #include "subsystems/servo/CloseServoCommand.hpp"
@@ -35,8 +36,13 @@ int rawEncoder = 0;
 namespace robots {
 class InfantryControl : public ControlInterface {
 public:
+#if defined(ENGINEER)
+    using Hardware = EngineerHardware;
+#else
+    using Hardware = InfantryHardware;
+#endif
     // pass drivers back to root robotcontrol to store
-    InfantryControl(src::Drivers *drivers) : drivers(drivers), hardware(InfantryHardware{drivers}) {}
+    InfantryControl(src::Drivers *drivers) : drivers(drivers), hardware(Hardware{drivers}) {}
     // functions we are using
     void initialize() override {
         // Initialize subsystems (registration is internal)
@@ -54,23 +60,24 @@ public:
         gimbal.setDefaultCommand(&stopGimbal);
         flywheel.setDefaultCommand(&shooterStop);
         drivetrain.setDefaultCommand(&stopDriveCommand);
-        indexer.setDefaultCommand(&indexerStop);
+        indexer.setDefaultCommand(&indexerIdle);
 
-        shootButton.onTrue(&shooterStart)->whileTrue(&indexer10Hz)->onTrue(&closeServo);
+        shootButton.onTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
         unjamButton.whileTrue(&indexerUnjam)->onTrue(&openServo);
 
         stopFlywheelTrigger.onTrue(&shooterStop);
+        
+        // autoFireTrigger.onTrue(&autoFire)->onFalse(&lookJoystick);
 
         // Mouse and Keyboard mappings
         unjamKey.whileTrue(&indexerUnjam)->onTrue(&openServo);
-        onlyCloseLidKey.onTrue(&closeServo);
-        shootRegKey.whileTrue(&indexer10Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
+        shootRegKey.onTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
         shootFastKey.whileTrue(&indexer20Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
-        autoAimKey.whileTrue(&autoCommand)->onFalse(&lookMouse)->onTrue(&shooterStart)->onTrue(&closeServo);
+        autoAimKey.onTrue(&shooterStart)->onTrue(&closeServo);
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
-        // drivers->commandScheduler.addCommand(&draw); //tries to draw immediately, doesn't always work well
+        drivers->commandScheduler.addCommand(&draw); //tries to draw immediately, doesn't always work well
 
         // drive commands and also enable mouse looking
 
@@ -125,29 +132,29 @@ public:
             drivers->commandScheduler.addCommand(&lookMouse);
         }
         drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
+        drivers->commandScheduler.addCommand(&indexerIdle);
         update();
     }
 
     bool isStopped = true;
 
     src::Drivers *drivers;
-    InfantryHardware hardware;
+    Hardware hardware;
 
 
     // Subsystems
     subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
-    subsystems::IndexerSubsystem indexer{drivers, &hardware.indexMotor, false};
+    subsystems::SingleIndexerSubsystem indexer{drivers, &hardware.indexMotor, false}; //standard doesn't home
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::ServoSubsystem servo{drivers, &hardware.servo};
-    subsystems::JetsonSubsystem jetson{drivers, &gimbal};
+    subsystems::JetsonSubsystem jetson{drivers, &gimbal, nullptr};
 
 
     // //commands
     commands::InfantryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &servo};
-    commands::AutoAimCommand autoCommand{drivers, &gimbal, &jetson};
-    // commands::AutoAimAndFireCommand autoFireCommand{drivers, &gimbal, &indexer, &cv};
+    // commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr}; //Need to implement drivetrain odo for standard cv
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::JoystickMoveCommand lookJoystickOffset{drivers, &gimbal, true};
@@ -157,17 +164,19 @@ public:
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 
+    commands::IndexerNBallsCommand indexerSingle{drivers, &indexer, 1, 20};
     commands::IndexerNBallsCommand indexer10Hz{drivers, &indexer, -1, 10};
     commands::IndexerNBallsCommand indexer20Hz{drivers, &indexer, -1, 20};
     commands::IndexerUnjamCommand indexerUnjam{drivers, &indexer};
 
     commands::IndexerStopCommand indexerStop{drivers, &indexer};
+    commands::IndexerIdleCommand indexerIdle{drivers, &indexer};
 
     //CHANGE NUMBERS LATER
     commands::DrivetrainDriveCommand peekRight{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_RIGHT, commands::ControlMode::KEYBOARD};
     commands::DrivetrainDriveCommand peekLeft{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_LEFT, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand drivetrainFollowKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::FOLLOW_TURRET, commands::ControlMode::CONTROLLER};
+    commands::DrivetrainDriveCommand drivetrainFollowKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::KEYBOARD}; //Temporary standard doesn't follow drivetrain because its yaw encoder (through the ribbon cable) doesn't work
+    commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
     commands::DrivetrainDriveCommand beybladeJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE, commands::ControlMode::CONTROLLER};
     commands::DrivetrainDriveCommand beybladeKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE, commands::ControlMode::KEYBOARD};
     commands::DrivetrainDriveCommand noSpinDriveCommand{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
@@ -187,8 +196,8 @@ public:
     Trigger onlyCloseLidKey{drivers, Remote::Key::CTRL}; //blame peter
     Trigger autoAimKey{drivers, MouseButton::RIGHT};
     Trigger shootKey{drivers, MouseButton::LEFT};
-    Trigger shootFastKey = shootKey & !onlyCloseLidKey;
-    Trigger shootRegKey = shootKey & onlyCloseLidKey;
+    Trigger shootFastKey = shootKey & onlyCloseLidKey;
+    Trigger shootRegKey = shootKey & !onlyCloseLidKey;
 
     Trigger scrollUp{drivers, MouseScrollDirection::UP};
     Trigger scrollDown{drivers, MouseScrollDirection::DOWN};
@@ -209,6 +218,8 @@ public:
     Trigger joystickDrive0{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};// = (Trigger(drivers, Remote::Key::Q) & Trigger(drivers, Remote::Key::E)) | Trigger(drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP);
     Trigger joystickDrive1{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::MID};
     Trigger joystickDrive2{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
+    
+    Trigger autoFireTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
 
 
     //keyboard driving
@@ -220,7 +231,7 @@ public:
 
     Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
-    Trigger* triggers[24] = {&joystickLook0, &joystickLook1, &joystickLook2, &peekLeftButton, &peekRightButton, &peekNoneButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &onlyCloseLidKey, &unjamKey, &shootKey, &shootRegKey, &shootFastKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
+    Trigger* triggers[25] = {&joystickLook0, &joystickLook1, &joystickLook2, &peekLeftButton, &peekRightButton, &peekNoneButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &onlyCloseLidKey, &unjamKey, &autoFireTrigger, &shootKey, &shootRegKey, &shootFastKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
 
 private:
     bool wasControllerModeBeforeRecal;

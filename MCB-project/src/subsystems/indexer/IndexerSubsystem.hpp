@@ -1,97 +1,158 @@
 #pragma once
-#include "tap/algorithms/smooth_pid.hpp"
 #include "tap/architecture/periodic_timer.hpp"
 #include "tap/board/board.hpp"
 #include "tap/motor/dji_motor.hpp"
-#include "tap/motor/servo.hpp"
 #include "tap/control/subsystem.hpp"
 
-#include "ShotCounter.hpp"
+// #include "IndexerController.hpp"
 #include "drivers.hpp"
 
 namespace subsystems
 {
 
+    
+// a superclass for SingleIndexerSubsystem and HeroIndexerSubsystem
+// allows commands to say to shoot at a rate, shoot once, unjam...
+// and single and hero can handle that differently
+// it used to be that SingleIndexerSubsystem's responibilities were in IndexerSubsystem, 
+// and HeroIndexerSubsystem would override things. Hero broke when we changed something (position control)
+// that would have only applied to SingleIndexerSubsystem if it had existed.
 class IndexerSubsystem : public tap::control::Subsystem
 {
+    
+private:
+uint32_t lastShotTime = 0; //ms, for the 20Hz cooldown
+static constexpr uint32_t MIN_SHOT_FREQ = 50; //ms, for the 20Hz cooldown
+
+int numShotsRemaining = 0; //for indexNShotsAtRate. Decrements each time tryShootOnce gets called. Is -1 for indexAtRate.
+float shotsPerSecond = 0; //is 0 if not continuously firing, is positive if indexAtRate or indexNShotsAtRate is working.
+tap::arch::PeriodicMilliTimer timer;
+
+
+bool autoUnjamTrigger(tap::motor::DjiMotor* unjamMotor);
+
+
+protected:  
+src::Drivers* drivers;
+tap::motor::DjiMotor* motorIndexer; //for checking if it is online
+
+// single and hero should check this
+bool isManualUnjamming = false;
+
+// single and hero should check this
+bool isStopped = true;
+
+// setting a virtual method equal to 0 is like an abstract method in java: it isn't implemented in this class, but it is in a subclass.
+
+// IndexerSubsystem does things in initialize, Single and Hero override this to initialize things.
+virtual void finishInitialize() = 0;
+// IndexerSubsystem does things in refresh, Single and Hero override this to update.
+virtual void finishRefresh() = 0;
+
+// single and hero can call this to know if they should unjam this motor
+void doAutoUnjam(tap::motor::DjiMotor* unjamMotor, tap::arch::MilliTimeout& timeoutUnjam, bool& isAutoUnjamming);
 
 
 public:
-ShotCounter counter;
 
-protected:  // Private Variables
-src::Drivers* drivers;
-tap::motor::DjiMotor* motorIndexer;
-tap::algorithms::SmoothPid indexPIDController;
-float revPerBall;
-
-float ballsPerSecond = 0.0f;
-static constexpr int MAX_INDEX_RPM = 17000;
-int32_t indexerVoltage = 0;
-
-
-tap::arch::MilliTimeout timeoutUnjam;
-bool isAutoUnjamming = false;
-
-
-tap::arch::MilliTimeout timeoutHome;
-enum class HomingState : uint8_t {
-    DONT_HOME = 0,       // hero doesn't home, it has a beambreak. Standard might home. Sentry needs it
-    NEED_TO_HOME = 1,    // waiting until motor turns on (or imu to be done) to start homing
-    HOMING = 2,          // the timer is going, the motor is spinning
-    HOMED = 3,           // homed sucessfully, by motor being stalled
-    GAVE_UP_HOMING = 4   // timer ran out, we are out of physical shots (probably)
-};
-
-private:
-int homeTimeoutCounter = 0;
-
-HomingState homingState;
-
-public:  // Public Methods
-
-IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming);
-IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, ShotCounter::BarrelType barrel);
-IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index, bool doHoming, ShotCounter::BarrelType barrel, float revPerBall);
+IndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* index);
 
 ~IndexerSubsystem() {}
 
+// only registers the subsystem here
 virtual void initialize();
 
-virtual void refresh() override;
+// sets isHoming using shouldStartHoming and shouldEndHoming, and handles indexAtRate and indexNShotsAtRate calling tryShootOnce.
+virtual void refresh();
 
-virtual float indexAtRate(float ballsPerSecond);
-virtual void indexAtMaxRate();
+// Sets the index to shoot at a fixed rate until stopped.
+// This can be stopped by calling tryShootOnce() or forceShootOnce(), or indexAtRate(0), or stopIndex().
+// Avoids overheating.
+// If inputShotsPerSecond is negative or 0, then this behaves like stopIndexingAtRate().
+// If inputShotsPerSecond is above 20, then this behaves like it was 20 because of canShoot()'s 20Hz cooldown between shots.
+// Returns true if it shot immediately, false if it didn't (because the index was already indexing at a rate)
+bool indexAtRate(float inputShotsPerSecond);
 
+// Sets the index to shoot at a fixed rate until tryShootOnce() has benn called the target number of times, or until stopped.
+// see indexAtRate() for more info.
+// If numShots is negative or 0, then this behaves like stopIndexingAtRate().
+// Returns true if it shot immediately, false if it didn't (because the index was already indexing at a rate)
+bool indexNShotsAtRate(float inputShotsPerSecond, int numShots);
+
+// stops indexAtRate or indexNShotsAtRate from continuing.
+void stopIndexingAtRate();
+
+// if indexNShotsAtRate shot all it's shots, or indexAtRate or indexNShotsAtRate were stopped some other way.
+bool isDoneIndexingAtRate();
+
+// Stops the motors from moving as quick as possible, avoiding shooting any more shots.
+// Stops indexAtRate and indexNShotsAtRate from shooting more shots.
 void stopIndex();
 
-void unjam();
 
-virtual float getNumBallsShot();
-virtual float getTotalNumBallsShot();
+virtual void finishStopIndex() = 0; 
 
-virtual void resetBallsCounter();
 
-virtual float getBallsPerSecond();
+// stops indexAtRate and unjam, but allows the indexer to still move
+void idle();
 
-virtual float getActualBallsPerSecond();
+// Sets the index to spin backwards until stopped.
+// Stopped in the same way as indexAtRate().
+void manualUnjam();
 
-// non hero always returns true
+
+
+// uses canShoot() to determine if shooting is possible. 
+// If it can shoot, shoots once, and returns true.
+// Otherwise this is ignored and returns false.
+virtual bool tryShootOnce() = 0;
+
+// doesn't check heat. use heatAllowsShooting() to know if you should call this
+// Might be useful if you intentionally want to overheat.
+virtual void forceShootOnce() = 0; 
+// on hero, should force ignore beambreak?
+// It depends on what the robot pilot wants 'force shoot' to do.
+// Would have been good in the past, killing yourself to kill the base.
+
+
+// If the beambreak sensor senses that there is a shot ready.
+// non heros always returns true, as far as they know there is always a shot ready.
 virtual bool isProjectileAtBeam();
 
-virtual bool isIndexOnline();
+// if the ref system thinks it's powering the motor. Either there is a delay until power is given or the motor just takes a lot of time to turn on.
+bool refPoweringIndex();
+
+// if the motor thinks it's online. There is a delay after the ref system thinks it is returning power, and there is a delay after the ref system thinks it took power.
+bool isIndexOnline();
+
+// gives a number (ideally) between 0 and 1. 0 is no heat, 1 is full of heat. If forceShootOnce() is used then it could be above 1.
+virtual float getEstHeatRatio() = 0;
+
+// used by ui (PredictedRemainingShotsIndicator)
+virtual float getTotalNumBallsShot() = 0;
+
+// If heat (kept track on the robot, not through the ref system) allows shooting another shot.
+virtual bool heatAllowsShooting() = 0;
+
+// If isIndexOnline(), refPoweringIndex(), heatAllowsShooting(), and isProjectileAtBeam() all return true.
+// Also has a 20Hz cooldown to prevent tryShootOnce() called too quickly from shooting too quickly.
+virtual bool canShoot();
 
 
-void homeIndexer();
+int getMeasurement();
 
-private:  // Private Methods
-
-void setTargetMotorRPM(int targetMotorRPM);
 
 protected:
 
-bool doAutoUnjam(float inputBallsPerSecond);
+// // if homing (or loading for hero) should start. Check isHoming for if the robot is currently homing.
+// virtual bool shouldStartHoming() = 0;
+// // if homing (or loading for hero) should stop. Check isHoming for if the robot is currently homing.
+// virtual bool shouldEndHoming() = 0;
+// bool isHoming; //set by IndexerSubsystem, used by Single and Hero in their finishRefresh()
 
+// Single and Hero would call this when they shoot.
+// This is for the 20Hz cooldown in canShoot().
+void justShot();
 
 };
 } //namespace subsystems

@@ -10,6 +10,7 @@
 #include "tap/motor/dji_motor.hpp"
 
 #include "controllers/PitchController.hpp"
+#include "controllers/AngleSetpointRate.hpp"
 #include "controllers/YawController.hpp"
 #include "drivers.hpp"
 #include "GimbalSubsystemConstants.hpp"
@@ -31,6 +32,8 @@ private:  // Private Variables
 
     YawController yawController;  // default constructor
     PitchController pitchController;
+    AngleSetpointRate absoluteYawRate;
+    void applyYawSetpoint(float changeInTargetYaw, float targetPitch, float targetYawRate);
 
     float pitchMotorVoltage, yawMotorVoltage;
 
@@ -44,12 +47,12 @@ private:  // Private Variables
     float positionHistory[LATENCY_Q_SIZE];
 
     // for sysid
-    std::random_device rd;
-    std::mt19937 gen;
+    std::mt19937 gen{std::mt19937::default_seed};
     std::uniform_int_distribution<int> distYaw;
     std::uniform_int_distribution<int> distPitch;
 
     float prevTargetPitch = 0;
+    bool wasYawMotorOffline = true;
 
 public:  // Public Methods
     GimbalSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* yaw, tap::motor::DjiMotor* pitch);
@@ -77,6 +80,10 @@ public:  // Public Methods
 
     float getPrevTargetPitch();
     void setPrevTargetPitch(float value);
+    
+#ifdef MCB_HOSTED
+    float getHostedTargetYaw() const { return targetYawAngleWorld; }
+#endif
 
     /*
      *   Straight up gives a full state for the controllers to target
@@ -115,8 +122,16 @@ public:  // Public Methods
 
     void clearBuildup();
 
+    bool isYawMotorOnline();
+
+    void setAngles(float yawAngle, float pitchAngle);
+
+
 private:  // Private Methods
     int getPitchVoltage(float targetAngle, float pitchAngleRelativeGimbal, float pitchAngularVelocity, float dt);
     int getYawVoltage(float driveTrainAngularVelocity, float yawAngleRelativeWorld, float yawAngularVelocity, float desiredAngleWorld, float inputVel, float dt);
+
+    void resetEncoderIfGainPower();
+
 };
 }  // namespace subsystems

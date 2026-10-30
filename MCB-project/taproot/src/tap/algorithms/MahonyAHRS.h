@@ -13,12 +13,16 @@
 // 29/09/2011    SOH Madgwick    Initial release
 // 02/10/2011    SOH Madgwick    Optimised for reduced CPU load
 // 09/06/2020    Matthew Arnold  Update style, use safer casting
+// 04/30/2022    Matthew Arnold  Change input/outputs from degrees to radians
+// 03/06/2025    Chinmay Murthy  Make getters const
 //
 //=============================================================================================
 #ifndef MAHONY_AHRS_H_
 #define MAHONY_AHRS_H_
 
 #include <cmath>
+
+#include "modm/math/geometry/angle.hpp"
 
 //--------------------------------------------------------------------------------------------
 // Variable declaration
@@ -70,21 +74,13 @@ public:
         float my,
         float mz);
     void updateIMU(float gx, float gy, float gz, float ax, float ay, float az);
-    float getRoll() const { return roll * 57.29578f; }
-    float getPitch() const { return pitch * 57.29578f; }
-    float getYaw() const
-    {
-        float yawDegrees = yaw * 57.29578f;
-        return fmod(yawDegrees + 360.0f, 360.0f);
-    }
-    float getRollRadians() const { return roll; }
-    float getPitchRadians() const { return pitch; }
-    float getYawRadians() const { return yaw; }
-    float getq0() const {return q0;}
-    float getq1() const {return q1;}
-    float getq2() const {return q2;}
-    float getq3() const {return q3;}
-
+    float getRoll() const { return roll; }
+    float getPitch() const { return pitch; }
+    float getYaw() const { return fmod(yaw + M_TWOPI, M_TWOPI); }
+		float getq0() const { return q0; }
+    float getq1() const { return q1; }
+    float getq2() const { return q2; }
+    float getq3() const { return q3; }
 };
 
 #endif  // MAHONY_AHRS_H_

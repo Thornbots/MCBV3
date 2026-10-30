@@ -1,104 +1,162 @@
 #include "AutoAimAndFireCommand.hpp"
+#include "JetsonSubsystemConstants.hpp"
+
+#include <algorithm>
+
 
 namespace commands {
 using namespace tap::communication::serial;
 
-void AutoAimAndFireCommand::initialize() {
-    shoot = -1;
+AutoAimAndFireCommand::AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsystem* gimbal, IndexerSubsystem* indexer, FlywheelSubsystem* flywheel, JetsonSubsystem* jetson, OdometrySubsystem* odo, AutoDriveCommand* adc, bool isManualControl)
+    : drivers(drivers),
+        gimbal(gimbal),
+        indexer(indexer),
+        flywheel(flywheel),
+        jetson(jetson),
+        odo(odo),
+        adc(adc),
+        isManualControl(isManualControl)
+{
+    addSubsystemRequirement(gimbal);
+    if(!isManualControl) {
+        addSubsystemRequirement(indexer);
+        addSubsystemRequirement(flywheel);
+    }
+    startShotTimeout.stop();
+    cvTargetValidTimeout.stop();
+}
 
-    drivers->leds.set(tap::gpio::Leds::Green, true);
+void AutoAimAndFireCommand::initialize() {
+    isScheduled = true;
 }
 void AutoAimAndFireCommand::execute() {
     bool allowShooting = true;
     bool allowGimbal = true;
 
-    if (drivers->refSerial.getRefSerialReceivingData() && 
-       (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
+    // if automatic, check if we are in a game, and if we are before it starts, don't allow aiming or shooting
+    // if (!isManualControl && drivers->refSerial.getRefSerialReceivingData() && 
+    //    (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
 
-        allowShooting = false;
-        allowGimbal = false;
+    //     allowShooting = false;
+    //     allowGimbal = false;
 
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
-            // allow both
-            allowShooting = true;
-            allowGimbal = true;
-        }
+    //     if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
+    //         // allow both
+    //         allowShooting = true;
+    //         allowGimbal = true;
+    //     }
 
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
-            // countdown, only allow gimbal
-            allowGimbal = true;
-        }
+    //     //don't spin before match
+    //     if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
+    //         // countdown, only allow gimbal
+    //         allowGimbal = true;
+    //     }
 
+    // }
+    
+    if(cvTargetValidTimeout.isExpired()) cvTargetValidTimeout.stop();
+    if(startShotTimeout.isStopped() && jetson->getCvTarget(&cvTarget)) {
+        receivedCvTargetEver = true;
+        cvTargetValidTimeout.restart(TARGET_VALID_TIME);
+        // Shorter than the physical indexing latency means request immediately.
+        startShotTimeout.restart(std::max(0, static_cast<int>(cvTarget.delay_ms) - FIRING_LATENCY_TIME));
     }
+    float angleToTurnForSentry = drivers->hitTracker.getAngleToTurnForSentry();
+    bool turnToHitFlag =        (cvTarget.flags & CV_TARGET_FLAG_TURN_TO_HIT)>0;
+    bool typeCBasedPatrolFlag = (cvTarget.flags & CV_TARGET_FLAG_TYPE_C_BASED_PATROL)>0;
+    bool shootFlag =            (cvTarget.flags & CV_TARGET_FLAG_FIRE)>0;
+    bool needToTurnToHit = turnToHitFlag && drivers->hitTracker.didHitThisControlCycle();
+    turningToHit &= turnToHitFlag;
+    
+    // set variables that ui debug can use
+    targeting = allowGimbal&&!cvTargetValidTimeout.isStopped()&&!(needToTurnToHit||turningToHit);
+    if(isManualControl) targeting &= shootFlag&&drivers->remote.getMouseR();
+    // cvTarget and getAim* share the raw aim frame, never relocalized. The gimbal's world yaw is
+    // the IMU's, counterclockwise and zero at power-on, so take the start's yaw off
+    Vector2d deltaXY{cvTarget.x - odo->getAimX(), cvTarget.y - odo->getAimY()};
+    Vector3d deltasUnadjusted{deltaXY.getX(), deltaXY.getY(), cvTarget.z};
+    Vector3d deltasAdjusted = Projections::robotSpaceToPivotSpace(deltasUnadjusted);
+    deltaXY = {deltasAdjusted.getX(), deltasAdjusted.getY()};
+    deltaX = deltasAdjusted.getX();
+    deltaY = deltasAdjusted.getY();
+    deltaZ = deltasAdjusted.getZ();
+    targetYaw = deltaXY.angle() - odo->getStartYaw();
+    targetPitch = Reticle::solveForPitch(deltaXY.magnitude(), deltaZ); //gimbal subsystem will clamp the pitch. If it gets clamped, maybe don't shoot?
+    
+    if (targeting) { //do position-based aiming
+        // the tap::algorithms::ballistics::findTargetProjectileIntersection function
+        // is useful for knowing how to hit a moving target, but the jetson already
+        // did that work. So we just need to do simple projectile motion to aim
+        // at a position that isn't moving.
+        // The cvTarget xyz is in the field frame, so if odo thinks we are at (3, 4)
+        // and cvTarget says to aim at (5, 4, 0.2), we need to aim toward +x. We adjust
+        // our aiming to hit the cvTarget as odo moves, so if we move to (3, 3.8)
+        // while we are aiming, we need to look slightly to the left of +x.
 
-
-    float dyaw = 0;
-    float currentYaw = gimbal->getYawAngleRelativeWorld();
-    float currentPitch = gimbal->getPitchEncoderValue();
-    cv->update(currentYaw, currentPitch, yawvel, pitchvel, &dyaw, &pitch, &yawvel, &pitchvel, &shoot);
-
-    if (shoot != -1) {
-        //if(tap::arch::clock::getTimeMilliseconds() - lastSeenTime >  PERSISTANCE) flip = flip * -1;
-        //Found a target, moving to it and maybe shooting at it
-
-        dyaw = fmod(dyaw, 2 * PI);
-        // clamp between -Pi and PI to allow for dividing
-        dyaw = dyaw > PI ? dyaw - 2 * PI : dyaw < -PI ? dyaw + 2 * PI : dyaw;
-        lastSeenTime = tap::arch::clock::getTimeMilliseconds();
-
-        float newPitch = currentPitch + (pitch - currentPitch) / 4.0f;
-        if (abs(dyaw) > .05) {
-            dyaw /= 4.0f;}
-        else dyaw /= 1.75;
-        if (allowGimbal) gimbal->updateMotorsAndVelocityWithLatencyCompensation(dyaw/2.5f, pitch, yawvel, pitchvel);  // division is to prevent overshoot from latency
-        if (shoot == 1) isShooting = true;
-    } else if (tap::arch::clock::getTimeMilliseconds() - lastSeenTime < PERSISTANCE) {
-        //Haven't found a target right now but I have recently, keep shooting if I was shooting
-
-        if(allowGimbal) gimbal->updateMotors(0, pitch);
+        // Note that for gimbal subsystem, positive pitch is downward.
+        gimbal->setAngles(targetYaw, targetPitch);
+        if(startShotTimeout.execute()){
+            if(allowShooting && shootFlag)
+                indexer->tryShootOnce();
+            startShotTimeout.stop();
+        }
     } else {
-        //Haven't found a target, patrol
+        if(isManualControl){
+            MouseMoveCommand::executeWith(drivers, gimbal);
+        } else if (allowGimbal){ //automatic movement
+            // getAngleToTurnForSentry() returns a world-frame hit bearing for one control cycle.
+            // Preserve that bearing as an absolute yaw target while the turret turns toward it.
+            if (needToTurnToHit) {
+                // The tracker already expressed the hit bearing in the gimbal's world-yaw frame.
+                hitTargetYaw = angleToTurnForSentry;
+                turningToHit = true;
+                hitTurnStartTime = tap::arch::clock::getTimeMilliseconds();
+            }
 
-        isShooting = false;
-        pitch = 0.05;  // pitch down to avoid looking into the sky
-        numCyclesForBurst++;
-
-        if(allowGimbal) {
-            if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
-                gimbal->updateMotors(BURST_AMOUNT, pitch);
-                numCyclesForBurst = 0;
+            if (turningToHit && tap::arch::clock::getTimeMilliseconds() - hitTurnStartTime < HIT_TURN_DURATION) {
+                // Hold the heading toward the hit. CV still runs at the top of execute(), so if the
+                // attacker comes into view the shoot branch takes over and engages it.
+                gimbal->setAngles(hitTargetYaw, PATROL_PITCH);
             } else {
-                gimbal->updateMotors(PATROL_SPEED, pitch);
+                turningToHit = false;
+                float yawChange = 0;
+                if(typeCBasedPatrolFlag) {
+                    numCyclesForBurst++;
+                    if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
+                        yawChange = BURST_AMOUNT;
+                        numCyclesForBurst = 0;
+                    } else {
+                        yawChange = PATROL_SPEED;
+                    }
+                }
+                gimbal->updateMotors(yawChange, PATROL_PITCH);
             }
         }
     }
 
-    if(allowShooting){
-        if (isShooting) {
-            // if we see a panel or recently have seen a panel
-            indexer->indexAtRate(20);
+    if(!isManualControl){
+        if(allowShooting){
+            indexer->idle();
         } else {
-            // if we haven't seen a panel for a bit
-            //  indexer->stopIndex();
-            indexer->unjam();
+            indexer->stopIndex();
         }
-    } else {
-        indexer->stopIndex();
-        
-    }
-
-    if(allowGimbal) {
-        flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM);
-    } else {
-        gimbal->stopMotors();
-        if(adc->getIsScheduled()) flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM/4);
+        if(allowGimbal) {
+            flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM);
+        } else {
+            gimbal->stopMotors();
+            if(adc->getIsScheduled()) flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM/4);
+        }
     }
 }
 
 void AutoAimAndFireCommand::end(bool) {
-    pitch = 0;
-    drivers->leds.set(tap::gpio::Leds::Green, false);
+    isScheduled = false;
+    startShotTimeout.stop();
+    cvTargetValidTimeout.stop();
 }
+
+bool AutoAimAndFireCommand::getIsScheduled() { return isScheduled; }
+
 
 bool AutoAimAndFireCommand::isFinished() const { return !drivers->remote.isConnected(); }
 }  // namespace commands

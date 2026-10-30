@@ -40,7 +40,7 @@ public:
         addGraphicsObject(&orient);
         addGraphicsObject(&reticle);
         addGraphicsObject(&ring);
-        // addGraphicsObject(&remain);
+        addGraphicsObject(&remain);
         addGraphicsObject(&numbers);
         addGraphicsObject(&countdown);
         addGraphicsObject(&velo);
@@ -55,7 +55,7 @@ public:
         orient.update();
         reticle.update();
         ring.update();
-        // remain.update();
+        remain.update();
         numbers.update();
         countdown.update();
         velo.update();
@@ -72,7 +72,7 @@ public:
 
 private:
     src::Drivers* drivers;
-    UISubsystem* ui; 
+    UISubsystem* ui;
     GimbalSubsystem* gimbal;
     FlywheelSubsystem* flywheel;
     HeroIndexerSubsystem* indexer;
@@ -82,9 +82,9 @@ private:
     LaneAssistLines lane{gimbal};
     SupercapChargeIndicator supercap{drivetrain};
     ChassisOrientationIndicator orient{true, drivers, gimbal, drivetrain};
-    Reticle reticle{gimbal, indexer};
+    Reticle reticle{drivers, gimbal, indexer};
     HitRing ring{drivers, gimbal};
-    // PredictedRemainingShotsIndicator remain{drivers, indexer};
+    PredictedRemainingShotsIndicator remain{drivers, indexer};
     AllRobotHealthNumbers numbers{drivers};
     Countdown countdown{drivers};
     LinearVelocityIndicator velo{drivetrain};

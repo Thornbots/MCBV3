@@ -29,6 +29,9 @@ public:
     {
         addSubsystemRequirement(gimbal);
     }
+    
+    static void executeWith(src::Drivers* drivers, GimbalSubsystem* gimbal);
+    static void executeWith(src::Drivers* drivers, GimbalSubsystem* gimbal, bool& firstTime, bool& isOffset);
 
     void initialize() override;
 
@@ -51,8 +54,7 @@ private:
     uint32_t recalStartedTime;
     bool isRecalibrating = false;
 
-    float yaw = 0.0f, pitch = 0.0f;
-
     bool isOffset = false;
+    bool firstTime = false;
 };
 }  // namespace commands

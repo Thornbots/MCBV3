@@ -3,11 +3,13 @@
 namespace subsystems {
 class YawController {
 public:
-    float torqueHistory[Q_SIZE];
+    float torqueHistory[Q_SIZE]{};
     YawController();
     //~YawController();
     void estimateState(float *theta, float *thetadot, float tLast, float drivetrainVelocity);
     float calculate(float currentPosition, float currentVelocity, float currentDrivetrainVelocity, float targetPosition, float inputVelocity, float deltaT);
+
+    void estimateYawPos(float& currentPosition, float& currentVelocity, float currentDrivetrainVelocity);
 
     void clearBuildup() {
         buildup = 0;

@@ -3,9 +3,9 @@
 namespace subsystems {
     FlywheelSubsystem::FlywheelSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* flywheel1, tap::motor::DjiMotor* flywheel2) 
       : tap::control::Subsystem(drivers),
+        drivers(drivers),
         motorFlywheel1(flywheel1),
-        motorFlywheel2(flywheel2),
-        drivers(drivers) {} 
+        motorFlywheel2(flywheel2) {}
 
         /**
          * initializes the 2 flywheels
@@ -21,12 +21,19 @@ namespace subsystems {
      * sets the target motor RPM of the flywheels
      */
     void FlywheelSubsystem::setTargetVelocity(int targetMotorRPM){
+        if (startupCounter < 80 && drivers->remote.isConnected()) {
+            startupCounter++;
+            stopMotors();
+        } else {
         this->targetMotorRPM = targetMotorRPM;
-        flywheelPIDController1.runControllerDerivateError(targetMotorRPM - motorFlywheel1->getShaftRPM(), 1);
-        flywheelPIDController2.runControllerDerivateError(targetMotorRPM - motorFlywheel2->getShaftRPM(), 1);
+        flywheelPIDController1.runControllerDerivateError(targetMotorRPM - (motorFlywheel1->getEncoder()->getVelocity() * 30.0f / PI), 1);
+        flywheelPIDController2.runControllerDerivateError(targetMotorRPM - (motorFlywheel2->getEncoder()->getVelocity() * 30.0f / PI), 1);
 
         flyWheel1Voltage = static_cast<int32_t>(flywheelPIDController1.getOutput());
         flyWheel2Voltage = static_cast<int32_t>(flywheelPIDController2.getOutput());
+        }
+
+        if (!drivers->remote.isConnected()) startupCounter = 0;
     }
 
     /**

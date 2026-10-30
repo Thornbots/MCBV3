@@ -29,7 +29,7 @@ public:
             int16_t shotsBought = robotData.turret.bulletsRemaining17;
             #endif
 
-            float shotsShot = index->getTotalNumBallsShot() - shotsAtLastReload + 0.2; //add 0.2 for wiggleroom from unjam
+            float shotsShot = index->getTotalNumBallsShot() - shotsAtLastReload;
 
 
             float maxShots = FILLED_NUM_SHOTS;
@@ -60,9 +60,9 @@ private:
     IndexerSubsystem* index;
 
     #if defined(HERO)
-    static constexpr int FILLED_NUM_SHOTS = 80; 
+    static constexpr int FILLED_NUM_SHOTS = 74; 
     #else
-    static constexpr int FILLED_NUM_SHOTS = 500; 
+    static constexpr int FILLED_NUM_SHOTS = 729; 
     #endif
 
     static constexpr int MAX_SHOTS_1v1 = 200;     // if in 1v1, then you are a standard, and you can shoot only 200
