@@ -62,7 +62,10 @@ public:
         drivers->leds.set(tap::gpio::Leds::Green, false);
         tap::buzzer::silenceBuzzer(&drivers->pwm);
     }
-    bool isFinished() const override { return !drivers->mapping.isActive(); }
+    // Like every other command, a lost remote ends it so the stop defaults own all motors.
+    bool isFinished() const override {
+        return !drivers->mapping.isActive() || !drivers->remote.isConnected();
+    }
     const char* getName() const override { return "MCB mapping restrictions"; }
 
 private:

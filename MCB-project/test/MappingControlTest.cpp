@@ -136,17 +136,25 @@ TEST_F(MappingControlTest, SetupFailKeepsDoneStoppedAndHeadForward) {
     EXPECT_NEAR(std::remainder(control.gimbal.getHostedTargetYaw() - chassisYaw, 2 * PI), 0, 1e-5f);
 }
 
-TEST_F(MappingControlTest, DisconnectStopsDriveAndReconnectRestoresRestrictions) {
+TEST_F(MappingControlTest, DisconnectStopsEveryMotorAndReconnectRestoresRestrictions) {
     drivers.mapping.requestStart();
     drivers.mapping.receivePing(2, 0);
     tick();
     EXPECT_GT(control.drivetrain.getHostedTargetVelocity().magnitude(), 0);
+    EXPECT_NE(control.hardware.odoMotor.getOutputDesired(), 0);
     hosted::timeMs += 101;
     drivers.remote.read();
     ASSERT_FALSE(drivers.remote.isConnected());
     tick();
+    tick();
+    EXPECT_FALSE(drivers.commandScheduler.isCommandScheduled(&control.mappingCommand));
+    EXPECT_TRUE(drivers.commandScheduler.isCommandScheduled(&control.odoStop));
+    EXPECT_TRUE(drivers.commandScheduler.isCommandScheduled(&control.stopGimbal));
     for (const auto* motor : {&control.hardware.driveMotor1, &control.hardware.driveMotor2,
-            &control.hardware.driveMotor3, &control.hardware.driveMotor4})
+            &control.hardware.driveMotor3, &control.hardware.driveMotor4,
+            &control.hardware.yawMotor, &control.hardware.pitchMotor, &control.hardware.odoMotor,
+            &control.hardware.flywheelMotor1, &control.hardware.flywheelMotor2,
+            &control.hardware.indexMotor})
         EXPECT_EQ(motor->getOutputDesired(), 0);
     EXPECT_EQ(drivers.mapping.getState(), src::MappingMachine::State::Ready);
     connect(true);
@@ -198,53 +206,58 @@ TEST_F(MappingControlTest, ForwardHeadTracksChassisHeadingRatherThanWorldZero) {
     }
 }
 
-TEST_F(MappingControlTest, StartWhileDisconnectedClearsOutputsLeftByMain) {
+TEST_F(MappingControlTest, StartWhileDisconnectedKeepsEveryMotorStopped) {
     hosted::timeMs += 101;
     drivers.remote.read();
     ASSERT_FALSE(drivers.remote.isConnected());
+    tick();  // main schedules its stop defaults once the remote is gone
     for (auto* motor : {&control.hardware.driveMotor1, &control.hardware.driveMotor2,
             &control.hardware.driveMotor3, &control.hardware.driveMotor4,
+            &control.hardware.yawMotor, &control.hardware.pitchMotor, &control.hardware.odoMotor,
             &control.hardware.flywheelMotor1, &control.hardware.flywheelMotor2,
             &control.hardware.indexMotor}) motor->setDesiredOutput(1000);
     drivers.mapping.requestStart();
     tick();
+    EXPECT_FALSE(drivers.commandScheduler.isCommandScheduled(&control.mappingCommand));
     for (const auto* motor : {&control.hardware.driveMotor1, &control.hardware.driveMotor2,
             &control.hardware.driveMotor3, &control.hardware.driveMotor4,
+            &control.hardware.yawMotor, &control.hardware.pitchMotor, &control.hardware.odoMotor,
             &control.hardware.flywheelMotor1, &control.hardware.flywheelMotor2,
             &control.hardware.indexMotor}) EXPECT_EQ(motor->getOutputDesired(), 0);
 }
 
-TEST_F(MappingControlTest, PodsPointInEveryMappingStateEvenWithoutRemote) {
+TEST_F(MappingControlTest, PodsPointInEveryMappingStateAndStopWithoutRemote) {
     using State = src::MappingMachine::State;
-    for (bool disconnected : {false, true}) {
-        for (State state : {State::Setup, State::Ready, State::Mapping, State::Done}) {
-            SCOPED_TRACE(static_cast<int>(state));
-            SCOPED_TRACE(disconnected);
-            drivers.mapping = src::MappingMachine{};
-            drivers.mapping.requestStart();
-            if (state == State::Ready || state == State::Mapping)
-                drivers.mapping.receivePing(2, hosted::timeMs);
-            if (state == State::Mapping) drivers.mapping.receivePing(4, hosted::timeMs);
-            if (state == State::Done) drivers.mapping.receivePing(6, hosted::timeMs);
-            if (disconnected) {
-                hosted::timeMs += 101;
-                drivers.remote.read();
-                ASSERT_FALSE(drivers.remote.isConnected());
-            }
-            control.hardware.odoMotor.setDesiredOutput(0);
-            tick();
-            EXPECT_EQ(drivers.mapping.getState(), state);
-            expectRestricted();
-            EXPECT_NE(control.hardware.odoMotor.getOutputDesired(), 0);
-            EXPECT_EQ(ledStates[tap::gpio::Leds::Green], state == State::Ready);
-            EXPECT_FALSE(ledStates[tap::gpio::Leds::Red]);
-            EXPECT_FALSE(ledStates[tap::gpio::Leds::Blue]);
-            EXPECT_FALSE(drivers.commandScheduler.isCommandScheduled(&control.odoStop));
-            EXPECT_FALSE(drivers.commandScheduler.isCommandScheduled(&control.odoPointForwards));
-            const auto output = control.hardware.odoMotor.getOutputDesired();
-            control.mappingCommand.end(true);
-            EXPECT_EQ(control.hardware.odoMotor.getOutputDesired(), output);
-        }
+    for (State state : {State::Setup, State::Ready, State::Mapping, State::Done}) {
+        SCOPED_TRACE(static_cast<int>(state));
+        if (state != State::Setup) connect(true);  // the previous state ended disconnected
+        drivers.mapping = src::MappingMachine{};
+        drivers.mapping.requestStart();
+        if (state == State::Ready || state == State::Mapping)
+            drivers.mapping.receivePing(2, hosted::timeMs);
+        if (state == State::Mapping) drivers.mapping.receivePing(4, hosted::timeMs);
+        if (state == State::Done) drivers.mapping.receivePing(6, hosted::timeMs);
+        control.hardware.odoMotor.setDesiredOutput(0);
+        tick();
+        EXPECT_EQ(drivers.mapping.getState(), state);
+        expectRestricted();
+        EXPECT_NE(control.hardware.odoMotor.getOutputDesired(), 0);
+        EXPECT_EQ(ledStates[tap::gpio::Leds::Green], state == State::Ready);
+        EXPECT_FALSE(ledStates[tap::gpio::Leds::Red]);
+        EXPECT_FALSE(ledStates[tap::gpio::Leds::Blue]);
+        EXPECT_FALSE(drivers.commandScheduler.isCommandScheduled(&control.odoStop));
+        EXPECT_FALSE(drivers.commandScheduler.isCommandScheduled(&control.odoPointForwards));
+
+        hosted::timeMs += 101;
+        drivers.remote.read();
+        ASSERT_FALSE(drivers.remote.isConnected());
+        tick();
+        tick();
+        EXPECT_EQ(drivers.mapping.getState(), state);
+        EXPECT_FALSE(drivers.commandScheduler.isCommandScheduled(&control.mappingCommand));
+        EXPECT_EQ(control.hardware.odoMotor.getOutputDesired(), 0);
+        EXPECT_EQ(control.hardware.yawMotor.getOutputDesired(), 0);
+        EXPECT_EQ(control.hardware.pitchMotor.getOutputDesired(), 0);
     }
 }
 

@@ -127,7 +127,7 @@ public:
     void updateMapping() override {
         // main skips the scheduler (and Jetson refresh) until the IMU is ready.
         if (!drivers->recal.getIsImuReady()) jetson.serviceMappingPing();
-        if (!drivers->mapping.isActive() || isStopped) return;
+        if (!drivers->mapping.isActive() || isStopped || !drivers->remote.isConnected()) return;
         if (!drivers->commandScheduler.isCommandScheduled(&mappingCommand))
             drivers->commandScheduler.addCommand(&mappingCommand);
     }
