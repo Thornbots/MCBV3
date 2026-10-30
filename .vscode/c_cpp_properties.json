@@ -1,37 +1,20 @@
 {
   "configurations": [
     {
-      "name": "windows-gcc-x64",
-      "defines": [
-        "${default}",
-        "ENV_UNIT_TESTS",
-        "PLATFORM_HOSTED",
-        "RUN_WITH_PROFILING"
-      ],
-      "includePath": [
-        "${workspaceFolder}/**"
-      ],
-      "compilerPath": "C:/ProgramData/chocolatey/bin/gcc.exe",
-      "intelliSenseMode": "windows-gcc-x64",
-      "browse": {
-        "limitSymbolsToIncludedHeaders": true
-      },
-      "cStandard": "${default}",
-      "cppStandard": "${default}"
-    },
-    {
-      "name": "Sim",
-      "defines": [
-        "${default}",
-        "PLATFORM_HOSTED",
-        "RUN_WITH_PROFILING"
-      ],
+      "name": "SENTRY",
       "includePath": [
         "${default}",
-        "MCB-project/taproot/sim-modm/hosted-linux/modm/src"
+        "MCB-project/taproot/modm/src",
+        "MCB-project/taproot/modm/ext/cmsis/core",
+        "MCB-project/taproot/modm/ext/cmsis/device",
+        "MCB-project/taproot/modm/ext/cmsis/dsp",
+        "MCB-project/src/*"
       ],
-      "compilerPath": "g++",
-      "intelliSenseMode": "gcc-x64",
+      "defines": [
+        "SENTRY"
+      ],
+      "compilerPath": "arm-none-eabi-g++",
+      "intelliSenseMode": "gcc-arm",
       "browse": {
         "limitSymbolsToIncludedHeaders": true
       }
@@ -48,25 +31,6 @@
       ],
       "defines": [
         "INFANTRY"
-      ],
-      "compilerPath": "arm-none-eabi-g++",
-      "intelliSenseMode": "gcc-arm",
-      "browse": {
-        "limitSymbolsToIncludedHeaders": true
-      }
-    },
-    {
-      "name": "OLDINFANTRY",
-      "includePath": [
-        "${default}",
-        "MCB-project/taproot/modm/src",
-        "MCB-project/taproot/modm/ext/cmsis/core",
-        "MCB-project/taproot/modm/ext/cmsis/device",
-        "MCB-project/taproot/modm/ext/cmsis/dsp",
-        "MCB-project/src/*"
-      ],
-      "defines": [
-        "OLDINFANTRY"
       ],
       "compilerPath": "arm-none-eabi-g++",
       "intelliSenseMode": "gcc-arm",
@@ -94,7 +58,7 @@
       }
     },
     {
-      "name": "SENTRY",
+      "name": "ENGINEER",
       "includePath": [
         "${default}",
         "MCB-project/taproot/modm/src",
@@ -104,13 +68,49 @@
         "MCB-project/src/*"
       ],
       "defines": [
-        "SENTRY"
+        "ENGINEER"
       ],
       "compilerPath": "arm-none-eabi-g++",
       "intelliSenseMode": "gcc-arm",
       "browse": {
         "limitSymbolsToIncludedHeaders": true
       }
+    },
+    {
+      "name": "Sim",
+      "defines": [
+        "${default}",
+        "PLATFORM_HOSTED",
+        "RUN_WITH_PROFILING"
+      ],
+      "includePath": [
+        "${default}",
+        "MCB-project/taproot/sim-modm/hosted-linux/modm/src"
+      ],
+      "compilerPath": "g++",
+      "intelliSenseMode": "gcc-x64",
+      "browse": {
+        "limitSymbolsToIncludedHeaders": true
+      }
+    },
+    {
+      "name": "windows-gcc-x64",
+      "defines": [
+        "${default}",
+        "ENV_UNIT_TESTS",
+        "PLATFORM_HOSTED",
+        "RUN_WITH_PROFILING"
+      ],
+      "includePath": [
+        "${workspaceFolder}/**"
+      ],
+      "compilerPath": "C:/ProgramData/chocolatey/bin/gcc.exe",
+      "intelliSenseMode": "windows-gcc-x64",
+      "browse": {
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "cStandard": "${default}",
+      "cppStandard": "${default}"
     }
   ],
   "version": 4

@@ -94,7 +94,7 @@
     ".gitignore": true,
     "Pipfile": true,
     "COPYING": true,
-    ".devcontainer.json": true,
+    ".devcontainer": true,
     ".gitlab-ci.yml": true,
     "isolated-deploy": true,
     "MCB-project/build": true,
