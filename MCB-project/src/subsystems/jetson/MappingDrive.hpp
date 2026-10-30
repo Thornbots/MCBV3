@@ -5,7 +5,7 @@
 #include <cmath>
 #include "util/Pose2d.hpp"
 
-namespace robots {
+namespace commands {
 // Chassis-local convention: x right, y forward; angular velocity is rad/s.
 inline constexpr float MAPPING_MAX_TRANSLATION_MPS = 0.4f;
 inline constexpr float MAPPING_MAX_ROTATION_RADPS = 0.5f;
@@ -19,4 +19,4 @@ inline Pose2d mappingDrive(float right, float forward, float rotation, bool conn
     return Pose2d(right * scale, forward * scale,
                   std::clamp(rotation, -1.0f, 1.0f) * MAPPING_MAX_ROTATION_RADPS);
 }
-}  // namespace robots
+}  // namespace commands

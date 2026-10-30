@@ -80,7 +80,7 @@ Setup and Done stop drive. Ready and Mapping use chassis-relative manual
 joysticks: left horizontal/right, left vertical/forward, right horizontal/turn.
 Translation magnitude is capped at 0.4 m/s and rotation at 0.5 rad/s; tune
 `MAPPING_MAX_TRANSLATION_MPS` and `MAPPING_MAX_ROTATION_RADPS` in
-`src/robots/sentry/MappingDrive.hpp`. No boost or autonomous drive participates.
+`src/subsystems/jetson/MappingDrive.hpp`. No boost or autonomous drive participates.
 Remote disconnect stops drive but keeps odometry pod pointing active in every
 MMM state. Every active MMM state disables flywheels and
 indexing, including indexer homing, and holds pitch level and yaw aligned with

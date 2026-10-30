@@ -3,7 +3,7 @@
 
 #include "robots/RobotControl.hpp"
 #include "robots/sentry/SentryHardware.hpp"
-#include "robots/sentry/MappingCommand.hpp"
+#include "subsystems/jetson/MappingCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainDriveCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainStopCommand.hpp"
 #include "subsystems/drivetrain/MoveToPositionCommand.hpp"
@@ -194,7 +194,7 @@ public:
     subsystems::JetsonSubsystem jetson{drivers, &gimbal, &odo};
 
     // commands
-    MappingCommand mappingCommand{drivers, &drivetrain, &gimbal, &flywheel, &indexer, &odo};
+    commands::MappingCommand mappingCommand{drivers, &drivetrain, &gimbal, &flywheel, &indexer, &odo};
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     // commands::MouseMoveCommand lookMouse{drivers, &gimbal};

@@ -5,7 +5,7 @@
 #include <limits>
 #include <vector>
 #include "util/MappingMachine.hpp"
-#include "robots/sentry/MappingDrive.hpp"
+#include "subsystems/jetson/MappingDrive.hpp"
 
 namespace {
 using Machine = src::MappingMachine;
@@ -343,12 +343,12 @@ TEST(MappingMachineTest, OddRetryAndReadyCadenceSurviveClockRollover) {
 TEST(MappingDriveTest, CapsMagnitudeAndRotationWithoutBoostAndStopsOnDisconnect) {
     for (float right : {-2.0f, -1.0f, -0.1f, 0.0f, 0.5f, 1.0f, 2.0f}) {
         for (float forward : {-2.0f, -1.0f, 0.0f, 1.0f, 2.0f}) {
-            const auto drive = robots::mappingDrive(right, forward, 2, true);
+            const auto drive = commands::mappingDrive(right, forward, 2, true);
             EXPECT_LE(std::hypot(drive.getX(), drive.getY()), 0.400001f);
             EXPECT_FLOAT_EQ(drive.getRotation(), 0.5f);
-            EXPECT_EQ(robots::mappingDrive(right, forward, 1, false), Pose2d(0, 0, 0));
+            EXPECT_EQ(commands::mappingDrive(right, forward, 1, false), Pose2d(0, 0, 0));
         }
     }
-    EXPECT_FLOAT_EQ(robots::mappingDrive(0, 0.5f, -0.5f, true).getY(), 0.2f);
-    EXPECT_EQ(robots::mappingDrive(std::numeric_limits<float>::quiet_NaN(), 0, 0, true), Pose2d(0, 0, 0));
+    EXPECT_FLOAT_EQ(commands::mappingDrive(0, 0.5f, -0.5f, true).getY(), 0.2f);
+    EXPECT_EQ(commands::mappingDrive(std::numeric_limits<float>::quiet_NaN(), 0, 0, true), Pose2d(0, 0, 0));
 }

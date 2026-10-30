@@ -1,14 +1,14 @@
 // Copyright 2026 Thornbots. SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
-#include "robots/sentry/MappingDrive.hpp"
+#include "subsystems/jetson/MappingDrive.hpp"
 #include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
 #include "subsystems/flywheel/FlywheelSubsystem.hpp"
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
 #include "subsystems/indexer/IndexerSubsystem.hpp"
 #include "subsystems/odometry/OdometryPointForwardsCommand.hpp"
 
-namespace robots {
+namespace commands {
 class MappingCommand : public tap::control::Command {
 public:
     MappingCommand(src::Drivers* drivers, subsystems::DrivetrainSubsystem* drive,
@@ -71,6 +71,6 @@ private:
     subsystems::GimbalSubsystem* gimbal;
     subsystems::FlywheelSubsystem* flywheel;
     subsystems::IndexerSubsystem* indexer;
-    commands::OdometryPointForwardsCommand pointOdo;
+    OdometryPointForwardsCommand pointOdo;
 };
-}  // namespace robots
+}  // namespace commands
