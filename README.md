@@ -56,6 +56,10 @@ scons run robot=<ROBOT_TYPE> sysid=<SYSID_TYPE>
 
 These arguments will work for `scons build` too!
 
+In the VS Code dev container (Linux host), `Ctrl+Shift+B` runs `scons run` for the
+robot selected as the C/C++ configuration in the status bar. The container matches CI's
+toolchain and sees the host's USB debug probe; plug the probe in before flashing.
+
 The Jetson `CV_TARGET` wire format is documented in the bridge's
 [UART protocol reference](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#cv_target-id1--aim-point-and-fire-decision).
 Bit 3 marks a point from Jetson patrol and is currently ignored by firmware;

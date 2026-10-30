@@ -1,0 +1,27 @@
+{
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    // Flashing needs the CMSIS-DAP probe: share host USB (major 189) with hotplug.
+    "runArgs": [
+        "--device-cgroup-rule=c 189:* rmw",
+        "-v", "/dev/bus/usb:/dev/bus/usb"
+    ],
+    "postCreateCommand": "cd MCB-project && pipenv install",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "marus25.cortex-debug",
+                "ms-vscode.cpptools",
+                "aruwrobotchooser.robot-chooser"
+            ],
+            "settings": {
+                "cortex-debug.gdbPath": "gdb-multiarch"
+            }
+        }
+    },
+    "mounts": [
+        // Persist installed extensions across container rebuilds
+        "source=MCB-extensions,target=/root/.vscode-server/extensions,type=volume"
+    ]
+}
