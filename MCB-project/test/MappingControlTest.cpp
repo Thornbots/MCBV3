@@ -48,9 +48,9 @@ protected:
         hosted::setJetsonFd(-1);
         hosted::sensors = {};
     }
-    void connect(bool afterTimeout = false) {
+    void connect(bool afterTimeout = false, uint16_t rightVertical = 1024) {
         // Both left axes and right horizontal at maximum; switches choose normal triggers.
-        const uint16_t channels[] = {1684, 1024, 1684, 1684};
+        const uint16_t channels[] = {1684, rightVertical, 1684, 1684};
         uint64_t bits = 0;
         for (int i = 0; i < 4; ++i) bits |= static_cast<uint64_t>(channels[i]) << (11 * i);
         bits |= uint64_t{0xD} << 44;
@@ -67,6 +67,15 @@ protected:
         drivers.commandScheduler.run();
         control.update();
         ++hosted::timeMs;
+    }
+    // Feeds the remote and drains Jetson output every loop of a long hold.
+    void holdRightStick(bool up, uint32_t ms) {
+        uint8_t buffer[4096];
+        for (uint32_t i = 0; i < ms; ++i) {
+            connect(false, up ? 1684 : 1024);
+            tick();
+            while (read(sockets[1], buffer, sizeof(buffer)) > 0) {}
+        }
     }
     void expectRestricted() {
         EXPECT_TRUE(drivers.commandScheduler.isCommandScheduled(&control.mappingCommand));
@@ -361,4 +370,39 @@ TEST_F(MappingControlTest, CalibrationFallbackServicesMainAndStartWithoutSchedul
     control.updateMapping();
     ASSERT_EQ(read(sockets[1], buffer, sizeof(buffer)), 10);
     EXPECT_EQ(buffer[7], 1);
+}
+
+TEST_F(MappingControlTest, RightStickHoldStartsThenSavesOncePerHold) {
+    using State = src::MappingMachine::State;
+    const auto holdMs = static_cast<uint32_t>(MAPPING_HOLD_TIME);
+    tick();
+    drivers.commandScheduler.addCommand(&control.lookJoystickOffset);
+    holdRightStick(true, holdMs - 10);
+    EXPECT_EQ(drivers.mapping.getState(), State::Main);
+    holdRightStick(true, 20);
+    EXPECT_EQ(drivers.mapping.getState(), State::Setup);
+    holdRightStick(true, 10);
+    expectRestricted();
+    drivers.mapping.receivePing(1, hosted::timeMs);  // ACK the sent start.
+
+    // The start hold carries into Ready without saving until released.
+    drivers.mapping.receivePing(2, hosted::timeMs);
+    holdRightStick(true, 2 * holdMs);
+    EXPECT_EQ(drivers.mapping.getState(), State::Ready);
+    holdRightStick(false, 1);
+    holdRightStick(true, holdMs + 10);
+    EXPECT_EQ(drivers.mapping.getState(), State::Done);
+
+    // A failed final save resumes Mapping; another hold sends an incomplete save.
+    drivers.mapping.receivePing(4, hosted::timeMs);
+    holdRightStick(true, holdMs + 10);
+    holdRightStick(false, 1);
+    EXPECT_EQ(drivers.mapping.getState(), State::Mapping);
+    drivers.mapping.receivePing(3, hosted::timeMs);  // No save awaits this ACK.
+    EXPECT_FALSE(drivers.mapping.hasPendingPing());
+    holdRightStick(true, holdMs + 10);
+    drivers.mapping.receivePing(3, hosted::timeMs);  // ACK queues the final leg.
+    EXPECT_TRUE(drivers.mapping.hasPendingPing());
+    EXPECT_EQ(drivers.mapping.getState(), State::Mapping);
+    expectRestricted();
 }

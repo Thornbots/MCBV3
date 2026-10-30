@@ -13,7 +13,7 @@ void JoystickMoveCommand::execute() {
     // do special behavior in the isOffset mode
     float rawControllerPitch = drivers->remote.getChannel(tap::communication::serial::Remote::Channel::RIGHT_VERTICAL);
     bool recalibrationInput = isOffset && rawControllerPitch < PITCH_RECAL_THRESHOLD; //point down to recalibrate
-    bool mappingInput = isOffset && rawControllerPitch > PITCH_MAPPING_THRESHOLD; //point down to recalibrate
+    bool mappingInput = isOffset && rawControllerPitch > PITCH_MAPPING_THRESHOLD; //point up to start mapping
     
     if (recalibrationInput) {
         if(downForRecalTimeout.isStopped()) downForRecalTimeout.restart(RECAL_HOLD_TIME);
@@ -27,9 +27,10 @@ void JoystickMoveCommand::execute() {
     
     if (mappingInput) {
         if(upForMappingTimeout.isStopped()) upForMappingTimeout.restart(MAPPING_HOLD_TIME);
-        if (upForMappingTimeout.execute()) {
-            // start the mapping state machine
-        }
+#ifdef SENTRY
+        // MappingCommand then takes the gimbal; it owns the save hold.
+        if (upForMappingTimeout.execute()) drivers->mapping.requestStart();
+#endif
     } else {
         upForMappingTimeout.stop();
     }
