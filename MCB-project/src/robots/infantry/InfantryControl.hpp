@@ -83,7 +83,7 @@ public:
         controllerDriveNoSpinTrigger.onTrue(&noSpinDriveCommand);              // right switch mid
         controllerDriveBeybladeTrigger.onTrue(&beybladeJoystick);              // right switch down
 
-        controllerAutoFireTrigger.onTrue(&lookJoystick);                  // left switch up
+        controllerAutoFireTrigger.onTrue(&autoFire);                      // left switch up
         controllerLookJoystickTrigger.onTrue(&lookJoystick);              // left switch mid
         controllerLookJoystickOffsetTrigger.onTrue(&lookJoystickOffset);  // left switch down
 
@@ -160,11 +160,12 @@ public:
 
     // //commands
     commands::InfantryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &servo};
-    // commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr}; //Need to implement drivetrain odo for standard cv
+    commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr, nullptr, false};
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     commands::JoystickMoveCommand lookJoystickOffset{drivers, &gimbal, true};
-    commands::MouseMoveCommand lookMouse{drivers, &gimbal};
+    // commands::MouseMoveCommand lookMouse{drivers, &gimbal};
+    commands::AutoAimAndFireCommand lookMouse{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr, nullptr, true};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
 
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
@@ -198,8 +199,8 @@ public:
     // shooting
     Trigger controllerShootTrigger{drivers, Remote::Channel::WHEEL, -0.5};
     Trigger controllerUnjamTrigger{drivers, Remote::Channel::WHEEL, 0.5};
-    Trigger keyboardUnjamTrigger{drivers, Remote::Key::Z};            // or R if based
-    Trigger keyboardModifierTrigger{drivers, Remote::Key::CTRL};  // blame peter
+    Trigger keyboardUnjamTrigger{drivers, Remote::Key::Z};
+    Trigger keyboardModifierTrigger{drivers, Remote::Key::CTRL};
     Trigger mouseAimTrigger{drivers, MouseButton::RIGHT};
     Trigger mouseShootTrigger{drivers, MouseButton::LEFT};
     Trigger mouseShootFastTrigger = mouseShootTrigger & keyboardModifierTrigger;
@@ -217,7 +218,7 @@ public:
     Trigger keyboardPeekNoneTrigger = !(keyboardPeekLeftTrigger | keyboardPeekRightTrigger);
 
     // controller driving
-    Trigger controllerDrivePointForwardTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};  // = (Trigger(drivers, Remote::Key::Q) & Trigger(drivers, Remote::Key::E)) | Trigger(drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP);
+    Trigger controllerDrivePointForwardTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};
     Trigger controllerDriveNoSpinTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::MID};
     Trigger controllerDriveBeybladeTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
 

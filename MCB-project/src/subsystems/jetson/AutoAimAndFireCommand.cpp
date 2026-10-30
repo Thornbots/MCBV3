@@ -14,8 +14,8 @@ AutoAimAndFireCommand::AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsys
         indexer(indexer),
         flywheel(flywheel),
         jetson(jetson),
-        odo(odo),
-        adc(adc),
+        odo(odo), //can be nullptr for robots without odometry subsystem
+        adc(adc), //can be nullptr for non-sentries
         isManualControl(isManualControl)
 {
     addSubsystemRequirement(gimbal);
@@ -83,7 +83,15 @@ void AutoAimAndFireCommand::execute() {
     if(isManualControl) targeting &= shootFlag&&drivers->remote.getMouseR();
     // cvTarget and getAim* share the raw aim frame, never relocalized. The gimbal's world yaw is
     // the IMU's, counterclockwise and zero at power-on, so take the start's yaw off
-    Vector2d deltaXY{cvTarget.x - odo->getAimX(), cvTarget.y - odo->getAimY()};
+    float odoAimX = 0;
+    float odoAimY = 0;
+    float odoStartYaw = 0;
+    if(odo!=nullptr){
+        odoAimX = odo->getAimX();
+        odoAimY = odo->getAimY();
+        odoStartYaw = odo->getStartYaw();
+    }
+    Vector2d deltaXY{cvTarget.x - odoAimX, cvTarget.y - odoAimY};
     Vector3d deltasUnadjusted{deltaXY.getX(), deltaXY.getY(), cvTarget.z};
     Vector3d deltasAdjusted = Projections::robotSpaceToPivotSpace(deltasUnadjusted);
     deltaXY = {deltasAdjusted.getX(), deltasAdjusted.getY()};
@@ -93,7 +101,7 @@ void AutoAimAndFireCommand::execute() {
     // The barrel sits OFFSET_X_PITCH_PIVOT_TO_BARREL right of the yaw axis; turn so its line,
     // not the axis's, passes through the target.
     const float range = std::max(deltaXY.magnitude(), std::abs(Projections::OFFSET_X_PITCH_PIVOT_TO_BARREL) + 1e-3f);
-    targetYaw = deltaXY.angle() + std::asin(Projections::OFFSET_X_PITCH_PIVOT_TO_BARREL / range) - odo->getStartYaw();
+    targetYaw = deltaXY.angle() + std::asin(Projections::OFFSET_X_PITCH_PIVOT_TO_BARREL / range) - odoStartYaw;
     targetPitch = Reticle::solveForPitch(deltaXY.magnitude(), deltaZ); //gimbal subsystem will clamp the pitch. If it gets clamped, maybe don't shoot?
     
     if (targeting) { //do position-based aiming
@@ -155,7 +163,7 @@ void AutoAimAndFireCommand::execute() {
             flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM);
         } else {
             gimbal->stopMotors();
-            if(adc->getIsScheduled()) flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM/4);
+            if(adc!=nullptr && adc->getIsScheduled()) flywheel->setTargetVelocity(FLYWHEEL_MOTOR_MAX_RPM/4);
         }
     }
     
