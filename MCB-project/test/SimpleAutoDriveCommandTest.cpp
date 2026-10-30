@@ -59,13 +59,140 @@ protected:
             EXPECT_FLOAT_EQ(command.targets[i].tolerance, wall ? 0.2f : 0.5f) << i;
         }
         if (mode == Mode::ARCC_ROUGH_PATH) {
-            const float left = blue ? 2.5f : -2.5f;
             for (int i : {1, 2}) {
-                const auto expected = odo.fromStart(i == 1 ? 0.5f : 1.4f, left);
-                EXPECT_FLOAT_EQ(command.targets[i].position.first, expected.getX());
-                EXPECT_FLOAT_EQ(command.targets[i].position.second, expected.getY());
+                const float x = (blue ? 1.0f : -1.0f) * (4.625f - (i == 1 ? 0.5f : 1.4f));
+                EXPECT_NEAR(command.targets[i].position.first, x, 1e-6f);
+                EXPECT_NEAR(command.targets[i].position.second, -2.5f, 1e-6f);
             }
         }
+    }
+
+    struct FieldWaypoint { float x, y, vx, vy; };
+
+    void checkFieldRoute(Mode mode, bool blue, std::initializer_list<FieldWaypoint> expected,
+            std::pair<float, float> initial) {
+        team(blue);
+        SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, mode);
+        command.initialize();
+        ASSERT_EQ(command.targets.size(), expected.size());
+        size_t i = 0;
+        for (const auto& point : expected) {
+            SCOPED_TRACE(i);
+            const auto& actual = command.targets[i++];
+            EXPECT_NEAR(actual.position.first, point.x, 2e-6f);
+            EXPECT_NEAR(actual.position.second, point.y, 2e-6f);
+            EXPECT_NEAR(actual.velocity.first, point.vx, 2e-6f);
+            EXPECT_NEAR(actual.velocity.second, point.vy, 2e-6f);
+        }
+        EXPECT_NEAR(command.changedInitialPoint.first, initial.first, 2e-6f);
+        EXPECT_NEAR(command.changedInitialPoint.second, initial.second, 2e-6f);
+    }
+
+    void checkLegacyFieldCoordinates() {
+        // Golden field coordinates from the former red=0/blue=PI route definitions.
+        checkFieldRoute(Mode::TEST, false, {
+            {-4.625f, 0.0f, 0.0f, 0.0f},
+            {-3.625f, 0.0f, 0.0f, 0.0f},
+            {-3.625f, 1.0f, 0.0f, 0.0f},
+            {-4.625f, 1.0f, 0.0f, 0.0f},
+            {-4.625f, 0.0f, 0.0f, 0.0f},
+        }, {0.0f, 0.0f});
+        checkFieldRoute(Mode::TEST, true, {
+            {4.625f, 0.0f, 0.0f, 0.0f},
+            {3.625f, 0.0f, 0.0f, 0.0f},
+            {3.625f, 1.0f, 0.0f, 0.0f},
+            {4.625f, 1.0f, 0.0f, 0.0f},
+            {4.625f, 0.0f, 0.0f, 0.0f},
+        }, {0.0f, 0.0f});
+        checkFieldRoute(Mode::PURDUE2V2, false, {
+            {-4.625f, 0.0f, 0.0f, 0.0f},
+            {-4.625f, -0.18f, 0.0f, -1.5f},
+            {-4.60824f, -0.24f, 0.75f, -1.299f},
+            {-4.565f, -0.2838f, 1.299f, -0.75f},
+            {-4.505f, -0.3f, 1.5f, 0.0f},
+            {-4.4908f, -0.3f, 1.5f, 0.0f},
+            {-4.4128f, -0.2922f, 1.47f, 0.29f},
+            {-4.3376f, -0.2694f, 1.385f, 0.574f},
+            {-4.2686f, -0.2324f, 1.247f, 0.833f},
+            {-4.2078f, -0.1828f, 1.06f, 1.06f},
+            {-3.925f, 0.1f, 0.0f, 0.0f},
+        }, {0.0f, 0.0f});
+        checkFieldRoute(Mode::PURDUE2V2, true, {
+            {4.625f, 0.0f, 0.0f, 0.0f},
+            {4.625f, -1.5f, 0.0f, 0.0f},
+            {3.125f, -1.5f, 0.0f, 0.0f},
+            {1.125f, 0.5f, 0.0f, 0.0f},
+        }, {0.0f, 0.0f});
+        checkFieldRoute(Mode::ARCC_RAMP_PATH, false, {
+            {-4.625f, 0.0f, 0.0f, 0.0f},
+            {-4.03f, 1.833f, 0.0f, 0.0f},
+            {-0.565f, 1.833f, 0.0f, 0.0f},
+            {0.0f, -0.5f, 0.0f, 0.0f},
+        }, {-5.125f, -0.5f});
+        checkFieldRoute(Mode::ARCC_RAMP_PATH, true, {
+            {4.625f, 0.0f, 0.0f, 0.0f},
+            {4.03f, 1.833f, 0.0f, 0.0f},
+            {0.565f, 1.833f, 0.0f, 0.0f},
+            {0.0f, -0.5f, 0.0f, 0.0f},
+        }, {5.125f, -0.5f});
+        checkFieldRoute(Mode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED, false, {
+            {-4.625f, 0.0f, 0.0f, 0.0f},
+            {-4.03f, 1.833f, 0.0f, 0.0f},
+            {0.247f, 1.833f, 0.0f, 0.0f},
+            {0.812f, -0.5f, 0.0f, 0.0f},
+        }, {-5.125f, -0.5f});
+        checkFieldRoute(Mode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED, true, {
+            {4.625f, 0.0f, 0.0f, 0.0f},
+            {4.03f, 1.833f, 0.0f, 0.0f},
+            {-0.247f, 1.833f, 0.0f, 0.0f},
+            {-0.812f, -0.5f, 0.0f, 0.0f},
+        }, {5.125f, -0.5f});
+        checkFieldRoute(Mode::ARCC_HALLWAY_PATH, false, {
+            {-4.625f, 0.0f, 0.0f, 0.0f},
+            {-3.733f, 0.874f, 0.0f, 0.0f},
+            {-2.901f, 0.874f, 0.0f, 0.0f},
+            {-2.901f, -0.693f, 0.0f, 0.0f},
+            {-2.395f, -1.2f, 0.0f, 0.0f},
+            {0.0f, -0.885f, 0.0f, 0.0f},
+        }, {-5.125f, -0.5f});
+        checkFieldRoute(Mode::ARCC_HALLWAY_PATH, true, {
+            {4.625f, 0.0f, 0.0f, 0.0f},
+            {3.733f, 0.874f, 0.0f, 0.0f},
+            {2.901f, 0.874f, 0.0f, 0.0f},
+            {2.901f, -0.693f, 0.0f, 0.0f},
+            {2.395f, -1.2f, 0.0f, 0.0f},
+            {0.0f, -0.885f, 0.0f, 0.0f},
+        }, {5.125f, -0.5f});
+        checkFieldRoute(Mode::ARCC_ROUGH_PATH, false, {
+            {-4.625f, 0.0f, 0.0f, 0.0f},
+            {-4.125f, -2.5f, 0.0f, 0.0f},
+            {-3.225f, -2.5f, 0.0f, 0.0f},
+            {0.0f, 0.5f, 0.0f, 0.0f},
+        }, {-5.125f, 0.5f});
+        checkFieldRoute(Mode::ARCC_ROUGH_PATH, true, {
+            {4.625f, 0.0f, 0.0f, 0.0f},
+            {4.125f, -2.5f, 0.0f, 0.0f},
+            {3.225f, -2.5f, 0.0f, 0.0f},
+            {0.0f, 0.5f, 0.0f, 0.0f},
+        }, {5.125f, 0.5f});
+    }
+
+    void checkBootAxes(bool blue) {
+        team(blue);
+        EXPECT_NEAR(odo.getStartYaw(), 1.57079632679f, 1e-6f);
+        const float startX = blue ? 4.625f : -4.625f;
+        const auto point = odo.fromStart(2.0f, 0.7f);
+        EXPECT_NEAR(point.getX(), startX - 0.7f, 1e-6f);
+        EXPECT_NEAR(point.getY(), 2.0f, 1e-6f);
+        hosted::sensors.podX = 0.3f;  // pod right is field +x
+        hosted::sensors.podY = 0.5f;  // pod forward is field +y
+        hosted::sensors.podVx = -0.2f;
+        hosted::sensors.podVy = 0.4f;
+        EXPECT_NEAR(odo.getAimX(), startX + 0.3f, 1e-6f);
+        EXPECT_NEAR(odo.getAimY(), 0.5f, 1e-6f);
+        EXPECT_NEAR(odo.getXVel(), -0.2f, 1e-6f);
+        EXPECT_NEAR(odo.getYVel(), 0.4f, 1e-6f);
+        hosted::sensors = {};
     }
 
     void checkTraversal(bool backwards) {
@@ -93,6 +220,15 @@ protected:
         }
     }
 };
+
+TEST_F(SimpleAutoDriveCommandTest, BothTeamsBootAlongFieldPositiveY) {
+    checkBootAxes(false);
+    checkBootAxes(true);
+}
+
+TEST_F(SimpleAutoDriveCommandTest, EveryRoutePreservesLegacyFieldCoordinatesAndVelocities) {
+    checkLegacyFieldCoordinates();
+}
 
 TEST_F(SimpleAutoDriveCommandTest, OnlyRoughWallWaypointsTightenForEitherTeam) {
     for (bool blue : {false, true}) {

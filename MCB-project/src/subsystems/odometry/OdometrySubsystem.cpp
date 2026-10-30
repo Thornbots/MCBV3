@@ -80,7 +80,7 @@ float OdometrySubsystem::getRawY() {
     return drivers->i2c.odom.getY();
 }
 float OdometrySubsystem::getStartYaw() {
-    return isBlue ? PI : 0.0f;
+    return PI / 2.0f;
 }
 Vector2d OdometrySubsystem::fromStart(float forward, float left) {
     Vector2d start(isBlue ? START_X : -START_X, START_Y);

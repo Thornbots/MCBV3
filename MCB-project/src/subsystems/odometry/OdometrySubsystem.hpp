@@ -53,7 +53,7 @@ public:  // Public Methods
 
     // getX/getY include the navigation offset replaced by relocalizeTo. Raw
     // getAimX/getAimY are the field-aligned pod coordinates sent in POSE.
-    // Team selection initializes the raw field origin and startup heading.
+    // Team selection initializes the raw field origin; both teams boot facing +y.
 
     // gives x accounting for relocalize offset
     float getX();
@@ -71,7 +71,7 @@ public:  // Public Methods
     // sets the offsets so that if the odo pods don't move after you call this, getX and getY return newX and newY
     void relocalizeTo(float newX, float newY);
 
-    // field yaw of the heading at power-on (the pods' and the IMU's zero): 0 red, PI blue
+    // field yaw of the heading at power-on (the pods' and the IMU's zero): PI/2 for both teams
     float getStartYaw();
 
     // the field point forward and left of the start, along the heading at power-on
