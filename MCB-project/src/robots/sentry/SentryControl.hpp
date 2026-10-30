@@ -3,6 +3,7 @@
 
 #include "robots/RobotControl.hpp"
 #include "robots/sentry/SentryHardware.hpp"
+#include "subsystems/jetson/MappingCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainDriveCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainStopCommand.hpp"
 #include "subsystems/drivetrain/MoveToPositionCommand.hpp"
@@ -102,6 +103,7 @@ public:
     
     void update() override {
 
+        if (drivers->mapping.isActive()) return;
         if (isStopped) return;
 
         for (Trigger* trigger : triggers) {
@@ -139,6 +141,14 @@ public:
             drivers->refSerial.getGameData().gameStage != RefSerialData::Rx::GameStage::IN_GAME) {
             stopFlywheelTrigger.update();
         }
+    }
+
+    void updateMapping() override {
+        // main skips the scheduler (and Jetson refresh) until the IMU is ready.
+        if (!drivers->recal.getIsImuReady()) jetson.serviceMappingPing();
+        if (!drivers->mapping.isActive() || isStopped) return;
+        if (!drivers->commandScheduler.isCommandScheduled(&mappingCommand))
+            drivers->commandScheduler.addCommand(&mappingCommand);
     }
 
     void stopForImuRecal() override {
@@ -184,6 +194,7 @@ public:
     subsystems::JetsonSubsystem jetson{drivers, &gimbal, &odo};
 
     // commands
+    commands::MappingCommand mappingCommand{drivers, &drivetrain, &gimbal, &flywheel, &indexer, &odo};
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
     // commands::MouseMoveCommand lookMouse{drivers, &gimbal};

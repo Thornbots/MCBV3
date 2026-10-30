@@ -36,6 +36,12 @@ UARTCommunication::outgoingDataFrame::outgoingDataFrame(uint16_t len, uint16_t m
 
 void UARTCommunication::messageReceiveCallback(const ReceivedSerialMessage& completeMessage) {
     if (completeMessage.header.dataLength == 0 || completeMessage.header.dataLength > SERIAL_RX_BUFF_SIZE) return;
+    if (completeMessage.messageType == 5 && pingHandler != nullptr) {
+        if (completeMessage.header.dataLength == 1)
+            pingHandler(pingContext, completeMessage.data[0], getCurrentTime());
+        lastReceivedTime = getCurrentTime();
+        return;
+    }
     mostRecentMessage.messageType = completeMessage.messageType;
     mostRecentMessage.dataLength = completeMessage.header.dataLength;
     memcpy((void*)mostRecentMessage.data, completeMessage.data, completeMessage.header.dataLength);

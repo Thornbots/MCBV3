@@ -7,10 +7,12 @@
 #include <unistd.h>
 namespace {
 int jetsonFd = -1;
+uint32_t failedWrites = 0;
 std::array<std::deque<uint8_t>, 3> incoming;
 std::array<std::deque<uint8_t>, 3> afterDiscard;
 }
 namespace hosted {
+uint32_t failedUartWrites() { return failedWrites; }
 void setJetsonFd(int fd) { jetsonFd = fd; }
 void queueUart(tap::communication::serial::Uart::UartPort port, const uint8_t* data, size_t n) {
     if (n == 0) return;
@@ -48,6 +50,7 @@ bool Uart::write(UartPort port, uint8_t data) { return write(port, &data, 1) == 
 size_t Uart::write(UartPort port, const uint8_t* data, size_t n) {
     if (port != Uart1) return n;
     auto count = ::write(jetsonFd, data, n);
+    if (count != static_cast<ssize_t>(n)) ++failedWrites;
     if (count >= 0) return count;
     if (errno == EAGAIN || (EWOULDBLOCK != EAGAIN && errno == EWOULDBLOCK) || errno == EIO) return 0;
     throw std::runtime_error("hosted UART write failed");

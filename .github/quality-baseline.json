@@ -28,8 +28,8 @@
   "[\"MCB-project/src/util/Pose2d.hpp\", \"runtime/explicit\", \"Single-parameter constructors should be marked explicit.\"]": 2,
   "[\"MCB-project/src/util/Vector2d.hpp\", \"runtime/explicit\", \"Single-parameter constructors should be marked explicit.\"]": 1,
   "[\"MCB-project/src/util/Vector3d.hpp\", \"runtime/explicit\", \"Single-parameter constructors should be marked explicit.\"]": 1,
-  "[\"MCB-project/src/util/hitTracker.hpp\", \"readability/casting\", \"Using C-style cast.  Use static_cast<uint16_t>(...) instead\"]": 1,
-  "[\"MCB-project/src/util/hitTracker.hpp\", \"runtime/explicit\", \"Single-parameter constructors should be marked explicit.\"]": 1,
+  "[\"MCB-project/src/util/HitTracker.hpp\", \"readability/casting\", \"Using C-style cast.  Use static_cast<uint16_t>(...) instead\"]": 1,
+  "[\"MCB-project/src/util/HitTracker.hpp\", \"runtime/explicit\", \"Single-parameter constructors should be marked explicit.\"]": 1,
   "[\"MCB-project/src/util/ui/AtomicGraphicsObject.hpp\", \"runtime/explicit\", \"Single-parameter constructors should be marked explicit.\"]": 1,
   "[\"MCB-project/src/util/ui/AtomicGraphicsObjects.hpp\", \"runtime/explicit\", \"Single-parameter constructors should be marked explicit.\"]": 1
 }

@@ -61,6 +61,73 @@ The Jetson `CV_TARGET` wire format is documented in the bridge's
 Bit 3 marks a point from Jetson patrol and is currently ignored by firmware;
 bit 1 remains the separate permission for firmware patrol.
 
+## MCB Mapping Machine (sentry)
+
+The sentry's Drivers-owned `mapping` object exposes `requestStart()` and
+`requestSave()` for operator-input integration. No switch, key or gesture is
+bound. Other robot builds do not connect MMM to UART or control hooks.
+Start acts only in Main and immediately enters Setup. PING 2 moves Setup or
+Mapping to Ready; PING 4 moves Ready or Done to Mapping. PING 6 (fail) moves
+Setup to Done and cancels start retries. Save in Ready immediately
+enters Done. Save in Mapping sends the incomplete-save request and stays in
+Mapping. Other source states ignore these requests. Main is restored only by
+restarting the firmware. A failed final save can return Done to Mapping with
+PING 4, restoring manual drive under Mapping's restrictions. This cancels any
+pending save request, queued save or final save echo; only a fresh operator save
+can send another save request.
+
+Setup and Done stop drive. Ready and Mapping use chassis-relative manual
+joysticks: left horizontal/right, left vertical/forward, right horizontal/turn.
+Translation magnitude is capped at 0.4 m/s and rotation at 0.5 rad/s; tune
+`MAPPING_MAX_TRANSLATION_MPS` and `MAPPING_MAX_ROTATION_RADPS` in
+`src/subsystems/jetson/MappingDrive.hpp`. No boost or autonomous drive participates.
+Remote disconnect stops drive but keeps odometry pod pointing active in every
+MMM state. Every active MMM state disables flywheels and
+indexing, including indexer homing, and holds pitch level and yaw aligned with
+the chassis front. Done adds no head-down pose. Ready lights steady green and
+pulses the buzzer for 100 ms every second using wrapping millisecond timers.
+
+`src/util/MappingMachine.hpp` owns state, handshake timers and counted pending
+echoes without hardware dependencies. UART dispatches PING directly at receive
+time, before the shared latest-message mailbox. `JetsonSubsystem::refresh()`
+services MMM pings before POSE/REF_SYS; the sentry control hook calls the same
+ping service while IMU calibration skips scheduler refreshes. The hook schedules
+`MappingCommand`, which persistently owns drive, gimbal, flywheels, indexer and
+odometry, including disconnected output restrictions and Ready LEDs/buzzer.
+Ending the command clears green and silences the buzzer. Sentry trigger evaluation
+returns immediately throughout MMM, so ordinary triggers cannot replace these
+commands. The scheduler and IMU calibration mechanism are not suspended or
+re-zeroed by MMM. The hosted fixture also gates its direct drive overrides.
+
+PING keeps id 5 and its one-byte number. Zero echoes only in Main; unknown
+numbers are ignored. Every received 2, 4 or 6 queues an echo, even from an illegal
+source state; only legal state changes apply. Requests 1 and 3 retry at least
+0.5 s after their last successful same-number send until acknowledged. Their
+first matching ACK queues one final echo; all later echoes are ignored,
+including the Jetson's ACK of that final leg. Distinct saves can be sent
+inside five seconds: the Jetson ACKs them but suppresses work until there
+has been a five-second same-number receive gap. Failed sends retain pending work,
+which has priority over periodic POSE/REF_SYS telemetry. Legal save API calls
+always apply their state transition immediately. Additional save transmissions
+queue behind the preceding ACK/final leg and its 0.5 s send interval
+to prevent overlapping indistinguishable requests. ACK means receipt,
+not durable storage; Done
+can precede completion of Jetson's asynchronous save.
+
+Hosted GoogleTests cover the transition matrix, duplicate/failing UART traffic,
+retry timing and rollover, joystick caps and sentry restrictions. The hosted
+test runner links the actual firmware objects built by `build-sim`.
+
+The hosted executable optionally accepts `MCB_MMM_CONTROL_FD`, a private
+nonblocking `SOCK_SEQPACKET` fixture channel defined in
+`src/hosted/mapping_control.hpp`. It invokes the same start/save APIs and
+supplies DBUS joystick channels, returning state, Ready beep timing, UART write
+failures and measured execution time per simulated 1 ms loop. It changes no
+UART payload or board input binding. The hardware source graph excludes
+`hosted/`, and `tools/test_cpp.sh` verifies both that exclusion and the empty
+control header without `MCB_HOSTED`. The [sim MMM suite](../../sim/README.md#run-the-tests)
+exercises the compiled executable against the real Jetson node and save service.
+
 ## Automatic indexer recovery
 
 Automatic aiming returns its indexer to idle when referee state allows shooting,
