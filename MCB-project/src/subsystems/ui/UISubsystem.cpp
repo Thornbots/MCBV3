@@ -210,7 +210,7 @@ bool UISubsystem::run() { //run has to do with prototheads
 void UISubsystem::setTopLevelContainer(GraphicsContainer* container) {
 
     if (container) {
-        topLevelContainer->resetIteration();
+        container->resetIteration();
         // drivers->leds.set(tap::gpio::Leds::Blue, true);
     }
     topLevelContainer = container;
