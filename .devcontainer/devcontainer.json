@@ -1,4 +1,7 @@
 {
+    // Standalone clone. Inside the Isaac ROS workspace, pick isaac-ros-workspace
+    // instead: it adds workspace policy hooks and commit signing.
+    "name": "MCBV3",
     "build": {
         "dockerfile": "Dockerfile"
     },
@@ -7,6 +10,15 @@
         "--device-cgroup-rule=c 189:* rmw",
         "-v", "/dev/bus/usb:/dev/bus/usb"
     ],
+    // Non-root, remapped to the host UID, so build output and .git stay host-owned.
+    "remoteUser": "ubuntu",
+    // Hosts that cannot remap the UID (Docker Desktop) still show the checkout
+    // as foreign-owned; git refuses it as "dubious ownership" without this.
+    "containerEnv": {
+        "GIT_CONFIG_COUNT": "1",
+        "GIT_CONFIG_KEY_0": "safe.directory",
+        "GIT_CONFIG_VALUE_0": "*"
+    },
     "postCreateCommand": "cd MCB-project && pipenv install",
     "customizations": {
         "vscode": {
@@ -22,6 +34,6 @@
     },
     "mounts": [
         // Persist installed extensions across container rebuilds
-        "source=MCB-extensions,target=/root/.vscode-server/extensions,type=volume"
+        "source=MCB-extensions-ubuntu,target=/home/ubuntu/.vscode-server/extensions,type=volume"
     ]
 }

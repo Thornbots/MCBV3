@@ -2,7 +2,7 @@
 FROM ubuntu:24.04
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        ca-certificates git usbutils \
+        ca-certificates git openssh-client usbutils \
         gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib \
         gdb-multiarch openocd \
         gcc-14 g++-14 libgtest-dev \

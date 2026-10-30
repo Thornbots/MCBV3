@@ -59,6 +59,8 @@ These arguments will work for `scons build` too!
 In the VS Code dev container (Linux host), `Ctrl+Shift+B` runs `scons run` for the
 robot selected as the C/C++ configuration in the status bar. The container matches CI's
 toolchain and sees the host's USB debug probe; plug the probe in before flashing.
+Inside the Isaac ROS workspace, choose the "MCBV3 (Isaac ROS workspace)" configuration
+so commits run the workspace policy hooks and are signed with your `~/.ssh` key.
 
 The Jetson `CV_TARGET` wire format is documented in the bridge's
 [UART protocol reference](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#cv_target-id1--aim-point-and-fire-decision).
