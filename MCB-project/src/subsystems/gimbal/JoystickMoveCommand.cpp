@@ -5,8 +5,34 @@
 namespace commands {
 
 void JoystickMoveCommand::initialize() { firstTime = true; }
+
 void JoystickMoveCommand::execute() {
+    // do joystick movement
     executeWith(drivers, gimbal, firstTime, isOffset);
+    
+    // do special behavior in the isOffset mode
+    float rawControllerPitch = drivers->remote.getChannel(tap::communication::serial::Remote::Channel::RIGHT_VERTICAL);
+    bool recalibrationInput = isOffset && rawControllerPitch < PITCH_RECAL_THRESHOLD; //point down to recalibrate
+    bool mappingInput = isOffset && rawControllerPitch > PITCH_MAPPING_THRESHOLD; //point down to recalibrate
+    
+    if (recalibrationInput) {
+        if(downForRecalTimeout.isStopped()) downForRecalTimeout.restart(RECAL_HOLD_TIME);
+        if (downForRecalTimeout.execute()) {
+            gimbal->setPrevTargetPitch(SECOND_PITCH_OFFSET);
+            drivers->recal.forceCalibration();
+        }
+    } else {
+        downForRecalTimeout.stop();
+    }
+    
+    if (mappingInput) {
+        if(upForMappingTimeout.isStopped()) upForMappingTimeout.restart(MAPPING_HOLD_TIME);
+        if (upForMappingTimeout.execute()) {
+            // start the mapping state machine
+        }
+    } else {
+        upForMappingTimeout.stop();
+    }
 }
 
 void JoystickMoveCommand::executeWith(src::Drivers* drivers, GimbalSubsystem* gimbal) {
@@ -16,26 +42,7 @@ void JoystickMoveCommand::executeWith(src::Drivers* drivers, GimbalSubsystem* gi
 }
 void JoystickMoveCommand::executeWith(src::Drivers* drivers, GimbalSubsystem* gimbal, bool& firstTime, bool& isOffset) {
     float yawInc = CONTROLLER_YAW_PROPORTIONAL * drivers->remote.getChannel(tap::communication::serial::Remote::Channel::RIGHT_HORIZONTAL);
-    float rawControllerPitch = drivers->remote.getChannel(tap::communication::serial::Remote::Channel::RIGHT_VERTICAL);
-    float pitchInc = CONTROLLER_PITCH_PROPORTIONAL * rawControllerPitch;
-    
-    bool recalibrationInput = isOffset && rawControllerPitch < PITCH_RECAL_THRESHOLD;
-    
-    if (recalibrationInput) {
-        if (isRecalibrating) {
-            if (!hasRecalibrated && tap::arch::clock::getTimeMilliseconds() - recalStartedTime >= RECAL_HOLD_TIME) {
-                gimbal->setPrevTargetPitch(SECOND_PITCH_OFFSET);
-                drivers->recal.forceCalibration();
-                hasRecalibrated = true;
-            }
-        } else {
-            isRecalibrating = true;
-            recalStartedTime = tap::arch::clock::getTimeMilliseconds();
-        }
-    } else {
-        isRecalibrating = false;
-        hasRecalibrated = false;
-    }
+    float pitchInc = CONTROLLER_PITCH_PROPORTIONAL * drivers->remote.getChannel(tap::communication::serial::Remote::Channel::RIGHT_VERTICAL);
 
     if (firstTime) {
         firstTime=false;

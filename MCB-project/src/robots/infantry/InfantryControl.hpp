@@ -6,33 +6,28 @@
 #include "robots/infantry/InfantryHardware.hpp"
 #endif
 
-#include "subsystems/ui/UISubsystem.hpp"
-#include "subsystems/ui/InfantryDrawCommand.hpp"
-
-#include "subsystems/gimbal/JoystickMoveCommand.hpp"
-#include "subsystems/gimbal/MouseMoveCommand.hpp"
-
 #include "subsystems/drivetrain/DrivetrainDriveCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainStopCommand.hpp"
 #include "subsystems/flywheel/ShooterStartCommand.hpp"
 #include "subsystems/flywheel/ShooterStopCommand.hpp"
+#include "subsystems/gimbal/GimbalStopCommand.hpp"
 #include "subsystems/gimbal/JoystickMoveCommand.hpp"
 #include "subsystems/gimbal/MouseMoveCommand.hpp"
-#include "subsystems/gimbal/GimbalStopCommand.hpp"
-#include "subsystems/jetson/AutoAimAndFireCommand.hpp"
-#include "subsystems/indexer/SingleIndexerSubsystem.hpp"
-#include "subsystems/indexer/IndexerNBallsCommand.hpp"
-#include "subsystems/indexer/IndexerUnjamCommand.hpp"
-#include "subsystems/indexer/IndexerStopCommand.hpp"
 #include "subsystems/indexer/IndexerIdleCommand.hpp"
-#include "subsystems/servo/ServoSubsystem.hpp"
-#include "subsystems/servo/OpenServoCommand.hpp"
+#include "subsystems/indexer/IndexerNBallsCommand.hpp"
+#include "subsystems/indexer/IndexerStopCommand.hpp"
+#include "subsystems/indexer/IndexerUnjamCommand.hpp"
+#include "subsystems/indexer/SingleIndexerSubsystem.hpp"
+#include "subsystems/jetson/AutoAimAndFireCommand.hpp"
 #include "subsystems/servo/CloseServoCommand.hpp"
+#include "subsystems/servo/OpenServoCommand.hpp"
+#include "subsystems/servo/ServoSubsystem.hpp"
+#include "subsystems/ui/InfantryDrawCommand.hpp"
+#include "subsystems/ui/UISubsystem.hpp"
 #include "util/trigger.hpp"
 
-
 #include "drivers.hpp"
-int rawEncoder = 0;
+
 namespace robots {
 class InfantryControl : public ControlInterface {
 public:
@@ -42,7 +37,7 @@ public:
     using Hardware = InfantryHardware;
 #endif
     // pass drivers back to root robotcontrol to store
-    InfantryControl(src::Drivers *drivers) : drivers(drivers), hardware(Hardware{drivers}) {}
+    InfantryControl(src::Drivers* drivers) : drivers(drivers), hardware(Hardware{drivers}) {}
     // functions we are using
     void initialize() override {
         // Initialize subsystems (registration is internal)
@@ -54,7 +49,7 @@ public:
         servo.initialize();
         jetson.initialize();
 
-        drivers->commandScheduler.addCommand(&closeServo); //close servo so I stop getting carbon splinters
+        drivers->commandScheduler.addCommand(&closeServo);  // close servo so I stop getting carbon splinters
 
         // Run startup commands
         gimbal.setDefaultCommand(&stopGimbal);
@@ -62,53 +57,62 @@ public:
         drivetrain.setDefaultCommand(&stopDriveCommand);
         indexer.setDefaultCommand(&indexerIdle);
 
-        shootButton.onTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
-        unjamButton.whileTrue(&indexerUnjam)->onTrue(&openServo);
+        controllerShootTrigger.onTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
+        controllerUnjamTrigger.whileTrue(&indexerUnjam)->onTrue(&openServo);
 
         stopFlywheelTrigger.onTrue(&shooterStop);
-        
-        // autoFireTrigger.onTrue(&autoFire)->onFalse(&lookJoystick);
 
         // Mouse and Keyboard mappings
-        unjamKey.whileTrue(&indexerUnjam)->onTrue(&openServo);
-        shootRegKey.onTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
-        shootFastKey.whileTrue(&indexer20Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
-        autoAimKey.onTrue(&shooterStart)->onTrue(&closeServo);
-        // implement speed mode
+        keyboardUnjamTrigger.whileTrue(&indexerUnjam)->onTrue(&openServo);
+        mouseShootSingleTrigger.onTrue(&indexerSingle)->onTrue(&shooterStart)->onTrue(&closeServo);
+        mouseShootFastTrigger.whileTrue(&indexer20Hz)->onTrue(&shooterStart)->onTrue(&closeServo);
+        mouseAimTrigger.onTrue(&shooterStart)->onTrue(&closeServo);
 
-        toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
-        drivers->commandScheduler.addCommand(&draw); //tries to draw immediately, doesn't always work well
+        keyboardUITrigger.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);  // press g to start robot
+        drivers->commandScheduler.addCommand(&draw);                                       // tries to draw immediately, doesn't always work well
 
         // drive commands and also enable mouse looking
+        keyboardPeekLeftTrigger.onTrue(&peekLeft);
+        keyboardPeekRightTrigger.onTrue(&peekRight);
+        keyboardPeekNoneTrigger.onTrue(&beybladeKeyboard);  // makes it so that the driver can be sloppy when they swap peeking directions, they are allowed to press q and e at the same time
 
-        peekLeftButton.onTrue(&peekLeft);//->onFalse(&beybladeKeyboard);
-        peekRightButton.onTrue(&peekRight);//->onFalse(&beybladeKeyboard);
-        peekNoneButton.onTrue(&beybladeKeyboard); //makes it so that the driver can be sloppy when they swap peeking directions, they are allowed to press q and e at the same time
-
-        stopBeybladeKey.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
+        keyboardStopBeybladeTrigger.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
         startBeybladeKey.onTrue(&beybladeKeyboard)->onTrue(&lookMouse);
 
-        joystickDrive0.onTrue(&noSpinDriveCommand);
-        joystickDrive1.onTrue(&drivetrainFollowJoystick);
-        joystickDrive2.onTrue(&beybladeJoystick);
+        controllerDrivePointForwardTrigger.onTrue(&drivetrainFollowJoystick);  // right switch up
+        controllerDriveNoSpinTrigger.onTrue(&noSpinDriveCommand);              // right switch mid
+        controllerDriveBeybladeTrigger.onTrue(&beybladeJoystick);              // right switch down
 
-        joystickLook0.onTrue(&lookJoystick); //looks horizontal
-        joystickLook1.onTrue(&lookJoystick); //looks horizontal
-        joystickLook2.onTrue(&lookJoystickOffset); //looks downward to fit in sizing box
+        controllerAutoFireTrigger.onTrue(&lookJoystick);                  // left switch up
+        controllerLookJoystickTrigger.onTrue(&lookJoystick);              // left switch mid
+        controllerLookJoystickOffsetTrigger.onTrue(&lookJoystickOffset);  // left switch down
 
         isStopped = false;
     }
 
+    bool rescheduleMoveJoystick = false;
+    bool rescheduleMoveKeyboard = false;
+
+    bool rescheduleLookJoystick = false;
+    bool rescheduleLookJoystickOffset = false;
+    bool rescheduleLookMouse = false;
+
     void update() override {
-        if(isStopped)
-            return;
+        if (isStopped) return;
 
         for (Trigger* trigger : triggers) {
             trigger->update();
         }
 
-        //if we don't have ref uart or we do and we aren't currently in game, we are able to stop flywheels by buttons
-        if(!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getGameData().gameStage!=RefSerialData::Rx::GameStage::IN_GAME){
+        rescheduleMoveJoystick = drivetrain.isInControllerMode;  // drivetrainFollowJoystick
+        rescheduleMoveKeyboard = drivetrain.isInKeyboardMode;    // drivetrainFollowKeyboard
+
+        rescheduleLookJoystick = drivers->commandScheduler.isCommandScheduled(&lookJoystick);
+        rescheduleLookJoystickOffset = drivers->commandScheduler.isCommandScheduled(&lookJoystickOffset);
+        rescheduleLookMouse = drivers->commandScheduler.isCommandScheduled(&lookMouse);
+
+        // if we don't have ref uart or we do and we aren't currently in game, we are able to stop flywheels by buttons
+        if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getGameData().gameStage != RefSerialData::Rx::GameStage::IN_GAME) {
             stopFlywheelTrigger.update();
         }
     }
@@ -126,11 +130,15 @@ public:
         isStopped = false;
         gimbal.clearBuildup();
         gimbal.reZeroYaw();
-        if (wasControllerModeBeforeRecal) {
-            drivers->commandScheduler.addCommand(&lookJoystickOffset);
-        } else {
-            drivers->commandScheduler.addCommand(&lookMouse);
-        }
+        // Need to find a better way to do this, like saving a reference
+        // to the currently running command, and rescheduling it here.
+        // But I don't know how to get the currently running command on a subsystem.
+        if (rescheduleMoveJoystick) drivers->commandScheduler.addCommand(&drivetrainFollowJoystick);
+        if (rescheduleMoveKeyboard) drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
+
+        if (rescheduleLookJoystick) drivers->commandScheduler.addCommand(&lookJoystick);
+        if (rescheduleLookJoystickOffset) drivers->commandScheduler.addCommand(&lookJoystickOffset);
+        if (rescheduleLookMouse) drivers->commandScheduler.addCommand(&lookMouse);
         drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
         drivers->commandScheduler.addCommand(&indexerIdle);
         update();
@@ -138,19 +146,17 @@ public:
 
     bool isStopped = true;
 
-    src::Drivers *drivers;
+    src::Drivers* drivers;
     Hardware hardware;
-
 
     // Subsystems
     subsystems::UISubsystem ui{drivers};
     subsystems::GimbalSubsystem gimbal{drivers, &hardware.yawMotor, &hardware.pitchMotor};
     subsystems::FlywheelSubsystem flywheel{drivers, &hardware.flywheelMotor1, &hardware.flywheelMotor2};
-    subsystems::SingleIndexerSubsystem indexer{drivers, &hardware.indexMotor, false}; //standard doesn't home
+    subsystems::SingleIndexerSubsystem indexer{drivers, &hardware.indexMotor, false};  // standard doesn't home
     subsystems::DrivetrainSubsystem drivetrain{drivers, &hardware.driveMotor1, &hardware.driveMotor2, &hardware.driveMotor3, &hardware.driveMotor4};
     subsystems::ServoSubsystem servo{drivers, &hardware.servo};
     subsystems::JetsonSubsystem jetson{drivers, &gimbal, nullptr};
-
 
     // //commands
     commands::InfantryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &servo};
@@ -172,10 +178,10 @@ public:
     commands::IndexerStopCommand indexerStop{drivers, &indexer};
     commands::IndexerIdleCommand indexerIdle{drivers, &indexer};
 
-    //CHANGE NUMBERS LATER
+    // CHANGE NUMBERS LATER
     commands::DrivetrainDriveCommand peekRight{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_RIGHT, commands::ControlMode::KEYBOARD};
     commands::DrivetrainDriveCommand peekLeft{drivers, &drivetrain, &gimbal, commands::DriveMode::PEEK_LEFT, commands::ControlMode::KEYBOARD};
-    commands::DrivetrainDriveCommand drivetrainFollowKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::KEYBOARD}; //Temporary standard doesn't follow drivetrain because its yaw encoder (through the ribbon cable) doesn't work
+    commands::DrivetrainDriveCommand drivetrainFollowKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::KEYBOARD};
     commands::DrivetrainDriveCommand drivetrainFollowJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::NO_SPIN, commands::ControlMode::CONTROLLER};
     commands::DrivetrainDriveCommand beybladeJoystick{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE, commands::ControlMode::CONTROLLER};
     commands::DrivetrainDriveCommand beybladeKeyboard{drivers, &drivetrain, &gimbal, commands::DriveMode::BEYBLADE, commands::ControlMode::KEYBOARD};
@@ -187,51 +193,70 @@ public:
     commands::OpenServoCommand openServo{drivers, &servo};
     commands::CloseServoCommand closeServo{drivers, &servo};
 
-    //mappings
+    // mappings
 
-    //shooting
-    Trigger shootButton{drivers, Remote::Channel::WHEEL, -0.5};
-    Trigger unjamButton{drivers, Remote::Channel::WHEEL, 0.5};
-    Trigger unjamKey{drivers, Remote::Key::Z}; //or R if based
-    Trigger onlyCloseLidKey{drivers, Remote::Key::CTRL}; //blame peter
-    Trigger autoAimKey{drivers, MouseButton::RIGHT};
-    Trigger shootKey{drivers, MouseButton::LEFT};
-    Trigger shootFastKey = shootKey & onlyCloseLidKey;
-    Trigger shootRegKey = shootKey & !onlyCloseLidKey;
+    // shooting
+    Trigger controllerShootTrigger{drivers, Remote::Channel::WHEEL, -0.5};
+    Trigger controllerUnjamTrigger{drivers, Remote::Channel::WHEEL, 0.5};
+    Trigger keyboardUnjamTrigger{drivers, Remote::Key::Z};            // or R if based
+    Trigger keyboardModifierTrigger{drivers, Remote::Key::CTRL};  // blame peter
+    Trigger mouseAimTrigger{drivers, MouseButton::RIGHT};
+    Trigger mouseShootTrigger{drivers, MouseButton::LEFT};
+    Trigger mouseShootFastTrigger = mouseShootTrigger & keyboardModifierTrigger;
+    Trigger mouseShootSingleTrigger = mouseShootTrigger & !keyboardModifierTrigger;
 
-    Trigger scrollUp{drivers, MouseScrollDirection::UP};
-    Trigger scrollDown{drivers, MouseScrollDirection::DOWN};
+    Trigger scrollUpTrigger{drivers, MouseScrollDirection::UP};
+    Trigger scrollDownTrigger{drivers, MouseScrollDirection::DOWN};
 
-    //toggle UI
-    Trigger toggleUIKey{drivers, Remote::Key::G};
+    // toggle UI
+    Trigger keyboardUITrigger{drivers, Remote::Key::G};
 
-    //peeking
-    Trigger peekLeftButton{drivers, Remote::Key::Q};
-    Trigger peekRightButton{drivers, Remote::Key::E};
-    Trigger peekNoneButton = !(peekLeftButton|peekRightButton);
-    
-    Trigger joystickLook0{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
-    Trigger joystickLook1{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::MID};
-    Trigger joystickLook2{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::DOWN};
+    // peeking
+    Trigger keyboardPeekLeftTrigger{drivers, Remote::Key::Q};
+    Trigger keyboardPeekRightTrigger{drivers, Remote::Key::E};
+    Trigger keyboardPeekNoneTrigger = !(keyboardPeekLeftTrigger | keyboardPeekRightTrigger);
 
-    //controller driving
-    Trigger joystickDrive0{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};// = (Trigger(drivers, Remote::Key::Q) & Trigger(drivers, Remote::Key::E)) | Trigger(drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP);
-    Trigger joystickDrive1{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::MID};
-    Trigger joystickDrive2{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
-    
-    Trigger autoFireTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
+    // controller driving
+    Trigger controllerDrivePointForwardTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};  // = (Trigger(drivers, Remote::Key::Q) & Trigger(drivers, Remote::Key::E)) | Trigger(drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP);
+    Trigger controllerDriveNoSpinTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::MID};
+    Trigger controllerDriveBeybladeTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
 
+    Trigger controllerAutoFireTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
+    Trigger controllerLookJoystickTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::MID};
+    Trigger controllerLookJoystickOffsetTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::DOWN};
 
-    //keyboard driving
-    // Trigger speedModeKey{drivers, Remote::Key::SHIFT}; //drivetrain drive command reads shift
-    Trigger stopBeybladeKey{drivers, Remote::Key::X};
-    Trigger beybladeType1Key{drivers, Remote::Key::C}; //most beyblade, checked in DrivetrainDriveCommand
-    Trigger beybladeType2Key{drivers, Remote::Key::V}; //most translation, checked in DrivetrainDriveCommand
-    Trigger startBeybladeKey = beybladeType1Key | beybladeType2Key | scrollUp | scrollDown;
+    // keyboard driving
+    Trigger keyboardStopBeybladeTrigger{drivers, Remote::Key::X};
+    Trigger keyboardBeybladeSpinPriorityTrigger{drivers, Remote::Key::C};  // most beyblade, checked in DrivetrainDriveCommand
+    Trigger keyboardBeybladeMovePriorityTrigger{drivers, Remote::Key::V};  // most translation, checked in DrivetrainDriveCommand
+    Trigger startBeybladeKey = keyboardBeybladeSpinPriorityTrigger | keyboardBeybladeMovePriorityTrigger | scrollUpTrigger | scrollDownTrigger;
 
-    Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
+    Trigger stopFlywheelTrigger = controllerUnjamTrigger | keyboardUnjamTrigger;  // doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
-    Trigger* triggers[25] = {&joystickLook0, &joystickLook1, &joystickLook2, &peekLeftButton, &peekRightButton, &peekNoneButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &shootButton, &unjamButton, &onlyCloseLidKey, &unjamKey, &autoFireTrigger, &shootKey, &shootRegKey, &shootFastKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
+    Trigger* triggers[24] = {&controllerLookJoystickTrigger,
+                             &controllerLookJoystickOffsetTrigger,
+                             &keyboardPeekLeftTrigger,
+                             &keyboardPeekRightTrigger,
+                             &keyboardPeekNoneTrigger,
+                             &controllerDrivePointForwardTrigger,
+                             &controllerDriveNoSpinTrigger,
+                             &controllerDriveBeybladeTrigger,
+                             &controllerShootTrigger,
+                             &controllerUnjamTrigger,
+                             &keyboardModifierTrigger,
+                             &keyboardUnjamTrigger,
+                             &controllerAutoFireTrigger,
+                             &mouseShootTrigger,
+                             &mouseShootSingleTrigger,
+                             &mouseShootFastTrigger,
+                             &mouseAimTrigger,
+                             &keyboardStopBeybladeTrigger,
+                             &keyboardBeybladeSpinPriorityTrigger,
+                             &keyboardBeybladeMovePriorityTrigger,
+                             &scrollUpTrigger,
+                             &scrollDownTrigger,
+                             &startBeybladeKey,
+                             &keyboardUITrigger};  //, &indexSpinButton};
 
 private:
     bool wasControllerModeBeforeRecal;

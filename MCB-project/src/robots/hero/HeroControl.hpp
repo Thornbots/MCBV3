@@ -50,32 +50,30 @@ public:
 
 
         // Mouse and Keyboard mappings
-        unjamKey.whileTrue(&indexerUnjam);
-        shootKey.onTrue(&indexerSemi)->onTrue(&shooterStart);
-        unjamButton.whileTrue(&indexerUnjam);
-        shootButton.onTrue(&indexerSemi)->onTrue(&shooterStart);
+        keyboardUnjamTrigger.whileTrue(&indexerUnjam);
+        mouseShootTrigger.onTrue(&indexerSemi)->onTrue(&shooterStart);
+        controllerUnjamTrigger.whileTrue(&indexerUnjam);
+        controllerShootTrigger.onTrue(&indexerSemi)->onTrue(&shooterStart);
         stopFlywheelTrigger.onTrue(&shooterStop);
-        autoAimKey.onTrue(&shooterStart);
-        // implement speed mode
+        mouseAimTrigger.onTrue(&shooterStart);
 
-        toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
+        keyboardUITrigger.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
         drivers->commandScheduler.addCommand(&draw);
 
         // drive commands and also enable mouse looking
+        keyboardPeekLeftTrigger.onTrue(&peekLeft)->onFalse(&beybladeKeyboard);
+        keyboardPeekRightTrigger.onTrue(&peekRight)->onFalse(&beybladeKeyboard);
 
-        peekLeftButton.onTrue(&peekLeft)->onFalse(&beybladeKeyboard);
-        peekRightButton.onTrue(&peekRight)->onFalse(&beybladeKeyboard);
-
-        stopBeybladeKey.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
+        keyboardStopBeybladeTrigger.onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);
         startBeybladeKey.onTrue(&beybladeKeyboard)->onTrue(&lookMouse);
 
-        joystickDrive0.onTrue(&noSpinDriveCommand);
-        joystickDrive1.onTrue(&drivetrainFollowJoystick);
-        joystickDrive2.onTrue(&beybladeJoystick);
+        controllerDrivePointForwardTrigger.onTrue(&drivetrainFollowJoystick);   // right switch up
+        controllerDriveNoSpinTrigger.onTrue(&noSpinDriveCommand);               // right switch mid
+        controllerDriveBeybladeTrigger.onTrue(&beybladeJoystick);               // right switch down
 
-        joystickLook0.onTrue(&lookJoystick); //looks horizontal
-        joystickLook1.onTrue(&lookJoystick); //looks horizontal
-        joystickLook2.onTrue(&lookJoystickOffset); //looks downward to fit in sizing box
+        controllerAutoFireTrigger.onTrue(&lookJoystick);                    // left switch up
+        controllerLookJoystickTrigger.onTrue(&lookJoystick);                // left switch mid
+        controllerLookJoystickOffsetTrigger.onTrue(&lookJoystickOffset);    // left switch down
 
         isStopped = false;
     }
@@ -164,42 +162,41 @@ public:
     // mappings
 
     //shooting
-    Trigger shootButton{drivers, Remote::Channel::WHEEL, -0.5};
-    Trigger unjamButton{drivers, Remote::Channel::WHEEL, 0.5};
-    Trigger unjamKey{drivers, Remote::Key::Z}; //or R if based
-    Trigger autoAimKey{drivers, MouseButton::RIGHT};
-    Trigger shootKey{drivers, MouseButton::LEFT};
+    Trigger controllerShootTrigger{drivers, Remote::Channel::WHEEL, -0.5};
+    Trigger controllerUnjamTrigger{drivers, Remote::Channel::WHEEL, 0.5};
+    Trigger keyboardUnjamTrigger{drivers, Remote::Key::Z}; //or R if based
+    Trigger mouseAimTrigger{drivers, MouseButton::RIGHT};
+    Trigger mouseShootTrigger{drivers, MouseButton::LEFT};
 
-    Trigger scrollUp{drivers, MouseScrollDirection::UP};
-    Trigger scrollDown{drivers, MouseScrollDirection::DOWN};
+    Trigger scrollUpTrigger{drivers, MouseScrollDirection::UP};
+    Trigger scrollDownTrigger{drivers, MouseScrollDirection::DOWN};
 
     //toggle UI
-    Trigger toggleUIKey{drivers, Remote::Key::G};
+    Trigger keyboardUITrigger{drivers, Remote::Key::G};
 
     //peeking
-    Trigger peekLeftButton{drivers, Remote::Key::Q};
-    Trigger peekRightButton{drivers, Remote::Key::E};
+    Trigger keyboardPeekLeftTrigger{drivers, Remote::Key::Q};
+    Trigger keyboardPeekRightTrigger{drivers, Remote::Key::E};
 
     //controller driving
-    Trigger joystickDrive0{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};// = (Trigger(drivers, Remote::Key::Q) & Trigger(drivers, Remote::Key::E)) | Trigger(drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP);
-    Trigger joystickDrive1{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::MID};
-    Trigger joystickDrive2{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
+    Trigger controllerDrivePointForwardTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::UP};// = (Trigger(drivers, Remote::Key::Q) & Trigger(drivers, Remote::Key::E)) | Trigger(drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP);
+    Trigger controllerDriveNoSpinTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::MID};
+    Trigger controllerDriveBeybladeTrigger{drivers, Remote::Switch::RIGHT_SWITCH, Remote::SwitchState::DOWN};
 
-    Trigger joystickLook0{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
-    Trigger joystickLook1{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::MID};
-    Trigger joystickLook2{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::DOWN};
+    Trigger controllerAutoFireTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::UP};
+    Trigger controllerLookJoystickTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::MID};
+    Trigger controllerLookJoystickOffsetTrigger{drivers, Remote::Switch::LEFT_SWITCH, Remote::SwitchState::DOWN};
 
 
     //keyboard driving
-    // Trigger speedModeKey{drivers, Remote::Key::SHIFT}; //drivetrain drive command reads shift
-    Trigger stopBeybladeKey{drivers, Remote::Key::X};
-    Trigger beybladeType1Key{drivers, Remote::Key::C}; //most beyblade, checked in DrivetrainDriveCommand
-    Trigger beybladeType2Key{drivers, Remote::Key::V}; //most translation, checked in DrivetrainDriveCommand
-    Trigger startBeybladeKey = beybladeType1Key | beybladeType2Key | scrollUp | scrollDown;
+    Trigger keyboardStopBeybladeTrigger{drivers, Remote::Key::X};
+    Trigger keyboardBeybladeSpinPriorityTrigger{drivers, Remote::Key::C}; //most beyblade, checked in DrivetrainDriveCommand
+    Trigger keyboardBeybladeMovePriorityTrigger{drivers, Remote::Key::V}; //most translation, checked in DrivetrainDriveCommand
+    Trigger startBeybladeKey = keyboardBeybladeSpinPriorityTrigger | keyboardBeybladeMovePriorityTrigger | scrollUpTrigger | scrollDownTrigger;
 
-    Trigger stopFlywheelTrigger = unjamButton | unjamKey; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
+    Trigger stopFlywheelTrigger = controllerUnjamTrigger | keyboardUnjamTrigger; //doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
-    Trigger* triggers[20] = {&peekLeftButton, &peekRightButton, &joystickDrive0, &joystickDrive1, &joystickDrive2, &joystickLook0, &joystickLook1, &joystickLook2, &shootButton, &unjamButton, &unjamKey, &shootKey, &autoAimKey, &stopBeybladeKey, &beybladeType1Key, &beybladeType2Key, &scrollUp, &scrollDown, &startBeybladeKey, &toggleUIKey};//, &indexSpinButton};
+    Trigger* triggers[20] = {&keyboardPeekLeftTrigger, &keyboardPeekRightTrigger, &controllerDrivePointForwardTrigger, &controllerDriveNoSpinTrigger, &controllerDriveBeybladeTrigger, &controllerAutoFireTrigger, &controllerLookJoystickTrigger, &controllerLookJoystickOffsetTrigger, &controllerShootTrigger, &controllerUnjamTrigger, &keyboardUnjamTrigger, &mouseShootTrigger, &mouseAimTrigger, &keyboardStopBeybladeTrigger, &keyboardBeybladeSpinPriorityTrigger, &keyboardBeybladeMovePriorityTrigger, &scrollUpTrigger, &scrollDownTrigger, &startBeybladeKey, &keyboardUITrigger};//, &indexSpinButton};
 private:
     bool wasControllerModeBeforeRecal;
 };

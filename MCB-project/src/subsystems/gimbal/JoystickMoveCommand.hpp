@@ -50,9 +50,8 @@ private:
     GimbalSubsystem* gimbal;
 
     bool isCalibrated = false;
-    bool hasRecalibrated = false;
-    uint32_t recalStartedTime;
-    bool isRecalibrating = false;
+    tap::arch::MilliTimeout downForRecalTimeout; //restarted with RECAL_HOLD_TIME
+    tap::arch::MilliTimeout upForMappingTimeout; //restarted with MAPPING_HOLD_TIME
 
     bool isOffset = false;
     bool firstTime = false;

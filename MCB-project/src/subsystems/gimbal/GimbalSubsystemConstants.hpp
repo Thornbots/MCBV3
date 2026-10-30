@@ -18,7 +18,9 @@ static constexpr float CONTROLLER_PITCH_PROPORTIONAL = -0.005;
 static constexpr int LATENCY_Q_SIZE = 23; //12 cycles = 24ms
 
 static constexpr float PITCH_RECAL_THRESHOLD = -0.5;
+static constexpr float PITCH_MAPPING_THRESHOLD = 0.5;
 static constexpr float RECAL_HOLD_TIME = 3000; // milliseconds to hold controller combo until recalibration
+static constexpr float MAPPING_HOLD_TIME = 5000; // milliseconds to hold controller combo until sentry enters mapping mode
 
 #if defined(HERO)
 constexpr static int YAW_MOTOR_MAX_SPEED = 1000;  // TODO: Make this value relevent
@@ -36,9 +38,6 @@ static constexpr float SECOND_PITCH_OFFSET = 0.85f;  // to make gimbal look down
 static constexpr float YAW_TOTAL_RATIO = 32319.0f / 748.0f;  // unitless, ratio of encoder counts to degrees of rotation
 
 static constexpr int YAW_DIST_RANGE = 18000;
-
-static constexpr float CONTROLLER_PITCH_PROPORTIONAL = -0.3 * PI;
-
 
 static constexpr float PITCH_RATIO = 4.0f;
 
@@ -62,8 +61,6 @@ static constexpr float YAW_TOTAL_RATIO = 32319.0f / 748.0f;  // unitless, ratio 
 
 static constexpr int YAW_DIST_RANGE = 18000;
 
-static constexpr float CONTROLLER_PITCH_PROPORTIONAL = -0.2f * PI;
-
 static constexpr float PITCH_RATIO = 3.0f;
 
 #elif defined(INFANTRY)
@@ -82,8 +79,6 @@ static constexpr float SECOND_PITCH_OFFSET = 0.08 * PI_CONST;
 static constexpr float YAW_TOTAL_RATIO = 32319.0f / 748.0f;  // unitless, ratio of encoder counts to degrees of rotation
 
 static constexpr int YAW_DIST_RANGE = 16384 / 4;  // 20/4 = 5 amps
-
-static constexpr float CONTROLLER_PITCH_PROPORTIONAL = -0.1 * PI;
 
 static constexpr float PITCH_RATIO = 3.0f;
 
