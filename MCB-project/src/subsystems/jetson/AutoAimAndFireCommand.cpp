@@ -24,6 +24,7 @@ AutoAimAndFireCommand::AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsys
         addSubsystemRequirement(flywheel);
     }
     startShotTimeout.stop();
+    cvTargetValidTimeout.stop();
 }
 
 void AutoAimAndFireCommand::initialize() {
@@ -78,9 +79,12 @@ void AutoAimAndFireCommand::execute() {
     // cvTarget and getAim* share the raw aim frame, never relocalized. The gimbal's world yaw is
     // the IMU's, counterclockwise and zero at power-on, so take the start's yaw off
     Vector2d deltaXY{cvTarget.x - odo->getAimX(), cvTarget.y - odo->getAimY()};
-    deltaX = deltaXY.getX();
-    deltaY = deltaXY.getY();
-    deltaZ = cvTarget.z-Projections::OFFSET_Z_ROBOT_TO_PITCH_PIVOT;
+    Vector3d deltasUnadjusted{deltaXY.getX(), deltaXY.getY(), cvTarget.z};
+    Vector3d deltasAdjusted = Projections::robotSpaceToPivotSpace(deltasUnadjusted);
+    deltaXY = {deltasAdjusted.getX(), deltasAdjusted.getY()};
+    deltaX = deltasAdjusted.getX();
+    deltaY = deltasAdjusted.getY();
+    deltaZ = deltasAdjusted.getZ();
     // The barrel sits OFFSET_X_PITCH_PIVOT_TO_BARREL right of the yaw axis; turn so its line,
     // not the axis's, passes through the target.
     const float range = std::max(deltaXY.magnitude(), std::abs(Projections::OFFSET_X_PITCH_PIVOT_TO_BARREL) + 1e-3f);
@@ -154,6 +158,7 @@ void AutoAimAndFireCommand::execute() {
 void AutoAimAndFireCommand::end(bool) {
     isScheduled = false;
     startShotTimeout.stop();
+    cvTargetValidTimeout.stop();
 }
 
 bool AutoAimAndFireCommand::getIsScheduled() { return isScheduled; }

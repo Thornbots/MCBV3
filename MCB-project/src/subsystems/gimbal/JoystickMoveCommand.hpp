@@ -49,6 +49,10 @@ private:
     src::Drivers* drivers;
     GimbalSubsystem* gimbal;
 
+    bool isCalibrated = false;
+    tap::arch::MilliTimeout downForRecalTimeout; //restarted with RECAL_HOLD_TIME
+    tap::arch::MilliTimeout upForMappingTimeout; //restarted with MAPPING_HOLD_TIME
+
     bool isOffset = false;
     bool firstTime = false;
 };

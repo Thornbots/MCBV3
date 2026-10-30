@@ -78,8 +78,9 @@ private:
     tap::arch::MilliTimeout cvTargetValidTimeout{};
     tap::arch::MilliTimeout startShotTimeout{}; //ideally we don't have to queue up multiple shots
     static constexpr int TARGET_VALID_TIME = 200; //ms, perhaps the new version of PERSISTANCE after the last shot
-    // Indexer request to chamber exit; the sentry's 20 ms is timed on the robot (2026-10-28).
-#if defined(SENTRY)
+    // Indexer request to chamber exit; the sentry's 20 ms is timed on the robot (2026-10-28),
+    // infantry's is assumed equal.
+#if defined(SENTRY) or defined(INFANTRY)
     static constexpr int FIRING_LATENCY_TIME = 20;
 #else
     static constexpr int FIRING_LATENCY_TIME = 80;

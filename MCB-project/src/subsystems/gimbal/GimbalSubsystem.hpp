@@ -79,6 +79,8 @@ public:  // Public Methods
     void updateMotors(float changeInTargetYaw, float targetPitch);
 
     float getPrevTargetPitch();
+    void setPrevTargetPitch(float value);
+    
 #ifdef MCB_HOSTED
     float getHostedTargetYaw() const { return targetYawAngleWorld; }
 #endif

@@ -144,7 +144,9 @@ int main() {
             checkAutoRecalibrate(); //would make drivers.recal.isForcingRecalibration() return true
             bool goingToRecalibrate = drivers.recal.isForcingRecalibration() || shouldExecuteScheduledRecalibration();
             if(goingToRecalibrate){
-                control.stopForImuRecal();
+                if (!control.isStopped) {
+                    control.stopForImuRecal();
+                }
                 drivers.recal.setIsWaiting();
                 drivers.leds.set(tap::gpio::Leds::Blue, true);
                 drivers.leds.set(tap::gpio::Leds::Green, true);
