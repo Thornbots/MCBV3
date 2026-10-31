@@ -1,10 +1,14 @@
 {
-    // Standalone clone. Inside the Isaac ROS workspace, pick isaac-ros-workspace
-    // instead: it adds workspace policy hooks and commit signing.
+    // MCBV3 as the Isaac ROS workspace's firmware/MCBV3 submodule. Its .git file
+    // points at ../../.git/modules/firmware/MCBV3, so mount the workspace at its
+    // host path: git, core.hooksPath and the policy hooks (docs/CI.md) resolve.
+    // A standalone clone is not supported here; it would mount the clone's grandparent.
     "name": "MCBV3",
     "build": {
         "dockerfile": "Dockerfile"
     },
+    "workspaceMount": "source=${localWorkspaceFolder}/../..,target=${localWorkspaceFolder}/../..,type=bind",
+    "workspaceFolder": "${localWorkspaceFolder}",
     // Flashing needs the CMSIS-DAP probe: share host USB (major 189) with hotplug.
     "runArgs": [
         "--device-cgroup-rule=c 189:* rmw",
@@ -34,6 +38,8 @@
     },
     "mounts": [
         // Persist installed extensions across container rebuilds
-        "source=MCB-extensions-ubuntu,target=/home/ubuntu/.vscode-server/extensions,type=volume"
+        "source=MCB-extensions-ubuntu,target=/home/ubuntu/.vscode-server/extensions,type=volume",
+        // Read-only, at the host path, so ssh commit signing works if configured.
+        "source=${localEnv:HOME}/.ssh,target=${localEnv:HOME}/.ssh,type=bind,readonly"
     ]
 }
