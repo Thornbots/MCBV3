@@ -16,13 +16,14 @@ static constexpr float ODO_OFFSET = -0.25 + PI_CONST/2;//90*PI_CONST/180;
 
 static constexpr int ODO_DIST_RANGE = 18000;
 
-// Field frame (REP-105, z up): 12 m x 8 m, (0, 0) at the centre, x toward blue's base,
-// y left. Both chassis boot facing +y; routes use the inward direction from each base.
-// START_X puts ARCC_ROUGH_PATH's centre target on x = 0; not measured on the field yet.
-static constexpr float FIELD_LENGTH = 12.0f;  // meters, along x
-static constexpr float FIELD_WIDTH = 8.0f;    // meters, along y
-static constexpr float START_X = 4.625f;      // meters
-static constexpr float START_Y = 0.0f;        // meters
+// Field frame (REP-105, z up): 2026 spooky scrim 2v2 field, 8.384 m x 5.0 m, (0, 0) at
+// the centre, x toward blue's base, y left. Both chassis boot facing +y; routes use the
+// inward direction from each base. Start is red's (-3.53, -0.426), mirrored in x for
+// blue, read from the SPOOKY_SCRIM_2V2 route drawing; not measured on the field yet.
+static constexpr float FIELD_LENGTH = 8.384f;  // meters, along x
+static constexpr float FIELD_WIDTH = 5.0f;     // meters, along y
+static constexpr float START_X = 3.53f;        // meters
+static constexpr float START_Y = -0.426f;      // meters
 static constexpr float BOOT_YAW = 1.5707963267948966f;  // radians, both teams
 
 }

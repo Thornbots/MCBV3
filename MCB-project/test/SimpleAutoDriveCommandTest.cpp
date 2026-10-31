@@ -144,12 +144,15 @@ TEST_F(SimpleAutoDriveCommandTest, BothTeamsKeepBootHeadingPodAxesAndVelocity) {
 TEST_F(SimpleAutoDriveCommandTest, BothTeamsRoutesStillRunInwardToFieldCenter) {
     for (bool blue : {false, true}) {
         team(blue);
-        const auto center = odo.fromStart(4.625f, 0);
-        EXPECT_NEAR(center.getX(), 0, 1e-5f);
-        EXPECT_NEAR(center.getY(), 0, 1e-5f);
-        const auto leg = odo.fromStart(0.5f, blue ? 2.5f : -2.5f);
-        EXPECT_NEAR(leg.getX(), blue ? 4.125f : -4.125f, 1e-5f);
-        EXPECT_NEAR(leg.getY(), -2.5f, 1e-5f);
+        SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, Mode::SPOOKY_SCRIM_2V2);
+        command.initialize();
+        const float sign = blue ? 1.0f : -1.0f;
+        const float field[][2] = {{3.50f, -1.75f}, {2.19f, -1.76f}, {0.0f, 0.0f}};
+        ASSERT_EQ(command.targets.size(), 3u);
+        for (size_t i = 0; i < 3; ++i) {
+            EXPECT_NEAR(command.targets[i].position.first, sign * field[i][0], 1e-5f) << i;
+            EXPECT_NEAR(command.targets[i].position.second, field[i][1], 1e-5f) << i;
+        }
     }
 }
 
@@ -228,7 +231,7 @@ TEST_F(SimpleAutoDriveCommandTest, OnlyRoughWallWaypointsTightenForEitherTeam) {
     for (bool blue : {false, true}) {
         for (Mode mode : {Mode::TEST, Mode::PURDUE2V2, Mode::ARCC_HALLWAY_PATH,
                 Mode::ARCC_ROUGH_PATH, Mode::ARCC_RAMP_PATH,
-                Mode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED}) checkRoute(mode, blue);
+                Mode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED, Mode::SPOOKY_SCRIM_2V2}) checkRoute(mode, blue);
     }
 }
 
