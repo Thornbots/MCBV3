@@ -55,6 +55,18 @@ void JetsonSubsystem::refresh() {
 #endif
             };
             sendMsg(&p);
+        } else if (messageCount < 10) {
+            // No odometry (hero, standard): the chassis stays at (0, 0) so the
+            // Jetson still gets gimbal angles and an odom frame to aim in.
+            Pose p{
+                0.0f,
+                0.0f,
+                0.0f,
+                0.0f,
+                gimbal->getPitchEncoderValue(),
+                std::fmod(gimbal->getYawAngleRelativeWorld(), 2 * PI),
+                OdomStatus::ODOM_I2C_DEAD};  // protocol code 2: x/y/vel have no source
+            sendMsg(&p);
         } else {  // if(drivers->refSerial.getRefSerialReceivingData()) {
 
             tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
