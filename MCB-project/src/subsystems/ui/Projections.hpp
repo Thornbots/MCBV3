@@ -7,7 +7,7 @@ class Projections {
 
 public:
 
-#if defined(HERO)        // todo
+#if defined(HERO)
 //no OFFSET_X_ROBOT_TO_PITCH_PIVOT because pitch rotates around x
 static constexpr float OFFSET_Y_ROBOT_TO_PITCH_PIVOT = 0;  // meters, forward distance from robot center to pitch rotate point, positive means it is in front of robot center
 static constexpr float OFFSET_Z_ROBOT_TO_PITCH_PIVOT = 0.75; //meters, vertical distance from floor to pitch rotate point, positive means gimbal is above the floor (kind of has to be positive)
@@ -19,10 +19,12 @@ static constexpr float OFFSET_Z_PITCH_PIVOT_TO_VTM = 0.0785; //meters, vertical 
 static constexpr float OFFSET_X_PITCH_PIVOT_TO_BARREL = 0; //meters, like OFFSET_X_PITCH_PIVOT_TO_VTM but for where shots exit. Exit velocity is in JetsonSubsystemConstants.hpp, as J
 static constexpr float OFFSET_Y_PITCH_PIVOT_TO_BARREL = 0.188; //meters
 static constexpr float OFFSET_Z_PITCH_PIVOT_TO_BARREL = 0; //meters
-#elif defined(SENTRY)    // todo
+#elif defined(SENTRY)
 //no OFFSET_X_ROBOT_TO_PITCH_PIVOT because pitch rotates around x
 static constexpr float OFFSET_Y_ROBOT_TO_PITCH_PIVOT = 0;  // meters, forward distance from robot center to pitch rotate point, positive means it is in front of robot center
-static constexpr float OFFSET_Z_ROBOT_TO_PITCH_PIVOT = 0.39; //meters, vertical distance from floor to pitch rotate point, positive means gimbal is above the floor (kind of has to be positive)
+
+// making this value bigger makes it aim lower
+static constexpr float OFFSET_Z_ROBOT_TO_PITCH_PIVOT = 0.28; //meters, vertical distance from floor to pitch rotate point, positive means gimbal is above the floor (kind of has to be positive)
 
 static constexpr float OFFSET_X_PITCH_PIVOT_TO_VTM = 0; //meters, side to side distance from robot center to vtm, positive means vtm is to the right of robot center
 static constexpr float OFFSET_Y_PITCH_PIVOT_TO_VTM = 0.1212; //meters, forward distance from pitch rotate point to vtm, positive means vtm is in front of pitch pivot point
@@ -31,19 +33,21 @@ static constexpr float OFFSET_Z_PITCH_PIVOT_TO_VTM = 0.0882; //meters, vertical 
 static constexpr float OFFSET_X_PITCH_PIVOT_TO_BARREL = -0.0019; //meters, like OFFSET_X_PITCH_PIVOT_TO_VTM but for where shots exit (2026-10-26 low-res CAD bore: 1.9 mm left of the yaw axis). Exit velocity is in JetsonSubsystemConstants.hpp, as J
 static constexpr float OFFSET_Y_PITCH_PIVOT_TO_BARREL = 0.068; //meters
 static constexpr float OFFSET_Z_PITCH_PIVOT_TO_BARREL = 0; //meters
-#elif defined(INFANTRY)  // todo
+#elif defined(INFANTRY)
 //no OFFSET_X_ROBOT_TO_PITCH_PIVOT because pitch rotates around x
 static constexpr float OFFSET_Y_ROBOT_TO_PITCH_PIVOT = 0;  // meters, forward distance from robot center to pitch rotate point, positive means it is in front of robot center
-static constexpr float OFFSET_Z_ROBOT_TO_PITCH_PIVOT = 0.352358; //meters, vertical distance from floor to pitch rotate point, positive means gimbal is above the floor (kind of has to be positive)
+
+// making this value bigger makes it aim lower
+static constexpr float OFFSET_Z_ROBOT_TO_PITCH_PIVOT = 0.28; //meters, vertical distance from floor to pitch rotate point, positive means gimbal is above the floor (kind of has to be positive)
 
 static constexpr float OFFSET_X_PITCH_PIVOT_TO_VTM = 0; //meters, side to side distance from robot center to vtm, positive means vtm is to the right of robot center
-static constexpr float OFFSET_Y_PITCH_PIVOT_TO_VTM = 0.1555; //meters, forward distance from pitch rotate point to vtm, positive means vtm is in front of pitch pivot point
-static constexpr float OFFSET_Z_PITCH_PIVOT_TO_VTM = 0.0072336; //meters, vertical distance from pitch rotate point to vtm, positive means vtm is above the pitch pivot point
+static constexpr float OFFSET_Y_PITCH_PIVOT_TO_VTM = 0.1212; //meters, forward distance from pitch rotate point to vtm, positive means vtm is in front of pitch pivot point
+static constexpr float OFFSET_Z_PITCH_PIVOT_TO_VTM = 0.0882; //meters, vertical distance from pitch rotate point to vtm, positive means vtm is above the pitch pivot point
 
-static constexpr float OFFSET_X_PITCH_PIVOT_TO_BARREL = 0; //meters, like OFFSET_X_PITCH_PIVOT_TO_VTM but for where shots exit. Exit velocity is in JetsonSubsystemConstants.hpp, as J
-static constexpr float OFFSET_Y_PITCH_PIVOT_TO_BARREL = 0.1555; //meters
+static constexpr float OFFSET_X_PITCH_PIVOT_TO_BARREL = -0.0019; //meters, like OFFSET_X_PITCH_PIVOT_TO_VTM but for where shots exit (2026-10-26 low-res CAD bore: 1.9 mm left of the yaw axis). Exit velocity is in JetsonSubsystemConstants.hpp, as J
+static constexpr float OFFSET_Y_PITCH_PIVOT_TO_BARREL = 0.068; //meters
 static constexpr float OFFSET_Z_PITCH_PIVOT_TO_BARREL = 0; //meters
-#else                    // old infantry, todo
+#else                    // old infantry
 //no OFFSET_X_ROBOT_TO_PITCH_PIVOT because pitch rotates around x
 static constexpr float OFFSET_Y_ROBOT_TO_PITCH_PIVOT = 0;  // meters, forward distance from robot center to pitch rotate point, positive means it is in front of robot center
 static constexpr float OFFSET_Z_ROBOT_TO_PITCH_PIVOT = 0.36; //meters, vertical distance from floor to pitch rotate point, positive means gimbal is above the floor (kind of has to be positive)
