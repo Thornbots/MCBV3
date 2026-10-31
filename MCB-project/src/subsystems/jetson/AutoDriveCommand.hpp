@@ -61,6 +61,7 @@ private:
     Pose2d targetVelocity;
 
     bool isScheduled = false;
+    bool hasNavGoal = false;
 
 };
 }  // namespace commands

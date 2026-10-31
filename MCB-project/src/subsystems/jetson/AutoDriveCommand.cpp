@@ -12,6 +12,7 @@ int count = 0;
 // Vector2d startPosition = Vector2d(0, 0);
 void AutoDriveCommand::initialize() {
     isScheduled = true;
+    hasNavGoal = false;
 
     count = 0;
     
@@ -58,7 +59,12 @@ void AutoDriveCommand::execute() {
     //     targetPosition = Pose2d(0, 0, 0);
     // }
 
-    jetson->updateROS(&targetPosition, &targetVelocity, &jetsonExpectedPosition);
+    if (jetson->updateROS(&targetPosition, &targetVelocity, &jetsonExpectedPosition))
+        hasNavGoal = true;
+    if (!odo->isNavigationLocalized() || !hasNavGoal) {
+        drivetrain->stopMotors();
+        return;
+    }
 
 
     Pose2d currentPosition = Pose2d(odo->getX() + offsetX, odo->getY() + offsetY, referenceAngle);

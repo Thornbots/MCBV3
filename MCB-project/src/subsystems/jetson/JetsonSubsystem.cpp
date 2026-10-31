@@ -107,6 +107,7 @@ void JetsonSubsystem::checkApplyRelocalize() {
 bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d*) {
     NavGoal navGoal;
     if (!getMsg(&navGoal)) return false;
+    if (odo == nullptr || !odo->isNavigationLocalized()) return false;
     *targetPosition = Vector2d(navGoal.x, navGoal.y);
     *targetVelocity = Vector2d(0, 0);
 

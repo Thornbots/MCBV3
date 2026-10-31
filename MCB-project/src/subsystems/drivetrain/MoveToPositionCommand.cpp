@@ -11,6 +11,11 @@ void MoveToPositionCommand::initialize() {
 }
 
 void MoveToPositionCommand::execute() {
+    if (!odo->isNavigationLocalized()) {
+        drivetrain->stopMotors();
+        return;
+    }
+
 
     if (drivers->refSerial.getRefSerialReceivingData() && 
        (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
@@ -41,10 +46,14 @@ void MoveToPositionCommand::execute() {
     // drivetrain->setTargetTranslation(drive, false);
 }
 
-bool MoveToPositionCommand::isFinished() const { return !drivers->remote.isConnected() || (targetPosition-currentPosition).magnitude() < tolerance; }
+bool MoveToPositionCommand::isFinished() const { return !drivers->remote.isConnected() || (odo->isNavigationLocalized() && (targetPosition-currentPosition).magnitude() < tolerance); }
 
 
-void MoveToPositionCommand::end(bool cancel) { 
+void MoveToPositionCommand::end(bool cancel) {
+    if (!odo->isNavigationLocalized()) {
+        drivetrain->stopMotors();
+        return;
+    }
     if(cancel)
         drivetrain->setTargetTranslation(targetVelocity, false);
 }

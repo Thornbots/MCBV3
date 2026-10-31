@@ -21,6 +21,11 @@ namespace commands {
     }
     
     void SimpleAutoDriveCommand::execute() {
+        if (!odo->isNavigationLocalized()) {
+            stuckTimer.stop();
+            positionCommand.drivetrain->stopMotors();
+            return;
+        }
         // if we haven't self-disabled
         if (isScheduled) {
             // set direction

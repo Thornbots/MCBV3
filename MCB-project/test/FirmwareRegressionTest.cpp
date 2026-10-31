@@ -39,8 +39,8 @@ TEST(OdometryFramesTest, RelocalizationChangesNavigationButPreservesRawAim) {
     subsystems::OdometrySubsystem odometry(&drivers, nullptr);
     const float rawX = odometry.getAimX();
     const float rawY = odometry.getAimY();
-    EXPECT_FLOAT_EQ(rawX, -odo::START_X);
-    EXPECT_FLOAT_EQ(rawY, odo::START_Y);
+    EXPECT_FLOAT_EQ(rawX, 0.0f);
+    EXPECT_FLOAT_EQ(rawY, 0.0f);
     odometry.relocalizeTo(1.25f, -0.75f);
     EXPECT_FLOAT_EQ(odometry.getX(), 1.25f);
     EXPECT_FLOAT_EQ(odometry.getY(), -0.75f);
