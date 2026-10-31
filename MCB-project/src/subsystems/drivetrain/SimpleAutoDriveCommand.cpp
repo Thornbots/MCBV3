@@ -21,6 +21,11 @@ namespace commands {
     }
     
     void SimpleAutoDriveCommand::execute() {
+        if (!odo->isNavigationLocalized()) {
+            stuckTimer.stop();
+            positionCommand.drivetrain->stopMotors();
+            return;
+        }
         // if we haven't self-disabled
         if (isScheduled) {
             // set direction
@@ -104,7 +109,7 @@ namespace commands {
         bool isBlue = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId);
         int m = isBlue ? -1 : 1;
 
-        // Each waypoint is (forward, left) from the team's start, along the heading at power-on;
+        // Waypoints are (inward, left) from the team's start in its route basis;
         // at() and vel() turn them into the field frame (OdometrySubsystemConstants.hpp)
         // velocity is normally zero; tolerance defaults to WAYPOINT_TOLERANCE
         auto at = [this](float forward, float left) {
@@ -112,7 +117,7 @@ namespace commands {
             return std::pair<float, float>{p.getX(), p.getY()};
         };
         auto vel = [this](float forward, float left) {
-            Vector2d v = Vector2d(forward, left).rotate(odo->getStartYaw());
+            const Vector2d v = Vector2d(forward, left).rotate(odo->getRouteYaw());
             return std::pair<float, float>{v.getX(), v.getY()};
         };
         targets[0].position = at(0.0f, 0.0f);  // the start, added in the constructor

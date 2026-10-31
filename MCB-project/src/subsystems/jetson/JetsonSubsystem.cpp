@@ -2,6 +2,7 @@
 
 #include "JetsonSubsystemConstants.hpp"
 #include "subsystems/drivetrain/SimpleAutoDriveCommand.hpp"
+#include "subsystems/odometry/OdometrySubsystemConstants.hpp"
 
 namespace subsystems {
 
@@ -64,7 +65,7 @@ void JetsonSubsystem::refresh() {
                 0.0f,
                 0.0f,
                 gimbal->getPitchEncoderValue(),
-                std::fmod(gimbal->getYawAngleRelativeWorld(), 2 * PI),
+                std::fmod(gimbal->getYawAngleRelativeWorld() + odo::BOOT_YAW, 2 * PI),
                 OdomStatus::ODOM_I2C_DEAD};  // protocol code 2: x/y/vel have no source
             sendMsg(&p);
         } else {  // if(drivers->refSerial.getRefSerialReceivingData()) {
@@ -107,6 +108,7 @@ void JetsonSubsystem::checkApplyRelocalize() {
 bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVelocity, Vector2d*) {
     NavGoal navGoal;
     if (!getMsg(&navGoal)) return false;
+    if (odo == nullptr || !odo->isNavigationLocalized()) return false;
     *targetPosition = Vector2d(navGoal.x, navGoal.y);
     *targetVelocity = Vector2d(0, 0);
 

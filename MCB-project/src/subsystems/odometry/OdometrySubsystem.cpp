@@ -21,14 +21,8 @@ void OdometrySubsystem::initialize() {
 bool useController = false;
 void OdometrySubsystem::refresh() {
     bool blue = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId);
-    if (blue != isBlue) {
-        // A new start: raw aim (fromStart) jumps between team starts, 9.25 m red to blue,
-        // and the old navigation offset no longer applies. Jetson consumers must not
-        // interpolate across this step (UART_PROTOCOL.md, message types).
-        isBlue = blue;
-        offsetX = 0.0f;
-        offsetY = 0.0f;
-    }
+    updateAimPosition();
+    isBlue = blue;
 
     if(!useController){
         motorOdo->setDesiredOutput(odoMotorVoltage);
@@ -80,19 +74,22 @@ float OdometrySubsystem::getRawY() {
     return drivers->i2c.odom.getY();
 }
 float OdometrySubsystem::getStartYaw() {
+    return BOOT_YAW;
+}
+float OdometrySubsystem::getRouteYaw() {
     return isBlue ? PI : 0.0f;
 }
 Vector2d OdometrySubsystem::fromStart(float forward, float left) {
     Vector2d start(isBlue ? START_X : -START_X, START_Y);
-    return start + Vector2d(forward, left).rotate(getStartYaw());
+    return start + Vector2d(forward, left).rotate(getRouteYaw());
 }
 // the pods are x right, y forward of the start: forward is raw y, left is raw -x
 void OdometrySubsystem::relocalizeTo(float newX, float newY) {
-    Vector2d p = fromStart(getRawY(), -getRawX());
-    offsetX = newX - p.getX();
-    offsetY = newY - p.getY();
-    //off       = new - raw
-    //off + raw = new
+    if (!std::isfinite(newX) || !std::isfinite(newY)) return;
+    updateAimPosition();
+    offsetX = newX - aimPosition.getX();
+    offsetY = newY - aimPosition.getY();
+    navigationLocalized = true;
 }
 float OdometrySubsystem::getX() {
     return offsetX + getAimX();
@@ -100,11 +97,19 @@ float OdometrySubsystem::getX() {
 float OdometrySubsystem::getY() {
     return offsetY + getAimY();
 }
+// Pods are (right, forward) at boot; rotate (forward, left) into field axes.
+void OdometrySubsystem::updateAimPosition() {
+    const Vector2d pods(getRawY(), -getRawX());
+    aimPosition = aimPosition + (pods - lastPodPosition).rotate(getStartYaw());
+    lastPodPosition = pods;
+}
 float OdometrySubsystem::getAimX() {
-    return fromStart(getRawY(), -getRawX()).getX();
+    updateAimPosition();
+    return aimPosition.getX();
 }
 float OdometrySubsystem::getAimY() {
-    return fromStart(getRawY(), -getRawX()).getY();
+    updateAimPosition();
+    return aimPosition.getY();
 }
 float OdometrySubsystem::getXVel() {
     return Vector2d(drivers->i2c.odom.getYVel(), -drivers->i2c.odom.getXVel()).rotate(getStartYaw()).getX();

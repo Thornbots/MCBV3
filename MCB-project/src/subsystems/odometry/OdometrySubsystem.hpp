@@ -36,8 +36,11 @@ private:  // Private Variables
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
-    // team from the referee, which picks the start; red until it says blue
+    // Referee team selects route points; pod axes and boot heading stay fixed.
     bool isBlue = false;
+    bool navigationLocalized = false;
+    Vector2d aimPosition{0.0f, 0.0f};
+    Vector2d lastPodPosition{0.0f, 0.0f};
 
     // for sysid
     std::mt19937 gen{std::mt19937::default_seed};
@@ -53,7 +56,7 @@ public:  // Public Methods
 
     // getX/getY include the navigation offset replaced by relocalizeTo. Raw
     // getAimX/getAimY are the field-aligned pod coordinates sent in POSE.
-    // Team selection initializes the raw field origin and startup heading.
+    // Raw aim starts at zero; team selection never reanchors accumulated position.
 
     // gives x accounting for relocalize offset
     float getX();
@@ -70,11 +73,15 @@ public:  // Public Methods
 
     // sets the offsets so that if the odo pods don't move after you call this, getX and getY return newX and newY
     void relocalizeTo(float newX, float newY);
+    bool isNavigationLocalized() const { return navigationLocalized; }
 
-    // field yaw of the heading at power-on (the pods' and the IMU's zero): 0 red, PI blue
+    // Field yaw of the heading at power-on (the pods' and IMU's zero): PI/2 both teams.
     float getStartYaw();
 
-    // the field point forward and left of the start, along the heading at power-on
+    // Route basis points inward from each team's base, independently of chassis yaw.
+    float getRouteYaw();
+
+    // Field point inward and left from the team's start in the route basis.
     Vector2d fromStart(float forward, float left);
     
     void refresh() override;
@@ -91,6 +98,7 @@ public:  // Public Methods
     float getOdoVel();
 
 private:  // Private Methods
+    void updateAimPosition();
     int getOdoVoltage(float driveTrainAngularVelocity, float odoAngleRelativeWorld, float odoAngularVelocity, float desiredAngleWorld, float inputVel, float dt);
 
     // gets the actual encoder value x. doesn't change after relocalize
