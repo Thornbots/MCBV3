@@ -311,7 +311,7 @@ private:
     // initialPos and initialVelo are in pivot space, parallel to the ground so gravity is pulling in the -z direction only
     static void getInitials(Vector3d* initialPos, Vector3d* initialVelo, float pitch) {
         Vector3d temp{0, initialShotVelocity, 0};
-        *initialVelo = temp.rotatePitch(-pitch);
+        *initialVelo = temp.rotatePitch(-(pitch + Projections::SHOT_PITCH_DOWN_BIAS));
         *initialPos = {0, 0, 0};  // shot starts in barrel space
         temp = Projections::barrelSpaceToPivotSpace(*initialPos);
         *initialPos = temp.rotatePitch(-pitch);
@@ -351,7 +351,11 @@ private:
         Vector3d initialPos;
         Vector3d initialVelo;
         getInitials(&initialPos, &initialVelo, pitch);
-        float t = (distanceDownRange - initialPos.getY()) / initialVelo.getY();  //(distance to travel [meters]) divided by (speed to get there [meters/seconds]) gives (time to get there [seconds])
+        // Time to cover the down-range distance. Horizontal drag only: vertical drag moves the
+        // sentry's shots under 1 cm at 8 m, so the closed form stays cheap enough for every cycle.
+        const float downRange = distanceDownRange - initialPos.getY();
+        constexpr float k = Projections::SHOT_DRAG_PER_METER;
+        float t = k > 0 ? std::expm1(k * downRange) / (k * initialVelo.getY()) : downRange / initialVelo.getY();
 
         // make sure gravity is negative, the taproot constant is positive, need to subtract
         float zFinal = initialPos.getZ() + initialVelo.getZ() * t - tap::algorithms::ACCELERATION_GRAVITY / 2 * t * t;
