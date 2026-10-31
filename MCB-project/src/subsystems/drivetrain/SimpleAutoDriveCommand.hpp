@@ -36,7 +36,8 @@ public:
         // odo will read wrong on the sloped ramp. This path pretends the ramp is longer, to account for
         // measuring the hypotenuses of the triangluar ramps with the odo pods.
         // Won't work well with jetson relocalization
-        ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED = 5
+        ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED = 5,
+        SPOOKY_SCRIM_2V2 = 6
     };
 
     SimpleAutoDriveCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, OdometrySubsystem* odo, TargetMode mode);

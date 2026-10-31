@@ -177,6 +177,12 @@ namespace commands {
                 targets.push_back({at(1.4f, -m*2.5f), vel(0.0f, 0.0f), WALL_LEG_TOLERANCE});                                          // forward: past wall
                 targets.push_back({at(4.125f + TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET), vel(0.0f, 0.0f)});  // left forward diagonal: to center
                 return;
+            case TargetMode::SPOOKY_SCRIM_2V2:
+                // red field waypoints (-3.50, -1.75), (-2.19, -1.76), (0, 0) from a (-3.53, -0.426) start
+                targets.push_back({at(0.03f, m*-1.324f), vel(0.0f, 0.0f)});  // right: beside the bunker
+                targets.push_back({at(1.34f, m*-1.334f), vel(0.0f, 0.0f)});  // forward: past the bunker
+                targets.push_back({at(3.53f, m*0.426f), vel(0.0f, 0.0f)});   // forward left diagonal: to center
+                return;
         }  // end switch
     }
 
