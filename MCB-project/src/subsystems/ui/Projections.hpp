@@ -23,15 +23,16 @@ static constexpr float OFFSET_Z_PITCH_PIVOT_TO_BARREL = 0; //meters
 //no OFFSET_X_ROBOT_TO_PITCH_PIVOT because pitch rotates around x
 static constexpr float OFFSET_Y_ROBOT_TO_PITCH_PIVOT = 0;  // meters, forward distance from robot center to pitch rotate point, positive means it is in front of robot center
 
-// making this value bigger makes it aim lower
-static constexpr float OFFSET_Z_ROBOT_TO_PITCH_PIVOT = 0.28; //meters, vertical distance from floor to pitch rotate point, positive means gimbal is above the floor (kind of has to be positive)
+// CAD: thornbots_pkg sentry.urdf.xacro headlink 0.2675 + headpitch 0.136 above the wheel datum.
+// Do not tune this to move the aim; a range-dependent miss belongs in SHOT_PITCH_DOWN_BIAS.
+static constexpr float OFFSET_Z_ROBOT_TO_PITCH_PIVOT = 0.4035; //meters, vertical distance from floor to pitch rotate point, positive means gimbal is above the floor (kind of has to be positive)
 
 static constexpr float OFFSET_X_PITCH_PIVOT_TO_VTM = 0; //meters, side to side distance from robot center to vtm, positive means vtm is to the right of robot center
 static constexpr float OFFSET_Y_PITCH_PIVOT_TO_VTM = 0.1212; //meters, forward distance from pitch rotate point to vtm, positive means vtm is in front of pitch pivot point
 static constexpr float OFFSET_Z_PITCH_PIVOT_TO_VTM = 0.0882; //meters, vertical distance from pitch rotate point to vtm, positive means vtm is above the pitch pivot point
 
 static constexpr float OFFSET_X_PITCH_PIVOT_TO_BARREL = -0.0019; //meters, like OFFSET_X_PITCH_PIVOT_TO_VTM but for where shots exit (2026-10-26 low-res CAD bore: 1.9 mm left of the yaw axis). Exit velocity is in JetsonSubsystemConstants.hpp, as J
-static constexpr float OFFSET_Y_PITCH_PIVOT_TO_BARREL = 0.068; //meters
+static constexpr float OFFSET_Y_PITCH_PIVOT_TO_BARREL = 0.173; //meters, CAD bore front ahead of the pitch axis (thornbots_pkg README, muzzle)
 static constexpr float OFFSET_Z_PITCH_PIVOT_TO_BARREL = 0; //meters
 #elif defined(INFANTRY)
 //no OFFSET_X_ROBOT_TO_PITCH_PIVOT because pitch rotates around x
@@ -59,6 +60,17 @@ static constexpr float OFFSET_Z_PITCH_PIVOT_TO_VTM = 0; //meters, vertical dista
 static constexpr float OFFSET_X_PITCH_PIVOT_TO_BARREL = 0; //meters, like OFFSET_X_PITCH_PIVOT_TO_VTM but for where shots exit. Exit velocity is in JetsonSubsystemConstants.hpp
 static constexpr float OFFSET_Y_PITCH_PIVOT_TO_BARREL = 0; //meters
 static constexpr float OFFSET_Z_PITCH_PIVOT_TO_BARREL = 0; //meters
+#endif
+
+#if defined(SENTRY)
+// Shots leave this far below where the solver aims (rad, + = down, gimbal pitch sign): camera/barrel
+// boresight or flywheel lift. Fit 2026-10-31: on target at 3 m, over the panel at 1 m.
+static constexpr float SHOT_PITCH_DOWN_BIAS = 0.042f;
+// Quadratic drag per metre, rho*Cd*A/(2m), for a 3.2 g 17 mm ball with sphere Cd 0.47 (not fitted).
+static constexpr float SHOT_DRAG_PER_METER = 0.02f;
+#else
+static constexpr float SHOT_PITCH_DOWN_BIAS = 0;
+static constexpr float SHOT_DRAG_PER_METER = 0;
 #endif
 
     /** robot space is defined as: center of robot at (x, y)=(0, 0), ground at z=0, 
