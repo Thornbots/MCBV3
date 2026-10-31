@@ -48,15 +48,15 @@ TEST(OdometryFramesTest, RelocalizationChangesNavigationButPreservesRawAim) {
     EXPECT_FLOAT_EQ(odometry.getAimY(), rawY);
     hosted::sensors.podX = 0.3f;
     hosted::sensors.podY = 0.5f;
-    EXPECT_NEAR(odometry.getAimX(), rawX + 0.5f, 1e-6f);
-    EXPECT_NEAR(odometry.getAimY(), rawY - 0.3f, 1e-6f);
-    EXPECT_NEAR(odometry.getX(), 1.75f, 1e-6f);
-    EXPECT_NEAR(odometry.getY(), -1.05f, 1e-6f);
+    EXPECT_NEAR(odometry.getAimX(), rawX + 0.3f, 1e-6f);
+    EXPECT_NEAR(odometry.getAimY(), rawY + 0.5f, 1e-6f);
+    EXPECT_NEAR(odometry.getX(), 1.55f, 1e-6f);
+    EXPECT_NEAR(odometry.getY(), -0.25f, 1e-6f);
     odometry.relocalizeTo(-2.0f, 3.0f);
     EXPECT_FLOAT_EQ(odometry.getX(), -2.0f);
     EXPECT_FLOAT_EQ(odometry.getY(), 3.0f);
-    EXPECT_NEAR(odometry.getAimX(), rawX + 0.5f, 1e-6f);
-    EXPECT_NEAR(odometry.getAimY(), rawY - 0.3f, 1e-6f);
+    EXPECT_NEAR(odometry.getAimX(), rawX + 0.3f, 1e-6f);
+    EXPECT_NEAR(odometry.getAimY(), rawY + 0.5f, 1e-6f);
     hosted::sensors = {};
 }
 

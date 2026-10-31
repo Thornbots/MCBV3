@@ -211,8 +211,8 @@ POSE and `AutoAimAndFireCommand` use these accessors. `getX/getY` add the
 navigation offset and remain the input to navigation controllers.
 RELOCALIZE replaces only that offset; raw POSE and held CV_TARGET aim remain
 continuous as the pods move. Boot/team selection can reanchor raw aim: a red
-to blue start changes the field origin by about 9.25 m and changes startup
-heading. Frame conventions and payload semantics are owned by the workspace's
+to blue start changes the raw field position by about 9.25 m; both teams retain
+the +y startup heading (π/2). Frame conventions and payload semantics are owned by the workspace's
 [UART protocol](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#message-types).
 Deploy matching firmware and Jetson packages together: unchanged payload
 sizes cannot detect a frame-semantic mismatch.

@@ -104,8 +104,9 @@ namespace commands {
         bool isBlue = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId);
         int m = isBlue ? -1 : 1;
 
-        // Each waypoint is (forward, left) from the team's start, along the heading at power-on;
+        // Each waypoint is (forward, left) from the +y boot heading for both teams;
         // at() and vel() turn them into the field frame (OdometrySubsystemConstants.hpp)
+        // m mirrors the fixed field routes, preserving their positions and velocities.
         // velocity is normally zero; tolerance defaults to WAYPOINT_TOLERANCE
         auto at = [this](float forward, float left) {
             Vector2d p = odo->fromStart(forward, left);
@@ -118,59 +119,59 @@ namespace commands {
         targets[0].position = at(0.0f, 0.0f);  // the start, added in the constructor
         switch (mode) {
             case TargetMode::TEST:
-                targets.push_back({at(1.0f, 0.0f), vel(0.0f, 0.0f)});     // forward
-                targets.push_back({at(1.0f, m*1.0f), vel(0.0f, 0.0f)});   // left
-                targets.push_back({at(0.0f, m*1.0f), vel(0.0f, 0.0f)});   // back
-                targets.push_back({at(0.0f, 0.0f), vel(0.0f, 0.0f)});     // right
+                targets.push_back({at(0.0f, -m*1.0f), vel(0.0f, 0.0f)});     // toward opposing base
+                targets.push_back({at(1.0f, -m*1.0f), vel(0.0f, 0.0f)});   // field +y
+                targets.push_back({at(1.0f, 0.0f), vel(0.0f, 0.0f)});   // toward own base
+                targets.push_back({at(0.0f, 0.0f), vel(0.0f, 0.0f)});     // field -y
                 return;
             case TargetMode::PURDUE2V2:
                 if (drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId)) {
-                    targets.push_back({at(0.0f, 1.5f), vel(0.0f, 0.0f)});
-                    targets.push_back({at(1.5f, 1.5f), vel(0.0f, 0.0f)});
-                    targets.push_back({at(3.5f, -0.5f), vel(0.0f, 0.0f)});   // should be at center
+                    targets.push_back({at(m*1.5f, 0.0f), vel(0.0f, 0.0f)});
+                    targets.push_back({at(m*1.5f, -m*1.5f), vel(0.0f, 0.0f)});
+                    targets.push_back({at(-m*0.5f, -m*3.5f), vel(0.0f, 0.0f)});   // should be at center
                 } else {
-                    targets.push_back({at(0.0f / 5, -0.9f / 5), vel(0.0f, -1.5f)});
-                    targets.push_back({at(0.0838f / 5, -1.2f / 5), vel(0.75f, -1.299f)});
-                    targets.push_back({at(0.3f / 5, -1.419f / 5), vel(1.299f, -0.75f)});
-                    targets.push_back({at(0.6f / 5, -1.5f / 5), vel(1.5f, 0.0f)});
-                    targets.push_back({at(0.671f / 5, -1.5f / 5), vel(1.5f, 0.0f)});
-                    targets.push_back({at(1.061f / 5, -1.461f / 5), vel(1.47f, 0.29f)});
-                    targets.push_back({at(1.437f / 5, -1.347f / 5), vel(1.385f, 0.574f)});
-                    targets.push_back({at(1.782f / 5, -1.162f / 5), vel(1.247f, 0.833f)});
-                    targets.push_back({at(2.086f / 5, -0.914f / 5), vel(1.06f, 1.06f)});
-                    targets.push_back({at(3.5f / 5, 0.5f / 5), vel(0.0f, 0.0f)});  // should be at center
+                    targets.push_back({at(m*(-0.9f / 5), 0.0f), vel(-m*1.5f, 0.0f)});
+                    targets.push_back({at(m*(-1.2f / 5), -m*(0.0838f / 5)), vel(-m*1.299f, -m*0.75f)});
+                    targets.push_back({at(m*(-1.419f / 5), -m*(0.3f / 5)), vel(-m*0.75f, -m*1.299f)});
+                    targets.push_back({at(m*(-1.5f / 5), -m*(0.6f / 5)), vel(0.0f, -m*1.5f)});
+                    targets.push_back({at(m*(-1.5f / 5), -m*(0.671f / 5)), vel(0.0f, -m*1.5f)});
+                    targets.push_back({at(m*(-1.461f / 5), -m*(1.061f / 5)), vel(m*0.29f, -m*1.47f)});
+                    targets.push_back({at(m*(-1.347f / 5), -m*(1.437f / 5)), vel(m*0.574f, -m*1.385f)});
+                    targets.push_back({at(m*(-1.162f / 5), -m*(1.782f / 5)), vel(m*0.833f, -m*1.247f)});
+                    targets.push_back({at(m*(-0.914f / 5), -m*(2.086f / 5)), vel(m*1.06f, -m*1.06f)});
+                    targets.push_back({at(m*(0.5f / 5), -m*(3.5f / 5)), vel(0.0f, 0.0f)});  // should be at center
                 }
                 return;
             case TargetMode::ARCC_RAMP_PATH:
-                // coordinates for red team
-                changedInitialPoint = at(-TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET);
-                targets.push_back({at(0.595f, m*1.8330f), vel(0.0f, 0.0f)});                                   // mostly left, some forward: before ramp
-                targets.push_back({at(4.060f, m*1.8330f), vel(0.0f, 0.0f)});                                   // forward: across ramp
-                targets.push_back({at(4.125f + TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET), vel(0.0f, 0.0f)});  // mostly right, some forward: to center
+                // Field route mirrored across x = 0 for blue.
+                changedInitialPoint = at(-TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET);
+                targets.push_back({at(1.8330f, -m*0.595f), vel(0.0f, 0.0f)});                                   // before ramp
+                targets.push_back({at(1.8330f, -m*4.060f), vel(0.0f, 0.0f)});                                   // across ramp
+                targets.push_back({at(-TOWARDS_ZONE_OFFSET, -m*(4.125f + TOWARDS_ZONE_OFFSET)), vel(0.0f, 0.0f)});  // to center
                 return;
             case TargetMode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED:
-                // coordinates for red team
-                changedInitialPoint = at(-TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET);
-                targets.push_back({at(0.595f, m*1.8330f), vel(0.0f, 0.0f)});                                   // mostly left, some forward: before ramp
-                targets.push_back({at(4.872f, m*1.8330f), vel(0.0f, 0.0f)});                                   // forward: across ramp (add 0.812)
-                targets.push_back({at(4.937f + TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET), vel(0.0f, 0.0f)});  // mostly right, some forward: to center (add 0.812)
+                // Field route mirrored across x = 0 for blue.
+                changedInitialPoint = at(-TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET);
+                targets.push_back({at(1.8330f, -m*0.595f), vel(0.0f, 0.0f)});                                   // before ramp
+                targets.push_back({at(1.8330f, -m*4.872f), vel(0.0f, 0.0f)});                                   // across ramp (add 0.812)
+                targets.push_back({at(-TOWARDS_ZONE_OFFSET, -m*(4.937f + TOWARDS_ZONE_OFFSET)), vel(0.0f, 0.0f)});  // to center (add 0.812)
                 return;
             case TargetMode::ARCC_HALLWAY_PATH:
-                // coordinates for red team
-                changedInitialPoint = at(-TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET);
-                targets.push_back({at(0.892f, m*0.874f), vel(0.0f, 0.0f)});                                               // left forward diagonal: before enter hallway
-                targets.push_back({at(1.724f, m*0.874f), vel(0.0f, 0.0f)});                                               // forward: enter hallway
-                targets.push_back({at(1.724f, -m*0.693f), vel(0.0f, 0.0f)});                                                // right: through hallway
-                targets.push_back({at(2.230f, -m*1.200f), vel(0.0f, 0.0f)});                                                // forward right diagonal: leave hallway
-                targets.push_back({at(4.125f + TOWARDS_ZONE_OFFSET, -m*(1.385f - TOWARDS_ZONE_OFFSET)), vel(0.0f, 0.0f)});  // forward: to center
+                // Field route mirrored across x = 0 for blue.
+                changedInitialPoint = at(-TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET);
+                targets.push_back({at(0.874f, -m*0.892f), vel(0.0f, 0.0f)});                                               // before enter hallway
+                targets.push_back({at(0.874f, -m*1.724f), vel(0.0f, 0.0f)});                                               // enter hallway
+                targets.push_back({at(-0.693f, -m*1.724f), vel(0.0f, 0.0f)});                                                // through hallway
+                targets.push_back({at(-1.200f, -m*2.230f), vel(0.0f, 0.0f)});                                                // leave hallway
+                targets.push_back({at(-(1.385f - TOWARDS_ZONE_OFFSET), -m*(4.125f + TOWARDS_ZONE_OFFSET)), vel(0.0f, 0.0f)});  // to center
                 return;
             case TargetMode::ARCC_ROUGH_PATH:
-                // coordinates for red team
-                changedInitialPoint = at(-TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET);
-                // the wall leg keeps the spinning chassis (0.42 m sweep) 0.1 m clear of the wall end, 1.81 m right of the start
-                targets.push_back({at(0.5f, -m*2.5f), vel(0.0f, 0.0f), WALL_LEG_TOLERANCE});                                          // right forward diagonal: before wall
-                targets.push_back({at(1.4f, -m*2.5f), vel(0.0f, 0.0f), WALL_LEG_TOLERANCE});                                          // forward: past wall
-                targets.push_back({at(4.125f + TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET), vel(0.0f, 0.0f)});  // left forward diagonal: to center
+                // Field route mirrored across x = 0 for blue.
+                changedInitialPoint = at(TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET);
+                // the wall leg keeps the spinning chassis (0.42 m sweep) 0.1 m clear of the wall end at field y = -1.81 m
+                targets.push_back({at(-2.5f, -m*0.5f), vel(0.0f, 0.0f), WALL_LEG_TOLERANCE});                                          // before wall
+                targets.push_back({at(-2.5f, -m*1.4f), vel(0.0f, 0.0f), WALL_LEG_TOLERANCE});                                          // past wall
+                targets.push_back({at(TOWARDS_ZONE_OFFSET, -m*(4.125f + TOWARDS_ZONE_OFFSET)), vel(0.0f, 0.0f)});  // to center
                 return;
         }  // end switch
     }
