@@ -90,7 +90,7 @@
             "presentation": {
                 "panel": "new"
             },
-            "command": "pipenv run scons build profile=debug profiling=true",
+            "command": "pipenv run scons build profile=debug robot=${command:cpptools.activeConfigName}",
             "group": "build",
             "problemMatcher": [],
             "options": {
@@ -103,7 +103,7 @@
             "presentation": {
                 "panel": "new"
             },
-            "command": "pipenv run scons run profile=debug",
+            "command": "pipenv run scons run profile=debug robot=${command:cpptools.activeConfigName}",
             "group": "build",
             "problemMatcher": [],
             "options": {
