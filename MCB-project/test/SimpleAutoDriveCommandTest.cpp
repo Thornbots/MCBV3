@@ -112,8 +112,8 @@ TEST_F(SimpleAutoDriveCommandTest, RawStartsAtZeroForBothTeamsAndNeverReanchors)
     hosted::sensors.podY = 0.5f;
     const float x = odo.getAimX();
     const float y = odo.getAimY();
-    EXPECT_NEAR(x, -0.5f, 1e-6f);  // existing blue axes
-    EXPECT_NEAR(y, 0, 1e-6f);
+    EXPECT_NEAR(x, 0, 1e-6f);
+    EXPECT_NEAR(y, 0.5f, 1e-6f);
     odo.relocalizeTo(2, 3);
     team(false);
     EXPECT_FLOAT_EQ(odo.getAimX(), x);
@@ -122,7 +122,35 @@ TEST_F(SimpleAutoDriveCommandTest, RawStartsAtZeroForBothTeamsAndNeverReanchors)
     EXPECT_FLOAT_EQ(odo.getY(), 3);
     EXPECT_TRUE(odo.isNavigationLocalized());
     hosted::sensors.podY = 0.75f;
-    EXPECT_NEAR(odo.getAimX(), x + 0.25f, 1e-6f);  // subsequent red delta
+    EXPECT_NEAR(odo.getAimX(), x, 1e-6f);
+    EXPECT_NEAR(odo.getAimY(), y + 0.25f, 1e-6f);
+}
+
+TEST_F(SimpleAutoDriveCommandTest, BothTeamsKeepBootHeadingPodAxesAndVelocity) {
+    for (bool blue : {false, true}) {
+        team(blue);
+        EXPECT_NEAR(odo.getStartYaw(), 1.5707963267948966f, 1e-7f);
+        hosted::sensors.podX = 0.3f;
+        hosted::sensors.podY = 0.5f;
+        hosted::sensors.podVx = -0.2f;
+        hosted::sensors.podVy = 0.4f;
+        EXPECT_NEAR(odo.getAimX(), 0.3f, 1e-6f);
+        EXPECT_NEAR(odo.getAimY(), 0.5f, 1e-6f);
+        EXPECT_NEAR(odo.getXVel(), -0.2f, 1e-6f);
+        EXPECT_NEAR(odo.getYVel(), 0.4f, 1e-6f);
+    }
+}
+
+TEST_F(SimpleAutoDriveCommandTest, BothTeamsRoutesStillRunInwardToFieldCenter) {
+    for (bool blue : {false, true}) {
+        team(blue);
+        const auto center = odo.fromStart(4.625f, 0);
+        EXPECT_NEAR(center.getX(), 0, 1e-5f);
+        EXPECT_NEAR(center.getY(), 0, 1e-5f);
+        const auto leg = odo.fromStart(0.5f, blue ? 2.5f : -2.5f);
+        EXPECT_NEAR(leg.getX(), blue ? 4.125f : -4.125f, 1e-5f);
+        EXPECT_NEAR(leg.getY(), -2.5f, 1e-5f);
+    }
 }
 
 TEST_F(SimpleAutoDriveCommandTest, RouteCannotAdvanceOrDriveBeforeValidRelocalize) {

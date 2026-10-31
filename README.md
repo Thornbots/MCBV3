@@ -211,17 +211,19 @@ POSE and `AutoAimAndFireCommand` use these accessors. `getX/getY` add the
 navigation offset and remain the input to navigation controllers.
 RELOCALIZE replaces only that offset; raw POSE and held CV_TARGET aim remain
 continuous as the pods move. Raw aim boots at `(0, 0)` for either team; pod
-increments retain the existing field-aligned axes. Team selection changes the
-heading used for subsequent increments and route points, without moving the
-accumulated raw position or clearing the navigation offset. Autonomous routes,
+increments use the fixed `π/2` chassis boot heading for both teams. Team
+selection changes route points, without moving the accumulated raw position,
+rotating pod axes or clearing the navigation offset. Autonomous routes,
 MoveToPositionCommand, and NAV_GOAL driving stop the drivetrain until the first
 finite RELOCALIZE establishes the field navigation offset. Invalid non-finite
 coordinates leave the gate and previous offset unchanged. NAV_GOALs received
 before localization are discarded; driving needs a fresh goal after the fix.
 
-Startup heading remains `0` for red and `π` for blue, which differs from the
-workspace's `π/2` heading contract; this change does not correct that
-discrepancy. Frame conventions and payload semantics are owned by the workspace's
+POSE adds this boot heading to the IMU-relative gimbal yaw; aiming and driving
+remove it when converting field targets into local commands. This also applies
+to robots without odometry. Route waypoints use a separate inward basis (`0`
+red, `π` blue), preserving their field paths independently of chassis yaw.
+Frame conventions and payload semantics are owned by the workspace's
 [UART protocol](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#message-types).
 Deploy matching firmware and Jetson packages together: unchanged payload
 sizes cannot detect a frame-semantic mismatch.

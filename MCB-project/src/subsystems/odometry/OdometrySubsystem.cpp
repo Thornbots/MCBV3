@@ -74,11 +74,14 @@ float OdometrySubsystem::getRawY() {
     return drivers->i2c.odom.getY();
 }
 float OdometrySubsystem::getStartYaw() {
+    return BOOT_YAW;
+}
+float OdometrySubsystem::getRouteYaw() {
     return isBlue ? PI : 0.0f;
 }
 Vector2d OdometrySubsystem::fromStart(float forward, float left) {
     Vector2d start(isBlue ? START_X : -START_X, START_Y);
-    return start + Vector2d(forward, left).rotate(getStartYaw());
+    return start + Vector2d(forward, left).rotate(getRouteYaw());
 }
 // the pods are x right, y forward of the start: forward is raw y, left is raw -x
 void OdometrySubsystem::relocalizeTo(float newX, float newY) {
@@ -94,7 +97,7 @@ float OdometrySubsystem::getX() {
 float OdometrySubsystem::getY() {
     return offsetY + getAimY();
 }
-// Rotate only new pod displacement: changing teams must not rotate accumulated aim.
+// Pods are (right, forward) at boot; rotate (forward, left) into field axes.
 void OdometrySubsystem::updateAimPosition() {
     const Vector2d pods(getRawY(), -getRawX());
     aimPosition = aimPosition + (pods - lastPodPosition).rotate(getStartYaw());
