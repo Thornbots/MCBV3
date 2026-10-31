@@ -20,6 +20,8 @@ static constexpr int ODO_DIST_RANGE = 18000;
 // the centre, x toward blue's base, y left. Both chassis boot facing +y; routes use the
 // inward direction from each base. Start is red's (-3.53, -0.426), mirrored in x for
 // blue, read from the SPOOKY_SCRIM_2V2 route drawing; not measured on the field yet.
+// TEMPORARY, not good: scrim-only values copied to the Jetson and sim. Measure, or
+// restore the ARCC field before the next event (docs/ROADMAP.md short todos).
 static constexpr float FIELD_LENGTH = 8.384f;  // meters, along x
 static constexpr float FIELD_WIDTH = 5.0f;     // meters, along y
 static constexpr float START_X = 3.53f;        // meters
