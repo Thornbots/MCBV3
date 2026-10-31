@@ -18,7 +18,7 @@ static constexpr float cameraXoffset = -.0325; // side to side; appears to be RG
 static constexpr float cameraYoffset = 131.826/1000; // front back (front of the camera (not include camera cover) to center of pitch axis)
 static constexpr float cameraZoffset = 44.55/1000; //pretty sure z is up down (stedman)
 
-static constexpr float initialShotVelocity = 24.0;           // Shot velocity
+static constexpr float initialShotVelocity = 22.0;           // Shot velocity, m/s (standard, 2026-10-30); match EXIT_VELOCITY
 
 // static constexpr float l = 0.02;           // Combined camera + Jetson latency
 // static constexpr float deltaTime = 0.0166;  // Frame time
@@ -69,7 +69,7 @@ static constexpr float cameraYoffset = 209.5/1000;
 static constexpr float cameraZoffset = 48.3/1000; //pretty sure z is up down (stedman)
 
 
-static constexpr float initialShotVelocity = 14.0f;           // Shot velocity
+static constexpr float initialShotVelocity = 11.0f;           // Shot velocity, m/s (hero, 2026-10-30); match EXIT_VELOCITY
 
 static constexpr float l = 0.05;           // Combined camera + Jetson latency
 static constexpr float deltaTime = 0.033;  // Frame time
