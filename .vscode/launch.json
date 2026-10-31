@@ -42,36 +42,30 @@
       ]
     },
     {
+      // Builds the debug profile for the robot selected as the C/C++
+      // configuration, flashes it over the CMSIS-DAP probe and stops at main.
       "name": "Debug Hardware",
       "type": "cortex-debug",
       "request": "launch",
       "servertype": "openocd",
-      "cwd": "${workspaceRoot}",
-      "preLaunchTask": "Program - Debug",
-      "executable": "./MCB-project/build/hardware/scons-debug/MCB-project.elf",
-      "device": "STM32F427II",
-      "configFiles": [
-        "./MCB-project/openocd.cfg"
-      ]
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Build - Debug",
+      "executable": "${workspaceFolder}/MCB-project/build/hardware/scons-debug/MCB-project.elf",
+      "device": "STM32F407IG",
+      "configFiles": ["${workspaceFolder}/MCB-project/openocd.cfg"],
+      "runToEntryPoint": "main"
     },
     {
-      "name": "C/C++ Runner: Debug Session",
-      "type": "cppdbg",
-      "request": "launch",
-      "args": [],
-      "stopAtEntry": false,
-      "externalConsole": true,
-      "cwd": "c:/Users/hardenej/Documents/GitHub/MCBV3/MCB-project/src/subsystems/indexer",
-      "program": "c:/Users/hardenej/Documents/GitHub/MCBV3/MCB-project/src/subsystems/indexer/build/Debug/outDebug",
-      "MIMode": "gdb",
-      "miDebuggerPath": "gdb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ]
+      // Attaches to firmware already running on the board without flashing.
+      // Only valid when the board runs the build in "executable".
+      "name": "Attach Hardware",
+      "type": "cortex-debug",
+      "request": "attach",
+      "servertype": "openocd",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/MCB-project/build/hardware/scons-debug/MCB-project.elf",
+      "device": "STM32F407IG",
+      "configFiles": ["${workspaceFolder}/MCB-project/openocd.cfg"]
     }
   ]
 }
