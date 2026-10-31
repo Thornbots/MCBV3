@@ -268,7 +268,7 @@ this predictor. The sentry ballistic solver assumes 22 m/s, the shot speed the t
 from the robot (2026-10-28); Jetson and sim use the same value. Calibration evidence lives in the
 [sim accuracy investigation](../../sim/docs/aim-accuracy-2026-10-12.md).
 
-The sentry solver uses CAD pivot height and bore length (`Projections.hpp`), horizontal
+The sentry and infantry solver (same gimbal, shared constants) uses CAD pivot height and bore length (`Projections.hpp`), horizontal
 quadratic drag, and `SHOT_PITCH_DOWN_BIAS`, the angle shots leave below the solved pitch.
 Pitch encoder offset or ratio errors cancel because the camera rides the pitch head, so a
 miss that grows with range is boresight or flywheel lift: refit the bias from misses at two
