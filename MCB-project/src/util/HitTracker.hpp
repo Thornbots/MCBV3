@@ -3,6 +3,7 @@
 #include <functional>
 
 #include "tap/communication/serial/ref_serial_data.hpp"
+#include "util/SentryBuzzer.hpp"
 #include "util/HitOrientation.hpp"
 #include "util/HitEventState.hpp"
 #include "tap/communication/sensors/buzzer/buzzer.hpp"
@@ -19,7 +20,8 @@ public:
 
     static constexpr float PLACEHOLDER_ANGLE = hit_orientation::NO_HIT_ANGLE;
 
-    explicit HitTracker(tap::Drivers* drivers) : drivers(drivers) {}
+    explicit HitTracker(tap::Drivers* drivers, src::SentryBuzzer* buzzer = nullptr)
+        : drivers(drivers), buzzer(buzzer) {}
 
     void setGetYawEncoderFunction(std::function<float()> func)
     {
@@ -53,14 +55,17 @@ public:
             if (hasPreviousHp && previousHp > robotData.currentHp) {
                 addHit();
 #if FEELS_PAIN
-                tap::buzzer::playNote(&(drivers->pwm), 4000);
+                if (buzzer) buzzer->setHit(true);
+                else tap::buzzer::playNote(&(drivers->pwm), 4000);
                 painTimeout.restart(250);
 #endif
             }
 
 #if FEELS_PAIN
-            if(painTimeout.execute())
-                tap::buzzer::silenceBuzzer(&(drivers->pwm));
+            if (painTimeout.execute()) {
+                if (buzzer) buzzer->setHit(false);
+                else tap::buzzer::silenceBuzzer(&(drivers->pwm));
+            }
 #endif
 
             previousHp = robotData.currentHp;
@@ -95,6 +100,7 @@ public:
 
 private:
     tap::Drivers* drivers;
+    src::SentryBuzzer* buzzer;
     std::function<float()> getYawEncoderValue_func;
     bool hasPreviousHp{false};
     HitEventState hitState;

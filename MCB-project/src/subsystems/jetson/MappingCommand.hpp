@@ -38,12 +38,10 @@ public:
         indexer->stopIndex();
         const bool ready = drivers->mapping.getState() == src::MappingMachine::State::Ready;
         drivers->leds.set(tap::gpio::Leds::Green, ready);
-        drivers->leds.set(tap::gpio::Leds::Red, false);
+        drivers->leds.set(tap::gpio::Leds::Red,
+            drivers->mapping.getState() == src::MappingMachine::State::OdomFault);
         drivers->leds.set(tap::gpio::Leds::Blue, false);
-        if (drivers->mapping.readyBeep(tap::arch::clock::getTimeMilliseconds()))
-            tap::buzzer::playNote(&drivers->pwm, 1000);
-        else
-            tap::buzzer::silenceBuzzer(&drivers->pwm);
+        drivers->buzzer.setReady(drivers->mapping.readyBeep(tap::arch::clock::getTimeMilliseconds()));
         using Remote = tap::communication::serial::Remote;
         if (drivers->mapping.canDrive() && drivers->remote.isConnected()) {
             drive->setTargetTranslation(mappingDrive(
@@ -65,7 +63,7 @@ public:
         indexer->stopIndex();
         gimbal->stopMotors();
         drivers->leds.set(tap::gpio::Leds::Green, false);
-        tap::buzzer::silenceBuzzer(&drivers->pwm);
+        drivers->buzzer.setReady(false);
     }
     // Like every other command, a lost remote ends it so the stop defaults own all motors.
     bool isFinished() const override {

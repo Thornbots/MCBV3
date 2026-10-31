@@ -8,7 +8,7 @@ namespace src {
 
 class MappingMachine {
 public:
-    enum class State { Main, Setup, Ready, Mapping, Done };
+    enum class State { Main, Setup, Ready, Mapping, Done, OdomFault };
     static constexpr uint32_t RETRY_MS = 500;
     static constexpr uint32_t BEEP_PERIOD_MS = 1000;
     static constexpr uint32_t BEEP_LENGTH_MS = 100;
@@ -18,6 +18,14 @@ public:
     bool canDrive() const { return state == State::Ready || state == State::Mapping; }
     bool readyBeep(uint32_t now) const {
         return state == State::Ready && (now - readySince) % BEEP_PERIOD_MS < BEEP_LENGTH_MS;
+    }
+
+    void reportOdomFault() {
+        if (!isActive()) return;
+        state = State::OdomFault;
+        queuedSaves = 0;
+        odd = {};
+        echoes[1] = echoes[3] = 0;
     }
 
     void requestStart() {
