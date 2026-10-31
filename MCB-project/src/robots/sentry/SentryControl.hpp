@@ -125,6 +125,16 @@ public:
     }
 
     void updateMapping() override {
+        const auto now = tap::arch::clock::getTimeMilliseconds();
+        const bool fresh = drivers->i2c.odom.isFresh(now, src::POD_STALE_MS);
+        if (!fresh) drivers->mapping.reportOdomFault();
+        if (drivers->mapping.getState() == src::MappingMachine::State::OdomFault) {
+            drivers->buzzer.setReady(false);
+            drivers->leds.set(tap::gpio::Leds::Red, true);
+            drivers->leds.set(tap::gpio::Leds::Green, false);
+            drivers->leds.set(tap::gpio::Leds::Blue, false);
+        }
+        drivers->buzzer.update(now, fresh);
         // main skips the scheduler (and Jetson refresh) until the IMU is ready.
         if (!drivers->recal.getIsImuReady()) jetson.serviceMappingPing();
         if (!drivers->mapping.isActive() || isStopped || !drivers->remote.isConnected()) return;

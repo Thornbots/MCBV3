@@ -352,3 +352,61 @@ TEST(MappingDriveTest, CapsMagnitudeAndRotationWithoutBoostAndStopsOnDisconnect)
     EXPECT_FLOAT_EQ(commands::mappingDrive(0, 0.5f, -0.5f, true).getY(), 0.2f);
     EXPECT_EQ(commands::mappingDrive(std::numeric_limits<float>::quiet_NaN(), 0, 0, true), Pose2d(0, 0, 0));
 }
+
+TEST(MappingMachineTest, OdomFaultLatchesFromEveryActiveStateAndCancelsTransactions) {
+    using Machine = src::MappingMachine;
+    using State = Machine::State;
+    for (auto state : {State::Setup, State::Ready, State::Mapping, State::Done}) {
+        Machine m;
+        m.requestStart();
+        if (state != State::Setup) m.receivePing(2, 0);
+        if (state == State::Mapping) m.receivePing(4, 0);
+        if (state == State::Done) m.requestSave();
+        ASSERT_EQ(m.getState(), state);
+        m.tick(0, [](uint8_t) { return true; });
+        m.requestSave();
+        m.requestSave();
+        m.reportOdomFault();
+        m.requestStart();
+        m.requestSave();
+        EXPECT_FALSE(m.canDrive());
+        EXPECT_FALSE(m.readyBeep(0));
+        for (uint8_t n : {0, 1, 3, 2, 4, 6}) m.receivePing(n, 1);
+        unsigned counts[7]{};
+        for (uint32_t t = 1; t < 3000; ++t)
+            m.tick(t, [&](uint8_t n) { ++counts[n]; return true; });
+        EXPECT_EQ(m.getState(), State::OdomFault);
+        EXPECT_EQ(counts[0] + counts[1] + counts[3], 0U);
+        // Every received even request is echoed, including those queued before fault.
+        EXPECT_GE(counts[2], 1U);
+        EXPECT_GE(counts[4], 1U);
+        EXPECT_EQ(counts[6], 1U);
+        EXPECT_FALSE(m.hasPendingPing());
+    }
+    Machine main;
+    main.reportOdomFault();
+    EXPECT_EQ(main.getState(), State::Main);
+}
+
+TEST(MappingMachineTest, FaultCancelsSentRetryQueuedSavesAndFinalEcho) {
+    for (bool finalEcho : {false, true}) {
+        src::MappingMachine m;
+        m.requestStart();
+        m.tick(0, [](uint8_t n) { EXPECT_EQ(n, 1); return true; });
+        m.receivePing(1, 0);
+        m.tick(1, [](uint8_t n) { EXPECT_EQ(n, 1); return true; });
+        m.receivePing(2, 1);
+        m.tick(2, [](uint8_t n) { EXPECT_EQ(n, 2); return true; });
+        m.receivePing(4, 2);
+        m.tick(3, [](uint8_t n) { EXPECT_EQ(n, 4); return true; });
+        m.requestSave();
+        m.tick(4, [](uint8_t n) { EXPECT_EQ(n, 3); return true; });
+        m.requestSave();
+        if (finalEcho) m.receivePing(3, 4);
+        m.reportOdomFault();
+        m.receivePing(3, 5);
+        for (uint32_t t : {5U, 504U, 1004U, 10000U})
+            m.tick(t, [](uint8_t) { ADD_FAILURE() << "Cancelled transaction sent"; return true; });
+        EXPECT_FALSE(m.hasPendingPing());
+    }
+}

@@ -29,6 +29,7 @@
 #include "communication/I2CCommunication.hpp"
 #include "communication/UARTCommunication.hpp"
 
+#include "util/SentryBuzzer.hpp"
 #include "util/HitTracker.hpp"
 #include "util/ImuRecalibration.hpp"
 #include "util/MappingMachine.hpp"
@@ -55,7 +56,12 @@ public:
     communication::UARTCommunication uart;
     ImuRecalibration recal;
     MappingMachine mapping;
-    HitTracker hitTracker{this}; 
+#ifdef SENTRY
+    SentryBuzzer buzzer{&pwm};
+    HitTracker hitTracker{this, &buzzer};
+#else
+    HitTracker hitTracker{this};
+#endif
 
     
     void executeCalibration() {
