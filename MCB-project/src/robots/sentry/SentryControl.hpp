@@ -1,9 +1,6 @@
 #pragma once
-#include "tap/control/sequential_command.hpp"
-
 #include "robots/RobotControl.hpp"
 #include "robots/sentry/SentryHardware.hpp"
-#include "subsystems/jetson/MappingCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainDriveCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainStopCommand.hpp"
 #include "subsystems/drivetrain/MoveToPositionCommand.hpp"
@@ -21,6 +18,7 @@
 #include "subsystems/jetson/AutoAimAndFireCommand.hpp"
 #include "subsystems/jetson/AutoDriveCommand.hpp"
 #include "subsystems/jetson/JetsonSubsystem.hpp"
+#include "subsystems/jetson/MappingCommand.hpp"
 #include "subsystems/odometry/OdometryPointForwardsCommand.hpp"
 #include "subsystems/odometry/OdometryStopCommand.hpp"
 #include "subsystems/ui/SentryDrawCommand.hpp"
@@ -57,11 +55,11 @@ public:
         controllerUnjamTrigger.whileTrue(&indexerUnjam);
         stopFlywheelTrigger.onTrue(&shooterStop);
 
-        controllerAutoDriveTrigger.onTrue(&simpleAutoDrive)->onTrue(&odoPointForwards);        // right switch up
+        controllerAutoDriveTrigger.onTrue(&simpleAutoDrive)->onTrue(&odoPointForwards);       // right switch up
         controllerDriveNoSpinTrigger.onTrue(&noSpinDriveCommand)->onTrue(&odoPointForwards);  // right switch mid
         controllerDriveBeybladeTrigger.onTrue(&beybladeJoystick)->onTrue(&odoPointForwards);  // right switch down
 
-        controllerAutoFireTrigger.onTrue(&autoFire);               // left switch up
+        controllerAutoFireTrigger.onTrue(&autoFire);                      // left switch up
         controllerLookJoystickTrigger.onTrue(&lookJoystick);              // left switch mid
         controllerLookJoystickOffsetTrigger.onTrue(&lookJoystickOffset);  // left switch down
 
@@ -75,7 +73,7 @@ public:
         // implement speed mode
 
         keyboardUITrigger.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);  // press g to start robot
-        drivers->commandScheduler.addCommand(&draw);                                       // tries to draw immediately, doesn't always work well
+        drivers->commandScheduler.addCommand(&draw);                                             // tries to draw immediately, doesn't always work well
 
         // drive commands and also enable mouse looking
         keyboardPeekLeftTrigger.onTrue(&peekLeft);
@@ -128,8 +126,7 @@ public:
         // main skips the scheduler (and Jetson refresh) until the IMU is ready.
         if (!drivers->recal.getIsImuReady()) jetson.serviceMappingPing();
         if (!drivers->mapping.isActive() || isStopped || !drivers->remote.isConnected()) return;
-        if (!drivers->commandScheduler.isCommandScheduled(&mappingCommand))
-            drivers->commandScheduler.addCommand(&mappingCommand);
+        if (!drivers->commandScheduler.isCommandScheduled(&mappingCommand)) drivers->commandScheduler.addCommand(&mappingCommand);
     }
 
     void stopForImuRecal() override {
@@ -153,8 +150,10 @@ public:
         if (rescheduleAutoDrive) drivers->commandScheduler.addCommand(&autoDrive);
         if (rescheduleSimpleAutoDrive) drivers->commandScheduler.addCommand(&simpleAutoDrive);
 
-        if (rescheduleAutoFire) drivers->commandScheduler.addCommand(&autoFire);
-        else drivers->commandScheduler.addCommand(&indexerIdle);
+        if (rescheduleAutoFire)
+            drivers->commandScheduler.addCommand(&autoFire);
+        else
+            drivers->commandScheduler.addCommand(&indexerIdle);
         if (rescheduleLookJoystick) drivers->commandScheduler.addCommand(&lookJoystick);
         if (rescheduleLookJoystickOffset) drivers->commandScheduler.addCommand(&lookJoystickOffset);
         if (rescheduleLookMouse) drivers->commandScheduler.addCommand(&lookMouse);
@@ -252,10 +251,33 @@ public:
     Trigger keyboardBeybladeMovePriorityTrigger{drivers, Remote::Key::V};  // most translation, checked in DrivetrainDriveCommand
     Trigger startBeybladeKey = keyboardBeybladeSpinPriorityTrigger | keyboardBeybladeMovePriorityTrigger | scrollUpTrigger | scrollDownTrigger;
 
-    Trigger stopFlywheelTrigger = controllerUnjamTrigger | keyboardUnjamTrigger;  // doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
+    Trigger stopFlywheelTrigger =
+        controllerUnjamTrigger | keyboardUnjamTrigger;  // doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
-    Trigger* triggers[24] = {&controllerLookJoystickTrigger,     &controllerLookJoystickOffsetTrigger, &controllerDriveNoSpinTrigger, &controllerDriveBeybladeTrigger, &controllerShootTrigger,     &controllerUnjamTrigger,     &keyboardUnjamTrigger, &controllerAutoFireTrigger, &keyboardStopBeybladeTrigger,
-                             &keyboardBeybladeSpinPriorityTrigger, &keyboardBeybladeMovePriorityTrigger,   &startBeybladeKey,    &keyboardPeekLeftTrigger,        &keyboardPeekRightTrigger, &keyboardPeekNoneTrigger,  &scrollUpTrigger, &scrollDownTrigger,      &mouseShootFastTrigger,
-                             &mouseShootSingleTrigger,      &mouseShootTrigger,           &mouseAimTrigger,          &keyboardUITrigger,           &keyboardModifierTrigger, &controllerAutoDriveTrigger};  //, &indexSpinButton};
+    Trigger* triggers[24] = {
+        &controllerLookJoystickTrigger,
+        &controllerLookJoystickOffsetTrigger,
+        &controllerDriveNoSpinTrigger,
+        &controllerDriveBeybladeTrigger,
+        &controllerShootTrigger,
+        &controllerUnjamTrigger,
+        &keyboardUnjamTrigger,
+        &controllerAutoFireTrigger,
+        &keyboardStopBeybladeTrigger,
+        &keyboardBeybladeSpinPriorityTrigger,
+        &keyboardBeybladeMovePriorityTrigger,
+        &startBeybladeKey,
+        &keyboardPeekLeftTrigger,
+        &keyboardPeekRightTrigger,
+        &keyboardPeekNoneTrigger,
+        &scrollUpTrigger,
+        &scrollDownTrigger,
+        &mouseShootFastTrigger,
+        &mouseShootSingleTrigger,
+        &mouseShootTrigger,
+        &mouseAimTrigger,
+        &keyboardUITrigger,
+        &keyboardModifierTrigger,
+        &controllerAutoDriveTrigger};  //, &indexSpinButton};
 };
 }  // namespace robots

@@ -1,11 +1,6 @@
+#pragma once
 #include "robots/RobotControl.hpp"
-
-#if defined(ENGINEER)
-#include "robots/engineer/EngineerHardware.hpp"
-#else
 #include "robots/infantry/InfantryHardware.hpp"
-#endif
-
 #include "subsystems/drivetrain/DrivetrainDriveCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainStopCommand.hpp"
 #include "subsystems/flywheel/ShooterStartCommand.hpp"
@@ -31,13 +26,8 @@
 namespace robots {
 class InfantryControl : public ControlInterface {
 public:
-#if defined(ENGINEER)
-    using Hardware = EngineerHardware;
-#else
-    using Hardware = InfantryHardware;
-#endif
     // pass drivers back to root robotcontrol to store
-    InfantryControl(src::Drivers* drivers) : drivers(drivers), hardware(Hardware{drivers}) {}
+    InfantryControl(src::Drivers* drivers) : drivers(drivers), hardware(InfantryHardware{drivers}) {}
     // functions we are using
     void initialize() override {
         // Initialize subsystems (registration is internal)
@@ -69,7 +59,7 @@ public:
         mouseAimTrigger.onTrue(&shooterStart)->onTrue(&closeServo);
 
         keyboardUITrigger.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);  // press g to start robot
-        drivers->commandScheduler.addCommand(&draw);                                       // tries to draw immediately, doesn't always work well
+        drivers->commandScheduler.addCommand(&draw);                                             // tries to draw immediately, doesn't always work well
 
         // drive commands and also enable mouse looking
         keyboardPeekLeftTrigger.onTrue(&peekLeft);
@@ -118,7 +108,6 @@ public:
     }
 
     void stopForImuRecal() override {
-        wasControllerModeBeforeRecal = drivetrain.isInControllerMode;
         drivers->commandScheduler.addCommand(&stopGimbal);
         drivers->commandScheduler.addCommand(&shooterStop);
         drivers->commandScheduler.addCommand(&stopDriveCommand);
@@ -147,7 +136,7 @@ public:
     bool isStopped = true;
 
     src::Drivers* drivers;
-    Hardware hardware;
+    InfantryHardware hardware;
 
     // Subsystems
     subsystems::UISubsystem ui{drivers};
@@ -158,7 +147,7 @@ public:
     subsystems::ServoSubsystem servo{drivers, &hardware.servo};
     subsystems::JetsonSubsystem jetson{drivers, &gimbal, nullptr};
 
-    // //commands
+    // commands
     commands::InfantryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &servo};
     commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, nullptr, nullptr, false};
 
@@ -232,35 +221,34 @@ public:
     Trigger keyboardBeybladeMovePriorityTrigger{drivers, Remote::Key::V};  // most translation, checked in DrivetrainDriveCommand
     Trigger startBeybladeKey = keyboardBeybladeSpinPriorityTrigger | keyboardBeybladeMovePriorityTrigger | scrollUpTrigger | scrollDownTrigger;
 
-    Trigger stopFlywheelTrigger = controllerUnjamTrigger | keyboardUnjamTrigger;  // doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
+    Trigger stopFlywheelTrigger =
+        controllerUnjamTrigger | keyboardUnjamTrigger;  // doesn't get added to the list of triggers, is special, during a match the only way to turn off flywheels is to turn off the remote
 
-    Trigger* triggers[24] = {&controllerLookJoystickTrigger,
-                             &controllerLookJoystickOffsetTrigger,
-                             &keyboardPeekLeftTrigger,
-                             &keyboardPeekRightTrigger,
-                             &keyboardPeekNoneTrigger,
-                             &controllerDrivePointForwardTrigger,
-                             &controllerDriveNoSpinTrigger,
-                             &controllerDriveBeybladeTrigger,
-                             &controllerShootTrigger,
-                             &controllerUnjamTrigger,
-                             &keyboardModifierTrigger,
-                             &keyboardUnjamTrigger,
-                             &controllerAutoFireTrigger,
-                             &mouseShootTrigger,
-                             &mouseShootSingleTrigger,
-                             &mouseShootFastTrigger,
-                             &mouseAimTrigger,
-                             &keyboardStopBeybladeTrigger,
-                             &keyboardBeybladeSpinPriorityTrigger,
-                             &keyboardBeybladeMovePriorityTrigger,
-                             &scrollUpTrigger,
-                             &scrollDownTrigger,
-                             &startBeybladeKey,
-                             &keyboardUITrigger};  //, &indexSpinButton};
-
-private:
-    bool wasControllerModeBeforeRecal;
+    Trigger* triggers[24] = {
+        &controllerLookJoystickTrigger,
+        &controllerLookJoystickOffsetTrigger,
+        &keyboardPeekLeftTrigger,
+        &keyboardPeekRightTrigger,
+        &keyboardPeekNoneTrigger,
+        &controllerDrivePointForwardTrigger,
+        &controllerDriveNoSpinTrigger,
+        &controllerDriveBeybladeTrigger,
+        &controllerShootTrigger,
+        &controllerUnjamTrigger,
+        &keyboardModifierTrigger,
+        &keyboardUnjamTrigger,
+        &controllerAutoFireTrigger,
+        &mouseShootTrigger,
+        &mouseShootSingleTrigger,
+        &mouseShootFastTrigger,
+        &mouseAimTrigger,
+        &keyboardStopBeybladeTrigger,
+        &keyboardBeybladeSpinPriorityTrigger,
+        &keyboardBeybladeMovePriorityTrigger,
+        &scrollUpTrigger,
+        &scrollDownTrigger,
+        &startBeybladeKey,
+        &keyboardUITrigger};
 };
 
 }  // namespace robots
