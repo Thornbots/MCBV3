@@ -1,5 +1,6 @@
 #include "AutoAimAndFireCommand.hpp"
 #include "JetsonSubsystemConstants.hpp"
+#include "subsystems/odometry/OdometrySubsystemConstants.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -85,7 +86,7 @@ void AutoAimAndFireCommand::execute() {
     // the IMU's, counterclockwise and zero at power-on, so take the start's yaw off
     float odoAimX = 0;
     float odoAimY = 0;
-    float odoStartYaw = 0;
+    float odoStartYaw = odo::BOOT_YAW;
     if(odo!=nullptr){
         odoAimX = odo->getAimX();
         odoAimY = odo->getAimY();
