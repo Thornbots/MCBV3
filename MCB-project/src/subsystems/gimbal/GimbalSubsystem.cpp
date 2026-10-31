@@ -121,10 +121,10 @@ void GimbalSubsystem::updateMotorsAndVelocityWithLatencyCompensation(float chang
 
 void GimbalSubsystem::resetEncoderIfGainPower() {
     if (!motorYaw->isMotorOnline() || !drivers->remote.isConnected()) {
-        //Temporary standard doesn't use analog yaw encoder
-        #if !defined(INFANTRY)
+        //temp standard and hero don't have yaw encoder
+#if defined(SENTRY)
         encoderOffset = drivers->adc1_pa6_read() * (-2*PI/4096) + YAW_OFFSET; //adc read is blocking right now.
-        #endif
+#endif
         motorYaw->getEncoder()->resetEncoderValue();
     }
 }

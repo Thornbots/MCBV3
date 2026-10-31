@@ -41,7 +41,7 @@ public:
     DjiMotor pitchMotor{drivers, MotorId::MOTOR6, CanBus::CAN_BUS2, false, "Pitch"};
 
     DjiMotor indexTopMotor{drivers, MotorId::MOTOR2, CanBus::CAN_BUS2, false, "IndexerTop"};
-    DjiMotor indexBottomMotor{drivers, MotorId::MOTOR6, CanBus::CAN_BUS1, true, "IndexerBottom"};
+    DjiMotor indexBottomMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS1, true, "IndexerBottom"};
 
     DjiMotor driveMotor1{drivers, MotorId::MOTOR1, CanBus::CAN_BUS1, false, "Motor 1"};
     DjiMotor driveMotor2{drivers, MotorId::MOTOR2, CanBus::CAN_BUS1, false, "Motor 2"};

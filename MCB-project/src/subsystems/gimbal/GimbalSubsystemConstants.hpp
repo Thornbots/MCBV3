@@ -29,7 +29,7 @@ constexpr static int YAW_MOTOR_MAX_SPEED = 1000;  // TODO: Make this value relev
 static constexpr float MAX_PITCH_UP = PI_CONST / 180 * 55;
 static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 30;
 
-static constexpr float YAW_OFFSET =  0.75 * PI_CONST ;
+static constexpr float YAW_OFFSET = 0; //temp standard and hero don't have yaw encoder
 
 static constexpr float PITCH_OFFSET = (0.01 ) * PI_CONST;  // to make gimbal horizontal when told to go to 0
 
@@ -45,15 +45,12 @@ static constexpr float PITCH_RATIO = 4.0f;
 constexpr static int YAW_MOTOR_MAX_SPEED = 1000;  // TODO: Make this value relevent
                                                   // //TODO: Check the datasheets
 
-static constexpr float MAX_PITCH_UP = PI_CONST / 180 * 20;
-static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 21;
+static constexpr float MAX_PITCH_UP = PI_CONST / 180 * 20; //hey up and down are flipped
+static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 5;
 
 static constexpr float YAW_OFFSET = 7*PI/4;
 
-
-//-1.62f = 2.15
-//0.0f   = 0.52
-static constexpr float PITCH_OFFSET = 0.52f;  // to make gimbal horizontal when told to go to 0
+static constexpr float PITCH_OFFSET = 0.18f;  // to make gimbal horizontal when told to go to 0
 
 static constexpr float SECOND_PITCH_OFFSET = 0.1f;
 
@@ -67,10 +64,10 @@ static constexpr float PITCH_RATIO = 3.0f;
 constexpr static int YAW_MOTOR_MAX_SPEED = 1000;  // TODO: Make this value relevent
                                                   // //TODO: Check the datasheets
 
-static constexpr float MAX_PITCH_UP = PI_CONST / 180 * 20;
-static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 21;
+static constexpr float MAX_PITCH_UP = PI_CONST / 180 * 20; //hey up and down are flipped
+static constexpr float MAX_PITCH_DOWN = PI_CONST / 180 * 5;
 
-static constexpr float YAW_OFFSET = 0.0f;
+static constexpr float YAW_OFFSET = 0.0f; //temp standard and hero don't have yaw encoder
 
 static constexpr float PITCH_OFFSET = 1.26;  // to make gimbal horizontal when told to go to 0
 
