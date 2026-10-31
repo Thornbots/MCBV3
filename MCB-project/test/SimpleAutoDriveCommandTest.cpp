@@ -54,6 +54,7 @@ protected:
     }
 
     int index(const SimpleAutoDriveCommand& command) { return command.targetIndex; }
+    const auto& targets(const SimpleAutoDriveCommand& command) { return command.targets; }
     bool positionFinished(const SimpleAutoDriveCommand& command) {
         return command.positionCommand.isFinished();
     }
@@ -148,10 +149,10 @@ TEST_F(SimpleAutoDriveCommandTest, BothTeamsRoutesStillRunInwardToFieldCenter) {
         command.initialize();
         const float sign = blue ? 1.0f : -1.0f;
         const float field[][2] = {{3.50f, -1.75f}, {2.19f, -1.76f}, {0.0f, 0.0f}};
-        ASSERT_EQ(command.targets.size(), 3u);
+        ASSERT_EQ(targets(command).size(), 4u);  // [0] is the start, added in the constructor
         for (size_t i = 0; i < 3; ++i) {
-            EXPECT_NEAR(command.targets[i].position.first, sign * field[i][0], 1e-5f) << i;
-            EXPECT_NEAR(command.targets[i].position.second, field[i][1], 1e-5f) << i;
+            EXPECT_NEAR(targets(command)[i + 1].position.first, sign * field[i][0], 1e-5f) << i;
+            EXPECT_NEAR(targets(command)[i + 1].position.second, field[i][1], 1e-5f) << i;
         }
     }
 }
