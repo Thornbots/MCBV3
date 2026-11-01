@@ -3,6 +3,8 @@
 #include "subsystems/drivetrain/DrivetrainSubsystemConstants.hpp"
 #include "util/Pose2d.hpp"
 
+#include <cmath>
+
 namespace commands {
 using namespace tap::communication::serial;
 
@@ -39,6 +41,11 @@ void MoveToPositionCommand::execute() {
 
     // Vector2d targetPositionAdjusted = targetPosition.vec() + startPosition;
     currentPosition = Pose2d(odo->getX(), odo->getY(), referenceAngle);
+    if (holdQuarterTurn) {
+        // referenceAngle is minus the chassis field yaw; turn it to the nearest quarter turn.
+        const float error = std::remainder(referenceAngle, PI / 2);
+        targetVelocity = Pose2d(targetVelocity.getX(), targetVelocity.getY(), drivetrain->calculateRotationPID(error));
+    }
 
   
 

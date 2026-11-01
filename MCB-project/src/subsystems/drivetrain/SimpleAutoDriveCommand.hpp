@@ -20,21 +20,11 @@ public:
         // a square
         TEST = 0,
 
-        // longest, interferes with where hero will probably be, but no rough or ramps
-        ARCC_HALLWAY_PATH = 2,
+        SPOOKY_SCRIM_2V2 = 6,
 
-        // shortest, odo might lose a lot of accuracy on the rough.
-        ARCC_ROUGH_PATH = 3,
-
-        // odo will read wrong on the sloped ramp. This path pretends the ramp isn't there, and hopes
-        // jetson relocalization (lidar and/or april tags) corrects the odo.
-        ARCC_RAMP_PATH = 4,
-
-        // odo will read wrong on the sloped ramp. This path pretends the ramp is longer, to account for
-        // measuring the hypotenuses of the triangluar ramps with the odo pods.
-        // Won't work well with jetson relocalization
-        ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED = 5,
-        SPOOKY_SCRIM_2V2 = 6
+        // ARCC Season 2 3v3 Battlefield: square through the Starting Zone's 0.745 m
+        // doorway, then spinning to just south of the Central Wall's tip.
+        ARCC_S2_3V3 = 7
     };
 
     SimpleAutoDriveCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, OdometrySubsystem* odo, TargetMode mode);
@@ -71,6 +61,7 @@ private:
     tap::arch::MilliTimeout stuckTimer{};
     static constexpr float WAYPOINT_TOLERANCE = 0.5f;  // meters, default arrival radius
     static constexpr float WALL_LEG_TOLERANCE = 0.2f;  // meters, prevent corner cutting
+    static constexpr float DOORWAY_TOLERANCE = 0.05f;  // meters, line up before the doorway
 
     static constexpr int STUCK_TIMER_AMOUNT = 15 * 1000;  // ms, how long to wait between points
 
@@ -80,7 +71,10 @@ private:
         std::pair<float, float> position;
         std::pair<float, float> velocity;
         float tolerance = WAYPOINT_TOLERANCE;
+        // Drive the leg into this waypoint (either way) without spin, holding a quarter turn.
+        bool square = false;
     };
+    bool squareLeg() const;
     std::vector<Waypoint> targets;
 
 };

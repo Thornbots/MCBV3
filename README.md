@@ -227,10 +227,16 @@ blue reflects x for positions and velocities. Firmware owns no team start XY.
 SimpleAutoDrive captures its first waypoint from navigation `getX/getY` on the
 first localized execute after scheduling; route team selection occurs then too,
 so referee data arriving after initialization selects the correct team. TEST's square is relative to that
-capture. ARCC routes retain their historical red `(-4.625, 0)` field geometry,
-including the shifted return point; SPOOKY uses red `(-3.50, -1.75)`,
-`(-2.19, -1.76)`, `(0, 0)` and returns to the captured start. Removing PURDUE's
-mode leaves its enum value 1 unused; other mode numbers remain unchanged.
+capture. The sentry runs `ARCC_S2_3V3` on the ARCC Season 2 3v3 Battlefield:
+red `(-5.25, -0.635)` (0.05 m arrival), `(-2.40, -0.635)` (0.2 m), then
+`(-0.60, -1.80)`, south of the Central Wall's tip. The Starting Zone's only exit is a
+0.745 m doorway between the Side Wall end and the Side High Ground, narrower than
+the 0.84 m spin sweep, so legs touching the first two waypoints (either direction)
+replace spin with a hold of the nearest field quarter turn
+([field geometry](../../sim/world/arcc_s2_3v3/cad/NOTES.md)).
+SPOOKY uses red `(-3.50, -1.75)`, `(-2.19, -1.76)`, `(0, 0)`; both return to the
+captured start. The 2026 ARCC routes (modes 2-5) and PURDUE (1) are removed; other
+mode numbers remain unchanged.
 Frame conventions and payload semantics are owned by the workspace's
 [UART protocol](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#message-types).
 Deploy matching firmware and Jetson packages together: unchanged payload

@@ -103,6 +103,7 @@ namespace commands {
             positionCommand.inputVelocity = {direction * targets[targetIndex].velocity.first, direction * targets[targetIndex].velocity.second, inputSpin};
 
             positionCommand.setTolerance(targets[targetIndex].tolerance);
+            positionCommand.holdQuarterTurn = !fasterSpinning && squareLeg();
 
             // do movement
             positionCommand.execute();
@@ -114,10 +115,17 @@ namespace commands {
             }
         } else { // !isScheduled
             // self disabled: spin fast in place
+            positionCommand.holdQuarterTurn = false;
             positionCommand.drivetrain->setTargetTranslation({0, 0, SPIN_VELOCITY}, (positionCommand.drivetrain->angularVel < 6.0f || positionCommand.drivetrain->powerLimit >= 100.0f));
         }
     }
     
+    bool SimpleAutoDriveCommand::squareLeg() const {
+        // Backwards, the leg (targetIndex + 1 -> targetIndex) is the reverse of the next one.
+        const size_t i = targetIndex;
+        return targets[i].square || (direction == -1 && i + 1 < targets.size() && targets[i + 1].square);
+    }
+
     bool SimpleAutoDriveCommand::isFinished() const { return !drivers->remote.isConnected(); }
     
     bool SimpleAutoDriveCommand::getIsScheduled() { return isScheduled; }
@@ -138,40 +146,13 @@ namespace commands {
                 targets.push_back({at(0.0f, 1.0f), vel(0.0f, 0.0f)});   // back
                 targets.push_back({at(0.0f, 0.0f), vel(0.0f, 0.0f)});     // right
                 return;
-            case TargetMode::ARCC_RAMP_PATH:
-                // coordinates for red team
-                needToApplyInitialPointChange = true;
-                changedInitialPoint = at(-5.125f, -0.5f);
-                targets.push_back({at(-4.030f, 1.8330f), vel(0.0f, 0.0f)});                                   // mostly left, some forward: before ramp
-                targets.push_back({at(-0.565f, 1.8330f), vel(0.0f, 0.0f)});                                   // forward: across ramp
-                targets.push_back({at(0.0f, -0.5f), vel(0.0f, 0.0f)});  // mostly right, some forward: to center
-                return;
-            case TargetMode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED:
-                // coordinates for red team
-                needToApplyInitialPointChange = true;
-                changedInitialPoint = at(-5.125f, -0.5f);
-                targets.push_back({at(-4.030f, 1.8330f), vel(0.0f, 0.0f)});                                   // mostly left, some forward: before ramp
-                targets.push_back({at(0.247f, 1.8330f), vel(0.0f, 0.0f)});                                   // forward: across ramp (add 0.812)
-                targets.push_back({at(0.812f, -0.5f), vel(0.0f, 0.0f)});  // mostly right, some forward: to center (add 0.812)
-                return;
-            case TargetMode::ARCC_HALLWAY_PATH:
-                // coordinates for red team
-                needToApplyInitialPointChange = true;
-                changedInitialPoint = at(-5.125f, -0.5f);
-                targets.push_back({at(-3.733f, 0.874f), vel(0.0f, 0.0f)});                                               // left forward diagonal: before enter hallway
-                targets.push_back({at(-2.901f, 0.874f), vel(0.0f, 0.0f)});                                               // forward: enter hallway
-                targets.push_back({at(-2.901f, -0.693f), vel(0.0f, 0.0f)});                                                // right: through hallway
-                targets.push_back({at(-2.395f, -1.200f), vel(0.0f, 0.0f)});                                                // forward right diagonal: leave hallway
-                targets.push_back({at(0.0f, -0.885f), vel(0.0f, 0.0f)});  // forward: to center
-                return;
-            case TargetMode::ARCC_ROUGH_PATH:
-                // coordinates for red team
-                needToApplyInitialPointChange = true;
-                changedInitialPoint = at(-5.125f, 0.5f);
-                // the wall leg keeps the spinning chassis (0.42 m sweep) 0.1 m clear of the wall end, 1.81 m right of the start
-                targets.push_back({at(-4.125f, -2.5f), vel(0.0f, 0.0f), WALL_LEG_TOLERANCE});                                          // right forward diagonal: before wall
-                targets.push_back({at(-3.225f, -2.5f), vel(0.0f, 0.0f), WALL_LEG_TOLERANCE});                                          // forward: past wall
-                targets.push_back({at(0.0f, 0.5f), vel(0.0f, 0.0f)});  // left forward diagonal: to center
+            case TargetMode::ARCC_S2_3V3:
+                // The Side Wall end (y -0.255) and Side High Ground corner (y -1) leave a 0.745 m
+                // doorway at x -4, narrower than the 0.84 m spin sweep: hold a quarter turn on
+                // y -0.635 until clear (sim world/arcc_s2_3v3/cad/NOTES.md).
+                targets.push_back({at(-5.25f, -0.635f), vel(0.0f, 0.0f), DOORWAY_TOLERANCE, true});  // north out of the zone
+                targets.push_back({at(-2.40f, -0.635f), vel(0.0f, 0.0f), WALL_LEG_TOLERANCE, true});  // east through the doorway
+                targets.push_back({at(-0.60f, -1.80f), vel(0.0f, 0.0f)});  // spinning, south of the Central Wall tip
                 return;
             case TargetMode::SPOOKY_SCRIM_2V2:
                 targets.push_back({at(-3.50f, -1.75f), vel(0, 0)});
