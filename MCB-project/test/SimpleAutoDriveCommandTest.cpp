@@ -292,6 +292,23 @@ TEST_F(SimpleAutoDriveCommandTest, CapturesFirstLocalizedNavigationAndResetsOnSc
     }
 }
 
+TEST_F(SimpleAutoDriveCommandTest, RescheduleAfterDrivingKeepsBootPointAsResupply) {
+    team(false);
+    SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, Mode::SPOOKY_SCRIM_2V2);
+    command.initialize();
+    odo.relocalizeTo(-3.53f, -0.426f);
+    command.execute();
+    hosted::sensors.podX = 1.0f;  // boot heading +y: pods (right, forward) are field (+x, +y)
+    hosted::sensors.podY = 2.0f;
+    odo.refresh();
+    ASSERT_NEAR(odo.getX(), -2.53f, 1e-5f);
+    command.end(false);  // e.g. remote reconnect or IMU recal reschedules mid-match
+    command.initialize();
+    command.execute();
+    EXPECT_NEAR(targets(command)[0].position.first, -3.53f, 1e-5f);
+    EXPECT_NEAR(targets(command)[0].position.second, -0.426f, 1e-5f);
+}
+
 TEST_F(SimpleAutoDriveCommandTest, ArccConversionPreservesHistoricalBothTeamFieldRoutes) {
     struct Route { Mode mode; std::vector<std::pair<float, float>> old; float returnY; };
     const Route routes[] = {

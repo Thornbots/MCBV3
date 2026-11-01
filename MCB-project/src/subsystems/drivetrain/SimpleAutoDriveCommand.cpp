@@ -7,7 +7,7 @@ namespace commands {
           odo(odo),
           mode(mode),
           positionCommand(drivers, drive, gimbal, odo, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, WAYPOINT_TOLERANCE) {
-        // Slot zero is captured from localized navigation on the first execute.
+        // Slot zero is the boot point, captured on the first localized execute.
         targets.push_back({{0.0f, 0.0f}, {0.0f, 0.0f}});
 
         addSubsystemRequirement(drive);
@@ -33,7 +33,8 @@ namespace commands {
         }
         if (!startCaptured) {
             setupMap();
-            const std::pair<float, float> start{odo->getX(), odo->getY()};
+            // The boot point, not the current position: rescheduling mid-match keeps resupply.
+            const std::pair<float, float> start{odo->getBootX(), odo->getBootY()};
             targets[0].position = start;
             if (mode == TargetMode::TEST) {
                 for (size_t i = 1; i < targets.size(); ++i) {
