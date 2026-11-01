@@ -59,34 +59,29 @@ protected:
         return command.positionCommand.isFinished();
     }
 
-    const auto& returnPoint(const SimpleAutoDriveCommand& command) { return command.changedInitialPoint; }
-    bool needsReturnChange(const SimpleAutoDriveCommand& command) { return command.needToApplyInitialPointChange; }
-    void executePosition(SimpleAutoDriveCommand& command) { command.positionCommand.execute(); }
+    bool holding(const SimpleAutoDriveCommand& command) { return command.positionCommand.holdQuarterTurn; }
+    void setIndex(SimpleAutoDriveCommand& command, int i) { command.targetIndex = i; }
+    // ARCC_S2_3V3 tolerances by index: start, doorway approach, doorway exit, centre.
+    static float s2Tolerance(size_t i) { return i == 1 ? 0.05f : i == 2 ? 0.2f : 0.5f; }
 
     void checkRoute(Mode mode, bool blue) {
         team(blue);
         SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, mode);
         command.initialize();
-        odo.relocalizeTo(blue ? 4.625f : -4.625f, 0);
+        odo.relocalizeTo(blue ? 5.25f : -5.25f, -3.0f);
         command.execute();
+        const bool s2 = mode == Mode::ARCC_S2_3V3;
         for (size_t i = 0; i < command.targets.size(); ++i) {
-            const bool wall = mode == Mode::ARCC_ROUGH_PATH && (i == 1 || i == 2);
-            EXPECT_FLOAT_EQ(command.targets[i].tolerance, wall ? 0.2f : 0.5f) << i;
-        }
-        if (mode == Mode::ARCC_ROUGH_PATH) {
-            const float sign = blue ? -1.0f : 1.0f;
-            for (int i : {1, 2}) {
-                EXPECT_FLOAT_EQ(command.targets[i].position.first, sign * (i == 1 ? -4.125f : -3.225f));
-                EXPECT_FLOAT_EQ(command.targets[i].position.second, -2.5f);
-            }
+            EXPECT_FLOAT_EQ(command.targets[i].tolerance, s2 ? s2Tolerance(i) : 0.5f) << i;
+            EXPECT_EQ(command.targets[i].square, s2 && (i == 1 || i == 2)) << i;
         }
     }
 
     void checkTraversal(bool backwards) {
         team(false, backwards);
-        SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, Mode::ARCC_ROUGH_PATH);
+        SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, Mode::ARCC_S2_3V3);
         command.initialize();
-        odo.relocalizeTo(-4.625f, 0);
+        odo.relocalizeTo(-5.25f, -3.0f);
         command.execute();
         // Switch between waypoint tolerances in both traversal orders.
         for (int step = 0; step < 4; ++step) {
@@ -99,13 +94,17 @@ protected:
             command.execute();
             EXPECT_EQ(command.targetIndex, i);
             EXPECT_EQ(command.positionCommand.isFinished(), i == 0 || i == 3) << i;
-            odo.relocalizeTo(position.first + 0.1f, position.second);
+            odo.relocalizeTo(position.first + 0.04f, position.second);
             command.positionCommand.execute();
             EXPECT_TRUE(command.positionCommand.isFinished()) << i;
             command.execute();
-            EXPECT_EQ(command.targetIndex, backwards ? std::max(0, i - 1) : std::min(3, i + 1));
-            const float nextTolerance = command.targets[command.targetIndex].tolerance;
-            EXPECT_FLOAT_EQ(nextTolerance, command.targetIndex == 1 || command.targetIndex == 2 ? 0.2f : 0.5f);
+            const int next = command.targetIndex;
+            EXPECT_EQ(next, backwards ? std::max(0, i - 1) : std::min(3, i + 1));
+            EXPECT_FLOAT_EQ(command.targets[next].tolerance, s2Tolerance(next));
+            // Square on every leg touching a doorway waypoint; spin when parked at either end.
+            const bool parkedAtEnd = (backwards ? i == 0 : i == 3);
+            EXPECT_EQ(command.positionCommand.holdQuarterTurn,
+                !parkedAtEnd && (backwards ? next <= 2 : next == 1 || next == 2)) << i;
         }
     }
 };
@@ -185,7 +184,7 @@ TEST_F(SimpleAutoDriveCommandTest, LateBlueRefereeSelectsRouteAtFirstLocalizedEx
 
 TEST_F(SimpleAutoDriveCommandTest, RouteCannotAdvanceOrDriveBeforeValidRelocalize) {
     team(false);
-    SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, Mode::ARCC_ROUGH_PATH);
+    SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, Mode::ARCC_S2_3V3);
     command.initialize();
     drive.setTargetTranslation({1, 0, 1}, false);
     for (float invalid : {std::numeric_limits<float>::quiet_NaN(),
@@ -198,7 +197,7 @@ TEST_F(SimpleAutoDriveCommandTest, RouteCannotAdvanceOrDriveBeforeValidRelocaliz
         EXPECT_FALSE(positionFinished(command));
         EXPECT_FLOAT_EQ(drive.getHostedTargetVelocity().magnitude(), 0);
     }
-    odo.relocalizeTo(-4.625f, 0);
+    odo.relocalizeTo(-5.25f, -3.0f);
     command.execute();
     command.execute();
     EXPECT_EQ(index(command), 1);
@@ -253,11 +252,9 @@ TEST_F(SimpleAutoDriveCommandTest, NavGoalsBeforeLocalizationAreDiscarded) {
     EXPECT_GT(drive.getHostedTargetVelocity().magnitude(), 0);
 }
 
-TEST_F(SimpleAutoDriveCommandTest, OnlyRoughWallWaypointsTightenForEitherTeam) {
+TEST_F(SimpleAutoDriveCommandTest, OnlyS2DoorwayWaypointsTightenAndSquareForEitherTeam) {
     for (bool blue : {false, true}) {
-        for (Mode mode : {Mode::TEST, Mode::ARCC_HALLWAY_PATH,
-                Mode::ARCC_ROUGH_PATH, Mode::ARCC_RAMP_PATH,
-                Mode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED, Mode::SPOOKY_SCRIM_2V2}) checkRoute(mode, blue);
+        for (Mode mode : {Mode::TEST, Mode::SPOOKY_SCRIM_2V2, Mode::ARCC_S2_3V3}) checkRoute(mode, blue);
     }
 }
 
@@ -309,50 +306,41 @@ TEST_F(SimpleAutoDriveCommandTest, RescheduleAfterDrivingKeepsBootPointAsResuppl
     EXPECT_NEAR(targets(command)[0].position.second, -0.426f, 1e-5f);
 }
 
-TEST_F(SimpleAutoDriveCommandTest, ArccConversionPreservesHistoricalBothTeamFieldRoutes) {
-    struct Route { Mode mode; std::vector<std::pair<float, float>> old; float returnY; };
-    const Route routes[] = {
-        {Mode::ARCC_HALLWAY_PATH, {{.892f,.874f},{1.724f,.874f},{1.724f,-.693f},
-            {2.230f,-1.200f},{4.625f,-.885f}}, -.5f},
-        {Mode::ARCC_ROUGH_PATH, {{.5f,-2.5f},{1.4f,-2.5f},{4.625f,.5f}}, .5f},
-        {Mode::ARCC_RAMP_PATH, {{.595f,1.833f},{4.060f,1.833f},{4.625f,-.5f}}, -.5f},
-        {Mode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED,
-            {{.595f,1.833f},{4.872f,1.833f},{5.437f,-.5f}}, -.5f},
-    };
-    static_assert(static_cast<int>(Mode::ARCC_HALLWAY_PATH) == 2);
-    static_assert(static_cast<int>(Mode::ARCC_ROUGH_PATH) == 3);
-    static_assert(static_cast<int>(Mode::ARCC_RAMP_PATH) == 4);
-    static_assert(static_cast<int>(Mode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED) == 5);
+TEST_F(SimpleAutoDriveCommandTest, S2RouteMirrorsForBlueAndEndsSouthOfCentralWall) {
     static_assert(static_cast<int>(Mode::SPOOKY_SCRIM_2V2) == 6);
+    static_assert(static_cast<int>(Mode::ARCC_S2_3V3) == 7);
+    const float red[][2] = {{-5.25f, -0.635f}, {-2.40f, -0.635f}, {-0.60f, -1.80f}};
     for (bool blue : {false, true}) {
         team(blue);
-        for (const auto& route : routes) {
-            SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, route.mode);
-            command.initialize();
-            odo.relocalizeTo(blue ? 3.1f : -3.1f, .8f);
-            command.execute();
-            EXPECT_FLOAT_EQ(targets(command)[0].position.first, blue ? 3.1f : -3.1f);
-            ASSERT_EQ(targets(command).size(), route.old.size() + 1);
-            for (size_t i = 0; i < route.old.size(); ++i) {
-                // Historical route rotated by pi for blue, after its lateral sign change.
-                const float forward = route.old[i].first;
-                const float left = blue ? -route.old[i].second : route.old[i].second;
-                const float angle = blue ? 3.14159265358979323846f : 0;
-                const auto old = Vector2d(forward, left).rotate(angle);
-                EXPECT_NEAR(targets(command)[i+1].position.first,
-                    (blue ? 4.625f : -4.625f) + old.getX(), 1e-5f);
-                EXPECT_NEAR(targets(command)[i+1].position.second, old.getY(), 1e-5f);
-                EXPECT_FLOAT_EQ(targets(command)[i+1].velocity.first, 0);
-                EXPECT_FLOAT_EQ(targets(command)[i+1].velocity.second, 0);
-            }
-            EXPECT_NEAR(returnPoint(command).first, blue ? 5.125f : -5.125f, 1e-5f);
-            EXPECT_NEAR(returnPoint(command).second, route.returnY, 1e-5f);
-            executePosition(command);
-            command.execute();
-            EXPECT_FALSE(needsReturnChange(command));
-            EXPECT_EQ(targets(command)[0].position, returnPoint(command));
+        SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, Mode::ARCC_S2_3V3);
+        command.initialize();
+        odo.relocalizeTo(blue ? 5.4f : -5.0f, -3.3f);  // anywhere in the Starting Zone
+        command.execute();
+        ASSERT_EQ(targets(command).size(), 4u);
+        EXPECT_FLOAT_EQ(targets(command)[0].position.first, blue ? 5.4f : -5.0f);
+        EXPECT_FLOAT_EQ(targets(command)[0].position.second, -3.3f);
+        for (size_t i = 0; i < 3; ++i) {
+            EXPECT_FLOAT_EQ(targets(command)[i + 1].position.first, blue ? -red[i][0] : red[i][0]) << i;
+            EXPECT_FLOAT_EQ(targets(command)[i + 1].position.second, red[i][1]) << i;
         }
     }
+}
+
+TEST_F(SimpleAutoDriveCommandTest, DoorwayLegsHoldQuarterTurnInsteadOfSpinning) {
+    team(false);
+    SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, Mode::ARCC_S2_3V3);
+    command.initialize();
+    odo.relocalizeTo(-5.25f, -3.0f);
+    command.execute();
+    command.execute();  // IN_GAME at the boot point: advance to the doorway approach
+    ASSERT_EQ(index(command), 1);
+    EXPECT_TRUE(holding(command));
+    // Booted at a quarter turn (+y) with the head centred: no turn requested.
+    EXPECT_NEAR(drive.getHostedTargetVelocity().getRotation(), 0.0f, 1e-3f);
+    setIndex(command, 3);
+    command.execute();
+    EXPECT_FALSE(holding(command));
+    EXPECT_LT(drive.getHostedTargetVelocity().getRotation(), -1.0f);
 }
 
 TEST_F(SimpleAutoDriveCommandTest, OutboundAppliesAndRestoresTolerance) {

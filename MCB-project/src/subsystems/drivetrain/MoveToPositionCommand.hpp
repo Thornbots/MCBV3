@@ -48,6 +48,9 @@ public:
 
     DrivetrainSubsystem* drivetrain;
     static constexpr float MOVE_TO_POS_SPIN_VELO = -8.0;  //was 12.0   here tune spin velo
+    // Replace the requested spin with a hold of the nearest field quarter turn, so the
+    // square chassis passes openings narrower than its spin sweep.
+    bool holdQuarterTurn = false;
 protected:
     src::Drivers* drivers;
     GimbalSubsystem* gimbal;
