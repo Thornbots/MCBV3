@@ -73,6 +73,11 @@ public:  // Public Methods
     void relocalizeTo(float newX, float newY);
     bool isNavigationLocalized() const { return navigationLocalized; }
 
+    // Navigation position of the power-on point (aim is zero there): the team start the
+    // Jetson sent, refined by later RELOCALIZEs. Valid once isNavigationLocalized().
+    float getBootX() const { return offsetX; }
+    float getBootY() const { return offsetY; }
+
     // Field yaw of the heading at power-on (the pods' and IMU's zero): PI/2 both teams.
     float getStartYaw();
 
