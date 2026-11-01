@@ -4,6 +4,7 @@
 
 #include "subsystems/drivetrain/DrivetrainSubsystemConstants.hpp"
 #include "util/Pose2d.hpp"
+#include "util/RefereeMatch.hpp"
 
 namespace commands {
 using namespace tap::communication::serial;
@@ -25,23 +26,11 @@ void AutoDriveCommand::execute() {
     bool allowSpinning = true;
     bool allowMoving = true;
 
-    if (drivers->refSerial.getRefSerialReceivingData() && 
-       (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
-
-        allowSpinning = false;
-        allowMoving = false;
-
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
-            // allow both
-            allowSpinning = true;
-            allowMoving = true;
-        }
-
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
-            // countdown, only allow spinning
-            allowSpinning = true;
-        }
-
+    // countdown only allows spinning
+    if (referee_match::inRmul3v3(drivers->refSerial)) {
+        const auto stage = drivers->refSerial.getGameData().gameStage;
+        allowMoving = stage == RefSerialData::Rx::GameStage::IN_GAME;
+        allowSpinning = allowMoving || stage == RefSerialData::Rx::GameStage::COUNTDOWN;
     }
     // allowMoving = false;
 

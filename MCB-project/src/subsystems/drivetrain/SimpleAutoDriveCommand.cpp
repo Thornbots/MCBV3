@@ -1,5 +1,7 @@
 #include "SimpleAutoDriveCommand.hpp"
 
+#include "util/RefereeMatch.hpp"
+
 namespace commands {
 
     SimpleAutoDriveCommand::SimpleAutoDriveCommand(src::Drivers* drivers, DrivetrainSubsystem* drive, GimbalSubsystem* gimbal, OdometrySubsystem* odo, TargetMode mode)
@@ -40,7 +42,7 @@ namespace commands {
                 int size = targets.size();
 
                 // if in 3v3 match, wait for match to start before moving
-                if (drivers->refSerial.getRefSerialReceivingData() && (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
+                if (referee_match::inRmul3v3(drivers->refSerial)) {
                     allowAdvancing = allowAdvancing && drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME;
                 }
 

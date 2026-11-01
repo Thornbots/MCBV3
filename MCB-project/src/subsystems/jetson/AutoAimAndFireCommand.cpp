@@ -1,6 +1,7 @@
 #include "AutoAimAndFireCommand.hpp"
 #include "JetsonSubsystemConstants.hpp"
 #include "subsystems/odometry/OdometrySubsystemConstants.hpp"
+#include "util/RefereeMatch.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -36,24 +37,11 @@ void AutoAimAndFireCommand::execute() {
     bool allowGimbal = true;
 
     // if automatic, check if we are in a game, and if we are before it starts, don't allow aiming or shooting
-    if (!isManualControl && drivers->refSerial.getRefSerialReceivingData() && 
-       (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
-
-        allowShooting = false;
-        allowGimbal = false;
-
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
-            // allow both
-            allowShooting = true;
-            allowGimbal = true;
-        }
-
-        //don't spin before match
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
-            // countdown, only allow gimbal
-            allowGimbal = true;
-        }
-
+    // countdown only allows the gimbal
+    if (!isManualControl && referee_match::inRmul3v3(drivers->refSerial)) {
+        const auto stage = drivers->refSerial.getGameData().gameStage;
+        allowShooting = stage == RefSerialData::Rx::GameStage::IN_GAME;
+        allowGimbal = allowShooting || stage == RefSerialData::Rx::GameStage::COUNTDOWN;
     }
     
     // A pending shot holds its target: a newer frame would cancel it (from newMain's cv tuning).

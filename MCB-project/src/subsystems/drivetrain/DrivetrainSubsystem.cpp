@@ -3,6 +3,7 @@
 #include "tap/communication/serial/ref_serial_data.hpp"
 
 #include "DrivetrainSubsystemConstants.hpp"
+#include "util/RefereeMatch.hpp"
 
 namespace subsystems {
 using namespace tap::communication::serial;
@@ -54,9 +55,8 @@ void DrivetrainSubsystem::refresh() {
     imuAngle = drivers->bmi088.getYaw() - PI;
 
     uint16_t minLimit = 240;
-    if (drivers->refSerial.getRefSerialReceivingData() && 
-       (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3) &&
-       (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::INITIALIZATION || drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN)) {
+    if (referee_match::rmul3v3StageIs(drivers->refSerial, RefSerialData::Rx::GameStage::INITIALIZATION) ||
+        referee_match::rmul3v3StageIs(drivers->refSerial, RefSerialData::Rx::GameStage::COUNTDOWN)) {
         minLimit = INITIAL_POWER_LIMIT_3V3;
     }
     powerLimit = std::min(minLimit, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);

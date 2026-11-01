@@ -23,6 +23,7 @@
 #include "subsystems/odometry/OdometryStopCommand.hpp"
 #include "subsystems/ui/SentryDrawCommand.hpp"
 #include "subsystems/ui/UISubsystem.hpp"
+#include "util/RefereeMatch.hpp"
 #include "util/trigger.hpp"
 
 #include "drivers.hpp"
@@ -116,8 +117,7 @@ public:
         rescheduleLookMouse = drivers->commandScheduler.isCommandScheduled(&lookMouse);
 
         // if we don't have ref uart or we aren't in a match or we aren't currently in game, we are able to stop flywheels by buttons
-        if (!drivers->refSerial.getRefSerialReceivingData() || drivers->refSerial.getGameData().gameType != RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3 ||
-            drivers->refSerial.getGameData().gameStage != RefSerialData::Rx::GameStage::IN_GAME) {
+        if (!referee_match::rmul3v3StageIs(drivers->refSerial, RefSerialData::Rx::GameStage::IN_GAME)) {
             stopFlywheelTrigger.update();
         }
     }
