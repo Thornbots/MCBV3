@@ -177,8 +177,9 @@ CXX=g++-14 tools/test_hosted_cpp.sh
 This runner tests package-owned code directly. The historical `scons run-tests`
 target also compiles vendored Taproot test suites and needs additional GoogleMock
 dependencies. The UART fixture revision is pinned in
-`.github/workflows/firmware.yml`; update it deliberately when the wire protocol
-changes. ARM builds use Ubuntu 24.04's GCC 13 cross compiler; hosted builds use GCC 14.
+[`.github/workflows/firmware.yml`](.github/workflows/firmware.yml); update it
+deliberately when the wire protocol or frame semantics change. ARM builds use
+Ubuntu 24.04's GCC 13 cross compiler; hosted builds use GCC 14.
 All builds treat compiler warnings as errors. Hosted builds use the system GCC
 by default; `compiler-suffix=-14` selects GCC 14 explicitly.
 

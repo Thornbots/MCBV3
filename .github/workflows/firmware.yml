@@ -68,7 +68,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: Thornbots/sim
-          ref: cc621c5005de2ff186d3383d09dda1b1552c12e5
+          ref: fc0430986c9a2aa975cf5fe7ee1ef6d47fd0e116
           path: uart-fixture
       - name: Exercise the compiled firmware over UART
         env:
