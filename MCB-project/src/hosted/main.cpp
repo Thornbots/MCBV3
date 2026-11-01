@@ -46,7 +46,9 @@ int main() {
     const int controlFd = controlFdText ? std::atoi(controlFdText) : -1;
     const char* debugFloodText = std::getenv("MCB_DEBUG_TEST_FLOOD");
     const bool debugFlood = debugFloodText && std::strcmp(debugFloodText, "1") == 0;
-    constexpr std::array<uint8_t, 4> debugBytes{0x00, 0xa5, 0xff, 0x25};
+    std::array<uint8_t, 128> debugBytes{};
+    for (size_t i = 0; i < debugBytes.size(); ++i) debugBytes[i] = static_cast<uint8_t>(i);
+    debugBytes[1] = 0xa5; debugBytes[2] = 0xff; debugBytes[3] = 0x25;
     hosted::MappingInput mappingInput{};
     uint32_t transitions = 0;
     // Match main.cpp's static storage (zero-initialized before construction).

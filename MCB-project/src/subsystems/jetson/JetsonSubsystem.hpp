@@ -143,11 +143,9 @@ private:  // Private Variables
     static constexpr uint32_t POD_STALE_MS = 500;
     uint32_t nextTelemetryMs = tap::arch::clock::getTimeMilliseconds() + 10U;
     uint8_t messageCount = 0;
-    std::array<uint8_t, 32> debugPayload{};
+    std::array<uint8_t, 128> debugPayload{};
     size_t debugLength = 0;
     bool debugPending = false;
-    bool debugSent = false;
-    uint32_t lastDebugMs = 0;
 
 
 public:  // Public Methods

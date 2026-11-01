@@ -46,10 +46,10 @@ public:
 
     bool isConnected() const;
 
-    // Buffer-empty is not transmission-complete. Wait a whole frame after it empties.
+    // Require full airtime since enqueue and one final byte after buffer-empty.
     bool isWireIdle();
     static constexpr uint32_t wireTimeUs(size_t bytes) {
-        return (bytes * 10U * 1000000U + 115199U) / 115200U;
+        return (bytes * 10ULL * 1000000U + UART_BAUD_RATE - 1U) / UART_BAUD_RATE;
     }
 
     bool isFinishedWriting() const { return drivers->uart.isWriteFinished(port); }
@@ -70,6 +70,7 @@ public:
 private:
     void* pingContext = nullptr;
     PingHandler pingHandler = nullptr;
+    uint32_t frameStartUs = 0;
     bool drainObserved = false;
     uint32_t drainObservedUs = 0;
     size_t lastFrameBytes = 0;

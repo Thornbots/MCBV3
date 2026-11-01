@@ -71,7 +71,7 @@ bit 1 remains the separate permission for firmware patrol.
 ## Opaque debug blobs
 
 `JetsonSubsystem::sendDebug(const uint8_t* data, size_t length)` copies a raw
-0–32 byte value for MCB→Jetson message id 6. There is no content schema.
+0–128 byte value for MCB→Jetson message id 6. There is no content schema.
 It returns false for oversize input, a null pointer with nonzero length, or
 an occupied single pending slot; accepted values are retained until attempted.
 A null pointer with zero length sends an empty payload. Call this cooperative
@@ -79,29 +79,24 @@ main-loop API per value at any rate; it allocates nothing and never writes or
 waits for UART. It is not an ISR or concurrent-thread API. There is no producer
 timer, growing queue, or delivery guarantee.
 
-`refresh()` drains DEBUG last, after receive work, MMM PING and the existing
-10 ms mandatory slot (nine POSE then one REF_SYS: 90 Hz and 10 Hz). A DEBUG
-attempt is charged at least 100 ms after the previous attempt, even on failure:
-at most one 41-byte frame per 100 ms, a sustained **410 wire bytes/s** ceiling
-including the nine framing/CRC bytes. Short payloads keep the same interval;
-idle time earns no burst credit. Failed/partial writes discard that value.
+`refresh()` services RX and MMM PING before telemetry and DEBUG. Mandatory
+telemetry keeps its original 10 ms deadline sequence (nine POSE then one
+REF_SYS), sending overdue slots before another DEBUG. The single pending slot
+is drained only when occupied; there is no fixed throttle. Failed/partial debug
+writes discard that value and still consume their full airtime budget.
 
-UART1 is 115200 baud, 8N1 (10 bits/byte). `isWriteFinished()` only establishes
-buffer-empty, not a fully drained wire. Before DEBUG, UARTCommunication waits
-an additional full previous-frame airtime, rounded up, from its first observed
-buffer-empty indication, including after PING or failed writes. It then admits
-DEBUG only if its full airtime plus 2 ms fits strictly before the next mandatory
-slot. The margin covers millisecond clock quantization and enqueue/baud slack;
-a 41-byte frame takes 3560 µs nominally. This assumes the configured baud and
-cooperative loop service within that margin; a stalled loop cannot guarantee
-wall-clock telemetry deadlines. The phase follows subsystem construction,
-including rollover, rather than assuming boot time is a multiple of 10 ms.
-DEBUG cannot suppress receive polling or change the mandatory slot phase.
-Existing MMM PING priority and the receive latest-message mailbox are unchanged.
+UART initialization and wire-time accounting share `DJISerial::UART_BAUD_RATE`
+(115200, 8N1). Wire-idle requires full airtime since enqueue, buffer-empty, and
+one additional byte time after the first empty observation. Admission reserves
+DEBUG airtime plus 3 ms and cannot cross the second future telemetry deadline.
+The [wire contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#debug-id6--opaque-firmware-debug)
+owns latency bounds, scheduler assumptions and flood guarantees. A baud too
+slow for that bound simply leaves oversized pending debug unsent. Telemetry
+samples current state when sent; RX continues independently of TX budget.
 
 The hosted-only executable accepts `MCB_DEBUG_TEST_FLOOD=1` alongside the usual
 `MCB_UART_FD` and binary stdin/stdout step fixture. Every simulated 1 ms main
-step calls `sendDebug` with the known bytes `{0x00, 0xa5, 0xff, 0x25}`. All other
+step calls `sendDebug` with 128 known bytes: `00 a5 ff 25` followed by `0x04` through `0x7f`. All other
 values of the environment variable leave it off. Run
 `MCB-project/build/sim/scons-release/MCB-project.elf` with the existing sim
 fixture transport; it is not a standalone interactive executable. The hardware
@@ -363,6 +358,6 @@ These hooks let modern newlib link without its warning-bearing nosys fallbacks.
 The generated Taproot/modm copies checked into this repository contain local
 compatibility fixes: explicit iterator traits instead of `std::iterator`,
 `delay_us`, guarded peripheral clock writes, and erase/remove for null command
-mappings. Preserve these fixes when regenerating from the pinned upstream
+mappings, and the shared DJI UART baud constant. Preserve these fixes when regenerating from the pinned upstream
 submodules. The hosted C++ regression tests check iterator traits, null command
 filtering, UART payload bounds, and clock rollover.

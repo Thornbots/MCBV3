@@ -73,6 +73,7 @@ bool UARTCommunication::sendMsg(uint8_t* dataToBeSent, uint16_t messageType, uin
                             dataLen +            // payload
                             CRC16_TRAILER_SIZE;  // CRC16
 
+    frameStartUs = tap::arch::clock::getTimeMicroseconds();
     drainObserved = false;
     lastFrameBytes = frameLen;  // Also guard partial/failed writes conservatively.
     int bytesWritten = drivers->uart.write(port, reinterpret_cast<uint8_t*>(&msg), frameLen);
@@ -91,7 +92,8 @@ bool UARTCommunication::isWireIdle() {
         drainObserved = true;
         drainObservedUs = now;
     }
-    return static_cast<uint32_t>(now - drainObservedUs) >= wireTimeUs(lastFrameBytes);
+    return static_cast<uint32_t>(now - frameStartUs) >= wireTimeUs(lastFrameBytes) &&
+           static_cast<uint32_t>(now - drainObservedUs) >= wireTimeUs(1);
 }
 
 bool UARTCommunication::isConnected() const { return ((getCurrentTime() - lastReceivedTime) <= CONNECTION_TIMEOUT); }

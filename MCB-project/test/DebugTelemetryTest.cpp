@@ -1,5 +1,6 @@
 // Copyright 2026 Thornbots. SPDX-License-Identifier: GPL-3.0-or-later
 #include <gtest/gtest.h>
+#include <algorithm>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <memory>
@@ -55,19 +56,19 @@ protected:
 
 TEST_F(DebugTelemetryTest, LengthBoundsCopyAndSinglePendingSlot) {
     auto& jetson = control->jetson;
-    uint8_t data[33]{};
-    EXPECT_FALSE(jetson.sendDebug(data, 33));
+    uint8_t data[129]{};
+    EXPECT_FALSE(jetson.sendDebug(data, 129));
     EXPECT_FALSE(jetson.sendDebug(nullptr, 1));
-    for (size_t i = 0; i < 32; ++i) data[i] = i;
-    ASSERT_TRUE(jetson.sendDebug(data, 32));
+    for (size_t i = 0; i < 128; ++i) data[i] = i;
+    ASSERT_TRUE(jetson.sendDebug(data, 128));
     EXPECT_FALSE(jetson.sendDebug(data, 1));
     data[0] = 99;
     EXPECT_TRUE(output().empty());  // API only copies, never writes.
     jetson.refresh();
     auto bytes = output();
-    ASSERT_EQ(bytes.size(), 41U);
+    ASSERT_EQ(bytes.size(), 137U);
     EXPECT_EQ(bytes[5], 6);
-    for (size_t i = 0; i < 32; ++i) EXPECT_EQ(bytes[i + 7], i);
+    for (size_t i = 0; i < 128; ++i) EXPECT_EQ(bytes[i + 7], i);
     EXPECT_TRUE(jetson.sendDebug(nullptr, 0));
     for (hosted::timeMs = 1; hosted::timeMs <= 110; ++hosted::timeMs) {
         jetson.refresh();
@@ -84,13 +85,12 @@ TEST_F(DebugTelemetryTest, LengthBoundsCopyAndSinglePendingSlot) {
 TEST_F(DebugTelemetryTest, FloodPreservesMandatorySlotsAndReceiveAcrossPhasesAndRollover) {
     for (uint32_t phase : {0U, 1U, 7U, 997U, 0xFFFFFFD0U}) {
         reset(phase);
-        uint8_t data[32]{};
-        uint32_t poses = 0, refs = 0, debug = 0, lastDebug = 0;
-        bool debugBefore = false;
+        uint8_t data[128]{};
+        uint32_t poses = 0, refs = 0, debug = 0, mandatory = 0;
+        uint32_t delayedByDebug = 0, lastPose = 0, maxPoseGap = 0;
         uint64_t wireFreeUs = 0;
-        for (uint32_t elapsed = 0; elapsed <= 2000; ++elapsed) {
+        for (uint32_t elapsed = 0; elapsed <= 6010; ++elapsed) {
             hosted::timeMs = phase + elapsed;
-            // A producer flood cannot overwrite or grow the pending slot.
             for (int i = 0; i < 100; ++i) control->jetson.sendDebug(data, sizeof(data));
             if (elapsed % 13 == 0) {
                 subsystems::CvTarget target{};
@@ -106,48 +106,55 @@ TEST_F(DebugTelemetryTest, FloodPreservesMandatorySlotsAndReceiveAcrossPhasesAnd
             }
             control->jetson.refresh();
             if (elapsed % 17 == 0) { EXPECT_FLOAT_EQ(control->odo.getX(), elapsed); }
-            auto bytes = output();
-            bool mandatory = false;
+            const auto bytes = output();
             for (size_t offset = 0; offset < bytes.size();) {
                 ASSERT_GE(bytes.size() - offset, 9U);
                 const size_t length = bytes[offset + 1] | bytes[offset + 2] << 8;
                 ASSERT_LE(offset + length + 9, bytes.size());
                 const auto type = bytes[offset + 5];
-                // Model physical 115200 8N1 drain despite hosted's always-true buffer flag.
                 EXPECT_GE(elapsed * 1000ULL, wireFreeUs);
                 wireFreeUs = elapsed * 1000ULL +
                     communication::UARTCommunication::wireTimeUs(length + 9);
                 if (type == subsystems::DEBUG) {
                     ++debug;
-                    EXPECT_EQ(length, 32U);
-                    if (debugBefore) { EXPECT_GE(elapsed - lastDebug, 100U); }
-                    debugBefore = true;
-                    lastDebug = elapsed;
-                    EXPECT_LT(wireFreeUs, (elapsed / 10U + 1U) * 10000ULL);
+                    EXPECT_EQ(length, 128U);
+                    EXPECT_LE(delayedByDebug, 1U);
+                    delayedByDebug = 0;
+                    // Full debug drain must precede the second future telemetry deadline.
+                    EXPECT_LT(wireFreeUs, (mandatory + 2U) * 10000ULL);
                 } else {
-                    mandatory = true;
-                    EXPECT_EQ(elapsed % 10U, 0U);
-                    EXPECT_EQ(type, elapsed % 100U == 0 ? subsystems::REF_SYS : subsystems::POSE);
-                    if (type == subsystems::POSE) ++poses;
-                    if (type == subsystems::REF_SYS) ++refs;
+                    ++mandatory;
+                    const uint32_t deadline = mandatory * 10;
+                    EXPECT_GE(elapsed, deadline);
+                    EXPECT_LE(elapsed - deadline, 10U);
+                    if (elapsed > deadline) ++delayedByDebug;
+                    EXPECT_LE(delayedByDebug, 1U);
+                    EXPECT_EQ(type, mandatory % 10U == 0 ? subsystems::REF_SYS : subsystems::POSE);
+                    if (type == subsystems::POSE) {
+                        if (poses) maxPoseGap = std::max(maxPoseGap, elapsed - lastPose);
+                        lastPose = elapsed;
+                        if (mandatory <= 600) ++poses;
+                    }
+                    if (type == subsystems::REF_SYS && mandatory <= 600) ++refs;
                 }
                 offset += length + 9;
             }
-            EXPECT_EQ(mandatory, elapsed > 0 && elapsed % 10U == 0);
         }
-        EXPECT_EQ(poses, 180U);
-        EXPECT_EQ(refs, 20U);
-        EXPECT_GE(debug, 19U);
-        EXPECT_LE(debug, 21U);
+        EXPECT_GE(mandatory, 600U);
+        EXPECT_EQ(poses, 540U);
+        EXPECT_EQ(refs, 60U);
+        EXPECT_LE(maxPoseGap, 30U);
+        EXPECT_GT(debug, 200U); // No fixed 100 ms throttle; consume available slack.
+
     }
 }
 
-TEST_F(DebugTelemetryTest, LatePhaseCannotAdmitFrameBeforeDeadlineAndPingWins) {
-    uint8_t data[32]{};
+TEST_F(DebugTelemetryTest, DebugWaitsNearSecondDeadlineAndPingWins) {
+    uint8_t data[128]{};
     hosted::timeMs = 6;
     ASSERT_TRUE(control->jetson.sendDebug(data, sizeof(data)));
     control->jetson.refresh();
-    EXPECT_TRUE(output().empty()); // 4 ms remaining cannot fit the guarded frame.
+    EXPECT_TRUE(output().empty()); // Insufficient budget before the second deadline.
     drivers->mapping.receivePing(0, 6);
     hosted::timeMs = 7;
     control->jetson.refresh();
@@ -162,42 +169,49 @@ TEST_F(DebugTelemetryTest, LatePhaseCannotAdmitFrameBeforeDeadlineAndPingWins) {
     }
 }
 
-TEST_F(DebugTelemetryTest, BufferEmptyStillRequiresAFullDrainAfterObservation) {
-    uint8_t bytes[32]{};
+TEST_F(DebugTelemetryTest, WireDrainUsesEnqueueTimeAndFinalByteAfterBufferEmpty) {
+    uint8_t bytes[128]{};
     ASSERT_TRUE(drivers->uart.sendMsg(bytes, subsystems::DEBUG, sizeof(bytes)));
-    // Hosted reports buffer-empty immediately, even though 41 bytes need 3560 us.
     EXPECT_TRUE(drivers->uart.isFinishedWriting());
     hosted::timeMs = 3;
-    EXPECT_FALSE(drivers->uart.isWireIdle()); // First observation starts the guard.
-    hosted::timeMs = 6;
     EXPECT_FALSE(drivers->uart.isWireIdle());
-    hosted::timeMs = 7;
+    hosted::timeMs = 11;
+    EXPECT_FALSE(drivers->uart.isWireIdle());
+    hosted::timeMs = 12;
     EXPECT_TRUE(drivers->uart.isWireIdle());
     ASSERT_TRUE(drivers->uart.sendMsg(bytes, subsystems::PING, 1));
-    EXPECT_FALSE(drivers->uart.isWireIdle());
-    hosted::timeMs = 8;
+    hosted::timeMs = 14;
+    EXPECT_FALSE(drivers->uart.isWireIdle()); // First empty observation guards final byte.
+    hosted::timeMs = 15;
     EXPECT_TRUE(drivers->uart.isWireIdle());
 }
 
 TEST_F(DebugTelemetryTest, FailedDebugIsDroppedAndStillChargedAgainstBudget) {
-    uint8_t data[32]{};
+    uint8_t data[128]{};
     uint8_t fill[4096]{};
     while (write(sockets[0], fill, sizeof(fill)) > 0) {}
     const uint32_t failures = hosted::failedUartWrites();
     ASSERT_TRUE(control->jetson.sendDebug(data, sizeof(data)));
     control->jetson.refresh();
     EXPECT_GT(hosted::failedUartWrites(), failures);
-    output(); // Free transport; next value can be accepted, but no immediate retry.
+    output();
     ASSERT_TRUE(control->jetson.sendDebug(data, sizeof(data)));
-    for (hosted::timeMs = 1; hosted::timeMs < 100; ++hosted::timeMs) {
+    bool debugSent = false;
+    for (hosted::timeMs = 1; hosted::timeMs <= 40; ++hosted::timeMs) {
+        control->jetson.refresh();
+        auto bytes = output();
+        if (!bytes.empty() && bytes[5] == subsystems::DEBUG) {
+            EXPECT_GE(hosted::timeMs, 12U);
+            debugSent = true;
+        }
+    }
+    EXPECT_TRUE(debugSent);
+}
+
+TEST_F(DebugTelemetryTest, NoProducerSendsOnlyTelemetry) {
+    for (hosted::timeMs = 0; hosted::timeMs <= 100; ++hosted::timeMs) {
         control->jetson.refresh();
         auto bytes = output();
         if (!bytes.empty()) { EXPECT_NE(bytes[5], subsystems::DEBUG); }
     }
-    for (; hosted::timeMs <= 110; ++hosted::timeMs) {
-        control->jetson.refresh();
-        auto bytes = output();
-        if (!bytes.empty() && bytes[5] == subsystems::DEBUG) return;
-    }
-    FAIL() << "next value did not drain after the charged interval";
 }

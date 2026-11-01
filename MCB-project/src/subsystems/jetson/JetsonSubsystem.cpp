@@ -24,16 +24,13 @@ bool JetsonSubsystem::sendDebug(const uint8_t* data, size_t length) {
 void JetsonSubsystem::serviceDebug() {
     if (!debugPending || !drivers->uart.isWireIdle()) return;
     const uint32_t now = tap::arch::clock::getTimeMilliseconds();
-    if (debugSent && static_cast<uint32_t>(now - lastDebugMs) < 100U) return;
     const int32_t remainingMs = static_cast<int32_t>(nextTelemetryMs - now);
-    // Reserve 1 ms for clock quantization and 1 ms for enqueue/baud margin.
-    const uint32_t requiredUs = UARTCommunication::wireTimeUs(debugLength + 9U) + 2000U;
-    if (remainingMs <= 0 || static_cast<uint32_t>(remainingMs) * 1000U <= requiredUs) return;
+    // At most one deadline may pass: 1 ms polling, 1 ms drain, 1 ms enqueue margin.
+    const uint32_t requiredUs = UARTCommunication::wireTimeUs(debugLength + 9U) + 3000U;
+    if (remainingMs <= 0 || requiredUs > (static_cast<uint32_t>(remainingMs) + 10U) * 1000U) return;
     // Charge even a partial/failed write; never retry a partial frame or build backlog.
     drivers->uart.sendMsg(debugPayload.data(), DEBUG, debugLength);
     debugPending = false;
-    debugSent = true;
-    lastDebugMs = now;
 }
 #ifdef SENTRY
 void JetsonSubsystem::serviceMappingPing() {
@@ -60,8 +57,9 @@ void JetsonSubsystem::refresh() {
 
     const uint32_t now = tap::arch::clock::getTimeMilliseconds();
     if (static_cast<int32_t>(now - nextTelemetryMs) >= 0) {
-        nextTelemetryMs += ((now - nextTelemetryMs) / 10U + 1U) * 10U;
+        if (!drivers->uart.isWireIdle()) return;
         messageCount++;
+        bool sent = false;
 
         // 9 poses, 1 ref sys msg
         if (messageCount < 10 && odo != nullptr) {
@@ -79,7 +77,7 @@ void JetsonSubsystem::refresh() {
                 OdomStatus::ODOM_PODS
 #endif
             };
-            sendMsg(&p);
+            sent = sendMsg(&p);
         } else if (messageCount < 10) {
             // No odometry (hero, standard): the chassis stays at (0, 0) so the
             // Jetson still gets gimbal angles and an odom frame to aim in.
@@ -91,7 +89,7 @@ void JetsonSubsystem::refresh() {
                 gimbal->getPitchEncoderValue(),
                 std::fmod(gimbal->getYawAngleRelativeWorld() + odo::BOOT_YAW, 2 * PI),
                 OdomStatus::ODOM_I2C_DEAD};  // protocol code 2: x/y/vel have no source
-            sendMsg(&p);
+            sent = sendMsg(&p);
         } else {  // if(drivers->refSerial.getRefSerialReceivingData()) {
 
             tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
@@ -115,9 +113,12 @@ void JetsonSubsystem::refresh() {
                     robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::CHASSIS_HAS_POWER) << 1 |
                     robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::GIMBAL_HAS_POWER))};
             // needToSendRefData = !
-            if (sendMsg(&r)) drivers->hitTracker.consumeReportedHit();
-            messageCount = 0;
+            sent = sendMsg(&r);
+            if (sent) drivers->hitTracker.consumeReportedHit();
         }
+        if (!sent) { --messageCount; return; }
+        if (messageCount == 10) messageCount = 0;
+        nextTelemetryMs += 10U; // Retain overdue slots; never skip a deadline.
     }
     serviceDebug();
 }

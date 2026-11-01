@@ -67,8 +67,12 @@ class HostedHandshake(unittest.TestCase):
                         offset = end
                     self.assertEqual(types.count(2), 27)
                     self.assertEqual(types.count(3), 2)  # ticks cover 0..299 ms
-                    self.assertEqual(debug, [bytes([0x00, 0xa5, 0xff, 0x25])] *
-                                     (3 if setting == '1' else 0))
+                    expected = bytes([0, 0xa5, 0xff, 0x25]) + bytes(range(4, 128))
+                    if setting == '1':
+                        self.assertGreater(len(debug), 10)
+                        self.assertTrue(all(blob == expected for blob in debug))
+                    else:
+                        self.assertEqual(debug, [])
                 finally:
                     os.close(master)
                     os.close(slave)
