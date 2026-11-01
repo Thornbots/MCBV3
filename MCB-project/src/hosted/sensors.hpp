@@ -7,7 +7,8 @@ namespace hosted {
 class Pods {
 public:
     // Hosted sensors are supplied directly by the fixture, without I2C transactions.
-    bool isFresh(uint32_t, uint32_t) const { return true; }
+    bool isFresh(uint32_t, uint32_t) const { return fresh; }
+    bool fresh = true;
     float offsetX = 0, offsetY = 0;
     float getX() { return sensors.podX + offsetX; }
     float getY() { return sensors.podY + offsetY; }

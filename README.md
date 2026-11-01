@@ -82,7 +82,14 @@ Mapping to Ready; PING 4 moves Ready or Done to Mapping. PING 6 (fail) moves
 Setup to Done and cancels start retries. Save in Ready immediately
 enters Done. Save in Mapping sends the incomplete-save request and stays in
 Mapping. Other source states ignore these requests. Main is restored only by
-restarting the firmware. A failed final save can return Done to Mapping with
+restarting the firmware. Stale Pico I2C reads (the same 500 ms freshness test
+as POSE `ODOM_I2C_DEAD`) latch any active MMM state into OdomFault until
+restart, even if reads recover. OdomFault stops drive, discards save holds,
+cancels queued saves and odd request retries, and keeps the other MMM motor
+restrictions. Remote disconnect still stops every motor. PING 2/4/6 are
+echoed without changing state; cancelled 1/3 transactions ignore late ACKs.
+OdomFault lights steady red with green off. A failed final save can return
+Done to Mapping with
 PING 4, restoring manual drive under Mapping's restrictions. This cancels any
 pending save request, queued save or final save echo; only a fresh operator save
 can send another save request.
@@ -92,8 +99,7 @@ joysticks: left horizontal/right, left vertical/forward, right horizontal/turn.
 Translation magnitude is capped at 0.4 m/s and rotation at 0.5 rad/s; tune
 `MAPPING_MAX_TRANSLATION_MPS` and `MAPPING_MAX_ROTATION_RADPS` in
 `src/subsystems/jetson/MappingDrive.hpp`. No boost or autonomous drive participates.
-Remote disconnect stops drive but keeps odometry pod pointing active in every
-MMM state. Every active MMM state disables flywheels and
+While connected, odometry pods point forward in every MMM state. Every active MMM state disables flywheels and
 indexing, including indexer homing, and holds pitch level and yaw aligned with
 the chassis front. Done adds no head-down pose. Ready lights steady green and
 pulses the buzzer for 100 ms every second using wrapping millisecond timers.
@@ -105,7 +111,15 @@ services MMM pings before POSE/REF_SYS; the sentry control hook calls the same
 ping service while IMU calibration skips scheduler refreshes. The hook schedules
 `MappingCommand`, which persistently owns drive, gimbal, flywheels, indexer and
 odometry, including disconnected output restrictions and Ready LEDs/buzzer.
-Ending the command clears green and silences the buzzer. Sentry trigger evaluation
+Ending the command clears green and releases its Ready sound.
+A sentry buzzer owner gives stale Pico I2C priority over Ready and hit sounds,
+including the silent gaps. In every mode, after a 3 s boot grace from the
+first control tick, stale reads
+produce two 100 ms beeps at 2000 Hz separated by 100 ms, repeating every
+second. Fresh reads stop the fault sound immediately; this alarm is not
+latched. Ready retains its 100 ms per second sound at 1000 Hz. Constants live
+in `src/util/SentryBuzzer.hpp` (Ready timing in `MappingMachine.hpp`).
+Sentry trigger evaluation
 returns immediately throughout MMM, so ordinary triggers cannot replace these
 commands. The scheduler and IMU calibration mechanism are not suspended or
 re-zeroed by MMM. The hosted fixture also gates its direct drive overrides.

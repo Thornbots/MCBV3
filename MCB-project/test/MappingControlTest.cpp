@@ -17,7 +17,7 @@ extern "C" void __wrap__ZN3tap4gpio4Leds3setENS1_6LedPinEb(
 }
 extern "C" void __wrap__ZN3tap6buzzer8playNoteEPNS_4gpio3PwmEj(
     tap::gpio::Pwm*, uint32_t frequency) {
-    EXPECT_EQ(frequency, 1000U);
+    EXPECT_TRUE(frequency == 1000U || frequency == 2000U || frequency == 4000U);
     buzzerDuty = 0.5f;
 }
 extern "C" void __wrap__ZN3tap6buzzer13silenceBuzzerEPNS_4gpio3PwmE(tap::gpio::Pwm*) {
@@ -237,7 +237,7 @@ TEST_F(MappingControlTest, StartWhileDisconnectedKeepsEveryMotorStopped) {
 
 TEST_F(MappingControlTest, PodsPointInEveryMappingStateAndStopWithoutRemote) {
     using State = src::MappingMachine::State;
-    for (State state : {State::Setup, State::Ready, State::Mapping, State::Done}) {
+    for (State state : {State::Setup, State::Ready, State::Mapping, State::Done, State::OdomFault}) {
         SCOPED_TRACE(static_cast<int>(state));
         if (state != State::Setup) connect(true);  // the previous state ended disconnected
         drivers.mapping = src::MappingMachine{};
@@ -246,13 +246,14 @@ TEST_F(MappingControlTest, PodsPointInEveryMappingStateAndStopWithoutRemote) {
             drivers.mapping.receivePing(2, hosted::timeMs);
         if (state == State::Mapping) drivers.mapping.receivePing(4, hosted::timeMs);
         if (state == State::Done) drivers.mapping.receivePing(6, hosted::timeMs);
+        if (state == State::OdomFault) drivers.mapping.reportOdomFault();
         control.hardware.odoMotor.setDesiredOutput(0);
         tick();
         EXPECT_EQ(drivers.mapping.getState(), state);
         expectRestricted();
         EXPECT_NE(control.hardware.odoMotor.getOutputDesired(), 0);
         EXPECT_EQ(ledStates[tap::gpio::Leds::Green], state == State::Ready);
-        EXPECT_FALSE(ledStates[tap::gpio::Leds::Red]);
+        EXPECT_EQ(ledStates[tap::gpio::Leds::Red], state == State::OdomFault);
         EXPECT_FALSE(ledStates[tap::gpio::Leds::Blue]);
         EXPECT_FALSE(drivers.commandScheduler.isCommandScheduled(&control.odoStop));
         EXPECT_FALSE(drivers.commandScheduler.isCommandScheduled(&control.odoPointForwards));
@@ -317,7 +318,7 @@ TEST_F(MappingControlTest, JetsonServicesPingInMainAndEveryMappingState) {
         EXPECT_EQ(buffer[5], subsystems::PING);
         EXPECT_EQ(buffer[7], number);
     };
-    for (State state : {State::Main, State::Setup, State::Ready, State::Mapping, State::Done}) {
+    for (State state : {State::Main, State::Setup, State::Ready, State::Mapping, State::Done, State::OdomFault}) {
         SCOPED_TRACE(static_cast<int>(state));
         drivers.mapping = src::MappingMachine{};
         if (state != State::Main) {
@@ -341,10 +342,14 @@ TEST_F(MappingControlTest, JetsonServicesPingInMainAndEveryMappingState) {
             drivers.mapping.receivePing(6, hosted::timeMs);
             expectPing(6);
         }
+        if (state == State::OdomFault) drivers.mapping.reportOdomFault();
         ASSERT_EQ(drivers.mapping.getState(), state);
         for (uint8_t number : {2, 4, 6}) {
             drivers.mapping.receivePing(number, hosted::timeMs);
             expectPing(number);
+            if (state == State::OdomFault) {
+                EXPECT_EQ(drivers.mapping.getState(), state);
+            }
         }
     }
     drivers.mapping = src::MappingMachine{};
@@ -405,4 +410,81 @@ TEST_F(MappingControlTest, RightStickHoldStartsThenSavesOncePerHold) {
     EXPECT_TRUE(drivers.mapping.hasPendingPing());
     EXPECT_EQ(drivers.mapping.getState(), State::Mapping);
     expectRestricted();
+}
+
+TEST_F(MappingControlTest, StalePodsLatchStopAndKeepAlarmThroughDisconnect) {
+    drivers.mapping.requestStart();
+    drivers.mapping.receivePing(2, 0);
+    tick();
+    drivers.i2c.odom.fresh = false;
+    hosted::timeMs = src::SentryBuzzer::BOOT_GRACE_MS;
+    connect(true);
+    tick();
+    EXPECT_EQ(drivers.mapping.getState(), src::MappingMachine::State::OdomFault);
+    expectRestricted();
+    EXPECT_FLOAT_EQ(control.drivetrain.getHostedTargetVelocity().magnitude(), 0);
+    EXPECT_TRUE(ledStates[tap::gpio::Leds::Red]);
+    EXPECT_FALSE(ledStates[tap::gpio::Leds::Green]);
+    EXPECT_FLOAT_EQ(buzzerDuty, 0.5f);
+    hosted::timeMs += 1000;
+    drivers.remote.read();
+    tick();
+    tick();
+    EXPECT_FALSE(drivers.commandScheduler.isCommandScheduled(&control.mappingCommand));
+    EXPECT_EQ(control.hardware.odoMotor.getOutputDesired(), 0);
+    EXPECT_TRUE(ledStates[tap::gpio::Leds::Red]);
+    EXPECT_FLOAT_EQ(buzzerDuty, 0.5f);
+    drivers.i2c.odom.fresh = true;
+    tick();
+    EXPECT_EQ(drivers.mapping.getState(), src::MappingMachine::State::OdomFault);
+    EXPECT_FLOAT_EQ(buzzerDuty, 0);
+}
+
+TEST_F(MappingControlTest, BuzzerFaultPriorityGraceRecoveryAndWrappingTiming) {
+    auto& b = drivers.buzzer;
+    b.update(0, false);
+    b.update(2999, false);
+    EXPECT_EQ(b.frequency(), 0U);
+    b.update(3000, false);
+    for (uint32_t dt : {0U, 99U, 100U, 199U, 200U, 299U, 300U, 999U, 1000U}) {
+        b.update(3000 + dt, false);
+        b.setReady(true);
+        b.setHit(true);
+        const auto phase = dt % 1000;
+        EXPECT_EQ(b.frequency(), (phase < 100 || (phase >= 200 && phase < 300)) ? 2000U : 0U);
+        EXPECT_FLOAT_EQ(buzzerDuty, b.frequency() ? 0.5f : 0.0f);
+        b.setReady(false);
+        b.setHit(false);
+    }
+    b.update(UINT32_MAX - 50, true);
+    b.update(UINT32_MAX - 50, false);
+    b.update(49, false);
+    EXPECT_EQ(b.frequency(), 0U);
+    b.update(149, false);
+    EXPECT_EQ(b.frequency(), 2000U);
+    b.update(249, false);
+    EXPECT_EQ(b.frequency(), 0U);
+    b.update(250, true);
+    EXPECT_EQ(b.frequency(), 0U);
+    b.setHit(true);
+    EXPECT_EQ(b.frequency(), 4000U);
+    b.setReady(true);
+    EXPECT_EQ(b.frequency(), 1000U);
+}
+
+TEST_F(MappingControlTest, AlarmInMainAndBootGraceAcrossRollover) {
+    src::SentryBuzzer buzzer{&drivers.pwm};
+    const uint32_t boot = UINT32_MAX - 1000;
+    buzzer.update(boot, false);
+    buzzer.update(boot + 2999, false);
+    EXPECT_EQ(buzzer.frequency(), 0U);
+    buzzer.update(boot + 3000, false);
+    EXPECT_EQ(buzzer.frequency(), 2000U);
+    drivers.i2c.odom.fresh = false;
+    hosted::timeMs = 10000;
+    control.updateMapping();
+    hosted::timeMs += 3000;
+    control.updateMapping();
+    EXPECT_EQ(drivers.mapping.getState(), src::MappingMachine::State::Main);
+    EXPECT_EQ(drivers.buzzer.frequency(), 2000U);
 }
