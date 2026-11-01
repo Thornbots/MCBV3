@@ -225,7 +225,8 @@ remove it when converting field targets into local commands. This also applies
 to robots without odometry. Route waypoints are absolute red field coordinates;
 blue reflects x for positions and velocities. Firmware owns no team start XY.
 SimpleAutoDrive captures its first waypoint from navigation `getX/getY` on the
-first localized execute after scheduling. TEST's square is relative to that
+first localized execute after scheduling; route team selection occurs then too,
+so referee data arriving after initialization selects the correct team. TEST's square is relative to that
 capture. ARCC routes retain their historical red `(-4.625, 0)` field geometry,
 including the shifted return point; SPOOKY uses red `(-3.50, -1.75)`,
 `(-2.19, -1.76)`, `(0, 0)` and returns to the captured start. Removing PURDUE's

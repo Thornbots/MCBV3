@@ -22,7 +22,6 @@ namespace commands {
         startCaptured = false;
         needToApplyInitialPointChange = false;
         stuckTimer.stop();
-        setupMap();
         isScheduled = true;
     }
     
@@ -33,6 +32,7 @@ namespace commands {
             return;
         }
         if (!startCaptured) {
+            setupMap();
             const std::pair<float, float> start{odo->getX(), odo->getY()};
             targets[0].position = start;
             if (mode == TargetMode::TEST) {

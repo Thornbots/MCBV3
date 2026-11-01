@@ -67,6 +67,8 @@ protected:
         team(blue);
         SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, mode);
         command.initialize();
+        odo.relocalizeTo(blue ? 4.625f : -4.625f, 0);
+        command.execute();
         for (size_t i = 0; i < command.targets.size(); ++i) {
             const bool wall = mode == Mode::ARCC_ROUGH_PATH && (i == 1 || i == 2);
             EXPECT_FLOAT_EQ(command.targets[i].tolerance, wall ? 0.2f : 0.5f) << i;
@@ -152,6 +154,8 @@ TEST_F(SimpleAutoDriveCommandTest, BothTeamsRoutesStillRunInwardToFieldCenter) {
         team(blue);
         SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, Mode::SPOOKY_SCRIM_2V2);
         command.initialize();
+        odo.relocalizeTo(blue ? 4.625f : -4.625f, 0);
+        command.execute();
         const float sign = blue ? 1.0f : -1.0f;
         const float field[][2] = {{3.50f, -1.75f}, {2.19f, -1.76f}, {0.0f, 0.0f}};
         ASSERT_EQ(targets(command).size(), 4u);  // [0] is the start, added in the constructor
@@ -160,6 +164,23 @@ TEST_F(SimpleAutoDriveCommandTest, BothTeamsRoutesStillRunInwardToFieldCenter) {
             EXPECT_NEAR(targets(command)[i + 1].position.second, field[i][1], 1e-5f) << i;
         }
     }
+}
+
+TEST_F(SimpleAutoDriveCommandTest, LateBlueRefereeSelectsRouteAtFirstLocalizedExecute) {
+    SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, Mode::SPOOKY_SCRIM_2V2);
+    command.initialize();
+    command.execute();
+    ASSERT_EQ(targets(command).size(), 1u);
+    EXPECT_FLOAT_EQ(drive.getHostedTargetVelocity().magnitude(), 0);
+    team(true);
+    odo.relocalizeTo(4.2f, -0.35f);
+    command.execute();
+    ASSERT_EQ(targets(command).size(), 4u);
+    EXPECT_FLOAT_EQ(targets(command)[0].position.first, 4.2f);
+    EXPECT_FLOAT_EQ(targets(command)[0].position.second, -0.35f);
+    EXPECT_FLOAT_EQ(targets(command)[1].position.first, 3.50f);
+    EXPECT_FLOAT_EQ(targets(command)[1].position.second, -1.75f);
+    EXPECT_FLOAT_EQ(targets(command)[2].position.first, 2.19f);
 }
 
 TEST_F(SimpleAutoDriveCommandTest, RouteCannotAdvanceOrDriveBeforeValidRelocalize) {
