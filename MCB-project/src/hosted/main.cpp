@@ -1,6 +1,8 @@
 // Copyright 2026 Thornbots. SPDX-License-Identifier: GPL-3.0-or-later
 // Hardware fixture for the real sentry firmware. stdin/stdout are lockstep IPC;
 // UART1 is a raw PTY. All protocol parsing and control run in the MCB sources.
+#include <array>
+#include <cstring>
 #include <cstdio>
 #include <cstdlib>
 #include <fcntl.h>
@@ -42,6 +44,9 @@ int main() {
     hosted::setJetsonFd(fd);
     const char* controlFdText = std::getenv("MCB_MMM_CONTROL_FD");
     const int controlFd = controlFdText ? std::atoi(controlFdText) : -1;
+    const char* debugFloodText = std::getenv("MCB_DEBUG_TEST_FLOOD");
+    const bool debugFlood = debugFloodText && std::strcmp(debugFloodText, "1") == 0;
+    constexpr std::array<uint8_t, 4> debugBytes{0x00, 0xa5, 0xff, 0x25};
     hosted::MappingInput mappingInput{};
     uint32_t transitions = 0;
     // Match main.cpp's static storage (zero-initialized before construction).
@@ -111,6 +116,7 @@ int main() {
                     &h.driveMotor3, &h.driveMotor4}) feedback(*motor, in.motors[motorIndex++]);
             const float before = control.indexer.getTotalNumBallsShot();
             control.updateMapping();
+            if (debugFlood) control.jetson.sendDebug(debugBytes.data(), debugBytes.size());
             drivers.commandScheduler.run();
             drivers.hitTracker.update();
             control.update();

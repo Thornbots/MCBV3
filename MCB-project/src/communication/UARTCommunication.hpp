@@ -46,6 +46,12 @@ public:
 
     bool isConnected() const;
 
+    // Buffer-empty is not transmission-complete. Wait a whole frame after it empties.
+    bool isWireIdle();
+    static constexpr uint32_t wireTimeUs(size_t bytes) {
+        return (bytes * 10U * 1000000U + 115199U) / 115200U;
+    }
+
     bool isFinishedWriting() const { return drivers->uart.isWriteFinished(port); }
 
     inline bool hasNewMessage() { return hasNewData; }
@@ -64,6 +70,9 @@ public:
 private:
     void* pingContext = nullptr;
     PingHandler pingHandler = nullptr;
+    bool drainObserved = false;
+    uint32_t drainObservedUs = 0;
+    size_t lastFrameBytes = 0;
     bool hasNewData;
     uint32_t lastReceivedTime;
 

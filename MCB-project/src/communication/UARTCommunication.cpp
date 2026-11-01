@@ -20,7 +20,7 @@ UARTCommunication::outgoingDataFrame::outgoingDataFrame(uint16_t len, uint16_t m
     messageType = msgType;
     seqNumber = 0;
 
-    std::memcpy(data, dataToBeSent, dataLen);
+    if (dataLen != 0) std::memcpy(data, dataToBeSent, dataLen);
 
     // CRC8 covers fixed header fields only
     crc8 = tap::algorithms::calculateCRC8(reinterpret_cast<uint8_t*>(this), CRC8_COVERAGE);
@@ -73,9 +73,25 @@ bool UARTCommunication::sendMsg(uint8_t* dataToBeSent, uint16_t messageType, uin
                             dataLen +            // payload
                             CRC16_TRAILER_SIZE;  // CRC16
 
+    drainObserved = false;
+    lastFrameBytes = frameLen;  // Also guard partial/failed writes conservatively.
     int bytesWritten = drivers->uart.write(port, reinterpret_cast<uint8_t*>(&msg), frameLen);
 
     return bytesWritten == static_cast<int>(frameLen);
+}
+
+bool UARTCommunication::isWireIdle() {
+    if (!isFinishedWriting()) {
+        drainObserved = false;
+        return false;
+    }
+    if (lastFrameBytes == 0) return true;
+    const uint32_t now = tap::arch::clock::getTimeMicroseconds();
+    if (!drainObserved) {
+        drainObserved = true;
+        drainObservedUs = now;
+    }
+    return static_cast<uint32_t>(now - drainObservedUs) >= wireTimeUs(lastFrameBytes);
 }
 
 bool UARTCommunication::isConnected() const { return ((getCurrentTime() - lastReceivedTime) <= CONNECTION_TIMEOUT); }

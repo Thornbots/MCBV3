@@ -32,6 +32,7 @@ enum UartMessage : uint8_t{
     // outgoing
     POSE = 2,
     REF_SYS = 3,
+    DEBUG = 6,
     
     // bidirectional
     PING = 5,
@@ -140,10 +141,13 @@ private:  // Private Variables
 
     // Sentry Pico values arrive every ~260 ms (max gap 230 ms stale, 2026-10-26); ~2x that.
     static constexpr uint32_t POD_STALE_MS = 500;
-    static constexpr int TIME_FOR_REF_DATA = 200; //send at 5hz
-    tap::arch::PeriodicMilliTimer refDataSendingTimeout{TIME_FOR_REF_DATA};
-    tap::arch::PeriodicMilliTimer poseDataTimeout{10}; //for sending pose data at 100hz
-    // bool needToSendRefData = false;
+    uint32_t nextTelemetryMs = tap::arch::clock::getTimeMilliseconds() + 10U;
+    uint8_t messageCount = 0;
+    std::array<uint8_t, 32> debugPayload{};
+    size_t debugLength = 0;
+    bool debugPending = false;
+    bool debugSent = false;
+    uint32_t lastDebugMs = 0;
 
 
 public:  // Public Methods
@@ -154,6 +158,10 @@ public:  // Public Methods
     void initialize();
 
     void refresh() override;
+
+    // Cooperative main-loop API, not ISR/thread safe. Copies one value; false drops it.
+    // Accepts nullptr only for length zero. No allocation or UART I/O here.
+    bool sendDebug(const uint8_t* data, size_t length);
 
 #ifdef SENTRY
     // Also serviced while IMU calibration prevents scheduler refreshes.
@@ -171,6 +179,7 @@ public:  // Public Methods
 
 
 private:  // Private Methods
+    void serviceDebug();
 
     // Fill the data of the message with the most recently received message. Returns true if the message was updated, false if not.
     template<class msg_type>

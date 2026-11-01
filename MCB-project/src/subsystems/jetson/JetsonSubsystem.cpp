@@ -12,7 +12,29 @@ void JetsonSubsystem::initialize() {
     drivers->commandScheduler.registerSubsystem(this);
     // comm.initialize();
 }
-int messageCount = 0;
+bool JetsonSubsystem::sendDebug(const uint8_t* data, size_t length) {
+    if (length > debugPayload.size() || (length != 0 && data == nullptr) || debugPending)
+        return false;
+    if (length != 0) std::memcpy(debugPayload.data(), data, length);
+    debugLength = length;
+    debugPending = true;
+    return true;
+}
+
+void JetsonSubsystem::serviceDebug() {
+    if (!debugPending || !drivers->uart.isWireIdle()) return;
+    const uint32_t now = tap::arch::clock::getTimeMilliseconds();
+    if (debugSent && static_cast<uint32_t>(now - lastDebugMs) < 100U) return;
+    const int32_t remainingMs = static_cast<int32_t>(nextTelemetryMs - now);
+    // Reserve 1 ms for clock quantization and 1 ms for enqueue/baud margin.
+    const uint32_t requiredUs = UARTCommunication::wireTimeUs(debugLength + 9U) + 2000U;
+    if (remainingMs <= 0 || static_cast<uint32_t>(remainingMs) * 1000U <= requiredUs) return;
+    // Charge even a partial/failed write; never retry a partial frame or build backlog.
+    drivers->uart.sendMsg(debugPayload.data(), DEBUG, debugLength);
+    debugPending = false;
+    debugSent = true;
+    lastDebugMs = now;
+}
 #ifdef SENTRY
 void JetsonSubsystem::serviceMappingPing() {
     drivers->mapping.tick(tap::arch::clock::getTimeMilliseconds(), [this](uint8_t number) {
@@ -36,7 +58,9 @@ void JetsonSubsystem::refresh() {
     if (getMsg(&ping)) sendMsg(&ping);
 #endif
 
-    if (poseDataTimeout.execute()) {
+    const uint32_t now = tap::arch::clock::getTimeMilliseconds();
+    if (static_cast<int32_t>(now - nextTelemetryMs) >= 0) {
+        nextTelemetryMs += ((now - nextTelemetryMs) / 10U + 1U) * 10U;
         messageCount++;
 
         // 9 poses, 1 ref sys msg
@@ -95,6 +119,7 @@ void JetsonSubsystem::refresh() {
             messageCount = 0;
         }
     }
+    serviceDebug();
 }
 
 void JetsonSubsystem::checkApplyRelocalize() {
