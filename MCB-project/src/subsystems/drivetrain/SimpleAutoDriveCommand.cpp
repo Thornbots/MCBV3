@@ -7,8 +7,7 @@ namespace commands {
           odo(odo),
           mode(mode),
           positionCommand(drivers, drive, gimbal, odo, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, WAYPOINT_TOLERANCE) {
-        // always need to start where the robot starts from; setupMap puts it in the field frame
-        // should be the reload/heal zone
+        // Slot zero is captured from localized navigation on the first execute.
         targets.push_back({{0.0f, 0.0f}, {0.0f, 0.0f}});
 
         addSubsystemRequirement(drive);
@@ -16,6 +15,13 @@ namespace commands {
     }
     
     void SimpleAutoDriveCommand::initialize() {
+        targets.clear();
+        targets.push_back({{0, 0}, {0, 0}});
+        targetIndex = 0;
+        direction = 1;
+        startCaptured = false;
+        needToApplyInitialPointChange = false;
+        stuckTimer.stop();
         setupMap();
         isScheduled = true;
     }
@@ -25,6 +31,18 @@ namespace commands {
             stuckTimer.stop();
             positionCommand.drivetrain->stopMotors();
             return;
+        }
+        if (!startCaptured) {
+            const std::pair<float, float> start{odo->getX(), odo->getY()};
+            targets[0].position = start;
+            if (mode == TargetMode::TEST) {
+                for (size_t i = 1; i < targets.size(); ++i) {
+                    targets[i].position.first += start.first;
+                    targets[i].position.second += start.second;
+                }
+            }
+            positionCommand.targetPosition = {start.first, start.second, 0};
+            startCaptured = true;
         }
         // if we haven't self-disabled
         if (isScheduled) {
@@ -107,81 +125,57 @@ namespace commands {
     
     void SimpleAutoDriveCommand::setupMap() {
         bool isBlue = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId);
-        int m = isBlue ? -1 : 1;
-
-        // Waypoints are (inward, left) from the team's start in its route basis;
-        // at() and vel() turn them into the field frame (OdometrySubsystemConstants.hpp)
-        // velocity is normally zero; tolerance defaults to WAYPOINT_TOLERANCE
-        auto at = [this](float forward, float left) {
-            Vector2d p = odo->fromStart(forward, left);
-            return std::pair<float, float>{p.getX(), p.getY()};
+        // Absolute red field coordinates; blue reflects x for positions and velocities.
+        auto at = [isBlue](float x, float y) {
+            return std::pair<float, float>{isBlue ? -x : x, y};
         };
-        auto vel = [this](float forward, float left) {
-            const Vector2d v = Vector2d(forward, left).rotate(odo->getRouteYaw());
-            return std::pair<float, float>{v.getX(), v.getY()};
-        };
-        targets[0].position = at(0.0f, 0.0f);  // the start, added in the constructor
+        auto vel = at;
         switch (mode) {
             case TargetMode::TEST:
                 targets.push_back({at(1.0f, 0.0f), vel(0.0f, 0.0f)});     // forward
-                targets.push_back({at(1.0f, m*1.0f), vel(0.0f, 0.0f)});   // left
-                targets.push_back({at(0.0f, m*1.0f), vel(0.0f, 0.0f)});   // back
+                targets.push_back({at(1.0f, 1.0f), vel(0.0f, 0.0f)});   // left
+                targets.push_back({at(0.0f, 1.0f), vel(0.0f, 0.0f)});   // back
                 targets.push_back({at(0.0f, 0.0f), vel(0.0f, 0.0f)});     // right
-                return;
-            case TargetMode::PURDUE2V2:
-                if (drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId)) {
-                    targets.push_back({at(0.0f, 1.5f), vel(0.0f, 0.0f)});
-                    targets.push_back({at(1.5f, 1.5f), vel(0.0f, 0.0f)});
-                    targets.push_back({at(3.5f, -0.5f), vel(0.0f, 0.0f)});   // should be at center
-                } else {
-                    targets.push_back({at(0.0f / 5, -0.9f / 5), vel(0.0f, -1.5f)});
-                    targets.push_back({at(0.0838f / 5, -1.2f / 5), vel(0.75f, -1.299f)});
-                    targets.push_back({at(0.3f / 5, -1.419f / 5), vel(1.299f, -0.75f)});
-                    targets.push_back({at(0.6f / 5, -1.5f / 5), vel(1.5f, 0.0f)});
-                    targets.push_back({at(0.671f / 5, -1.5f / 5), vel(1.5f, 0.0f)});
-                    targets.push_back({at(1.061f / 5, -1.461f / 5), vel(1.47f, 0.29f)});
-                    targets.push_back({at(1.437f / 5, -1.347f / 5), vel(1.385f, 0.574f)});
-                    targets.push_back({at(1.782f / 5, -1.162f / 5), vel(1.247f, 0.833f)});
-                    targets.push_back({at(2.086f / 5, -0.914f / 5), vel(1.06f, 1.06f)});
-                    targets.push_back({at(3.5f / 5, 0.5f / 5), vel(0.0f, 0.0f)});  // should be at center
-                }
                 return;
             case TargetMode::ARCC_RAMP_PATH:
                 // coordinates for red team
-                changedInitialPoint = at(-TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET);
-                targets.push_back({at(0.595f, m*1.8330f), vel(0.0f, 0.0f)});                                   // mostly left, some forward: before ramp
-                targets.push_back({at(4.060f, m*1.8330f), vel(0.0f, 0.0f)});                                   // forward: across ramp
-                targets.push_back({at(4.125f + TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET), vel(0.0f, 0.0f)});  // mostly right, some forward: to center
+                needToApplyInitialPointChange = true;
+                changedInitialPoint = at(-5.125f, -0.5f);
+                targets.push_back({at(-4.030f, 1.8330f), vel(0.0f, 0.0f)});                                   // mostly left, some forward: before ramp
+                targets.push_back({at(-0.565f, 1.8330f), vel(0.0f, 0.0f)});                                   // forward: across ramp
+                targets.push_back({at(0.0f, -0.5f), vel(0.0f, 0.0f)});  // mostly right, some forward: to center
                 return;
             case TargetMode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED:
                 // coordinates for red team
-                changedInitialPoint = at(-TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET);
-                targets.push_back({at(0.595f, m*1.8330f), vel(0.0f, 0.0f)});                                   // mostly left, some forward: before ramp
-                targets.push_back({at(4.872f, m*1.8330f), vel(0.0f, 0.0f)});                                   // forward: across ramp (add 0.812)
-                targets.push_back({at(4.937f + TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET), vel(0.0f, 0.0f)});  // mostly right, some forward: to center (add 0.812)
+                needToApplyInitialPointChange = true;
+                changedInitialPoint = at(-5.125f, -0.5f);
+                targets.push_back({at(-4.030f, 1.8330f), vel(0.0f, 0.0f)});                                   // mostly left, some forward: before ramp
+                targets.push_back({at(0.247f, 1.8330f), vel(0.0f, 0.0f)});                                   // forward: across ramp (add 0.812)
+                targets.push_back({at(0.812f, -0.5f), vel(0.0f, 0.0f)});  // mostly right, some forward: to center (add 0.812)
                 return;
             case TargetMode::ARCC_HALLWAY_PATH:
                 // coordinates for red team
-                changedInitialPoint = at(-TOWARDS_ZONE_OFFSET, -m*TOWARDS_ZONE_OFFSET);
-                targets.push_back({at(0.892f, m*0.874f), vel(0.0f, 0.0f)});                                               // left forward diagonal: before enter hallway
-                targets.push_back({at(1.724f, m*0.874f), vel(0.0f, 0.0f)});                                               // forward: enter hallway
-                targets.push_back({at(1.724f, -m*0.693f), vel(0.0f, 0.0f)});                                                // right: through hallway
-                targets.push_back({at(2.230f, -m*1.200f), vel(0.0f, 0.0f)});                                                // forward right diagonal: leave hallway
-                targets.push_back({at(4.125f + TOWARDS_ZONE_OFFSET, -m*(1.385f - TOWARDS_ZONE_OFFSET)), vel(0.0f, 0.0f)});  // forward: to center
+                needToApplyInitialPointChange = true;
+                changedInitialPoint = at(-5.125f, -0.5f);
+                targets.push_back({at(-3.733f, 0.874f), vel(0.0f, 0.0f)});                                               // left forward diagonal: before enter hallway
+                targets.push_back({at(-2.901f, 0.874f), vel(0.0f, 0.0f)});                                               // forward: enter hallway
+                targets.push_back({at(-2.901f, -0.693f), vel(0.0f, 0.0f)});                                                // right: through hallway
+                targets.push_back({at(-2.395f, -1.200f), vel(0.0f, 0.0f)});                                                // forward right diagonal: leave hallway
+                targets.push_back({at(0.0f, -0.885f), vel(0.0f, 0.0f)});  // forward: to center
                 return;
             case TargetMode::ARCC_ROUGH_PATH:
                 // coordinates for red team
-                changedInitialPoint = at(-TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET);
+                needToApplyInitialPointChange = true;
+                changedInitialPoint = at(-5.125f, 0.5f);
                 // the wall leg keeps the spinning chassis (0.42 m sweep) 0.1 m clear of the wall end, 1.81 m right of the start
-                targets.push_back({at(0.5f, -m*2.5f), vel(0.0f, 0.0f), WALL_LEG_TOLERANCE});                                          // right forward diagonal: before wall
-                targets.push_back({at(1.4f, -m*2.5f), vel(0.0f, 0.0f), WALL_LEG_TOLERANCE});                                          // forward: past wall
-                targets.push_back({at(4.125f + TOWARDS_ZONE_OFFSET, m*TOWARDS_ZONE_OFFSET), vel(0.0f, 0.0f)});  // left forward diagonal: to center
+                targets.push_back({at(-4.125f, -2.5f), vel(0.0f, 0.0f), WALL_LEG_TOLERANCE});                                          // right forward diagonal: before wall
+                targets.push_back({at(-3.225f, -2.5f), vel(0.0f, 0.0f), WALL_LEG_TOLERANCE});                                          // forward: past wall
+                targets.push_back({at(0.0f, 0.5f), vel(0.0f, 0.0f)});  // left forward diagonal: to center
                 return;
             case TargetMode::SPOOKY_SCRIM_2V2:
-                // red field waypoints (-3.50, -1.75), (-2.19, -1.76), (0, 0) from a (-3.53, -0.426) start
-                targets.push_back({at(0.03f, m*-1.324f), vel(0.0f, 0.0f)});  // right: beside the bunker
-                targets.push_back({at(1.34f, m*-1.334f), vel(0.0f, 0.0f)});  // forward: past the bunker
-                targets.push_back({at(3.53f, m*0.426f), vel(0.0f, 0.0f)});   // forward left diagonal: to center
+                targets.push_back({at(-3.50f, -1.75f), vel(0, 0)});
+                targets.push_back({at(-2.19f, -1.76f), vel(0, 0)});
+                targets.push_back({at(0, 0), vel(0, 0)});
                 return;
         }  // end switch
     }

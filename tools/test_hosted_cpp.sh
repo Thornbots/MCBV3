@@ -24,3 +24,5 @@ done
     -Wl,--wrap=_ZN3tap6buzzer13silenceBuzzerEPNS_4gpio3PwmE \
     -lgtest_main -lgtest -pthread -o build/unit-tests/firmware-regression-tests
 build/unit-tests/firmware-regression-tests "$@"
+
+python3 ../tools/test_hosted_handshake.py

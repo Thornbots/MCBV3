@@ -59,6 +59,10 @@ protected:
         return command.positionCommand.isFinished();
     }
 
+    const auto& returnPoint(const SimpleAutoDriveCommand& command) { return command.changedInitialPoint; }
+    bool needsReturnChange(const SimpleAutoDriveCommand& command) { return command.needToApplyInitialPointChange; }
+    void executePosition(SimpleAutoDriveCommand& command) { command.positionCommand.execute(); }
+
     void checkRoute(Mode mode, bool blue) {
         team(blue);
         SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, mode);
@@ -68,11 +72,10 @@ protected:
             EXPECT_FLOAT_EQ(command.targets[i].tolerance, wall ? 0.2f : 0.5f) << i;
         }
         if (mode == Mode::ARCC_ROUGH_PATH) {
-            const float left = blue ? 2.5f : -2.5f;
+            const float sign = blue ? -1.0f : 1.0f;
             for (int i : {1, 2}) {
-                const auto expected = odo.fromStart(i == 1 ? 0.5f : 1.4f, left);
-                EXPECT_FLOAT_EQ(command.targets[i].position.first, expected.getX());
-                EXPECT_FLOAT_EQ(command.targets[i].position.second, expected.getY());
+                EXPECT_FLOAT_EQ(command.targets[i].position.first, sign * (i == 1 ? -4.125f : -3.225f));
+                EXPECT_FLOAT_EQ(command.targets[i].position.second, -2.5f);
             }
         }
     }
@@ -81,6 +84,8 @@ protected:
         team(false, backwards);
         SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, Mode::ARCC_ROUGH_PATH);
         command.initialize();
+        odo.relocalizeTo(-4.625f, 0);
+        command.execute();
         // Switch between waypoint tolerances in both traversal orders.
         for (int step = 0; step < 4; ++step) {
             const int i = backwards ? 3 - step : step;
@@ -172,8 +177,7 @@ TEST_F(SimpleAutoDriveCommandTest, RouteCannotAdvanceOrDriveBeforeValidRelocaliz
         EXPECT_FALSE(positionFinished(command));
         EXPECT_FLOAT_EQ(drive.getHostedTargetVelocity().magnitude(), 0);
     }
-    const auto start = odo.fromStart(0, 0);
-    odo.relocalizeTo(start.getX(), start.getY());
+    odo.relocalizeTo(-4.625f, 0);
     command.execute();
     command.execute();
     EXPECT_EQ(index(command), 1);
@@ -230,9 +234,86 @@ TEST_F(SimpleAutoDriveCommandTest, NavGoalsBeforeLocalizationAreDiscarded) {
 
 TEST_F(SimpleAutoDriveCommandTest, OnlyRoughWallWaypointsTightenForEitherTeam) {
     for (bool blue : {false, true}) {
-        for (Mode mode : {Mode::TEST, Mode::PURDUE2V2, Mode::ARCC_HALLWAY_PATH,
+        for (Mode mode : {Mode::TEST, Mode::ARCC_HALLWAY_PATH,
                 Mode::ARCC_ROUGH_PATH, Mode::ARCC_RAMP_PATH,
                 Mode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED, Mode::SPOOKY_SCRIM_2V2}) checkRoute(mode, blue);
+    }
+}
+
+
+TEST_F(SimpleAutoDriveCommandTest, CapturesFirstLocalizedNavigationAndResetsOnSchedule) {
+    for (bool blue : {false, true}) {
+        team(blue);
+        SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, Mode::TEST);
+        command.initialize();
+        if (!odo.isNavigationLocalized()) command.execute();
+        // Deliberately distinct from both the raw pods and any historical field start.
+        odo.relocalizeTo(2.3f, -0.7f);
+        command.execute();
+        const float sign = blue ? -1.0f : 1.0f;
+        const float square[][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}, {0, 0}};
+        ASSERT_EQ(targets(command).size(), 5u);
+        for (size_t i = 0; i < 5; ++i) {
+            EXPECT_NEAR(targets(command)[i].position.first, 2.3f + sign * square[i][0], 1e-5f);
+            EXPECT_NEAR(targets(command)[i].position.second, -0.7f + square[i][1], 1e-5f);
+        }
+        odo.relocalizeTo(8, 9);
+        command.execute();
+        EXPECT_NEAR(targets(command)[0].position.first, 2.3f, 1e-5f);
+        EXPECT_NEAR(targets(command)[0].position.second, -0.7f, 1e-5f);
+        command.end(true);
+        command.initialize();
+        command.execute();
+        ASSERT_EQ(targets(command).size(), 5u);
+        EXPECT_FLOAT_EQ(targets(command)[0].position.first, 8);
+        EXPECT_FLOAT_EQ(targets(command)[0].position.second, 9);
+        EXPECT_FLOAT_EQ(targets(command)[1].position.first, 8 + sign);
+    }
+}
+
+TEST_F(SimpleAutoDriveCommandTest, ArccConversionPreservesHistoricalBothTeamFieldRoutes) {
+    struct Route { Mode mode; std::vector<std::pair<float, float>> old; float returnY; };
+    const Route routes[] = {
+        {Mode::ARCC_HALLWAY_PATH, {{.892f,.874f},{1.724f,.874f},{1.724f,-.693f},
+            {2.230f,-1.200f},{4.625f,-.885f}}, -.5f},
+        {Mode::ARCC_ROUGH_PATH, {{.5f,-2.5f},{1.4f,-2.5f},{4.625f,.5f}}, .5f},
+        {Mode::ARCC_RAMP_PATH, {{.595f,1.833f},{4.060f,1.833f},{4.625f,-.5f}}, -.5f},
+        {Mode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED,
+            {{.595f,1.833f},{4.872f,1.833f},{5.437f,-.5f}}, -.5f},
+    };
+    static_assert(static_cast<int>(Mode::ARCC_HALLWAY_PATH) == 2);
+    static_assert(static_cast<int>(Mode::ARCC_ROUGH_PATH) == 3);
+    static_assert(static_cast<int>(Mode::ARCC_RAMP_PATH) == 4);
+    static_assert(static_cast<int>(Mode::ARCC_RAMP_PATH_HYPOTENUSE_ADJUSTED) == 5);
+    static_assert(static_cast<int>(Mode::SPOOKY_SCRIM_2V2) == 6);
+    for (bool blue : {false, true}) {
+        team(blue);
+        for (const auto& route : routes) {
+            SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, route.mode);
+            command.initialize();
+            odo.relocalizeTo(blue ? 3.1f : -3.1f, .8f);
+            command.execute();
+            EXPECT_FLOAT_EQ(targets(command)[0].position.first, blue ? 3.1f : -3.1f);
+            ASSERT_EQ(targets(command).size(), route.old.size() + 1);
+            for (size_t i = 0; i < route.old.size(); ++i) {
+                // Historical route rotated by pi for blue, after its lateral sign change.
+                const float forward = route.old[i].first;
+                const float left = blue ? -route.old[i].second : route.old[i].second;
+                const float angle = blue ? 3.14159265358979323846f : 0;
+                const auto old = Vector2d(forward, left).rotate(angle);
+                EXPECT_NEAR(targets(command)[i+1].position.first,
+                    (blue ? 4.625f : -4.625f) + old.getX(), 1e-5f);
+                EXPECT_NEAR(targets(command)[i+1].position.second, old.getY(), 1e-5f);
+                EXPECT_FLOAT_EQ(targets(command)[i+1].velocity.first, 0);
+                EXPECT_FLOAT_EQ(targets(command)[i+1].velocity.second, 0);
+            }
+            EXPECT_NEAR(returnPoint(command).first, blue ? 5.125f : -5.125f, 1e-5f);
+            EXPECT_NEAR(returnPoint(command).second, route.returnY, 1e-5f);
+            executePosition(command);
+            command.execute();
+            EXPECT_FALSE(needsReturnChange(command));
+            EXPECT_EQ(targets(command)[0].position, returnPoint(command));
+        }
     }
 }
 

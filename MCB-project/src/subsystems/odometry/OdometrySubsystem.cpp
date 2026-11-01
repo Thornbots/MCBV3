@@ -20,9 +20,7 @@ void OdometrySubsystem::initialize() {
 }
 bool useController = false;
 void OdometrySubsystem::refresh() {
-    bool blue = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId);
     updateAimPosition();
-    isBlue = blue;
 
     if(!useController){
         motorOdo->setDesiredOutput(odoMotorVoltage);
@@ -75,13 +73,6 @@ float OdometrySubsystem::getRawY() {
 }
 float OdometrySubsystem::getStartYaw() {
     return BOOT_YAW;
-}
-float OdometrySubsystem::getRouteYaw() {
-    return isBlue ? PI : 0.0f;
-}
-Vector2d OdometrySubsystem::fromStart(float forward, float left) {
-    Vector2d start(isBlue ? START_X : -START_X, START_Y);
-    return start + Vector2d(forward, left).rotate(getRouteYaw());
 }
 // the pods are x right, y forward of the start: forward is raw y, left is raw -x
 void OdometrySubsystem::relocalizeTo(float newX, float newY) {
