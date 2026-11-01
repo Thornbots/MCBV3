@@ -36,8 +36,6 @@ private:  // Private Variables
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
-    // Referee team selects route points; pod axes and boot heading stay fixed.
-    bool isBlue = false;
     bool navigationLocalized = false;
     Vector2d aimPosition{0.0f, 0.0f};
     Vector2d lastPodPosition{0.0f, 0.0f};
@@ -78,12 +76,6 @@ public:  // Public Methods
     // Field yaw of the heading at power-on (the pods' and IMU's zero): PI/2 both teams.
     float getStartYaw();
 
-    // Route basis points inward from each team's base, independently of chassis yaw.
-    float getRouteYaw();
-
-    // Field point inward and left from the team's start in the route basis.
-    Vector2d fromStart(float forward, float left);
-    
     void refresh() override;
 
     /*

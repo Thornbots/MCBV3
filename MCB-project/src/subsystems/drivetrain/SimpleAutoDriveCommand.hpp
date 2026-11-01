@@ -20,9 +20,6 @@ public:
         // a square
         TEST = 0,
 
-        // 2v2 map at purdue midwest conference
-        PURDUE2V2 = 1,
-
         // longest, interferes with where hero will probably be, but no rough or ramps
         ARCC_HALLWAY_PATH = 2,
 
@@ -66,11 +63,10 @@ private:
     int targetIndex = 0;  // index in targets
     int direction = 1;    // either 1 or -1
     bool isScheduled = false;
+    bool startCaptured = false;
 
     bool needToApplyInitialPointChange = true;
     std::pair<float, float> changedInitialPoint{0.0f, 0.0f};
-
-    static constexpr float TOWARDS_ZONE_OFFSET = 0.5f;  // meters, how far (x and y distance) into a zone (reload or center) to be. 0 would stay at a corner.
 
     tap::arch::MilliTimeout stuckTimer{};
     static constexpr float WAYPOINT_TOLERANCE = 0.5f;  // meters, default arrival radius

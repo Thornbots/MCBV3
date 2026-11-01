@@ -12,7 +12,6 @@
 #include "hosted/sensors.hpp"
 #include "hosted/uart.hpp"
 #include "robots/RobotControl.hpp"
-#include "subsystems/odometry/OdometrySubsystemConstants.hpp"
 
 struct Input {
     uint32_t cycles;
@@ -56,8 +55,6 @@ int main() {
     drivers.recal.setIsDoneCalibrating();
     control.initialize();
     std::fwrite("MCB3", 1, 4, stdout);
-    const float start[2] = {odo::START_X, odo::START_Y};
-    std::fwrite(start, sizeof(float), 2, stdout);
     std::fflush(stdout);
     Input in;
     auto previousLoop = std::chrono::steady_clock::now();

@@ -222,8 +222,15 @@ before localization are discarded; driving needs a fresh goal after the fix.
 
 POSE adds this boot heading to the IMU-relative gimbal yaw; aiming and driving
 remove it when converting field targets into local commands. This also applies
-to robots without odometry. Route waypoints use a separate inward basis (`0`
-red, `π` blue), preserving their field paths independently of chassis yaw.
+to robots without odometry. Route waypoints are absolute red field coordinates;
+blue reflects x for positions and velocities. Firmware owns no team start XY.
+SimpleAutoDrive captures its first waypoint from navigation `getX/getY` on the
+first localized execute after scheduling; route team selection occurs then too,
+so referee data arriving after initialization selects the correct team. TEST's square is relative to that
+capture. ARCC routes retain their historical red `(-4.625, 0)` field geometry,
+including the shifted return point; SPOOKY uses red `(-3.50, -1.75)`,
+`(-2.19, -1.76)`, `(0, 0)` and returns to the captured start. Removing PURDUE's
+mode leaves its enum value 1 unused; other mode numbers remain unchanged.
 Frame conventions and payload semantics are owned by the workspace's
 [UART protocol](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#message-types).
 Deploy matching firmware and Jetson packages together: unchanged payload
@@ -278,7 +285,8 @@ ranges, never by moving the pivot height (a height change only shifts where the 
 
 ### Hosted hardware fixture
 
-The hosted `MCB3` hardware pipe carries ten DJI CAN feedback packets and
+The hosted hardware pipe emits only the four-byte `MCB3` header before the
+first tick output; it supplies no start XY. It carries ten DJI CAN feedback packets and
 returns raw motor command words. Gimbal encoders and velocities use the same
 Taproot decoder as the board; only the hosted yaw home is fixed to the sim
 joint's boot zero. Sim applies motor forces inside gz's 1 ms step; its
