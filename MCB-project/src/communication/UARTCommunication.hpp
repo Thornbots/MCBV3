@@ -46,7 +46,7 @@ public:
 
     bool isConnected() const;
 
-    // Require full airtime since enqueue and one final byte after buffer-empty.
+    // Require full airtime since enqueue and actual hardware transmission-complete.
     bool isWireIdle();
     static constexpr uint32_t wireTimeUs(size_t bytes) {
         return (bytes * 10ULL * 1000000U + UART_BAUD_RATE - 1U) / UART_BAUD_RATE;
@@ -71,8 +71,6 @@ private:
     void* pingContext = nullptr;
     PingHandler pingHandler = nullptr;
     uint32_t frameStartUs = 0;
-    bool drainObserved = false;
-    uint32_t drainObservedUs = 0;
     size_t lastFrameBytes = 0;
     bool hasNewData;
     uint32_t lastReceivedTime;

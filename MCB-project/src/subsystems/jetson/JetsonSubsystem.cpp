@@ -25,8 +25,9 @@ void JetsonSubsystem::serviceDebug() {
     if (!debugPending || !drivers->uart.isWireIdle()) return;
     const uint32_t now = tap::arch::clock::getTimeMilliseconds();
     const int32_t remainingMs = static_cast<int32_t>(nextTelemetryMs - now);
-    // At most one deadline may pass: 1 ms polling, 1 ms drain, 1 ms enqueue margin.
-    const uint32_t requiredUs = UARTCommunication::wireTimeUs(debugLength + 9U) + 3000U;
+    // Drain DEBUG and the delayed telemetry before a second deadline; 1 ms service each.
+    const uint32_t requiredUs = UARTCommunication::wireTimeUs(debugLength + 9U) +
+                                UARTCommunication::wireTimeUs(sizeof(Pose) + 9U) + 2000U;
     if (remainingMs <= 0 || requiredUs > (static_cast<uint32_t>(remainingMs) + 10U) * 1000U) return;
     // Charge even a partial/failed write; never retry a partial frame or build backlog.
     drivers->uart.sendMsg(debugPayload.data(), DEBUG, debugLength);

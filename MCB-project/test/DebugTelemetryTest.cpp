@@ -120,8 +120,10 @@ TEST_F(DebugTelemetryTest, FloodPreservesMandatorySlotsAndReceiveAcrossPhasesAnd
                     EXPECT_EQ(length, 128U);
                     EXPECT_LE(delayedByDebug, 1U);
                     delayedByDebug = 0;
-                    // Full debug drain must precede the second future telemetry deadline.
-                    EXPECT_LT(wireFreeUs, (mandatory + 2U) * 10000ULL);
+                    // Both frames, including two scheduler service intervals, fit before slot two.
+                    EXPECT_LE(wireFreeUs +
+                        communication::UARTCommunication::wireTimeUs(sizeof(subsystems::Pose) + 9) + 2000,
+                        (mandatory + 2U) * 10000ULL);
                 } else {
                     ++mandatory;
                     const uint32_t deadline = mandatory * 10;
@@ -169,7 +171,7 @@ TEST_F(DebugTelemetryTest, DebugWaitsNearSecondDeadlineAndPingWins) {
     }
 }
 
-TEST_F(DebugTelemetryTest, WireDrainUsesEnqueueTimeAndFinalByteAfterBufferEmpty) {
+TEST_F(DebugTelemetryTest, WireDrainUsesEnqueueTimeEvenWhenBufferEmptiesImmediately) {
     uint8_t bytes[128]{};
     ASSERT_TRUE(drivers->uart.sendMsg(bytes, subsystems::DEBUG, sizeof(bytes)));
     EXPECT_TRUE(drivers->uart.isFinishedWriting());
@@ -181,7 +183,7 @@ TEST_F(DebugTelemetryTest, WireDrainUsesEnqueueTimeAndFinalByteAfterBufferEmpty)
     EXPECT_TRUE(drivers->uart.isWireIdle());
     ASSERT_TRUE(drivers->uart.sendMsg(bytes, subsystems::PING, 1));
     hosted::timeMs = 14;
-    EXPECT_FALSE(drivers->uart.isWireIdle()); // First empty observation guards final byte.
+    EXPECT_TRUE(drivers->uart.isWireIdle()); // Late observation adds no extra frame guard.
     hosted::timeMs = 15;
     EXPECT_TRUE(drivers->uart.isWireIdle());
 }

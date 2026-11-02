@@ -86,9 +86,10 @@ is drained only when occupied; there is no fixed throttle. Failed/partial debug
 writes discard that value and still consume their full airtime budget.
 
 UART initialization and wire-time accounting share `DJISerial::UART_BAUD_RATE`
-(115200, 8N1). Wire-idle requires full airtime since enqueue, buffer-empty, and
-one additional byte time after the first empty observation. Admission reserves
-DEBUG airtime plus 3 ms and cannot cross the second future telemetry deadline.
+(115200, 8N1). Wire-idle requires full airtime since enqueue, buffer-empty, and the hardware
+transmission-complete flag (hosted models airtime). Admission reserves DEBUG
+airtime, maximum telemetry airtime and 2 ms for servicing both completions; both
+frames must finish before the second future telemetry deadline.
 The [wire contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#debug-id6--opaque-firmware-debug)
 owns latency bounds, scheduler assumptions and flood guarantees. A baud too
 slow for that bound simply leaves oversized pending debug unsent. Telemetry

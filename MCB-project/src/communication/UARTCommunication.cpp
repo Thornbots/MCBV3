@@ -74,7 +74,6 @@ bool UARTCommunication::sendMsg(uint8_t* dataToBeSent, uint16_t messageType, uin
                             CRC16_TRAILER_SIZE;  // CRC16
 
     frameStartUs = tap::arch::clock::getTimeMicroseconds();
-    drainObserved = false;
     lastFrameBytes = frameLen;  // Also guard partial/failed writes conservatively.
     int bytesWritten = drivers->uart.write(port, reinterpret_cast<uint8_t*>(&msg), frameLen);
 
@@ -82,18 +81,23 @@ bool UARTCommunication::sendMsg(uint8_t* dataToBeSent, uint16_t messageType, uin
 }
 
 bool UARTCommunication::isWireIdle() {
-    if (!isFinishedWriting()) {
-        drainObserved = false;
-        return false;
-    }
-    if (lastFrameBytes == 0) return true;
+    if (!isFinishedWriting()) return false;
     const uint32_t now = tap::arch::clock::getTimeMicroseconds();
-    if (!drainObserved) {
-        drainObserved = true;
-        drainObservedUs = now;
+    if (static_cast<uint32_t>(now - frameStartUs) < wireTimeUs(lastFrameBytes)) return false;
+#ifdef PLATFORM_HOSTED
+    return true; // Hosted UART has no shift register; model its full wire airtime above.
+#else
+    using namespace modm::platform;
+    switch (port) {
+        case tap::communication::serial::Uart::UartPort::Uart1:
+            return UsartHal1::getInterruptFlags().any(UsartHal1::InterruptFlag::TxComplete);
+        case tap::communication::serial::Uart::UartPort::Uart3:
+            return UsartHal3::getInterruptFlags().any(UsartHal3::InterruptFlag::TxComplete);
+        case tap::communication::serial::Uart::UartPort::Uart6:
+            return UsartHal6::getInterruptFlags().any(UsartHal6::InterruptFlag::TxComplete);
+        default: return false;
     }
-    return static_cast<uint32_t>(now - frameStartUs) >= wireTimeUs(lastFrameBytes) &&
-           static_cast<uint32_t>(now - drainObservedUs) >= wireTimeUs(1);
+#endif
 }
 
 bool UARTCommunication::isConnected() const { return ((getCurrentTime() - lastReceivedTime) <= CONNECTION_TIMEOUT); }
