@@ -42,6 +42,13 @@ void JetsonSubsystem::serviceMappingPing() {
 #endif
 
 void JetsonSubsystem::refresh() {
+    const uint32_t now = tap::arch::clock::getTimeMilliseconds();
+    // Calibration suspends scheduler refreshes. Resume with fresh samples, not a backlog.
+    if (static_cast<uint32_t>(now - lastRefreshMs) > 100U) {
+        nextTelemetryMs = now + 10U;
+        messageCount = 0;
+    }
+    lastRefreshMs = now;
     if (odo != nullptr) checkApplyRelocalize();
 
     drivers->uart.updateSerial();
@@ -56,7 +63,6 @@ void JetsonSubsystem::refresh() {
     if (getMsg(&ping)) sendMsg(&ping);
 #endif
 
-    const uint32_t now = tap::arch::clock::getTimeMilliseconds();
     if (static_cast<int32_t>(now - nextTelemetryMs) >= 0) {
         if (!drivers->uart.isWireIdle()) return;
         messageCount++;

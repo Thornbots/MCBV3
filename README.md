@@ -80,8 +80,11 @@ waits for UART. It is not an ISR or concurrent-thread API. There is no producer
 timer, growing queue, or delivery guarantee.
 
 `refresh()` services RX and MMM PING before telemetry and DEBUG. Mandatory
-telemetry keeps its original 10 ms deadline sequence (nine POSE then one
-REF_SYS), sending overdue slots before another DEBUG. The single pending slot
+telemetry under continuous service keeps its original 10 ms deadline sequence
+(nine POSE then one REF_SYS), sending overdue slots before another DEBUG.
+After a scheduler service gap longer than 100 ms, including boot calibration,
+the cycle restarts with its first POSE deadline 10 ms after service resumes.
+The single pending slot
 is drained only when occupied; there is no fixed throttle. Failed/partial debug
 writes discard that value and still consume their full airtime budget.
 

@@ -142,6 +142,7 @@ private:  // Private Variables
     // Sentry Pico values arrive every ~260 ms (max gap 230 ms stale, 2026-10-26); ~2x that.
     static constexpr uint32_t POD_STALE_MS = 500;
     uint32_t nextTelemetryMs = tap::arch::clock::getTimeMilliseconds() + 10U;
+    uint32_t lastRefreshMs = tap::arch::clock::getTimeMilliseconds();
     uint8_t messageCount = 0;
     std::array<uint8_t, 128> debugPayload{};
     size_t debugLength = 0;

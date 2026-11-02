@@ -217,3 +217,59 @@ TEST_F(DebugTelemetryTest, NoProducerSendsOnlyTelemetry) {
         if (!bytes.empty()) { EXPECT_NE(bytes[5], subsystems::DEBUG); }
     }
 }
+
+TEST_F(DebugTelemetryTest, CalibrationPauseStartsFreshCycleAcrossRollover) {
+    for (uint32_t phase : {0U, 0xFFFFFFD0U}) {
+        reset(phase);
+        for (uint32_t elapsed = 0; elapsed <= 37; ++elapsed) {
+            hosted::timeMs = phase + elapsed;
+            control->jetson.refresh();
+            output();
+        }
+        const uint32_t resume = phase + 4037U;
+        for (uint32_t elapsed = 0; elapsed <= 100; ++elapsed) {
+            hosted::timeMs = resume + elapsed;
+            control->jetson.refresh();
+            const auto bytes = output();
+            if (elapsed == 0 || elapsed % 10 != 0) {
+                EXPECT_TRUE(bytes.empty()) << "resume elapsed=" << elapsed;
+            } else {
+                ASSERT_GE(bytes.size(), 9U);
+                const bool referee = elapsed == 100;
+                EXPECT_EQ(bytes.size(), referee ? 20U : 34U);
+                EXPECT_EQ(bytes[5], referee ? subsystems::REF_SYS : subsystems::POSE);
+            }
+        }
+    }
+}
+
+TEST_F(DebugTelemetryTest, BootCalibrationStartsWithFreshPoseDeadline) {
+    hosted::timeMs = 4000;
+    control->jetson.refresh();
+    EXPECT_TRUE(output().empty());
+    hosted::timeMs = 4009;
+    control->jetson.refresh();
+    EXPECT_TRUE(output().empty());
+    hosted::timeMs = 4010;
+    control->jetson.refresh();
+    const auto bytes = output();
+    ASSERT_EQ(bytes.size(), 34U);
+    EXPECT_EQ(bytes[5], subsystems::POSE);
+}
+
+TEST_F(DebugTelemetryTest, OnlyGapsLongerThanOneCycleResetDeadlines) {
+    for (uint32_t phase : {0U, 0xFFFFFFD0U}) {
+        for (uint32_t gap : {100U, 101U}) {
+            reset(phase);
+            hosted::timeMs = phase + gap;
+            control->jetson.refresh();
+            const auto bytes = output();
+            if (gap == 100U) {
+                ASSERT_EQ(bytes.size(), 34U);
+                EXPECT_EQ(bytes[5], subsystems::POSE);
+            } else {
+                EXPECT_TRUE(bytes.empty());
+            }
+        }
+    }
+}
