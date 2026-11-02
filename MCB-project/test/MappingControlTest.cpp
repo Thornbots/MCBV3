@@ -185,10 +185,13 @@ TEST_F(MappingControlTest, PendingControlPingHasPriorityOverTelemetryAndRetriesB
     hosted::timeMs = 10000;
     control.jetson.refresh();
     ASSERT_FALSE(drivers.mapping.hasPendingPing());
-    ASSERT_GE(read(sockets[1], buffer, sizeof(buffer)), 20);
+    ASSERT_EQ(read(sockets[1], buffer, sizeof(buffer)), 10);
     EXPECT_EQ(buffer[5], subsystems::PING);
     EXPECT_EQ(buffer[7], 2);
-    EXPECT_TRUE(buffer[15] == subsystems::POSE || buffer[15] == subsystems::REF_SYS);
+    hosted::timeMs = 10001; // Telemetry waits until the control frame drains.
+    control.jetson.refresh();
+    ASSERT_GE(read(sockets[1], buffer, sizeof(buffer)), 20);
+    EXPECT_EQ(buffer[5], subsystems::POSE);
 }
 
 TEST_F(MappingControlTest, ExistingStoppedControlHasPrecedenceOverMappingRestrictions) {

@@ -79,6 +79,8 @@ namespace tap::communication::serial
 class DJISerial
 {
 public:
+    static constexpr uint32_t UART_BAUD_RATE = 115200;
+
     /**
      * The serial message's frame header.
      */
