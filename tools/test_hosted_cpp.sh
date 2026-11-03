@@ -16,7 +16,7 @@ done
     -Isrc -Itaproot/src -Itaproot/sim-modm/hosted-linux/modm/src \
     -Itaproot/modm/src \
     -Itaproot/modm/ext/cmsis/dsp -Itaproot/modm/ext/cmsis/core \
-    test/LocalizationPicoTest.cpp test/FirmwareRegressionTest.cpp test/DrivetrainStopCommandTest.cpp \
+    test/DebugTelemetryTest.cpp test/LocalizationPicoTest.cpp test/FirmwareRegressionTest.cpp test/DrivetrainStopCommandTest.cpp \
     test/SimpleAutoDriveCommandTest.cpp test/MappingControlTest.cpp "${objects[@]}" \
     build/sim/scons-release/libtaproot.a build/sim/scons-release/modm/libmodm.a \
     -Wl,--wrap=_ZN3tap4gpio4Leds3setENS1_6LedPinEb \

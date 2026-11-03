@@ -46,6 +46,12 @@ public:
 
     bool isConnected() const;
 
+    // Require full airtime since enqueue and actual hardware transmission-complete.
+    bool isWireIdle();
+    static constexpr uint32_t wireTimeUs(size_t bytes) {
+        return (bytes * 10ULL * 1000000U + UART_BAUD_RATE - 1U) / UART_BAUD_RATE;
+    }
+
     bool isFinishedWriting() const { return drivers->uart.isWriteFinished(port); }
 
     inline bool hasNewMessage() { return hasNewData; }
@@ -64,6 +70,8 @@ public:
 private:
     void* pingContext = nullptr;
     PingHandler pingHandler = nullptr;
+    uint32_t frameStartUs = 0;
+    size_t lastFrameBytes = 0;
     bool hasNewData;
     uint32_t lastReceivedTime;
 

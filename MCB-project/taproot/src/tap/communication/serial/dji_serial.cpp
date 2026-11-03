@@ -55,13 +55,13 @@ void DJISerial::initialize()
     switch (this->port)
     {
         case Uart::UartPort::Uart1:
-            drivers->uart.init<Uart::UartPort::Uart1, 115200>();
+            drivers->uart.init<Uart::UartPort::Uart1, UART_BAUD_RATE>();
             break;
         case Uart::UartPort::Uart3:
-            drivers->uart.init<Uart::UartPort::Uart3, 115200>();
+            drivers->uart.init<Uart::UartPort::Uart3, UART_BAUD_RATE>();
             break;
         case Uart::UartPort::Uart6:
-            drivers->uart.init<Uart::UartPort::Uart6, 115200>();
+            drivers->uart.init<Uart::UartPort::Uart6, UART_BAUD_RATE>();
             break;
         default:
             break;
