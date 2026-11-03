@@ -54,6 +54,7 @@ private:
     int direction = 1;    // either 1 or -1
     bool isScheduled = false;
     bool startCaptured = false;
+    bool stoppedInNarrowLeg = false;
 
     bool needToApplyInitialPointChange = true;
     std::pair<float, float> changedInitialPoint{0.0f, 0.0f};

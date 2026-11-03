@@ -64,6 +64,31 @@ protected:
     // ARCC_S2_3V3 tolerances by index: start, doorway approach, doorway exit, centre.
     static float s2Tolerance(size_t i) { return i == 1 ? 0.05f : i == 2 ? 0.2f : 0.5f; }
 
+    void checkStalledDoorway(bool backwards) {
+        team(false, backwards);
+        SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, Mode::ARCC_S2_3V3);
+        command.initialize();
+        odo.relocalizeTo(-5.25f, -3.0f);
+        command.execute();
+        command.targetIndex = backwards ? 1 : 2;
+        command.direction = backwards ? -1 : 1;
+        command.positionCommand.targetPosition = {100, 100, 0};
+        odo.relocalizeTo(-4.0f, -0.635f);
+        command.stuckTimer.restart(15000);
+        command.execute();
+        ASSERT_TRUE(holding(command));
+        ASSERT_TRUE(command.getIsScheduled());
+        hosted::timeMs += 15001;
+        command.execute();
+        EXPECT_FALSE(command.getIsScheduled());
+        EXPECT_FLOAT_EQ(drive.getHostedTargetVelocity().magnitude(), 0);
+        for (int i = 0; i < 3; ++i) {
+            command.execute();
+            EXPECT_TRUE(holding(command));
+            EXPECT_FLOAT_EQ(drive.getHostedTargetVelocity().magnitude(), 0);
+        }
+    }
+
     void checkRoute(Mode mode, bool blue) {
         team(blue);
         SimpleAutoDriveCommand command(&drivers, &drive, &gimbal, &odo, mode);
@@ -341,6 +366,14 @@ TEST_F(SimpleAutoDriveCommandTest, DoorwayLegsHoldQuarterTurnInsteadOfSpinning) 
     command.execute();
     EXPECT_FALSE(holding(command));
     EXPECT_LT(drive.getHostedTargetVelocity().getRotation(), -1.0f);
+}
+
+TEST_F(SimpleAutoDriveCommandTest, StalledOutboundDoorwayStopsWithoutSpin) {
+    checkStalledDoorway(false);
+}
+
+TEST_F(SimpleAutoDriveCommandTest, StalledReturnDoorwayStopsWithoutSpin) {
+    checkStalledDoorway(true);
 }
 
 TEST_F(SimpleAutoDriveCommandTest, OutboundAppliesAndRestoresTolerance) {

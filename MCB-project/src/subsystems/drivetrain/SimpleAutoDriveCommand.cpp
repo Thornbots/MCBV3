@@ -23,6 +23,7 @@ namespace commands {
         needToApplyInitialPointChange = false;
         stuckTimer.stop();
         isScheduled = true;
+        stoppedInNarrowLeg = false;
     }
     
     void SimpleAutoDriveCommand::execute() {
@@ -110,10 +111,16 @@ namespace commands {
             
             // if stuck
             if(stuckTimer.execute()){
-                // self disable to spin fast in place
+                // Never initiate a spin where the route requires narrow clearance.
+                stoppedInNarrowLeg = positionCommand.holdQuarterTurn;
                 isScheduled = false;
+                if (stoppedInNarrowLeg) positionCommand.drivetrain->stopMotors();
             }
         } else { // !isScheduled
+            if (stoppedInNarrowLeg) {
+                positionCommand.drivetrain->stopMotors();
+                return;
+            }
             // self disabled: spin fast in place
             positionCommand.holdQuarterTurn = false;
             positionCommand.drivetrain->setTargetTranslation({0, 0, SPIN_VELOCITY}, (positionCommand.drivetrain->angularVel < 6.0f || positionCommand.drivetrain->powerLimit >= 100.0f));
