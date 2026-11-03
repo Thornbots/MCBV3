@@ -1,5 +1,6 @@
 // Copyright 2026 Thornbots. SPDX-License-Identifier: GPL-3.0-or-later
 #include <gtest/gtest.h>
+#include <cerrno>
 #include <sys/socket.h>
 #include <unistd.h>
 #include "hosted/clock.hpp"
@@ -174,23 +175,55 @@ TEST_F(MappingControlTest, DisconnectStopsEveryMotorAndReconnectRestoresRestrict
 TEST_F(MappingControlTest, PendingControlPingHasPriorityOverTelemetryAndRetriesBusyUart) {
     uint8_t fill[4096]{};
     while (write(sockets[0], fill, sizeof(fill)) > 0) {}
+    const auto failures = hosted::failedUartWrites();
+    ASSERT_TRUE(control.jetson.sendDebug(fill, 128));
     drivers.mapping.receivePing(2, 0);
     control.jetson.refresh();
     EXPECT_TRUE(drivers.mapping.hasPendingPing());
     hosted::timeMs = 10;
     control.jetson.refresh();
     EXPECT_TRUE(drivers.mapping.hasPendingPing());
+    EXPECT_GE(hosted::failedUartWrites() - failures, 2U);
     uint8_t buffer[65536];
     while (read(sockets[1], buffer, sizeof(buffer)) > 0) {}
-    hosted::timeMs = 10000;
+    hosted::timeMs = 11; // Continuous service retains the overdue 10 ms POSE slot.
     control.jetson.refresh();
     ASSERT_FALSE(drivers.mapping.hasPendingPing());
     ASSERT_EQ(read(sockets[1], buffer, sizeof(buffer)), 10);
     EXPECT_EQ(buffer[5], subsystems::PING);
     EXPECT_EQ(buffer[7], 2);
-    hosted::timeMs = 10001; // Telemetry waits until the control frame drains.
     control.jetson.refresh();
-    ASSERT_GE(read(sockets[1], buffer, sizeof(buffer)), 20);
+    ASSERT_EQ(read(sockets[1], buffer, sizeof(buffer)), -1);
+    EXPECT_EQ(errno, EAGAIN); // Neither telemetry nor DEBUG overlaps the PING.
+    hosted::timeMs = 12; // Telemetry waits until the control frame drains.
+    control.jetson.refresh();
+    ASSERT_EQ(read(sockets[1], buffer, sizeof(buffer)), 34);
+    EXPECT_EQ(buffer[5], subsystems::POSE);
+}
+
+TEST_F(MappingControlTest, PendingControlPingSurvivesServiceGapBeforeFreshTelemetryCycle) {
+    uint8_t fill[4096]{};
+    while (write(sockets[0], fill, sizeof(fill)) > 0) {}
+    drivers.mapping.receivePing(2, 0);
+    control.jetson.refresh();
+    hosted::timeMs = 10;
+    control.jetson.refresh();
+    ASSERT_TRUE(drivers.mapping.hasPendingPing());
+    uint8_t buffer[65536];
+    while (read(sockets[1], buffer, sizeof(buffer)) > 0) {}
+    hosted::timeMs = 4010; // Calibration suspends scheduler service for four seconds.
+    control.jetson.refresh();
+    ASSERT_FALSE(drivers.mapping.hasPendingPing());
+    ASSERT_EQ(read(sockets[1], buffer, sizeof(buffer)), 10);
+    EXPECT_EQ(buffer[5], subsystems::PING);
+    EXPECT_EQ(buffer[7], 2);
+    for (hosted::timeMs = 4011; hosted::timeMs < 4020; ++hosted::timeMs) {
+        control.jetson.refresh();
+        ASSERT_EQ(read(sockets[1], buffer, sizeof(buffer)), -1);
+        EXPECT_EQ(errno, EAGAIN);
+    }
+    control.jetson.refresh();
+    ASSERT_EQ(read(sockets[1], buffer, sizeof(buffer)), 34);
     EXPECT_EQ(buffer[5], subsystems::POSE);
 }
 
