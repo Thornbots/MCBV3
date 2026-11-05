@@ -11,6 +11,7 @@
 #include "subsystems/jetson/JetsonSubsystem.hpp"
 #include "subsystems/ui/objects/Reticle.hpp"
 
+#include "AimPlanner.hpp"
 #include "AutoDriveCommand.hpp"
 
 #include "drivers.hpp"
@@ -55,8 +56,11 @@ public:
     float deltaY = 0;
     float deltaZ = 0;
 
-    CvTarget cvTarget{};
-    bool receivedCvTargetEver = false;
+    CvTarget cvTarget{};  // newest idle look point
+    bool receivedCvTargetEver = false;  // any idle point or target state
+    bool holdingTargetState = false;
+    uint32_t lastFireRequestMs = 0;  // when a plan last scheduled a shot
+    bool everRequestedFire = false;
 
 private:
     src::Drivers* drivers;
@@ -77,7 +81,7 @@ private:
     
     tap::arch::MilliTimeout cvTargetValidTimeout{};
     tap::arch::MilliTimeout startShotTimeout{}; //ideally we don't have to queue up multiple shots
-    static constexpr int TARGET_VALID_TIME = 200; //ms, perhaps the new version of PERSISTANCE after the last shot
+    static constexpr int TARGET_VALID_TIME = 200; //ms, idle CV_TARGET point validity
     // Indexer request to chamber exit; the sentry's 20 ms is timed on the robot (2026-10-28),
     // infantry's is assumed equal.
 #if defined(SENTRY) or defined(INFANTRY)
@@ -96,6 +100,17 @@ private:
     float hitTargetYaw = 0.0f;                           // absolute world yaw (rad) held while facing a hit
     uint32_t hitTurnStartTime = 0;
     static constexpr uint32_t HIT_TURN_DURATION = 500;  // ms to face a hit before resuming patrol
+
+    // ---- target state planning (README "MCBV3 aiming") ----
+    static aim::AimTuning makeTuning();
+    aim::AimPlanner planner;
+    TargetState heldState{};
+    uint32_t heldReceivedMs = 0;
+    bool haveTargetState = false;
+    uint32_t nextReplanMs = 0;
+    aim::Vec3 heldAim{};      // aim point held for the current replan period (or pending shot)
+    bool turnToHitPermitted = true;   // flags of the newest frame; defaults match CvTarget's
+    bool patrolPermitted = true;
 
     bool isScheduled = false;
 };

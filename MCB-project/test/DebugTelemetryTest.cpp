@@ -273,3 +273,76 @@ TEST_F(DebugTelemetryTest, OnlyGapsLongerThanOneCycleResetDeadlines) {
         }
     }
 }
+
+TEST(AimWire, StructSizesAndOffsetsMatchTheContract) {
+    EXPECT_EQ(sizeof(subsystems::CvTarget), 13U);
+    EXPECT_EQ(offsetof(subsystems::CvTarget, flags), 12U);
+    EXPECT_EQ(subsystems::CV_TARGET_FLAG_TYPE_C_BASED_PATROL, 0x02);
+    EXPECT_EQ(subsystems::CV_TARGET_FLAG_TURN_TO_HIT, 0x04);
+    using TS = subsystems::TargetState;
+    EXPECT_EQ(sizeof(TS), 80U);
+    EXPECT_EQ(offsetof(TS, center), 0U);
+    EXPECT_EQ(offsetof(TS, velocity), 12U);
+    EXPECT_EQ(offsetof(TS, acceleration), 24U);
+    EXPECT_EQ(offsetof(TS, yaw), 36U);
+    EXPECT_EQ(offsetof(TS, yaw_rate), 40U);
+    EXPECT_EQ(offsetof(TS, radius), 44U);
+    EXPECT_EQ(offsetof(TS, z_offset), 52U);
+    EXPECT_EQ(offsetof(TS, panel), 60U);
+    EXPECT_EQ(offsetof(TS, state_age_ms), 72U);
+    EXPECT_EQ(offsetof(TS, detection_age_ms), 74U);
+    EXPECT_EQ(offsetof(TS, track_id), 76U);
+    EXPECT_EQ(offsetof(TS, confidence), 78U);
+    EXPECT_EQ(offsetof(TS, flags), 79U);
+    EXPECT_EQ(subsystems::TARGET_STATE, 7);
+}
+
+TEST_F(DebugTelemetryTest, TargetStateIsReceivedWithItsReceiptTime) {
+    subsystems::TargetState sent{};
+    sent.center[0] = 3.5f;
+    sent.state_age_ms = 12;
+    sent.track_id = 9;
+    sent.confidence = 200;
+    sent.flags = subsystems::TARGET_STATE_FLAG_VALID;
+    hosted::timeMs = 1234;
+    receive(subsystems::TARGET_STATE, sent);
+    hosted::timeMs = 1236;
+    subsystems::CvTarget wrongType{};
+    EXPECT_FALSE(control->jetson.getCvTarget(&wrongType));  // not consumed by another type
+    subsystems::TargetState got{};
+    uint32_t receivedMs = 0;
+    ASSERT_TRUE(control->jetson.getTargetState(&got, &receivedMs));
+    EXPECT_FLOAT_EQ(got.center[0], 3.5f);
+    EXPECT_EQ(got.state_age_ms, 12);
+    EXPECT_EQ(got.track_id, 9);
+    EXPECT_EQ(receivedMs, 1234U);
+    EXPECT_FALSE(control->jetson.getTargetState(&got, &receivedMs));
+}
+
+TEST_F(DebugTelemetryTest, AutoAimHoldsAPlannedTargetStateAndDropsItAtTimeout) {
+    subsystems::TargetState ts{};
+    ts.center[0] = 3.0f; ts.center[2] = 0.3f;
+    ts.yaw = 3.14159265f;
+    ts.radius[0] = ts.radius[1] = 0.3f;
+    ts.panel[0] = 9.0f;
+    ts.detection_age_ms = 5;
+    ts.track_id = 1;
+    ts.confidence = 255;
+    ts.flags = subsystems::TARGET_STATE_FLAG_VALID;
+    auto& cmd = control->autoFire;
+    cmd.initialize();
+    hosted::timeMs = 1000;
+    receive(subsystems::TARGET_STATE, ts);
+    cmd.execute();
+    EXPECT_TRUE(cmd.holdingTargetState);
+    EXPECT_NEAR(cmd.deltaX, 2.7f, 0.05f);  // the facing panel, not ts.panel
+    EXPECT_NEAR(cmd.deltaY, 0.0f, 0.05f);
+    EXPECT_TRUE(cmd.everRequestedFire);  // stationary and confident: no dwell
+    // Stale before the next frame: the hold ends when state age reaches 0.5 s.
+    hosted::timeMs = 1499;
+    cmd.execute();
+    EXPECT_TRUE(cmd.holdingTargetState);
+    hosted::timeMs = 1500;
+    cmd.execute();
+    EXPECT_FALSE(cmd.holdingTargetState);
+}

@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <cstddef>
 
 #include "tap/algorithms/ballistics.hpp"
 #include "tap/algorithms/smooth_pid.hpp"
@@ -28,6 +29,7 @@ enum UartMessage : uint8_t{
     NAV_GOAL = 0,
     CV_TARGET = 1,
     RELOCALIZE = 4,
+    TARGET_STATE = 7,
 
     // outgoing
     POSE = 2,
@@ -60,21 +62,44 @@ struct NavGoal
 };
 
 
-static constexpr uint8_t CV_TARGET_FLAG_FIRE = 0x01;                // fire delay_ms after receipt
 static constexpr uint8_t CV_TARGET_FLAG_TYPE_C_BASED_PATROL = 0x02; // 0 stops patrolling, 1 allows it
 static constexpr uint8_t CV_TARGET_FLAG_TURN_TO_HIT = 0x04;         // 0 stops turning toward a hit, 1 allows it
-static constexpr uint8_t CV_TARGET_FLAG_PATROL = 0x08;              // point is from Jetson patrol; informational
-// Aim point and fire decision in one frame. x/y/z is a world-frame point in the
-// Jetson's odom (REP-105, z up), not a camera-frame one. delay_ms runs from receipt.
 static constexpr uint8_t CV_TARGET_FLAGS_DEFAULT = CV_TARGET_FLAG_TURN_TO_HIT | CV_TARGET_FLAG_TYPE_C_BASED_PATROL;
+// Idle look point: x/y/z in the Jetson's raw aim odom (REP-105, z up). Never a target or a fire request.
 struct CvTarget
 {
     float x = 0;           // meters
     float y = 0;           // meters
     float z = 0;           // meters, up
-    uint16_t delay_ms = 0; // fire this many ms after the frame arrives (0 = now)
-    uint8_t flags = CV_TARGET_FLAGS_DEFAULT;     // CV_TARGET_FLAG_* bits; bits 4-7 reserved (0)
+    uint8_t flags = CV_TARGET_FLAGS_DEFAULT;     // CV_TARGET_FLAG_* bits; 0 and 3-7 reserved (0)
 } modm_packed;
+static_assert(sizeof(CvTarget) == 13, "CV_TARGET payload is 13 bytes");
+
+static constexpr uint8_t TARGET_STATE_FLAG_VALID = 0x01;               // clear: unconverged, aim at panel only
+static constexpr uint8_t TARGET_STATE_FLAG_TYPE_C_BASED_PATROL = 0x02; // as CV_TARGET's bit 1
+// Tracked enemy armor model in raw aim odom at the state's stamp. Ages are the
+// bridge's at write time; the MCB adds time since receipt.
+struct TargetState
+{
+    float center[3];        // m
+    float velocity[3];      // m/s
+    float acceleration[3];  // m/s^2
+    float yaw;              // rad, [-pi, pi)
+    float yaw_rate;         // rad/s, + CCW
+    float radius[2];        // m
+    float z_offset[2];      // m
+    float panel[3];         // m
+    uint16_t state_age_ms;      // write time - header.stamp
+    uint16_t detection_age_ms;  // write time - detection_stamp
+    uint16_t track_id;
+    uint8_t confidence;     // round(confidence * 255)
+    uint8_t flags;          // TARGET_STATE_FLAG_*; 2-7 reserved (0)
+} modm_packed;
+static_assert(sizeof(TargetState) == 80, "TARGET_STATE payload is 80 bytes");
+static_assert(offsetof(TargetState, yaw) == 36 && offsetof(TargetState, radius) == 44 &&
+              offsetof(TargetState, z_offset) == 52 && offsetof(TargetState, panel) == 60 &&
+              offsetof(TargetState, state_age_ms) == 72 && offsetof(TargetState, track_id) == 76 &&
+              offsetof(TargetState, flags) == 79, "TARGET_STATE offsets");
 
 //where lidar thinks the robot is
 struct Relocalize
@@ -126,6 +151,7 @@ template<typename T>
 struct StructToMessageType;
 template<> struct StructToMessageType<NavGoal> { static constexpr UartMessage value = NAV_GOAL; };
 template<> struct StructToMessageType<CvTarget> { static constexpr UartMessage value = CV_TARGET; };
+template<> struct StructToMessageType<TargetState> { static constexpr UartMessage value = TARGET_STATE; };
 template<> struct StructToMessageType<Pose> { static constexpr UartMessage value = POSE; };
 template<> struct StructToMessageType<RefSys> { static constexpr UartMessage value = REF_SYS; };
 template<> struct StructToMessageType<Relocalize> { static constexpr UartMessage value = RELOCALIZE; };
@@ -174,6 +200,9 @@ public:  // Public Methods
 
     // AutoAimAndFireCommand knows how to interpret the CvTarget message
     bool getCvTarget(CvTarget* cvTarget);
+    // Same for TARGET_STATE; also reports when the frame arrived (ms), so the caller
+    // can age it: wire age + time since receipt.
+    bool getTargetState(TargetState* targetState, uint32_t* receivedMs);
     
 
 

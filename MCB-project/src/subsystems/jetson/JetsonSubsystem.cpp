@@ -152,4 +152,10 @@ bool JetsonSubsystem::updateROS(Vector2d* targetPosition, Vector2d* targetVeloci
 bool JetsonSubsystem::getCvTarget(CvTarget* cvTarget) {
     return getMsg(cvTarget);
 }
+bool JetsonSubsystem::getTargetState(TargetState* targetState, uint32_t* receivedMs) {
+    const uint32_t received = drivers->uart.getLastReceivedTime();
+    if (!getMsg(targetState)) return false;
+    if (receivedMs != nullptr) *receivedMs = received;
+    return true;
+}
 };  // namespace subsystems

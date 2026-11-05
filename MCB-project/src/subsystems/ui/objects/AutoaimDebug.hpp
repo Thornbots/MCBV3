@@ -34,7 +34,8 @@ public:
         point.cx = UISubsystem::HALF_SCREEN_WIDTH;
         point.cy = (aaafc->deltaZ*100)+UISubsystem::HALF_SCREEN_HEIGHT;
         
-        point.setHidden((aaafc->cvTarget.flags & CV_TARGET_FLAG_FIRE)==0 || !aaafc->receivedCvTargetEver);
+        // shown for 100 ms after the planner schedules a shot
+        point.setHidden(!aaafc->everRequestedFire || tap::arch::clock::getTimeMilliseconds() - aaafc->lastFireRequestMs > 100);
         pitchdiff.setHidden(!aaafc->receivedCvTargetEver);
         yawdiff.setHidden(!aaafc->receivedCvTargetEver);
     }
