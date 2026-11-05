@@ -63,10 +63,10 @@ Open it from the Isaac ROS workspace's `firmware/MCBV3` submodule: it mounts the
 workspace at its host path, so git and the workspace policy hooks work. Standalone clones
 are not supported.
 
-The Jetson `CV_TARGET` wire format is documented in the bridge's
-[UART protocol reference](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#cv_target-id1--aim-point-and-fire-decision).
-Bit 3 marks a point from Jetson patrol and is currently ignored by firmware;
-bit 1 remains the separate permission for firmware patrol.
+The Jetson `CV_TARGET` (idle look point) and `TARGET_STATE` (tracked armor model)
+wire formats are in the bridge's
+[UART protocol reference](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#cv_target-id1--idle-look-point);
+the aim planner is under [Aim and navigation odometry](#mcbv3-aiming-planner).
 
 ## Opaque debug blobs
 
@@ -293,15 +293,47 @@ DWT busy wait spent the whole guard repeatedly reading a peripheral register
 in Renode. The following remote-disconnected guard and IMU calibration still
 execute normally; no simulator hook skips firmware initialization.
 
-The wire fire delay includes indexer latency and an additional alignment wait.
-`AutoAimAndFireCommand` requests the shot `delay_ms - FIRING_LATENCY_TIME`
-after receipt, at once when that is negative. The sentry's 20 ms is the
-request-to-exit delay timed on the robot (2026-10-28); Jetson includes it in
-each scheduled exit and never sends under 25 ms, so the request always waits.
-While a request is pending the command reads no newer CV_TARGET (ported from
-`newMain`'s cv tuning, #109): a following non-fire frame would otherwise
-cancel it. The pending timer is released once due even when the gimbal is no
-longer targeting, so CV targets keep flowing.
+### MCBV3 aiming planner
+
+The MCB owns aiming after tracking
+([TARGET_STATE](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#target_state-id7--tracked-enemy-armor-model)):
+`src/subsystems/jetson/AimPlanner.{hpp,cpp}` is the Jetson's former `point_to_cv_target`
+planner ported to float with no hardware dependencies (hosted `AimPlannerTest`).
+Semantics are the Jetson's: `choose_panel` with held-panel hysteresis, `plan_shot`
+(panel lead; spin-mode shotgating, or chase when enabled; acceleration and shooter-velocity
+lead on a time-of-flight fixed point), `fire_exit_s`, spin hysteresis and the fire lock.
+Rationale and measurements: [thornbots_pkg design notes](../../thornbots_pkg/README.md).
+
+`AutoAimAndFireCommand` priority: held target state (state age under the 0.5 s timeout)
+over the idle CV_TARGET point (200 ms validity) over hit turn and firmware patrol.
+A held state makes no hit turn, and the idle point never fires. Age = wire age plus time
+since receipt. Every replan period the command propagates the state, plans from the
+shooter at the state's stamp (odometry position less velocity times state age, at the pivot
+height) and holds that aim until the next period. `valid` clear aims at `panel` without
+lead or fire. Fire needs `valid`, confidence of at least 0.5, detection age at most
+0.15 s, the fire lock, and a planned delay. A request waits
+`max(0, alignment + max(latency, min delay) - FIRING_LATENCY_TIME)` from the plan time
+(the exit time includes the indexer latency, which the sentry timed at 20 ms on the
+robot 2026-10-28). While a request is pending the command holds the aim it was planned for.
+Track change or timeout resets the lock and panel hold.
+
+Tuned values (`AimPlannerConstants.hpp`, moved unchanged from the Jetson defaults):
+
+| Value | Setting |
+|---|---|
+| replan period | 25 ms (the Jetson's 40 Hz tick) |
+| gimbal lag | 0.05 s |
+| firmware latency / min fire delay | 20 ms (`FIRING_LATENCY_TIME`) / 0.040 s |
+| lead, ToF iterations | on, 3 |
+| spin mode | shotgating (chase off, margin 0); enter 3.0 rad/s, exit 2.0 |
+| panel switch margin | 0.3 rad |
+| muzzle speed | `initialShotVelocity` |
+| fire confidence | 0.5 (`confidence / 255`) |
+| fire lock / grace | 1.0 s / 0.3 s; stationary bypass below 0.1 m/s outside spin |
+| max detection age to fire / target timeout | 0.15 s / 0.5 s |
+
+The fire lock counts milliseconds on the MCB clock (wrap-safe), not the Jetson's node clock.
+The orange debug circle shows for 100 ms after a shot is scheduled.
 
 Absolute aim points use a filtered angular-rate estimate over the 1 ms
 controller ticks: a 40 Hz point update must not become a one-tick velocity
