@@ -17,7 +17,7 @@ done
     -Itaproot/modm/src \
     -Itaproot/modm/ext/cmsis/dsp -Itaproot/modm/ext/cmsis/core \
     test/DebugTelemetryTest.cpp test/LocalizationPicoTest.cpp test/FirmwareRegressionTest.cpp test/DrivetrainStopCommandTest.cpp \
-    test/SimpleAutoDriveCommandTest.cpp test/MappingControlTest.cpp "${objects[@]}" \
+    test/AutoDriveCommandTest.cpp test/MappingControlTest.cpp "${objects[@]}" \
     build/sim/scons-release/libtaproot.a build/sim/scons-release/modm/libmodm.a \
     -Wl,--wrap=_ZN3tap4gpio4Leds3setENS1_6LedPinEb \
     -Wl,--wrap=_ZN3tap6buzzer8playNoteEPNS_4gpio3PwmEj \
