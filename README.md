@@ -65,7 +65,7 @@ are not supported.
 
 The Jetson `CV_TARGET` wire format is documented in the bridge's
 [UART protocol reference](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#cv_target-id1--aim-point-and-fire-decision).
-Bit 3 marks an idle/non-target point and is currently ignored by firmware;
+Bit 3 marks a point from Jetson patrol and is currently ignored by firmware;
 bit 1 remains the separate permission for firmware patrol.
 
 ## Opaque debug blobs
@@ -79,19 +79,24 @@ main-loop API per value at any rate; it allocates nothing and never writes or
 waits for UART. It is not an ISR or concurrent-thread API. There is no producer
 timer, growing queue, or delivery guarantee.
 
-`refresh()` services RX and MMM PING before telemetry and DEBUG; mandatory
-telemetry keeps its deadlines and overdue slots go before another DEBUG. The
-single pending slot is drained only when occupied; there is no fixed throttle.
-Failed/partial debug writes discard that value and still consume their full
-airtime budget.
+`refresh()` services RX and MMM PING before telemetry and DEBUG. Mandatory
+telemetry under continuous service keeps its original 10 ms deadline sequence
+(nine POSE then one REF_SYS), sending overdue slots before another DEBUG.
+After a scheduler service gap longer than 100 ms, including boot calibration,
+the cycle restarts with its first POSE deadline 10 ms after service resumes.
+The single pending slot
+is drained only when occupied; there is no fixed throttle. Failed/partial debug
+writes discard that value and still consume their full airtime budget.
 
 UART initialization and wire-time accounting share `DJISerial::UART_BAUD_RATE`
-(115200, 8N1); hosted models airtime. The
-[wire contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#debug-id6--opaque-firmware-debug)
-owns admission, latency bounds, scheduler assumptions, the 100 ms service-gap
-restart and flood guarantees. A baud too slow for that bound simply leaves
-oversized pending debug unsent. Telemetry samples current state when sent; RX
-continues independently of TX budget.
+(115200, 8N1). Wire-idle requires full airtime since enqueue, buffer-empty, and the hardware
+transmission-complete flag (hosted models airtime). Admission reserves DEBUG
+airtime, maximum telemetry airtime and 2 ms for servicing both completions; both
+frames must finish before the second future telemetry deadline.
+The [wire contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#debug-id6--opaque-firmware-debug)
+owns latency bounds, scheduler assumptions and flood guarantees. A baud too
+slow for that bound simply leaves oversized pending debug unsent. Telemetry
+samples current state when sent; RX continues independently of TX budget.
 
 The hosted-only executable accepts `MCB_DEBUG_TEST_FLOOD=1` alongside the usual
 `MCB_UART_FD` and binary stdin/stdout step fixture. Every simulated 1 ms main
@@ -146,13 +151,20 @@ returns immediately throughout MMM, so ordinary triggers cannot replace these
 commands. The scheduler and IMU calibration mechanism are not suspended or
 re-zeroed by MMM. The hosted fixture also gates its direct drive overrides.
 
-PING keeps id 5 and its one-byte number; the exchanges, retries, echo and
-five-second receive-window rules are in the
-[PING contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#ping-id5--mcb-mapping-machine-and-link-check).
-Failed sends retain pending work, which has priority over periodic POSE/REF_SYS
-telemetry. Legal save API calls always apply their state transition immediately;
-additional save transmissions queue behind the preceding ACK/final leg and its
-0.5 s send interval to prevent overlapping indistinguishable requests.
+PING keeps id 5 and its one-byte number. Zero echoes only in Main; unknown
+numbers are ignored. Every received 2, 4 or 6 queues an echo, even from an illegal
+source state; only legal state changes apply. Requests 1 and 3 retry at least
+0.5 s after their last successful same-number send until acknowledged. Their
+first matching ACK queues one final echo; all later echoes are ignored,
+including the Jetson's ACK of that final leg. Distinct saves can be sent
+inside five seconds: the Jetson ACKs them but suppresses work until there
+has been a five-second same-number receive gap. Failed sends retain pending work,
+which has priority over periodic POSE/REF_SYS telemetry. Legal save API calls
+always apply their state transition immediately. Additional save transmissions
+queue behind the preceding ACK/final leg and its 0.5 s send interval
+to prevent overlapping indistinguishable requests. ACK means receipt,
+not durable storage; Done
+can precede completion of Jetson's asynchronous save.
 
 Hosted GoogleTests cover the transition matrix, duplicate/failing UART traffic,
 retry timing and rollover, joystick caps and sentry restrictions. The hosted
@@ -228,11 +240,13 @@ these checks do not measure robot calibration or field RFID placement.
 
 ## Aim and navigation odometry
 
-Sentry POSE `odom_status` codes follow the
-[POSE contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#pose-id2--chassis-pose-and-gimbal-angles).
-The Pico values update about every 260 ms (2026-10-26), so the former 50 ms
-limit flagged healthy pods stale 80% of the time. The flag does not alter pod
-polling, bus recovery, or odometry values.
+Sentry POSE `odom_status` is 0 (`ODOM_PODS`) while the last successful Pico
+I2C read is less than 500 ms old, and 2 (`ODOM_I2C_DEAD`) before the first
+success or at age >=500 ms. On the sentry the Pico values update about every
+260 ms (2026-10-26), so 50 ms flagged healthy pods stale 80% of the time. The
+next transmitted POSE carries the change;
+this flag does not alter pod polling, bus recovery, or odometry values.
+Successful reads containing frozen values still report 0.
 
 `OdometrySubsystem::getAimX/getAimY` expose field-aligned raw pod odometry.
 POSE and `AutoAimAndFireCommand` use these accessors. `getX/getY` add the
@@ -279,10 +293,11 @@ DWT busy wait spent the whole guard repeatedly reading a peripheral register
 in Renode. The following remote-disconnected guard and IMU calibration still
 execute normally; no simulator hook skips firmware initialization.
 
+The wire fire delay includes indexer latency and an additional alignment wait.
 `AutoAimAndFireCommand` requests the shot `delay_ms - FIRING_LATENCY_TIME`
-after receipt, at once when that is negative
-([fire delay contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#cv_target-id1--aim-point-and-fire-decision)).
-The sentry's 20 ms is the request-to-exit delay timed on the robot (2026-10-28).
+after receipt, at once when that is negative. The sentry's 20 ms is the
+request-to-exit delay timed on the robot (2026-10-28); Jetson includes it in
+each scheduled exit and never sends under 25 ms, so the request always waits.
 While a request is pending the command reads no newer CV_TARGET (ported from
 `newMain`'s cv tuning, #109): a following non-fire frame would otherwise
 cancel it. The pending timer is released once due even when the gimbal is no
