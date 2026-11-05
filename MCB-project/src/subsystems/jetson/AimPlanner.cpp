@@ -26,7 +26,7 @@ namespace
 int quarter_index(float turns)
 {
     if (!std::isfinite(turns)) return 0;
-    const long k = std::lround(std::nearbyint(turns));
+    const int64_t k = static_cast<int64_t>(std::nearbyint(turns));
     return static_cast<int>(((k % 4) + 4) % 4);
 }
 }  // namespace
