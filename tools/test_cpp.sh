@@ -5,8 +5,8 @@ cd "$(dirname "${BASH_SOURCE[0]}")/../MCB-project"
 python3 ../tools/test_mapping_hook.py
 mkdir -p build/unit-tests
 "${CXX:-g++}" -std=c++20 -Wall -Wextra -Werror -DSENTRY -Isrc \
-    test/PoseTest.cpp test/ChassisControllerTest.cpp test/NewlibSyscallsTest.cpp test/YawControllerTest.cpp test/HitTrackerTest.cpp test/MappingMachineTest.cpp \
+    test/PoseTest.cpp test/ChassisControllerTest.cpp test/NewlibSyscallsTest.cpp test/YawControllerTest.cpp test/HitTrackerTest.cpp test/MappingMachineTest.cpp test/AimPlannerTest.cpp \
     src/platform/newlib_syscalls.cpp src/subsystems/drivetrain/ChassisController.cpp \
-    src/subsystems/gimbal/controllers/YawController.cpp \
+    src/subsystems/gimbal/controllers/YawController.cpp src/subsystems/jetson/AimPlanner.cpp \
     -lgtest_main -lgtest -pthread -o build/unit-tests/mcb-tests
 build/unit-tests/mcb-tests "$@"
