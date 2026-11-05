@@ -1,7 +1,6 @@
 #include "JetsonSubsystem.hpp"
 
 #include "JetsonSubsystemConstants.hpp"
-#include "subsystems/drivetrain/SimpleAutoDriveCommand.hpp"
 #include "subsystems/odometry/OdometrySubsystemConstants.hpp"
 
 namespace subsystems {

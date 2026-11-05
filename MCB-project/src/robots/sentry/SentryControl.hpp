@@ -3,8 +3,6 @@
 #include "robots/sentry/SentryHardware.hpp"
 #include "subsystems/drivetrain/DrivetrainDriveCommand.hpp"
 #include "subsystems/drivetrain/DrivetrainStopCommand.hpp"
-#include "subsystems/drivetrain/MoveToPositionCommand.hpp"
-#include "subsystems/drivetrain/SimpleAutoDriveCommand.hpp"
 #include "subsystems/flywheel/ShooterStartCommand.hpp"
 #include "subsystems/flywheel/ShooterStopCommand.hpp"
 #include "subsystems/gimbal/GimbalStopCommand.hpp"
@@ -55,7 +53,7 @@ public:
         controllerUnjamTrigger.whileTrue(&indexerUnjam);
         stopFlywheelTrigger.onTrue(&shooterStop);
 
-        controllerAutoDriveTrigger.onTrue(&simpleAutoDrive)->onTrue(&odoPointForwards);       // right switch up
+        controllerAutoDriveTrigger.onTrue(&autoDrive)->onTrue(&odoPointForwards);       // right switch up
         controllerDriveNoSpinTrigger.onTrue(&noSpinDriveCommand)->onTrue(&odoPointForwards);  // right switch mid
         controllerDriveBeybladeTrigger.onTrue(&beybladeJoystick)->onTrue(&odoPointForwards);  // right switch down
 
@@ -90,7 +88,6 @@ public:
     bool rescheduleMoveJoystick = false;
     bool rescheduleMoveKeyboard = false;
     bool rescheduleAutoDrive = false;
-    bool rescheduleSimpleAutoDrive = false;
 
     bool rescheduleAutoFire = false;
     bool rescheduleLookJoystick = false;
@@ -108,7 +105,6 @@ public:
         rescheduleMoveJoystick = drivetrain.isInControllerMode;  // drivetrainFollowJoystick
         rescheduleMoveKeyboard = drivetrain.isInKeyboardMode;    // drivetrainFollowKeyboard
         rescheduleAutoDrive = drivers->commandScheduler.isCommandScheduled(&autoDrive);
-        rescheduleSimpleAutoDrive = drivers->commandScheduler.isCommandScheduled(&simpleAutoDrive);
 
         rescheduleAutoFire = drivers->commandScheduler.isCommandScheduled(&autoFire);
         rescheduleLookJoystick = drivers->commandScheduler.isCommandScheduled(&lookJoystick);
@@ -148,7 +144,6 @@ public:
         if (rescheduleMoveJoystick) drivers->commandScheduler.addCommand(&drivetrainFollowJoystick);
         if (rescheduleMoveKeyboard) drivers->commandScheduler.addCommand(&drivetrainFollowKeyboard);
         if (rescheduleAutoDrive) drivers->commandScheduler.addCommand(&autoDrive);
-        if (rescheduleSimpleAutoDrive) drivers->commandScheduler.addCommand(&simpleAutoDrive);
 
         if (rescheduleAutoFire)
             drivers->commandScheduler.addCommand(&autoFire);
@@ -184,7 +179,6 @@ public:
     commands::AutoAimAndFireCommand lookMouse{drivers, &gimbal, &indexer, &flywheel, &jetson, &odo, &autoDrive, true};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
     commands::AutoDriveCommand autoDrive{drivers, &drivetrain, &gimbal, &jetson, &odo};
-    commands::SimpleAutoDriveCommand simpleAutoDrive{drivers, &drivetrain, &gimbal, &odo, commands::SimpleAutoDriveCommand::TargetMode::SPOOKY_SCRIM_2V2};
     commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, &odo, &autoDrive, false};
 
     commands::SentryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &lookMouse};

@@ -254,24 +254,21 @@ navigation offset and remain the input to navigation controllers.
 RELOCALIZE replaces only that offset; raw POSE and held CV_TARGET aim remain
 continuous as the pods move. Raw aim boots at `(0, 0)` for either team; pod
 increments use the fixed `π/2` chassis boot heading for both teams. Team
-selection changes route points, without moving the accumulated raw position,
-rotating pod axes or clearing the navigation offset. Autonomous routes,
-MoveToPositionCommand, and NAV_GOAL driving stop the drivetrain until the first
+selection never moves the accumulated raw position, rotates pod axes or
+clears the navigation offset. NAV_GOAL driving stops the drivetrain until the first
 finite RELOCALIZE establishes the field navigation offset. Invalid non-finite
 coordinates leave the gate and previous offset unchanged. NAV_GOALs received
 before localization are discarded; driving needs a fresh goal after the fix.
 
 POSE adds this boot heading to the IMU-relative gimbal yaw; aiming and driving
 remove it when converting field targets into local commands. This also applies
-to robots without odometry. Route waypoints are absolute red field coordinates;
-blue reflects x for positions and velocities. Firmware owns no team start XY.
-SimpleAutoDrive captures its first waypoint from navigation `getX/getY` on the
-first localized execute after scheduling; route team selection occurs then too,
-so referee data arriving after initialization selects the correct team. TEST's square is relative to that
-capture. ARCC routes retain their historical red `(-4.625, 0)` field geometry,
-including the shifted return point; SPOOKY uses red `(-3.50, -1.75)`,
-`(-2.19, -1.76)`, `(0, 0)` and returns to the captured start. Removing PURDUE's
-mode leaves its enum value 1 unused; other mode numbers remain unchanged.
+to robots without odometry. Firmware owns no route or team start XY: the
+Jetson's [waypoint navigation](../../nav_pkg/README.md) sends NAV_GOALs in the
+field frame, and the right switch's up position schedules `AutoDriveCommand` to
+follow them. It holds the nearest field quarter turn while travelling, because
+the 0.84 m spin sweep is wider than the Starting Zone's 0.745 m doorway, and
+spins only within `SPIN_START_RADIUS` of the goal (with hysteresis); during
+the 3v3 countdown it spins in place.
 Frame conventions and payload semantics are owned by the workspace's
 [UART protocol](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#message-types).
 Deploy matching firmware and Jetson packages together: unchanged payload

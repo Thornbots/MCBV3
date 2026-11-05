@@ -122,8 +122,9 @@ int main() {
             drivers.commandScheduler.run();
             drivers.hitTracker.update();
             control.update();
-            if (!drivers.mapping.isActive() && (in.mode & 3) != 1)
-                drivers.commandScheduler.removeCommand(&control.simpleAutoDrive, true);
+            // Mode 1 schedules autoDrive through the remote's right switch; 2 adds it directly.
+            if (!drivers.mapping.isActive() && (in.mode & 3) != 1 && (in.mode & 3) != 2)
+                drivers.commandScheduler.removeCommand(&control.autoDrive, true);
             if (!drivers.mapping.isActive() && (in.mode & 3) == 2 && !drivers.commandScheduler.isCommandScheduled(&control.autoDrive))
                 drivers.commandScheduler.addCommand(&control.autoDrive);
             if (!drivers.mapping.isActive() && (in.mode & 3) == 3)

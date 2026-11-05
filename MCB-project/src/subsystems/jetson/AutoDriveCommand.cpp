@@ -5,6 +5,8 @@
 #include "subsystems/drivetrain/DrivetrainSubsystemConstants.hpp"
 #include "util/Pose2d.hpp"
 
+#include <cmath>
+
 namespace commands {
 using namespace tap::communication::serial;
 
@@ -13,6 +15,7 @@ int count = 0;
 void AutoDriveCommand::initialize() {
     isScheduled = true;
     hasNavGoal = false;
+    spinning = false;
 
     count = 0;
     
@@ -20,7 +23,7 @@ void AutoDriveCommand::initialize() {
 }
 
 void AutoDriveCommand::execute() {
-    targetVelocity = Pose2d(0, 0, 9);
+    targetVelocity = Pose2d(0, 0, 0);
     Vector2d jetsonExpectedPosition = Vector2d(0, 0);
     bool allowSpinning = true;
     bool allowMoving = true;
@@ -73,10 +76,16 @@ void AutoDriveCommand::execute() {
     float posY = targetPosition.getY();
     float velX = targetVelocity.getX();
     float velY = targetVelocity.getY();
-    float velR = targetVelocity.getRotation();
+    const float distance = Vector2d(posX - currentPosition.getX(), posY - currentPosition.getY()).magnitude();
+    if (distance < SPIN_START_RADIUS) spinning = true;
+    else if (distance > SPIN_STOP_RADIUS) spinning = false;
+    // referenceAngle is minus the chassis field yaw; turn it to the nearest quarter turn.
+    float velR = spinning ? SPIN_VELOCITY
+                          : drivetrain->calculateRotationPID(std::remainder(referenceAngle, PI / 2));
     if(!allowMoving){
         velX = 0;
         velY = 0;
+        velR = SPIN_VELOCITY;  // countdown: spin in place
         posX = currentPosition.getX();
         posY = currentPosition.getY();
     }
