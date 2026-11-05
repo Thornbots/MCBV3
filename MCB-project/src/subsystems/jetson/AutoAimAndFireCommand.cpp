@@ -17,7 +17,8 @@ AutoAimAndFireCommand::AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsys
         jetson(jetson),
         odo(odo), //can be nullptr for robots without odometry subsystem
         adc(adc), //can be nullptr for non-sentries
-        isManualControl(isManualControl)
+        isManualControl(isManualControl),
+        planner(makeTuning())
 {
     addSubsystemRequirement(gimbal);
     if(!isManualControl) {
@@ -27,6 +28,33 @@ AutoAimAndFireCommand::AutoAimAndFireCommand(src::Drivers* drivers, GimbalSubsys
     startShotTimeout.stop();
     cvTargetValidTimeout.stop();
 }
+
+aim::AimTuning AutoAimAndFireCommand::makeTuning() {
+    aim::AimTuning t;
+    t.firmware_latency_s = FIRING_LATENCY_TIME * 0.001f;
+    t.v_muzzle_mps = initialShotVelocity;
+    return t;
+}
+
+namespace {
+aim::TargetInput toInput(const TargetState& s, float extraAgeS) {
+    aim::TargetInput in;
+    in.center = {s.center[0], s.center[1], s.center[2]};
+    in.velocity = {s.velocity[0], s.velocity[1], s.velocity[2]};
+    in.acceleration = {s.acceleration[0], s.acceleration[1], s.acceleration[2]};
+    in.panel = {s.panel[0], s.panel[1], s.panel[2]};
+    in.yaw = s.yaw;
+    in.yaw_rate = s.yaw_rate;
+    in.radius = {s.radius[0], s.radius[1]};
+    in.z_offset = {s.z_offset[0], s.z_offset[1]};
+    in.state_age_s = s.state_age_ms * 0.001f + extraAgeS;
+    in.detection_age_s = s.detection_age_ms * 0.001f + extraAgeS;
+    in.track_id = s.track_id;
+    in.confidence = s.confidence / 255.0f;
+    in.valid = (s.flags & TARGET_STATE_FLAG_VALID) != 0;
+    return in;
+}
+}  // namespace
 
 void AutoAimAndFireCommand::initialize() {
     isScheduled = true;
@@ -56,44 +84,91 @@ void AutoAimAndFireCommand::execute() {
 
     }
     
-    // A pending shot holds its target: a newer frame would cancel it (from newMain's cv tuning).
+    const uint32_t nowMs = tap::arch::clock::getTimeMilliseconds();
+
+    // Idle look point: aimed at for its validity, never fired at.
     CvTarget newCvTarget{};
-    //newerHasPriority if there is a newer target, current isn't shooting, and newer is shooting
-    bool newTarget = jetson->getCvTarget(&newCvTarget);
-    bool newerHasPriority = newTarget && (cvTarget.flags & CV_TARGET_FLAG_FIRE)==0 && (newCvTarget.flags & CV_TARGET_FLAG_FIRE)>0; 
-    if(newTarget&&(startShotTimeout.isStopped() || newerHasPriority)) { //if current is expired or newer has priority
-        cvTarget=newCvTarget;
+    if(jetson->getCvTarget(&newCvTarget)) {
+        cvTarget = newCvTarget;
         receivedCvTargetEver = true;
         cvTargetValidTimeout.restart(TARGET_VALID_TIME);
-        // Shorter than the physical indexing latency means request immediately.
-        startShotTimeout.restart(std::max(0, static_cast<int>(cvTarget.delay_ms) - FIRING_LATENCY_TIME));
+        turnToHitPermitted = (cvTarget.flags & CV_TARGET_FLAG_TURN_TO_HIT)>0;
+        patrolPermitted = (cvTarget.flags & CV_TARGET_FLAG_TYPE_C_BASED_PATROL)>0;
     }
+    if(cvTargetValidTimeout.isExpired()) cvTargetValidTimeout.stop();
+
+    // Tracked target state: held until its state age reaches the timeout.
+    TargetState newState{};
+    uint32_t receivedMs = 0;
+    if(jetson->getTargetState(&newState, &receivedMs)) {
+        heldState = newState;
+        heldReceivedMs = receivedMs;
+        haveTargetState = true;
+        receivedCvTargetEver = true;
+        turnToHitPermitted = false;  // nothing permits a hit turn until the next idle frame
+        patrolPermitted = (newState.flags & TARGET_STATE_FLAG_TYPE_C_BASED_PATROL)>0;
+        const float sinceReceipt = static_cast<int32_t>(nowMs - receivedMs) * 0.001f;
+        planner.observe(nowMs, toInput(heldState, std::max<float>(sinceReceipt, 0.0f)));
+    }
+    float sinceReceiptS = 0;
+    if(haveTargetState) {
+        sinceReceiptS = std::max<int32_t>(static_cast<int32_t>(nowMs - heldReceivedMs), 0) * 0.001f;
+        if(heldState.state_age_ms * 0.001f + sinceReceiptS >= planner.tuning().target_timeout_s) {
+            haveTargetState = false;
+            planner.reset();
+        }
+    }
+    holdingTargetState = haveTargetState;
+
     // Due once, then released whether or not this cycle can fire, so targets keep flowing.
     const bool shotDue = startShotTimeout.execute();
     if(shotDue) startShotTimeout.stop();
-    if(cvTargetValidTimeout.isExpired()) cvTargetValidTimeout.stop();
-    float angleToTurnForSentry = drivers->hitTracker.getAngleToTurnForSentry();
-    bool turnToHitFlag =        (cvTarget.flags & CV_TARGET_FLAG_TURN_TO_HIT)>0;
-    bool typeCBasedPatrolFlag = (cvTarget.flags & CV_TARGET_FLAG_TYPE_C_BASED_PATROL)>0;
-    bool shootFlag =            (cvTarget.flags & CV_TARGET_FLAG_FIRE)>0;
-    bool needToTurnToHit = turnToHitFlag && drivers->hitTracker.didHitThisControlCycle();
-    turningToHit &= turnToHitFlag;
-    
-    // set variables that ui debug can use
-    targeting = allowGimbal&&!cvTargetValidTimeout.isStopped()&&!(needToTurnToHit||turningToHit);
-    if(isManualControl) targeting &= shootFlag&&drivers->remote.getMouseR();
-    // cvTarget and getAim* share the raw aim frame, never relocalized. The gimbal's world yaw is
-    // the IMU's, counterclockwise and zero at power-on, so take the start's yaw off
+    const bool shotPending = !startShotTimeout.isStopped();
+
+    // odo can be nullptr for robots without odometry
     float odoAimX = 0;
     float odoAimY = 0;
+    float odoVelX = 0;
+    float odoVelY = 0;
     float odoStartYaw = odo::BOOT_YAW;
     if(odo!=nullptr){
         odoAimX = odo->getAimX();
         odoAimY = odo->getAimY();
+        odoVelX = odo->getXVel();
+        odoVelY = odo->getYVel();
         odoStartYaw = odo->getStartYaw();
     }
-    Vector2d deltaXY{cvTarget.x - odoAimX, cvTarget.y - odoAimY};
-    Vector3d deltasUnadjusted{deltaXY.getX(), deltaXY.getY(), cvTarget.z};
+
+    // Replan each period; a pending shot holds the aim it was planned for.
+    if(haveTargetState && !shotPending && static_cast<int32_t>(nowMs - nextReplanMs) >= 0) {
+        nextReplanMs = nowMs + static_cast<uint32_t>(planner.tuning().replan_period_s * 1000.0f + 0.5f);
+        const aim::TargetInput in = toInput(heldState, sinceReceiptS);
+        // The planner measures time from the state's stamp, so the shooter starts where it was then.
+        const aim::Vec3 shooterVel{odoVelX, odoVelY, 0.0f};
+        const aim::Vec3 shooterPos = aim::Vec3{odoAimX, odoAimY, Projections::OFFSET_Z_ROBOT_TO_PITCH_PIVOT} - shooterVel * in.state_age_s;
+        const aim::Plan plan = planner.plan(nowMs, in, shooterPos, shooterVel);
+        heldAim = plan.aim;
+        if(plan.fire) {
+            startShotTimeout.restart(plan.request_delay_ms);
+            lastFireRequestMs = nowMs;
+            everRequestedFire = true;
+        }
+    }
+
+    float angleToTurnForSentry = drivers->hitTracker.getAngleToTurnForSentry();
+    bool needToTurnToHit = !haveTargetState && turnToHitPermitted && drivers->hitTracker.didHitThisControlCycle();
+    turningToHit &= turnToHitPermitted && !haveTargetState;
+
+    // set variables that ui debug can use
+    const bool haveAim = haveTargetState || shotPending || !cvTargetValidTimeout.isStopped();
+    targeting = allowGimbal&&haveAim&&!(needToTurnToHit||turningToHit);
+    if(isManualControl) targeting &= haveTargetState&&drivers->remote.getMouseR();
+    // The aim point and getAim* share the raw aim frame, never relocalized. The gimbal's world yaw is
+    // the IMU's, counterclockwise and zero at power-on, so take the start's yaw off
+    const bool aimAtState = haveTargetState || shotPending;
+    const Vector3d aimWorld = aimAtState ? Vector3d{heldAim.x, heldAim.y, heldAim.z} : Vector3d{cvTarget.x, cvTarget.y, cvTarget.z};
+    Vector2d deltaXY{aimWorld.getX() - odoAimX, aimWorld.getY() - odoAimY};
+    Vector3d deltasUnadjusted{deltaXY.getX(), deltaXY.getY(), aimWorld.getZ()};
     Vector3d deltasAdjusted = Projections::robotSpaceToPivotSpace(deltasUnadjusted);
     deltaXY = {deltasAdjusted.getX(), deltasAdjusted.getY()};
     deltaX = deltasAdjusted.getX();
@@ -104,20 +179,14 @@ void AutoAimAndFireCommand::execute() {
     const float range = std::max(deltaXY.magnitude(), std::abs(Projections::OFFSET_X_PITCH_PIVOT_TO_BARREL) + 1e-3f);
     targetYaw = deltaXY.angle() + std::asin(Projections::OFFSET_X_PITCH_PIVOT_TO_BARREL / range) - odoStartYaw;
     targetPitch = Reticle::solveForPitch(deltaXY.magnitude(), deltaZ); //gimbal subsystem will clamp the pitch. If it gets clamped, maybe don't shoot?
-    
+
     if (targeting) { //do position-based aiming
-        // the tap::algorithms::ballistics::findTargetProjectileIntersection function
-        // is useful for knowing how to hit a moving target, but the jetson already
-        // did that work. So we just need to do simple projectile motion to aim
-        // at a position that isn't moving.
-        // The cvTarget xyz is in the field frame, so if odo thinks we are at (3, 4)
-        // and cvTarget says to aim at (5, 4, 0.2), we need to aim toward +x. We adjust
-        // our aiming to hit the cvTarget as odo moves, so if we move to (3, 3.8)
-        // while we are aiming, we need to look slightly to the left of +x.
+        // The MCB planner already led the target; here we only need simple projectile
+        // motion to a point. Positions are in the field frame, so we adjust as odo moves.
 
         // Note that for gimbal subsystem, positive pitch is downward.
         gimbal->setAngles(targetYaw, targetPitch);
-        if(shotDue && allowShooting && shootFlag){
+        if(shotDue && allowShooting){
             indexer->tryShootOnce();
         }
     } else {
@@ -134,13 +203,13 @@ void AutoAimAndFireCommand::execute() {
             }
 
             if (turningToHit && tap::arch::clock::getTimeMilliseconds() - hitTurnStartTime < HIT_TURN_DURATION) {
-                // Hold the heading toward the hit. CV still runs at the top of execute(), so if the
-                // attacker comes into view the shoot branch takes over and engages it.
+                // Hold the heading toward the hit. A target state arriving ends the turn
+                // (turningToHit is cleared above), so the aim branch takes over.
                 gimbal->setAngles(hitTargetYaw, PATROL_PITCH);
             } else {
                 turningToHit = false;
                 float yawChange = 0;
-                if(typeCBasedPatrolFlag) {
+                if(patrolPermitted) {
                     numCyclesForBurst++;
                     if (numCyclesForBurst == CYCLES_UNTIL_BURST) {
                         yawChange = BURST_AMOUNT;
@@ -168,16 +237,17 @@ void AutoAimAndFireCommand::execute() {
         }
     }
     
-    // blink the green led to show that the jetson sent a message that said to shoot
-    bool greenled = false;
-    if(newTarget) greenled = (newCvTarget.flags & CV_TARGET_FLAG_FIRE)>0;
-    drivers->leds.set(tap::gpio::Leds::Green, greenled);
+    // green led: a shot is scheduled
+    drivers->leds.set(tap::gpio::Leds::Green, !startShotTimeout.isStopped());
 }
 
 void AutoAimAndFireCommand::end(bool) {
     isScheduled = false;
     startShotTimeout.stop();
     cvTargetValidTimeout.stop();
+    haveTargetState = false;
+    holdingTargetState = false;
+    planner.reset();
 }
 
 bool AutoAimAndFireCommand::getIsScheduled() { return isScheduled; }

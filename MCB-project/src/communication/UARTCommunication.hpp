@@ -65,6 +65,9 @@ public:
     // Milliseconds since boot, wrapping every 2^32 ms.
     uint32_t getCurrentTime() const;
 
+    // When the newest frame (the one in the mailbox if unconsumed) arrived, same clock.
+    uint32_t getLastReceivedTime() const { return lastReceivedTime; }
+
     tap::communication::serial::Uart::UartPort getPort() const;
 
 private:
