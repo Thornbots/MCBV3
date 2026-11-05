@@ -109,6 +109,74 @@ firmware. Hosted regression tests flood the real subsystem and UART parser,
 check exact mandatory slots and CV_TARGET/RELOCALIZE receipt, and model physical
 wire drain despite the hosted UART's always-true buffer-empty flag.
 
+### Optional CAN bus health (layout v1)
+
+Build with `scons build robot=sentry can-bus-health=true` (also supported by
+`build-sim`, `infantry` and `hero`). The default is `can-bus-health=false`:
+normal/match builds contain no counters, feedback wrapper or telemetry producer.
+Enable this explicitly only for diagnostic builds. No Taproot sources change.
+After an enabled GCC 14 hosted build, run
+`MCB_CAN_BUS_HEALTH=1 CXX=g++-14 tools/test_hosted_cpp.sh` so the test runner
+uses the same class layout and checks opt-in DEBUG output. Omit that environment
+setting after a default build.
+
+Each approximately one-second cooperative window queues one 103-byte DEBUG
+payload through `sendDebug`; an occupied slot drops the window without retry.
+Sequence advances even for dropped windows. Reporting starts after control
+initialization, retains actual elapsed time across service gaps, and resets
+all counts each window. Existing DEBUG admission, RX and mandatory telemetry
+scheduling remain in charge; calibration may defer transmission.
+
+All integers are unsigned little-endian, with no C struct padding:
+
+| Offset | Bytes | Meaning |
+| --- | --- | --- |
+| 0 | 1 | Layout version, 1 |
+| 1 | 4 | Window sequence, starts at 0, wraps modulo 2³² |
+| 5 | 4 | Actual window length in milliseconds (wrapping boot-clock difference) |
+| 9 | 4 | Number of sampled 1 ms command cycles |
+| 13 | 45 | CAN1 record below |
+| 58 | 45 | CAN2 record below |
+
+Bus record offsets are relative to its start:
+
+| Offset | Bytes | Meaning |
+| --- | --- | --- |
+| 0 | 4 | Cycles with `isReadyToSend(bus) == false` |
+| 4 | 4 | `sendMessage` failures; zero with validity bit 1 clear (unavailable) |
+| 8 | 32 | Eight uint32 feedback counts, motor IDs 1–8 (0x201–0x208) |
+| 40 | 4 | bxCAN ESR snapshot, read once at window close |
+| 44 | 1 | Validity flags: bit 0 ESR available, bit 1 send failures available; others zero |
+
+ESR fields follow STM32F407 bxCAN: EWGF bit 0, EPVF bit 1, BOFF bit 2,
+LEC bits 4–6, TEC bits 16–23, REC bits 24–31. Hosted/sim reports zero ESR
+with bit 0 clear. No register is written or cleared. LEC is the last-error
+code, not an error count; see ST's [RM0090](https://www.st.com/resource/en/reference_manual/rm0090-stm32f405415-stm32f407417-stm32f427437-and-stm32f429439-advanced-armbased-32bit-mcus-stmicroelectronics.pdf).
+Taproot does not expose per-bus `sendMessage` results, so bit 1 stays clear.
+
+Readiness is sampled immediately before `encodeAndSendCanData`; a mailbox can
+drain before Taproot's own later check, so this is a skipped-command indicator,
+not an exact count of its internal branch or measured bus utilization. Counts
+cover firmware-dispatched feedback for configured motors, not every wire frame
+or frames lost before dispatch. Zero feedback can mean an unconfigured ID or
+a missing motor; compare with that robot's hardware assignments. The usual
+expectation is 1000 feedback frames/s per configured motor. CAN1 yaw (ID7,
+0x207) has lower arbitration priority than the sentry's other CAN1 feedback;
+compare its rate and ESR with the other IDs when investigating saturation.
+
+Decode a bag in a ROS terminal with the bridge messages installed, or decode
+payload-only hex with standard Python (no ROS dependencies):
+
+```bash
+python3 tools/decode_can_health.py --bag /path/to/bag
+python3 tools/decode_can_health.py --hex '01 ...'
+```
+
+The bag reader defaults to `/dji_serial_bridge/debug` (`--topic` overrides it)
+and skips unrelated DEBUG layouts. Output includes not-ready percentage of
+sampled cycles, events/s, each ID's feedback rate versus 1000/s, and ESR fields.
+These are diagnostic indicators; they do not infer a precise bus-load percentage.
+
 ## MCB Mapping Machine (sentry)
 
 The sentry's Drivers-owned `mapping` object exposes `requestStart()` and

@@ -1,7 +1,7 @@
 #pragma once
  #include "tap/architecture/periodic_timer.hpp"
 #include "tap/board/board.hpp"
-#include "tap/motor/dji_motor.hpp"
+#include "util/TelemetryDjiMotor.hpp"
 #include "tap/motor/servo.hpp"
 
 
@@ -23,21 +23,21 @@ public:
     src::Drivers* drivers;
 
     //motors 
-    DjiMotor flywheelMotor1{drivers, MotorId::MOTOR3, CanBus::CAN_BUS2, true, "TopFlywheel"};
-    DjiMotor flywheelMotor2{drivers, MotorId::MOTOR2, CanBus::CAN_BUS2, false, "BottomFlywheel"};
+    src::TelemetryDjiMotor flywheelMotor1{drivers, MotorId::MOTOR3, CanBus::CAN_BUS2, true, "TopFlywheel"};
+    src::TelemetryDjiMotor flywheelMotor2{drivers, MotorId::MOTOR2, CanBus::CAN_BUS2, false, "BottomFlywheel"};
 
 
-    DjiMotor odoMotor{drivers, MotorId::MOTOR5, CanBus::CAN_BUS1, true, "Odo"};
+    src::TelemetryDjiMotor odoMotor{drivers, MotorId::MOTOR5, CanBus::CAN_BUS1, true, "Odo"};
 
-    DjiMotor yawMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS1, false, "Yaw"};
-    DjiMotor pitchMotor{drivers, MotorId::MOTOR5, CanBus::CAN_BUS2, true, "Pitch"};
+    src::TelemetryDjiMotor yawMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS1, false, "Yaw"};
+    src::TelemetryDjiMotor pitchMotor{drivers, MotorId::MOTOR5, CanBus::CAN_BUS2, true, "Pitch"};
 
-    DjiMotor indexMotor{drivers, MotorId::MOTOR6, CanBus::CAN_BUS2, true, "indexer"};
+    src::TelemetryDjiMotor indexMotor{drivers, MotorId::MOTOR6, CanBus::CAN_BUS2, true, "indexer"};
 
-    DjiMotor driveMotor1{drivers, MotorId::MOTOR1, CanBus::CAN_BUS1, false, "Motor 1 as 1"};
-    DjiMotor driveMotor2{drivers, MotorId::MOTOR2, CanBus::CAN_BUS1, false, "Motor 2 as 2"};
-    DjiMotor driveMotor3{drivers, MotorId::MOTOR3, CanBus::CAN_BUS1, false, "Motor 3 as 3"};
-    DjiMotor driveMotor4{drivers, MotorId::MOTOR4, CanBus::CAN_BUS1, false, "Motor 4 as 4"};
+    src::TelemetryDjiMotor driveMotor1{drivers, MotorId::MOTOR1, CanBus::CAN_BUS1, false, "Motor 1 as 1"};
+    src::TelemetryDjiMotor driveMotor2{drivers, MotorId::MOTOR2, CanBus::CAN_BUS1, false, "Motor 2 as 2"};
+    src::TelemetryDjiMotor driveMotor3{drivers, MotorId::MOTOR3, CanBus::CAN_BUS1, false, "Motor 3 as 3"};
+    src::TelemetryDjiMotor driveMotor4{drivers, MotorId::MOTOR4, CanBus::CAN_BUS1, false, "Motor 4 as 4"};
 
 
 };

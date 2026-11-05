@@ -14,6 +14,7 @@
 #include "hosted/sensors.hpp"
 #include "hosted/uart.hpp"
 #include "robots/RobotControl.hpp"
+#include "util/CanBusHealthTelemetry.hpp"
 
 struct Input {
     uint32_t cycles;
@@ -61,6 +62,9 @@ int main() {
     drivers.recal.setIsFirstCalibrating();
     drivers.recal.setIsDoneCalibrating();
     control.initialize();
+#ifdef MCB_CAN_BUS_HEALTH
+    drivers.canHealth.start(hosted::timeMs);
+#endif
     std::fwrite("MCB3", 1, 4, stdout);
     std::fflush(stdout);
     Input in;
@@ -131,6 +135,10 @@ int main() {
                 control.drivetrain.setTargetTranslation(Pose2d(in.externalRight, in.externalForward, in.externalSpin), false);
             if (in.mode & 4) drivers.commandScheduler.removeCommand(&control.autoFire, true);
             if (control.indexer.getTotalNumBallsShot() > before) shots.push_back(hosted::timeMs);
+#ifdef MCB_CAN_BUS_HEALTH
+            src::sampleCanBusHealth(drivers);
+            src::reportCanBusHealth(drivers, control.jetson);
+#endif
             ++hosted::timeMs;
             static auto previousState = src::MappingMachine::State::Main;
             if (drivers.mapping.getState() != previousState) {

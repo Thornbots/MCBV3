@@ -1,7 +1,7 @@
 #pragma once
 #include "tap/architecture/periodic_timer.hpp"
 #include "tap/board/board.hpp"
-#include "tap/motor/dji_motor.hpp"
+#include "util/TelemetryDjiMotor.hpp"
 #include "tap/motor/servo.hpp"
 #include "drivers.hpp"
 
@@ -22,18 +22,18 @@ public:
     Servo servo{drivers, tap::gpio::Pwm::C1, 0.6f, 0.2f, 0.01f};
 
     //motors 
-    DjiMotor flywheelMotor1{drivers, MotorId::MOTOR5, CanBus::CAN_BUS2, true, "Flywheel"};
-    DjiMotor flywheelMotor2{drivers, MotorId::MOTOR8, CanBus::CAN_BUS2, false, "Flywheel"};
+    src::TelemetryDjiMotor flywheelMotor1{drivers, MotorId::MOTOR5, CanBus::CAN_BUS2, true, "Flywheel"};
+    src::TelemetryDjiMotor flywheelMotor2{drivers, MotorId::MOTOR8, CanBus::CAN_BUS2, false, "Flywheel"};
 
-    DjiMotor yawMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS1, false, "Yaw"};
-    DjiMotor pitchMotor{drivers, MotorId::MOTOR6, CanBus::CAN_BUS2, false, "Pitch"};
+    src::TelemetryDjiMotor yawMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS1, false, "Yaw"};
+    src::TelemetryDjiMotor pitchMotor{drivers, MotorId::MOTOR6, CanBus::CAN_BUS2, false, "Pitch"};
 
-    DjiMotor indexMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS2, false, "Indexer2"};
+    src::TelemetryDjiMotor indexMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS2, false, "Indexer2"};
 
-    DjiMotor driveMotor1{drivers, MotorId::MOTOR1, CanBus::CAN_BUS1, true, "Motor 1"};
-    DjiMotor driveMotor2{drivers, MotorId::MOTOR3, CanBus::CAN_BUS1, true, "Motor 2"};
-    DjiMotor driveMotor3{drivers, MotorId::MOTOR4, CanBus::CAN_BUS1, true, "Motor 3"};
-    DjiMotor driveMotor4{drivers, MotorId::MOTOR2, CanBus::CAN_BUS1, true, "Motor 4"};
+    src::TelemetryDjiMotor driveMotor1{drivers, MotorId::MOTOR1, CanBus::CAN_BUS1, true, "Motor 1"};
+    src::TelemetryDjiMotor driveMotor2{drivers, MotorId::MOTOR3, CanBus::CAN_BUS1, true, "Motor 2"};
+    src::TelemetryDjiMotor driveMotor3{drivers, MotorId::MOTOR4, CanBus::CAN_BUS1, true, "Motor 3"};
+    src::TelemetryDjiMotor driveMotor4{drivers, MotorId::MOTOR2, CanBus::CAN_BUS1, true, "Motor 4"};
 
 
 };
