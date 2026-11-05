@@ -6,6 +6,7 @@
 #include "robots/RobotControl.hpp"
 
 #include "drivers.hpp"
+#include "util/CanBusHealthTelemetry.hpp"
 
 static constexpr int RECALIBRATION_THRESHOLD_TIME = 15; //s, when there are fewer than this many seconds remaining in the game stage, run scheduled recalibrations
 static constexpr int AUTORECALIBRATION_THRESHOLD_TIME = 60*3000; //ms, set to 3 min. if the controller has been off for this long, recalibrate
@@ -125,6 +126,9 @@ int main() {
     tap::buzzer::silenceBuzzer(&(drivers.pwm));
 
     control.initialize();
+#ifdef MCB_CAN_BUS_HEALTH
+    drivers.canHealth.start(tap::arch::clock::getTimeMilliseconds());
+#endif
 
     tap::arch::PeriodicMilliTimer refreshTimer(1);
     tap::arch::MilliTimeout waitForRobotToStopMoving{};
@@ -184,7 +188,13 @@ int main() {
                 control.update();
             }
 
+#ifdef MCB_CAN_BUS_HEALTH
+            src::sampleCanBusHealth(drivers);
+#endif
             drivers.djiMotorTxHandler.encodeAndSendCanData();
+#ifdef MCB_CAN_BUS_HEALTH
+            src::reportCanBusHealth(drivers, control.jetson);
+#endif
 
             // drivers.terminalSerial.update();
         }

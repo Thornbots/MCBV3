@@ -5,6 +5,10 @@ cd "$(dirname "${BASH_SOURCE[0]}")/../MCB-project"
 mkdir -p build/unit-tests
 shopt -s globstar nullglob
 objects=()
+can_health_flags=()
+if [[ "${MCB_CAN_BUS_HEALTH:-0}" == 1 ]]; then
+    can_health_flags+=(-DMCB_CAN_BUS_HEALTH)
+fi
 for object in build/sim/scons-release/src/**/*.o; do
     case "$object" in
         */src/tap/*|*/src/hosted/main.o) continue ;;
@@ -12,7 +16,7 @@ for object in build/sim/scons-release/src/**/*.o; do
     objects+=("$object")
 done
 "${CXX:-g++}" -std=c++20 -Wall -Wextra -Werror -funsigned-char -funsigned-bitfields \
-    -DSENTRY -DPLATFORM_HOSTED -DMCB_HOSTED \
+    -DSENTRY -DPLATFORM_HOSTED -DMCB_HOSTED "${can_health_flags[@]}" \
     -Isrc -Itaproot/src -Itaproot/sim-modm/hosted-linux/modm/src \
     -Itaproot/modm/src \
     -Itaproot/modm/ext/cmsis/dsp -Itaproot/modm/ext/cmsis/core \

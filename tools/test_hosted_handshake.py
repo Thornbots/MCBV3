@@ -8,6 +8,57 @@ import unittest
 
 
 class HostedHandshake(unittest.TestCase):
+    def test_can_health_is_build_opt_in_and_reports_motor_feedback(self):
+        binary = Path(__file__).resolve().parents[1] / (
+            'MCB-project/build/sim/scons-release/MCB-project.elf')
+        master, slave = os.openpty()
+        try:
+            tty.setraw(slave)
+            os.set_blocking(slave, False)
+            tick = bytearray(168)
+            struct.pack_into('<I', tick, 0, 100)
+            struct.pack_into('<f', tick, 164, 1.0)
+            subprocess.run(
+                [str(binary)], input=tick * 21, capture_output=True, timeout=10,
+                env={**os.environ, 'MCB_UART_FD': str(master), 'MCB_DEBUG_TEST_FLOOD': '0'},
+                pass_fds=(master,), check=True)
+            wire = bytearray()
+            while True:
+                try:
+                    wire.extend(os.read(slave, 16384))
+                except BlockingIOError:
+                    break
+            blobs = []
+            offset = 0
+            while offset < len(wire):
+                self.assertEqual(wire[offset], 0xa5)
+                size = struct.unpack_from('<H', wire, offset + 1)[0]
+                kind = struct.unpack_from('<H', wire, offset + 5)[0]
+                end = offset + size + 9
+                self.assertLessEqual(end, len(wire))
+                if kind == 6:
+                    blobs.append(bytes(wire[offset + 7:end - 2]))
+                offset = end
+            if os.environ.get('MCB_CAN_BUS_HEALTH') != '1':
+                self.assertEqual(blobs, [])
+                return
+            self.assertEqual(len(blobs), 2)
+            for sequence, blob in enumerate(blobs):
+                self.assertEqual(len(blob), 103)
+                self.assertEqual(blob[0], 1)
+                seq, length, cycles = struct.unpack_from('<III', blob, 1)
+                self.assertEqual(seq, sequence)
+                self.assertEqual(length, 1000)
+                for bus, active in enumerate(({1, 2, 3, 4, 5, 7}, {2, 3, 5, 6})):
+                    base = 13 + 45 * bus
+                    self.assertEqual(blob[base + 44], 0)  # hosted ESR/failures unavailable
+                    for motor in range(1, 9):
+                        count = struct.unpack_from('<I', blob, base + 8 + 4 * (motor - 1))[0]
+                        self.assertEqual(count, cycles if motor in active else 0)
+        finally:
+            os.close(master)
+            os.close(slave)
+
     def test_header_is_immediately_followed_by_tick_output(self):
         binary = Path(__file__).resolve().parents[1] / (
             'MCB-project/build/sim/scons-release/MCB-project.elf')

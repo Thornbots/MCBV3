@@ -33,6 +33,11 @@ sysid = args["SYS_ID"]
 print("Building for " + robot_type + " with sysid " + sysid)
 
 c_flags =[args["ROBOT_TYPE"], args["SYS_ID"]]
+can_bus_health = ARGUMENTS.get("can-bus-health", "false")
+if can_bus_health not in ("true", "false"):
+    raise ValueError("can-bus-health must be true or false")
+if can_bus_health == "true":
+    c_flags.append("MCB_CAN_BUS_HEALTH")
 
 #=========================================================================================================
 # Define project settings and build paths

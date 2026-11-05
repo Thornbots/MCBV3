@@ -32,6 +32,9 @@
 #include "util/HitTracker.hpp"
 #include "util/ImuRecalibration.hpp"
 #include "util/MappingMachine.hpp"
+#ifdef MCB_CAN_BUS_HEALTH
+#include "util/CanBusHealth.hpp"
+#endif
 
 #define PRINT(msg_to_send ...) ({\
     char str[BUFSIZ]; \
@@ -55,6 +58,9 @@ public:
     communication::UARTCommunication uart;
     ImuRecalibration recal;
     MappingMachine mapping;
+#ifdef MCB_CAN_BUS_HEALTH
+    CanBusHealth canHealth;
+#endif
     HitTracker hitTracker{this}; 
 
     

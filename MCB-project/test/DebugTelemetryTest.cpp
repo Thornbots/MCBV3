@@ -8,6 +8,7 @@
 #include "hosted/clock.hpp"
 #include "hosted/uart.hpp"
 #include "robots/RobotControl.hpp"
+#include "util/CanBusHealthTelemetry.hpp"
 
 namespace {
 class DebugTelemetryTest : public ::testing::Test {
@@ -53,6 +54,31 @@ protected:
     }
 };
 }
+
+#ifdef MCB_CAN_BUS_HEALTH
+TEST_F(DebugTelemetryTest, CanHealthCountsVirtualFeedbackAndDropsBusyWindows) {
+    auto& health = drivers->canHealth;
+    health.start(0);
+    modm::can::Message message(0x207, 8);
+    tap::motor::DjiMotor& yaw = control->hardware.yawMotor;
+    yaw.processMessage(message);
+    tap::motor::DjiMotor& pitch = control->hardware.pitchMotor;
+    modm::can::Message pitchMessage(0x205, 8);
+    pitch.processMessage(pitchMessage);
+    auto payload = health.finish(1000, {}, false);
+    EXPECT_EQ(payload[45], 1); // CAN1 ID7
+    EXPECT_EQ(payload[82], 1); // CAN2 ID5
+    EXPECT_TRUE(yaw.isMotorOnline()); // Taproot processing still runs.
+    EXPECT_EQ(payload[57], 0); // Hosted ESR unavailable.
+
+    ASSERT_TRUE(control->jetson.sendDebug(nullptr, 0));
+    hosted::timeMs = 2000;
+    src::reportCanBusHealth(*drivers, control->jetson);
+    EXPECT_FALSE(health.due(2000)); // Busy slot still resets the window.
+    const auto next = health.finish(3000, {}, false);
+    EXPECT_EQ(next[1], 2); // Lost window has its own sequence.
+}
+#endif
 
 TEST_F(DebugTelemetryTest, LengthBoundsCopyAndSinglePendingSlot) {
     auto& jetson = control->jetson;
