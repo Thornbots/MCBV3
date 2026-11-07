@@ -59,6 +59,14 @@ These arguments will work for `scons build` too!
 In the VS Code dev container (Linux host), `Ctrl+Shift+B` runs `scons run` for the
 robot selected as the C/C++ configuration in the status bar. The container matches CI's
 toolchain and sees the host's USB debug probe; plug the probe in before flashing.
+The container runs as non-root `ubuntu`, so install the probe's udev rule on the host
+once (otherwise OpenOCD reports `unable to open CMSIS-DAP device`):
+
+```bash
+sudo install -m 644 .devcontainer/60-cmsis-dap.rules /etc/udev/rules.d/
+sudo udevadm control --reload && sudo udevadm trigger
+```
+
 Open it from the Isaac ROS workspace's `firmware/MCBV3` submodule: it mounts the whole
 workspace at its host path, so git and the workspace policy hooks work. Standalone clones
 are not supported.

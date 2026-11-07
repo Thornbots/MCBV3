@@ -1,0 +1,3 @@
+# Horco CMSIS-DAP probe: let the dev container's non-root user open it.
+# Install on the Linux host; see README "Writing and Flashing Code".
+SUBSYSTEM=="usb", ATTR{idVendor}=="faed", ATTR{idProduct}=="4870", MODE="0666"
