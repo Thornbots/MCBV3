@@ -11,30 +11,32 @@ RefWrapper(tap::Drivers* drivers) : drivers(drivers){}
 
 //returns true if we have the ref uart and we are in a match.
 bool inGame(){
-    return drivers->refSerial.getRefSerialReceivingData() && drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::IN_GAME;
+    return getGameStage()==RefSerialData::Rx::GameStage::IN_GAME;
 }
 
 bool inInitialization(){
-    return drivers->refSerial.getRefSerialReceivingData() && drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::INITIALIZATION;
+    return getGameStage()==RefSerialData::Rx::GameStage::INITIALIZATION;
 }
 
 bool inCountdown(){
-    return drivers->refSerial.getRefSerialReceivingData() && drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::COUNTDOWN;
+    return getGameStage()==RefSerialData::Rx::GameStage::COUNTDOWN;
 }
 
 bool isBeforeGame(){
-    return drivers->refSerial.getRefSerialReceivingData() && drivers->refSerial.getGameData().gameStage<RefSerialData::Rx::GameStage::IN_GAME;
+    return getGameStage() < RefSerialData::Rx::GameStage::IN_GAME;
+}
+
+bool isInPrematch(){
+    return getGameStage()==RefSerialData::Rx::GameStage::SETUP || getGameStage()==RefSerialData::Rx::GameStage::PREMATCH;
 }
 
 bool connectedToServer() {
-    return drivers->refSerial.getRefSerialReceivingData() && drivers->refSerial.getGameData().gameType != RefSerialData::Rx::GameType::UNKNOWN;
+    return drivers->refSerial.getRefSerialReceivingData() && drivers->refSerial.getGameData().gameType!=RefSerialData::Rx::GameType::UNKNOWN;
 }
 
 float getPowerLimit(){
     uint16_t minLimit = 240;
-    if (drivers->refSerial.getRefSerialReceivingData() && 
-       (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3) &&
-       (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::INITIALIZATION || drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN)) {
+    if (isBeforeGame()) {
         minLimit = INITIAL_POWER_LIMIT_3V3;
     }
     return std::min(minLimit, drivers->refSerial.getRobotData().chassis.powerConsumptionLimit);
@@ -45,7 +47,7 @@ bool refPoweringIndex() {
 }
 
 float getHeatLimit(){
-    if(drivers->refSerial.getRefSerialReceivingData()) return 100;
+    if(!drivers->refSerial.getRefSerialReceivingData()) return 100;
     return (float) drivers->refSerial.getRobotData().turret.heatLimit;
 }
 
@@ -89,10 +91,6 @@ bool isBlue(){
     return drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId) && drivers->refSerial.getRefSerialReceivingData();
 }
 
-bool isInPrematch(){
-    return drivers->refSerial.getRefSerialReceivingData() && (drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::SETUP || drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::PREMATCH);
-}
-
 bool is1v1(){
     return drivers->refSerial.getRefSerialReceivingData() && drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_1V1;
 }
@@ -118,10 +116,20 @@ bool isFullHp(){
 }
 
 RefSerialData::Rx::GameStage getGameStage(){
+    if (drivers->refSerial.getRefSerialReceivingData() && 
+        drivers->refSerial.getGameData().stageTimeRemaining==0 && 
+        drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::COUNTDOWN){
+        return RefSerialData::Rx::GameStage::IN_GAME;
+    }
     return drivers->refSerial.getGameData().gameStage;
 } 
 
 uint16_t getStageTime(){
+    if (drivers->refSerial.getRefSerialReceivingData() && 
+        drivers->refSerial.getGameData().stageTimeRemaining==0 && 
+        drivers->refSerial.getGameData().gameStage==RefSerialData::Rx::GameStage::COUNTDOWN){
+            return 300;
+        }
     return drivers->refSerial.getGameData().stageTimeRemaining;
 }
 

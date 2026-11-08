@@ -106,9 +106,6 @@ public:
             }
 
         }
-        if(drivers->remote.keyPressed(Remote::Key::CTRL)){
-        cool.integer=drivers->refWrapper.connectedToServer();
-        }
     }
 
 private:

@@ -41,7 +41,7 @@ public:
     // functions we are using
     void initialize() override {
         // Initialize subsystems (registration is internal)
-        gimbal.initialize();
+        // gimbal.initialize();
         flywheel.initialize();
         indexer.initialize();
         drivetrain.initialize();
@@ -73,7 +73,7 @@ public:
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse); //press g to start robot
-        // drivers->commandScheduler.addCommand(&draw); //tries to draw immediately, doesn't always work well
+        drivers->commandScheduler.addCommand(&draw); //tries to draw immediately, doesn't always work well
 
         // drive commands and also enable mouse looking
 
