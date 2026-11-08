@@ -15,7 +15,7 @@
     "MCB-project/Pipfile": true,
     "MCB-project/Pipfile.lock": true
   },
-  "C_Cpp.errorSquiggles": "Enabled",
+  "C_Cpp.errorSquiggles": "enabled",
   "C_Cpp.default.includePath": [
     "MCB-project/taproot/src",
     "MCB-project/src"
