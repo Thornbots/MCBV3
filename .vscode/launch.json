@@ -53,7 +53,11 @@
       "executable": "${workspaceFolder}/MCB-project/build/hardware/scons-debug/MCB-project.elf",
       "device": "STM32F407IG",
       "configFiles": ["${workspaceFolder}/MCB-project/openocd.cfg"],
-      "runToEntryPoint": "main"
+      "runToEntryPoint": "main",
+      "liveWatch": {
+        "enabled": true,
+        "samplesPerSecond": 4
+      }
     },
     {
       // Attaches to firmware already running on the board without flashing.
@@ -65,7 +69,11 @@
       "cwd": "${workspaceFolder}",
       "executable": "${workspaceFolder}/MCB-project/build/hardware/scons-debug/MCB-project.elf",
       "device": "STM32F407IG",
-      "configFiles": ["${workspaceFolder}/MCB-project/openocd.cfg"]
+      "configFiles": ["${workspaceFolder}/MCB-project/openocd.cfg"],
+      "liveWatch": {
+        "enabled": true,
+        "samplesPerSecond": 4
+      }
     }
   ]
 }
