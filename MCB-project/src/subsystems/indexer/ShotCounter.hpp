@@ -32,7 +32,7 @@ public:
     }
 
     bool canShootAgain() {
-        return ((float)estHeat+getHeatPerBall()*HEAT_PER_BALL_MULT) <= ((float) drivers->refSerial.getRobotData().turret.heatLimit);
+        return ((float)estHeat+getHeatPerBall()*HEAT_PER_BALL_MULT) <= (drivers->refWrapper.getHeatLimit());
     }
 
     uint32_t getTimesIncremented() {
@@ -53,9 +53,7 @@ public:
     }
     
     float getEstHeatRatio() {
-        if(drivers->refSerial.getRefSerialReceivingData())
-            return ((float) estHeat)/drivers->refSerial.getRobotData().turret.heatLimit;
-        return 0;
+        return ((float) estHeat)/drivers->refWrapper.getHeatLimit();
     }
     
     
@@ -89,13 +87,13 @@ private:
 
     void applyCooling() {
         // delta time[ms] * cooling[heat/s] / 1000[ms to s]
-        int32_t heatDiff = (tap::arch::clock::getTimeMilliseconds()-prevMillis)*(drivers->refSerial.getRobotData().turret.coolingRate)/1000;
+        int32_t heatDiff = (tap::arch::clock::getTimeMilliseconds()-prevMillis)*(drivers->refWrapper.getCoolingRate())/1000;
         if(heatDiff>0){ //could be 0 if not enough time has passed
             estHeat-=heatDiff;
             if(estHeat<0) estHeat=0; //can't be negative heat
 
             // change the time by the amount of cooling you applied
-            prevMillis += heatDiff*1000/(drivers->refSerial.getRobotData().turret.coolingRate);
+            prevMillis += heatDiff*1000/(drivers->refWrapper.getCoolingRate());
         }
     }
 

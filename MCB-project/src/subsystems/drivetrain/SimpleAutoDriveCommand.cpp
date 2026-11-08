@@ -27,7 +27,6 @@ namespace commands {
             setDirection();
             bool fasterSpinning = false;
             
-            tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
 
             // if reached target, choose new target
             if (positionCommand.isFinished()) {
@@ -35,8 +34,8 @@ namespace commands {
                 int size = targets.size();
 
                 // if in 3v3 match, wait for match to start before moving
-                if (drivers->refSerial.getRefSerialReceivingData() && (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
-                    allowAdvancing = allowAdvancing && drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME;
+                if (drivers->refWrapper.connectedToServer()) {
+                    allowAdvancing = allowAdvancing && drivers->refWrapper.inGame();
                 }
 
                 // if not moving, don't think you are stuck
@@ -47,7 +46,7 @@ namespace commands {
                     stuckTimer.restart(STUCK_TIMER_AMOUNT);
                     if (targetIndex<size-1) {
                         // there is somewhere to go
-                        if(gameData.gameStage == RefSerialData::Rx::GameStage::IN_GAME)  //comment this out to test withoug a server
+                        if(!drivers->refWrapper.connectedToServer() || drivers->refWrapper.inGame())  //comment this out to test withoug a server
                             targetIndex++;
                         
                         if (needToApplyInitialPointChange) {
@@ -101,7 +100,7 @@ namespace commands {
     void SimpleAutoDriveCommand::end(bool) { isScheduled = false; }
     
     void SimpleAutoDriveCommand::setupMap() {
-        bool isBlue = drivers->refSerial.isBlueTeam(drivers->refSerial.getRobotData().robotId);
+        bool isBlue = drivers->refWrapper.isBlue();
         int m = isBlue ? -1 : 1;
 
         // Each waypoint is (forward, left) from the team's start, along the heading at power-on;

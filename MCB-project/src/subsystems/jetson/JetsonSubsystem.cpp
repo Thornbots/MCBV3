@@ -45,27 +45,22 @@ void JetsonSubsystem::refresh() {
             };
             sendMsg(&p);
         } else {  // if(drivers->refSerial.getRefSerialReceivingData()) {
-
-            tap::communication::serial::RefSerial::Rx::GameData gameData = drivers->refSerial.getGameData();
-            tap::communication::serial::RefSerial::Rx::RobotData robotData = drivers->refSerial.getRobotData();
             const float chassisWorldYaw = drivers->bmi088.getYaw() - gimbal->getYawEncoderValue();
             const float deltaAngleGotHitIn = drivers->hitTracker.getAngleForRefSys(chassisWorldYaw);
             RefSys r{
-                (uint8_t)gameData.gameStage,
-                (uint16_t)gameData.stageTimeRemaining,
-                (uint16_t)robotData.currentHp,
-                static_cast<uint8_t>(static_cast<uint8_t>(robotData.robotId) % 100),  // blue hero is 101, we want to send 1
+                (uint8_t)drivers->refWrapper.getGameStage(),
+                (uint16_t)drivers->refWrapper.getStageTime(),
+                drivers->refWrapper.getCurrentHp(),
+                drivers->refWrapper.getRedTeamId(),  // blue hero is 101, we want to send 1
                 deltaAngleGotHitIn,
-                // 12.34,
-                static_cast<uint8_t>(drivers->refSerial.isBlueTeam(robotData.robotId) << 7 | (robotData.robotBuffStatus.recoveryBuff > 0) << 6 |
-                    (robotData.rfidStatus.any(
-                        tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE | tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_INSIDE_EXCHANGE))
-                        << 5 |
-                    robotData.rfidStatus.any(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::CENTRAL_BUFF) << 4 |
-                    gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_TEAM) << 3 |
-                    gameData.eventData.siteData.any(tap::communication::serial::RefSerial::Rx::SiteData::CENTRAL_BUFF_OCCUPIED_OPPONENT) << 2 |
-                    robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::CHASSIS_HAS_POWER) << 1 |
-                    robotData.robotPower.any(tap::communication::serial::RefSerial::Rx::RobotPower::GIMBAL_HAS_POWER))};
+                (uint8_t) (drivers->refWrapper.isBlue() << 7 | 
+                drivers->refWrapper.isHealing() << 6 |
+                drivers->refWrapper.isInHealZone() << 5 |
+                drivers->refWrapper.isAtCenter() << 4 |
+                drivers->refWrapper.teamHasCenter() << 3 |
+                drivers->refWrapper.opponentHasCenter() << 2 |
+                drivers->refWrapper.chassisHasPower() << 1 |
+                drivers->refWrapper.gimbalHasPower())};
             // needToSendRefData = !
             if (sendMsg(&r)) drivers->hitTracker.consumeReportedHit();
             messageCount = 0;

@@ -28,7 +28,7 @@
 
 #include "communication/I2CCommunication.hpp"
 #include "communication/UARTCommunication.hpp"
-
+#include "util/RefWrapper.hpp"
 #include "util/hitTracker.hpp"
 
 #define PRINT(msg_to_send ...) ({\
@@ -147,6 +147,7 @@ public:
     communication::I2CCommunication i2c;
     communication::UARTCommunication uart;
     ImuRecalibration recal;
+    RefWrapper refWrapper{this};
     HitTracker hitTracker{this}; 
 
     

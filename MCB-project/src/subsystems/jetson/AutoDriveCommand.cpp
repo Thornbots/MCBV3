@@ -30,13 +30,13 @@ void AutoDriveCommand::execute() {
         allowSpinning = false;
         allowMoving = false;
 
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
+        if (drivers->refWrapper.inGame()) {
             // allow both
             allowSpinning = true;
             allowMoving = true;
         }
 
-        if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
+        if (drivers->refWrapper.inCountdown()) {
             // countdown, only allow spinning
             allowSpinning = true;
         }

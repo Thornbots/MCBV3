@@ -19,25 +19,18 @@ public:
     }
 
     void update() {
-        
-        // if(drivers->remote.keyPressed(Remote::Key::R))
-        //     drivers->recal.requestRecalibration();
+        number.integer = drivers->refWrapper.getStageTime();
+        number.calculateNumbers();
+        number.x = X_POSITION - number.width/2;
 
-        if (drivers->refSerial.getRefSerialReceivingData()) {
-            RefSerialData::Rx::GameData gameData = drivers->refSerial.getGameData();
-            number.integer = gameData.stageTimeRemaining;
-            number.calculateNumbers();
-            number.x = X_POSITION - number.width/2;
-
-            if(gameData.gameStage == RefSerialData::Rx::GameStage::INITIALIZATION){
-                number.color = UISubsystem::Color::ORANGE;
-                number.show();
-            } else if(gameData.gameStage == RefSerialData::Rx::GameStage::COUNTDOWN){
-                number.color = UISubsystem::Color::CYAN;
-                number.show();
-            } else {
-                number.hide();
-            }
+        if(drivers->refWrapper.inInitialization()){
+            number.color = UISubsystem::Color::ORANGE;
+            number.show();
+        } else if(drivers->refWrapper.inCountdown()){
+            number.color = UISubsystem::Color::CYAN;
+            number.show();
+        } else {
+            number.hide();
         }
     }
 
