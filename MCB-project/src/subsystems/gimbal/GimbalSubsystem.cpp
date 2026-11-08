@@ -134,6 +134,7 @@ void GimbalSubsystem::stopMotors() {
     yawMotorVoltage = 0;
     
     //all robots with 3508 turrets
+    //all robots with 3508 turrets
     resetEncoderIfGainPower();
     targetYawAngleWorld = yawAngleRelativeWorld;
 
@@ -206,6 +207,8 @@ float GimbalSubsystem::getYawEncoderValue() {
 }
 
 float GimbalSubsystem::getPitchEncoderValue() { //more like get pitch relative to frame
+    float temp = std::fmod(motorPitch->getEncoder()->getPosition().getUnwrappedValue() / PITCH_RATIO - PITCH_OFFSET, 2 * PI);
+    return temp;
     float temp = std::fmod(motorPitch->getEncoder()->getPosition().getUnwrappedValue() / PITCH_RATIO - PITCH_OFFSET, 2 * PI);
     return temp;
 }
