@@ -12,7 +12,8 @@
     // Flashing needs the CMSIS-DAP probe: share host USB (major 189) with hotplug.
     "runArgs": [
         "--device-cgroup-rule=c 189:* rmw",
-        "-v", "/dev/bus/usb:/dev/bus/usb"
+        "-v",
+        "/dev/bus/usb:/dev/bus/usb"
     ],
     // Non-root, remapped to the host UID, so build output and .git stay host-owned.
     "remoteUser": "ubuntu",
@@ -28,8 +29,7 @@
         "vscode": {
             "extensions": [
                 "marus25.cortex-debug",
-                "ms-vscode.cpptools",
-                "aruwrobotchooser.robot-chooser"
+                "ms-vscode.cpptools"
             ],
             "settings": {
                 "cortex-debug.gdbPath": "gdb-multiarch"
