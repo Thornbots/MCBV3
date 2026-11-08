@@ -197,7 +197,9 @@ float GimbalSubsystem::getYawEncoderValue() {
 
 float GimbalSubsystem::getPitchEncoderValue() {  // more like get pitch relative to frame
     float raw = (motorPitch->getEncoder()->getPosition().getUnwrappedValue());
-    return std::fmod(raw / PITCH_RATIO - PITCH_OFFSET, 2 * PI);
+    pitchAngle = std::fmod(raw / PITCH_RATIO - PITCH_OFFSET, 2 * PI);
+    pitchAngleRaw = raw/PITCH_RATIO;
+    return pitchAngle;
 }
 float GimbalSubsystem::getYawVel() { return motorYaw->getEncoder()->getVelocity() / YAW_TOTAL_RATIO; }
 float GimbalSubsystem::getPitchVel() { return motorPitch->getEncoder()->getVelocity(); }

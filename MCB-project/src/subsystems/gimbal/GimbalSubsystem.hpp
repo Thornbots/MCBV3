@@ -9,21 +9,16 @@
 #include "tap/control/subsystem.hpp"
 #include "tap/motor/dji_motor.hpp"
 
-#include "controllers/PitchController.hpp"
 #include "controllers/AngleSetpointRate.hpp"
+#include "controllers/PitchController.hpp"
 #include "controllers/YawController.hpp"
-#include "drivers.hpp"
+
 #include "GimbalSubsystemConstants.hpp"
+#include "drivers.hpp"
 
+namespace subsystems {
 
-
-
-namespace subsystems
-{
-
-class GimbalSubsystem : public tap::control::Subsystem
-{
-
+class GimbalSubsystem : public tap::control::Subsystem {
 private:  // Private Variables
     src::Drivers* drivers;
     // TODO: Check all motor ID's, and verify indexers and flywheels are in the correct direction
@@ -36,13 +31,13 @@ private:  // Private Variables
     void applyYawSetpoint(float changeInTargetYaw, float targetPitch, float targetYawRate);
 
     float pitchMotorVoltage, yawMotorVoltage;
-
+    float pitchAngle = 0.0;
+    float pitchAngleRaw = 0.0;
     float driveTrainAngularVelocity, yawAngularVelocity, yawAngleRelativeWorld = 0.0;
     float gimbalPitchAngleRelativeWorld, gimbalPitchAngularVelocity;
     float yawEncoderCache = 0;
     float driveTrainEncoder = 0.0;
-    float stickAccumulator = 0, targetYawAngleWorld = 0,
-          targetDTVelocityWorld = 0;
+    float stickAccumulator = 0, targetYawAngleWorld = 0, targetDTVelocityWorld = 0;
 
     float positionHistory[LATENCY_Q_SIZE];
 
@@ -50,7 +45,6 @@ private:  // Private Variables
     std::mt19937 gen{std::mt19937::default_seed};
     std::uniform_int_distribution<int> distYaw;
     std::uniform_int_distribution<int> distPitch;
-
     float prevTargetPitch = 0;
     bool wasYawMotorOffline = true;
 
@@ -80,7 +74,7 @@ public:  // Public Methods
 
     float getPrevTargetPitch();
     void setPrevTargetPitch(float value);
-    
+
 #ifdef MCB_HOSTED
     float getHostedTargetYaw() const { return targetYawAngleWorld; }
 #endif
@@ -90,7 +84,6 @@ public:  // Public Methods
      */
 
     void updateMotorsAndVelocity(float changeInTargetYaw, float targetPitch, float targetYawVel, float targetPitchVel);
-
 
     void updateMotorsAndVelocityWithLatencyCompensation(float changeInTargetYaw, float targetPitch, float targetYawVel, float targetPitchVel);
 
@@ -126,12 +119,10 @@ public:  // Public Methods
 
     void setAngles(float yawAngle, float pitchAngle);
 
-
 private:  // Private Methods
     int getPitchVoltage(float targetAngle, float pitchAngleRelativeGimbal, float pitchAngularVelocity, float dt);
     int getYawVoltage(float driveTrainAngularVelocity, float yawAngleRelativeWorld, float yawAngularVelocity, float desiredAngleWorld, float inputVel, float dt);
 
     void resetEncoderIfGainPower();
-
 };
 }  // namespace subsystems
