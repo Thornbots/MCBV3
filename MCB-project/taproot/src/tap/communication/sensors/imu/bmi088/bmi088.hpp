@@ -32,6 +32,10 @@
 #include "tap/util_macros.hpp"
 
 #include "bmi088_data.hpp"
+#ifdef MCB_HOSTED
+#include <cmath>
+#include "hosted/sensor_state.hpp"
+#endif
 
 namespace tap
 {
@@ -61,22 +65,37 @@ public:
     DISALLOW_COPY_AND_ASSIGN(Bmi088)
     mockable ~Bmi088() = default;
 
+#ifdef MCB_HOSTED
+    // Calibrated hardware readings, visible through both src::Drivers and tap::Drivers.
+    float getYaw() const override {
+        float yaw = std::fmod(hosted::sensors.yaw, 2 * M_PI);
+        return yaw < 0 ? yaw + 2 * M_PI : yaw;
+    }
+    float getGz() const override { return hosted::sensors.yawRate; }
+    float getGx() const override { return 0; }
+    float getRoll() const override { return 0; }
+    void requestCalibration() override {}
+    ImuState getImuState() const override { return ImuState::IMU_CALIBRATED; }
+#endif
+
     static constexpr Acc::AccRange_t ACC_RANGE = Acc::AccRange::G3;
     static constexpr Gyro::GyroRange_t GYRO_RANGE = Gyro::GyroRange::DPS2000;
     /**
-     * The maximum angular velocity in degrees / second that the gyro can read based on GYRO_RANGE
+     * The maximum angular velocity in radians / second that the gyro can read based on GYRO_RANGE
      * specified above.
      */
-    static constexpr float GYRO_RANGE_MAX_DS = 2000.0f;
+    static constexpr float GYRO_RANGE_MAX_RAD_PER_S = modm::toRadian(2000.0f);
 
-    static constexpr float BMI088_TEMP_FACTOR = 0.125f; //See spec sheet for the meaning of htis
+    static constexpr float BMI088_TEMP_FACTOR = 0.125f;
     static constexpr float BMI088_TEMP_OFFSET = 23.0f;
 
+    static constexpr float BMI088_TARGET_TEMP = 35.0f;
+
     /**
-     * Used to convert raw gyro values to units of degrees / second. Ratio has units
-     * (degrees / second) / gyro counts.
+     * Used to convert raw gyro values to units of radians / second. Ratio has units
+     * (radians / second) / gyro counts.
      */
-    static constexpr float GYRO_DS_PER_GYRO_COUNT = GYRO_RANGE_MAX_DS / 32767.0f;
+    static constexpr float GYRO_RAD_PER_S_PER_GYRO_COUNT = GYRO_RANGE_MAX_RAD_PER_S / 32767.0f;
 
     /**
      * Refer to page 27 of the bmi088 datasheet for explination of this equation.
@@ -121,7 +140,10 @@ public:
 private:
     Drivers *drivers;
 
-    inline float getAccelerationSensitivity() override { return ACC_G_PER_ACC_COUNT; }
+    inline float getAccelerationSensitivity() const override
+    {
+        return tap::algorithms::ACCELERATION_GRAVITY / ACC_G_PER_ACC_COUNT;
+    }
 
     static constexpr uint16_t RAW_TEMPERATURE_TO_APPLY_OFFSET = 1023;
     /// Offset parsed temperature reading by this amount if > RAW_TEMPERATURE_TO_APPLY_OFFSET.
@@ -129,8 +151,8 @@ private:
 
     imu_heater::ImuHeater imuHeater;
 
-    Acc::AccBandwidth accOversampling = Acc::AccBandwidth::OSR4_OVERSAMPLING;
-    Acc::AccOutputRate accOutputRate = Acc::AccOutputRate::Hz1600;
+    Acc::AccBandwidth accOversampling = Acc::AccBandwidth::NORMAL;
+    Acc::AccOutputRate accOutputRate = Acc::AccOutputRate::Hz800;
 
     void initializeAcc();
 

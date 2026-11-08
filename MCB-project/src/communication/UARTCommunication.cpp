@@ -1,13 +1,13 @@
 #include "UARTCommunication.hpp"
 
-#include <chrono>
+#include "tap/architecture/clock.hpp"
 #include <cstring>
 
 namespace communication {
 UARTCommunication::UARTCommunication(tap::Drivers* drivers, tap::communication::serial::Uart::UartPort _port, bool isRxCRCEnforcementEnabled)
     : DJISerial(drivers, _port, isRxCRCEnforcementEnabled),
-      port(_port),
-      hasNewData(false) {
+      hasNewData(false),
+      port(_port) {
     // Good practice
     memset(&mostRecentMessage, 0, sizeof(uartMsg));
     // Initial time
@@ -35,7 +35,7 @@ UARTCommunication::outgoingDataFrame::outgoingDataFrame(uint16_t len, uint16_t m
 }
 
 void UARTCommunication::messageReceiveCallback(const ReceivedSerialMessage& completeMessage) {
-    if (completeMessage.header.dataLength <= 0 || completeMessage.data == nullptr) return;
+    if (completeMessage.header.dataLength == 0 || completeMessage.header.dataLength > SERIAL_RX_BUFF_SIZE) return;
     mostRecentMessage.messageType = completeMessage.messageType;
     mostRecentMessage.dataLength = completeMessage.header.dataLength;
     memcpy((void*)mostRecentMessage.data, completeMessage.data, completeMessage.header.dataLength);
@@ -55,8 +55,6 @@ void UARTCommunication::update() {
 const UARTCommunication::uartMsg UARTCommunication::getLastMsg() { return mostRecentMessage; }
 
 bool UARTCommunication::sendMsg(uint8_t* dataToBeSent, uint16_t messageType, uint16_t dataLen) {
-    // Flexible ports?
-    tap::communication::serial::Uart::UartPort currentPort = port;
     // Update the timestamp before sending.
     // output.timestamp = getCurrentTime();
     if (dataLen > SERIAL_RX_BUFF_SIZE) {
@@ -78,15 +76,8 @@ bool UARTCommunication::isConnected() const { return ((getCurrentTime() - lastRe
 
 void UARTCommunication::clearNewDataFlag() { hasNewData = false; }
 
-uint64_t UARTCommunication::getCurrentTime() const {
-    auto now = std::chrono::system_clock::now();
-
-    // Convert the current time to time since epoch
-    auto duration = now.time_since_epoch();
-
-    // Convert duration to milliseconds
-    auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-    return milliseconds;
+uint32_t UARTCommunication::getCurrentTime() const {
+    return tap::arch::clock::getTimeMilliseconds();
 }
 
 tap::communication::serial::Uart::UartPort UARTCommunication::getPort() const { return port; }

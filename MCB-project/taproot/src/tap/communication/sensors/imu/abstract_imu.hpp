@@ -30,6 +30,7 @@
 #include "tap/algorithms/transforms/vector.hpp"
 #include "tap/architecture/periodic_timer.hpp"
 #include "tap/communication/sensors/imu/imu_interface.hpp"
+#include "tap/util_macros.hpp"
 
 namespace tap::communication::sensors::imu
 {
@@ -37,11 +38,14 @@ using tap::algorithms::transforms::Orientation;
 using tap::algorithms::transforms::Transform;
 
 constexpr float GRAVITY_MPS2 = 9.81f;
+/**
+ * A class that represents any directly connected IMU.
+ */
 class AbstractIMU : public ImuInterface
 {
 public:
     AbstractIMU(const Transform& mountingTransform = Transform::identity())
-        : mountingTransform(mountingTransform)
+        : mountingTransform(mountingTransform.getInverse())
     {
     }
 
@@ -57,7 +61,7 @@ public:
      * calibrating, angle, accelerometer, and gyroscope values will return 0. When calibrating
      * the BMI088 should be level, otherwise the IMU will be calibrated incorrectly.
      */
-    virtual void requestCalibration();
+    virtual void requestCalibration() override;
 
     /**
      * Call this function at same rate as intialized sample frequency.
@@ -77,25 +81,25 @@ public:
      */
     virtual ImuState getImuState() const { return imuState; }
 
-    inline float getAx() const override { return accGTransformed.data[0]; }
-    inline float getAy() const override { return accGTransformed.data[1]; }
-    inline float getAz() const override { return accGTransformed.data[2]; }
-    inline float getAzMinusG() const { return accGTransformed.data[2] - GRAVITY_MPS2; }
+    mockable inline float getAx() const override { return imuData.accG.x(); }
+    mockable inline float getAy() const override { return imuData.accG.y(); }
+    mockable inline float getAz() const override { return imuData.accG.z(); }
+    mockable inline float getAzMinusG() const { return imuData.accG.z() - GRAVITY_MPS2; }
 
-    inline float getGx() const override { return gyroDegPerSecTransformed.data[0]; }
-    inline float getGy() const override { return gyroDegPerSecTransformed.data[1]; }
-    inline float getGz() const override { return gyroDegPerSecTransformed.data[2]; }
+    mockable inline float getGx() const override { return imuData.gyroRadPerSec.x(); }
+    mockable inline float getGy() const override { return imuData.gyroRadPerSec.y(); }
+    mockable inline float getGz() const override { return imuData.gyroRadPerSec.z(); }
 
-    inline float getTemp() const override { return imuData.temperature; }
+    mockable inline float getTemp() const { return imuData.temperature; }
 
-    virtual float getYaw() const override { return mahonyAlgorithm.getYaw(); }
-    virtual float getPitch() const override { return mahonyAlgorithm.getPitch(); }
-    virtual float getRoll() const override { return mahonyAlgorithm.getRoll(); }
+    virtual inline float getYaw() const override { return mahonyAlgorithm.getYaw(); }
+    virtual inline float getPitch() const override { return mahonyAlgorithm.getPitch(); }
+    virtual inline float getRoll() const override { return mahonyAlgorithm.getRoll(); }
 
-    virtual float getq0() const override { return mahonyAlgorithm.getq0(); }
-    virtual float getq1() const override { return mahonyAlgorithm.getq1(); }
-    virtual float getq2() const override { return mahonyAlgorithm.getq2(); }
-    virtual float getq3() const override { return mahonyAlgorithm.getq3(); }
+		virtual float getq0() const { return mahonyAlgorithm.getq0(); }
+    virtual float getq1() const { return mahonyAlgorithm.getq1(); }
+    virtual float getq2() const { return mahonyAlgorithm.getq2(); }
+    virtual float getq3() const { return mahonyAlgorithm.getq3(); }
 
     struct ImuData
     {
@@ -104,20 +108,27 @@ public:
         tap::algorithms::transforms::Vector accOffsetRaw = {0, 0, 0};
         tap::algorithms::transforms::Vector gyroOffsetRaw = {0, 0, 0};
         tap::algorithms::transforms::Vector accG = {0, 0, 0};
-        tap::algorithms::transforms::Vector gyroDegPerSec = {0, 0, 0};
+        tap::algorithms::transforms::Vector gyroRadPerSec = {0, 0, 0};
 
         float temperature = 0;
     };
 
     void setCalibrationSamples(int sampleCount) { offsetSampleCount = sampleCount; }
 
-protected:
-    void resetOffsets();
-    void computeOffsets();
     void setAccelOffset(float x, float y, float z);
     void setGyroOffset(float x, float y, float z);
 
-    virtual inline float getAccelerationSensitivity() = 0;
+protected:
+    void resetOffsets();
+    void computeOffsets();
+
+    inline void applyMountingTransformToRaw(ImuData& data)
+    {
+        data.accRaw = mountingTransform.apply(data.accRaw);
+        data.gyroRaw = mountingTransform.apply(data.gyroRaw);
+    }
+
+    virtual inline float getAccelerationSensitivity() const = 0;
 
     tap::algorithms::transforms::Transform mountingTransform;
 
@@ -132,9 +143,6 @@ protected:
     tap::arch::PeriodicMicroTimer readTimeout;
 
     uint32_t prevIMUDataReceivedTime = 0;
-
-    tap::algorithms::CMSISMat<3, 1> gyroDegPerSecTransformed;
-    tap::algorithms::CMSISMat<3, 1> accGTransformed;
 };
 
 }  // namespace tap::communication::sensors::imu

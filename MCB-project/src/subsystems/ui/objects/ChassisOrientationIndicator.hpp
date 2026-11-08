@@ -61,7 +61,7 @@ public:
         if(drivers->refWrapper.isBlue())
             side.color = UISubsystem::Color::CYAN;
         else
-            UISubsystem::Color::PINK;
+            side.color = UISubsystem::Color::PINK;
 
         if(showPlsSpin){
             plsSpinText.setHidden(drivetrain->isPeeking || drivetrain->isBeyblading);

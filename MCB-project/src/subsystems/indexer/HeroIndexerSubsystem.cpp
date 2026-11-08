@@ -5,9 +5,9 @@ namespace subsystems
 
 HeroIndexerSubsystem::HeroIndexerSubsystem(src::Drivers* drivers, tap::motor::DjiMotor* indexTop, tap::motor::DjiMotor* indexBottom)
     : IndexerSubsystem(drivers, indexBottom), //needs one motor to know disconnect, could be either
+    counter(drivers, ShotCounter::BarrelType::TURRET_42MM, indexTop),
     unitTop(   drivers, indexTop,    REV_PER_BALL,        REV_PER_BALL*GEAR_RATIO),
-    unitBottom(drivers, indexBottom, REV_PER_BALL_BOTTOM, REV_PER_BALL_BOTTOM*GEAR_RATIO),
-    counter(drivers, ShotCounter::BarrelType::TURRET_42MM, indexTop)
+    unitBottom(drivers, indexBottom, REV_PER_BALL_BOTTOM, REV_PER_BALL_BOTTOM*GEAR_RATIO)
 {}
 
 void HeroIndexerSubsystem::finishInitialize() {

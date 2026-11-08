@@ -1,3 +1,4 @@
+#pragma once
 #include "tap/control/sequential_command.hpp"
 
 #include "robots/RobotControl.hpp"
@@ -72,7 +73,7 @@ public:
         // implement speed mode
 
         toggleUIKey.onTrue(&draw)->onTrue(&drivetrainFollowKeyboard)->onTrue(&lookMouse);  // press g to start robot
-        // drivers->commandScheduler.addCommand(&draw); //tries to draw immediately, doesn't always work well
+        drivers->commandScheduler.addCommand(&draw); //tries to draw immediately, doesn't always work well
 
         // drive commands and also enable mouse looking
 
@@ -182,15 +183,17 @@ public:
     subsystems::JetsonSubsystem jetson{drivers, &gimbal, &odo};
 
     // commands
-    commands::SentryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain};
 
     commands::JoystickMoveCommand lookJoystick{drivers, &gimbal};
-    commands::MouseMoveCommand lookMouse{drivers, &gimbal};
+    // commands::MouseMoveCommand lookMouse{drivers, &gimbal};
+    commands::AutoAimAndFireCommand lookMouse{drivers, &gimbal, &indexer, &flywheel, &jetson, &odo, &autoDrive, true};
     commands::GimbalStopCommand stopGimbal{drivers, &gimbal};
-    commands::AutoDriveCommand autoDrive{drivers, &drivetrain, &gimbal, &jetson};
+    commands::AutoDriveCommand autoDrive{drivers, &drivetrain, &gimbal, &jetson, &odo};
     commands::SimpleAutoDriveCommand simpleAutoDrive{drivers, &drivetrain, &gimbal, &odo, commands::SimpleAutoDriveCommand::TargetMode::ARCC_ROUGH_PATH};
-    commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, &autoDrive};
+    commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, &odo, &autoDrive, false};
 
+    commands::SentryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &lookMouse};
+    
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};
 

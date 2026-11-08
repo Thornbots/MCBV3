@@ -2,9 +2,6 @@
 
 #include "modm/math/geometry/vector.hpp"
 
-// here tune confidence
-static constexpr float MSG_CONFIDENCE_CUTOFF = 0.75f; //lower than this confidence is ignored
-
 //here tune allow 'cone' (we are just checking yaw)
 static constexpr float YAW_OUT_SHOOT_THRESH = PI / 3; //if cv wants to move the yaw less than this amount, allow shooting
 static constexpr float MAX_SHOOT_DIST = 3.0f; //if the panel is too far just keep patrolling
@@ -46,7 +43,7 @@ static constexpr float cameraYoffset = 0.1;
 static constexpr float cameraZoffset = 54.791/1000; //pretty sure z is up down (stedman)
 
 
-static constexpr float initialShotVelocity = 24.0;           // Shot velocity
+static constexpr float initialShotVelocity = 21.5;           // Shot velocity
 
 static constexpr float l = 0.02;           // Combined camera + Jetson latency
 static constexpr float deltaTime = 0.0166;  // Frame time

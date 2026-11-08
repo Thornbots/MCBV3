@@ -43,7 +43,7 @@ void AbstractIMU::requestCalibration()
 
 void AbstractIMU::setMountingTransform(const Transform& transform)
 {
-    mountingTransform = transform;
+    mountingTransform = transform.getInverse();
 }
 
 void AbstractIMU::periodicIMUUpdate()
@@ -54,15 +54,13 @@ void AbstractIMU::periodicIMUUpdate()
     }
     else
     {
-        gyroDegPerSecTransformed = mountingTransform.getRotation().matrix() * imuData.gyroDegPerSec.coordinates();
-        accGTransformed = mountingTransform.getRotation().matrix() * imuData.accG.coordinates();
         mahonyAlgorithm.updateIMU(
-            gyroDegPerSecTransformed.data[0],
-            gyroDegPerSecTransformed.data[1],
-            gyroDegPerSecTransformed.data[2],
-            accGTransformed.data[0],
-            accGTransformed.data[1],
-            accGTransformed.data[2]);
+            imuData.gyroRadPerSec.x(),
+            imuData.gyroRadPerSec.y(),
+            imuData.gyroRadPerSec.z(),
+            imuData.accG.x(),
+            imuData.accG.y(),
+            imuData.accG.z());
     }
 }
 

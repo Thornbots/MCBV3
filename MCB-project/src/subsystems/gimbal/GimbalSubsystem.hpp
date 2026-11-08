@@ -10,6 +10,7 @@
 #include "tap/motor/dji_motor.hpp"
 
 #include "controllers/PitchController.hpp"
+#include "controllers/AngleSetpointRate.hpp"
 #include "controllers/YawController.hpp"
 #include "drivers.hpp"
 #include "GimbalSubsystemConstants.hpp"
@@ -31,6 +32,8 @@ private:  // Private Variables
 
     YawController yawController;  // default constructor
     PitchController pitchController;
+    AngleSetpointRate absoluteYawRate;
+    void applyYawSetpoint(float changeInTargetYaw, float targetPitch, float targetYawRate);
 
     float pitchMotorVoltage, yawMotorVoltage;
 
@@ -44,8 +47,7 @@ private:  // Private Variables
     float positionHistory[LATENCY_Q_SIZE];
 
     // for sysid
-    std::random_device rd;
-    std::mt19937 gen;
+    std::mt19937 gen{std::mt19937::default_seed};
     std::uniform_int_distribution<int> distYaw;
     std::uniform_int_distribution<int> distPitch;
 
@@ -77,6 +79,9 @@ public:  // Public Methods
     void updateMotors(float changeInTargetYaw, float targetPitch);
 
     float getPrevTargetPitch();
+#ifdef MCB_HOSTED
+    float getHostedTargetYaw() const { return targetYawAngleWorld; }
+#endif
 
     /*
      *   Straight up gives a full state for the controllers to target

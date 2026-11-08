@@ -19,7 +19,8 @@ void MoveToPositionCommand::execute() {
     }
 
 
-    float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
+    // minus the chassis' field heading: the IMU's zero is the start's heading
+    float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld() - odo->getStartYaw();
 
 
     // Vector2d targetPositionAdjusted = targetPosition.vec() + startPosition;

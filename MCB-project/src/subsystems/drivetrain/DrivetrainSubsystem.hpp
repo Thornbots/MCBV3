@@ -19,10 +19,7 @@ private:                                            // Private Variables
 
     tap::motor::DjiMotor* motorArray[4];
 
-    
-
     Pose2d lastDrive;
-
 
     float motorCurrent[4] = {0.0f,0.0f,0.0f,0.0f};
 
@@ -33,9 +30,11 @@ private:                                            // Private Variables
     tap::algorithms::SmoothPid rotationPIDController;
     float boost;
     float throttle;
-   
 
 public:  // Public Methods
+#ifdef MCB_HOSTED
+    Pose2d getHostedTargetVelocity() const { return controller.hostedTargetVelocity; }
+#endif
     float powerLimit; //default value
     float angularVel;
     DrivetrainSubsystem(src::Drivers* driver, tap::motor::DjiMotor* motorOne, tap::motor::DjiMotor* motorTwo, tap::motor::DjiMotor* motorThree, tap::motor::DjiMotor* motorFour);

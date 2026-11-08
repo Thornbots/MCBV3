@@ -32,10 +32,8 @@ SYS_ID_DEFINES                      = {"none": "no_sysid",
                                        "yaw": "yaw_sysid",
                                        "odo": "odom_sysid"}
 
-ROBOT_TYPE_DEFINES                  = {"oldinfantry": "OLDINFANTRY",
-                                       "oldstandard": "OLDINFANTRY",
-                                       "OLDINFANTRY": "OLDINFANTRY",
-                                       "OLDSTANDARD": "OLDINFANTRY",
+ROBOT_TYPE_DEFINES                  = {"engineer": "ENGINEER",
+                                       "ENGINEER": "ENGINEER",
                                        "infantry": "INFANTRY",
                                        "standard": "INFANTRY",
                                        "INFANTRY": "INFANTRY",
@@ -57,7 +55,7 @@ USAGE = "Usage: scons <target> [profile=<debug|release|fast>] [robot=<ROBOT_TYPE
         - \"run-sim\": build all code for the simulated environment, for the current host platform, and execute the simulator locally.\n\
     \"robot=<ROBOT_TYPE>\" is an optional argument that can override whatever robot type has been specified in robot_type.hpp.\n\
         - <ROBOT_TYPE> has a few aliases but will be one of the following:\n\
-            - OLDINFANTRY, INFANTRY, HERO, SENTRY.\n\
+            - ENGINEER, INFANTRY, HERO, SENTRY.\n\
         - \"sysid\" lets you run sysid stuff yay"
 
 
@@ -123,8 +121,8 @@ def parse_args():
         raise Exception(rtype+ " is an invalid robot type.\n" + USAGE)
     else: #nothing defined so do none
         print( "======================================================================================")
-        print(f"          !!!WARNING!!!: No robot type was specified, defaulting to OLDINFANTRY          ")
-        args["ROBOT_TYPE"] = ROBOT_TYPE_DEFINES["OLDINFANTRY"]
+        print(f"          !!!WARNING!!!: No robot type was specified, defaulting to ENGINEER          ")
+        args["ROBOT_TYPE"] = ROBOT_TYPE_DEFINES["ENGINEER"]
 
     print( "======================================================================================")
 #=================================================================================================================

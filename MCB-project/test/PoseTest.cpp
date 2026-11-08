@@ -44,7 +44,7 @@ TEST_F(Pose2dTest, ArrayConstructor) {
 TEST_F(Pose2dTest, EqualityOperator) {
     Pose2d p3(3.0f, 4.0f, 1.57f);
     EXPECT_EQ(p1, p3);
-    EXPECT_NE(p1, p2);
+    EXPECT_FALSE(p1 == p2);
 }
 
 // Test addition operator

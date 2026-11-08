@@ -7,6 +7,10 @@ void MouseMoveCommand::initialize() {
 }
 
 void MouseMoveCommand::execute() {
+    executeWith(drivers, gimbal);
+}
+
+void MouseMoveCommand::executeWith(src::Drivers* drivers, GimbalSubsystem* gimbal) {
     float yawInc = MOUSE_YAW_PROPORTIONAL * (drivers->remote.getMouseX());
     float pitchInc = MOUSE_PITCH_PROPORTIONAL * (drivers->remote.getMouseY());
 

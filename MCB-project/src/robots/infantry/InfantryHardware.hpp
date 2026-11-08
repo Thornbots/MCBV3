@@ -29,13 +29,13 @@ public:
         0.01f};
 
     //motors
-    DjiMotor flywheelMotor1{drivers, MotorId::MOTOR5, CanBus::CAN_BUS2, false, "Flywheel"};
-    DjiMotor flywheelMotor2{drivers, MotorId::MOTOR8, CanBus::CAN_BUS2, true, "Flywheel 2"};
+    DjiMotor flywheelMotor1{drivers, MotorId::MOTOR3, CanBus::CAN_BUS2, false, "Top Flywheel"};
+    DjiMotor flywheelMotor2{drivers, MotorId::MOTOR2, CanBus::CAN_BUS2, true, "Bottom Flywheel"};
 
     DjiMotor yawMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS1, false, "Yaw"};
-    DjiMotor pitchMotor{drivers, MotorId::MOTOR6, CanBus::CAN_BUS2, false, "Pitch"};
+    DjiMotor pitchMotor{drivers, MotorId::MOTOR6, CanBus::CAN_BUS2, true, "Pitch"};
 
-    DjiMotor indexMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS2, false, "Indexer2"};
+    DjiMotor indexMotor{drivers, MotorId::MOTOR7, CanBus::CAN_BUS2, true, "Indexer"};
 
     DjiMotor driveMotor1{drivers, MotorId::MOTOR1, CanBus::CAN_BUS1, false, "Motor 1"};
     DjiMotor driveMotor2{drivers, MotorId::MOTOR2, CanBus::CAN_BUS1, false, "Motor 2"};

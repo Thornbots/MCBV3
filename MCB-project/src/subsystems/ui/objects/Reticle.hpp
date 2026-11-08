@@ -181,7 +181,7 @@ public:
         solvedForPitchLandingSpotThisCycle = false;
         int numThings = solveMode == ReticleSolveMode::FOR_DISTANCE ? 1 : NUM_THINGS;
         for (int i = 0; i < numThings; i++) {
-            Vector3d landingSpot = calculateLandingSpot(&pitch, i);
+            Vector3d landingSpot = calculateLandingSpot(&pitch, i, solveMode, AVERAGE_HEIGHT_OFF_GROUND);
 
             Vector2d r = project(landingSpot + panelEdges[0], pitch);
             Vector2d l = project(landingSpot + panelEdges[1], pitch);
@@ -290,7 +290,7 @@ private:
     
     // for solving for pitch
     static constexpr int MAX_NUM_ITERATIONS = 10;  // it is difficult to actually solve for pitch because initial launch positions depend on pitch
-    int forPitchLandingSpotsSolved[NUM_THINGS];    // so we do a binary search, guessing a pitch, calculating where it lands, and trying a higher or lower pitch accordingly
+    bool forPitchLandingSpotsSolved[NUM_THINGS];    // so we do a binary search, guessing a pitch, calculating where it lands, and trying a higher or lower pitch accordingly
     Vector3d forPitchLandingSpots[NUM_THINGS];
     float forPitchPitches[NUM_THINGS];
     bool solvedForPitchLandingSpotThisCycle = false;  // prevent solving for multiple in one update() cycle so it doesn't take a long time
@@ -306,25 +306,27 @@ private:
         // now get to screen space
         return Projections::vtmSpaceToScreenSpace(temp2);
     }
-
-    // i is index into DISTANCES, ignored if solveMode is FOR_DISTANCE
-    Vector3d calculateLandingSpot(float* pitch, int i) {
+    
+    
+    // initialPos and initialVelo are in pivot space, parallel to the ground so gravity is pulling in the -z direction only
+    static void getInitials(Vector3d* initialPos, Vector3d* initialVelo, float pitch) {
         Vector3d temp{0, initialShotVelocity, 0};
-        Vector3d initialVelo = temp.rotatePitch(-*pitch);
-        Vector3d initialPos{0, 0, 0};  // shot starts in barrel space
-        temp = Projections::barrelSpaceToPivotSpace(initialPos);
-        initialPos = temp.rotatePitch(-*pitch);
-        // initialPos and initialVelo are in pivot space, parallel to the ground so gravity is pulling in the -z direction only
+        *initialVelo = temp.rotatePitch(-pitch);
+        *initialPos = {0, 0, 0};  // shot starts in barrel space
+        temp = Projections::barrelSpaceToPivotSpace(*initialPos);
+        *initialPos = temp.rotatePitch(-pitch);
+    }
 
-        if (solveMode == ReticleSolveMode::FOR_HEIGHT_OFF_GROUND) {
-            float t = (DISTANCES[i] - initialPos.getY()) / initialVelo.getY();  //(distance to travel [meters]) divided by (speed to get there [meters/seconds]) gives (time to get there [seconds])
+    // i is index into DISTANCES, ignored if inputSolveMode is FOR_DISTANCE
+    Vector3d calculateLandingSpot(float* pitch, int i, ReticleSolveMode inputSolveMode, float targetZ) {
 
-            // make sure gravity is negative, the taproot constant is positive, need to subtract
-            float zFinal = initialPos.getZ() + initialVelo.getZ() * t - tap::algorithms::ACCELERATION_GRAVITY / 2 * t * t;
-
-            return Vector3d{initialPos.getX(), DISTANCES[i], zFinal};  // side to side doesn't change, we are defining the down range distance, and we calculated the height
-        } else if (solveMode == ReticleSolveMode::FOR_DISTANCE) {
-            float changeInZ = AVERAGE_HEIGHT_OFF_GROUND - Projections::OFFSET_Z_ROBOT_TO_PITCH_PIVOT - initialPos.getZ();
+        if (inputSolveMode == ReticleSolveMode::FOR_HEIGHT_OFF_GROUND) {
+            return calculateLandingSpotForHeightOffGround(DISTANCES[i], *pitch);
+        } else if (inputSolveMode == ReticleSolveMode::FOR_DISTANCE) {
+            Vector3d initialPos;
+            Vector3d initialVelo;
+            getInitials(&initialPos, &initialVelo, *pitch);
+            float changeInZ = targetZ - Projections::OFFSET_Z_ROBOT_TO_PITCH_PIVOT - initialPos.getZ();
             float distance = initialVelo.getY() * (initialVelo.getZ() + std::sqrt(-2 * tap::algorithms::ACCELERATION_GRAVITY * changeInZ + initialVelo.getZ() * initialVelo.getZ())) /
                              tap::algorithms::ACCELERATION_GRAVITY;
             // side to side doesn't change, we calculated the down range distance, and we are defining the height
@@ -337,29 +339,44 @@ private:
             }
 
             // solve
-            forPitchPitches[i] = 0;
-            solveMode = ReticleSolveMode::FOR_HEIGHT_OFF_GROUND;  // switch to height mode to recurse and calculate the other way
-            for (int j = 0; j < MAX_NUM_ITERATIONS; j++) {
-                forPitchLandingSpots[i] = calculateLandingSpot(forPitchPitches + i, i);
-
-                // this seems backwards, maybe positive pitch is downward?
-                if (forPitchLandingSpots[i].getZ() > AVERAGE_HEIGHT_OFF_GROUND) {
-                    // if j is 0, we add pi/4, 45 degrees
-                    // if j is 1, we add pi/8, 22.5 degrees
-                    forPitchPitches[i] += PI / (4 << j);
-                } else {
-                    // if j is 0, we subtract pi/4, 45 degrees
-                    // if j is 1, we subtract pi/8, 22.5 degrees
-                    forPitchPitches[i] -= PI / (4 << j);
-                }
-            }
-
+            forPitchPitches[i] = solveForPitch(DISTANCES[i], targetZ);
             forPitchLandingSpotsSolved[i] = true;
             solvedForPitchLandingSpotThisCycle = true;
-            solveMode = ReticleSolveMode::FOR_PITCH;  // go back to original mode
-
             *pitch = forPitchPitches[i];
             return forPitchLandingSpots[i];
         }
+    }
+    
+    static Vector3d calculateLandingSpotForHeightOffGround(float distanceDownRange, float pitch) {
+        Vector3d initialPos;
+        Vector3d initialVelo;
+        getInitials(&initialPos, &initialVelo, pitch);
+        float t = (distanceDownRange - initialPos.getY()) / initialVelo.getY();  //(distance to travel [meters]) divided by (speed to get there [meters/seconds]) gives (time to get there [seconds])
+
+        // make sure gravity is negative, the taproot constant is positive, need to subtract
+        float zFinal = initialPos.getZ() + initialVelo.getZ() * t - tap::algorithms::ACCELERATION_GRAVITY / 2 * t * t;
+
+        return Vector3d{initialPos.getX(), distanceDownRange, zFinal};  // side to side doesn't change, we are defining the down range distance, and we calculated the height
+    }
+    
+public:
+    static float solveForPitch(float distanceDownRange, float targetZ) {
+        Vector3d workingLandingSpot{0, 0, 0};
+        float pitch = 0;
+        for (int j = 0; j < MAX_NUM_ITERATIONS; j++) {
+            workingLandingSpot = calculateLandingSpotForHeightOffGround(distanceDownRange, pitch);
+
+            // this seems backwards, maybe positive pitch is downward?
+            if (workingLandingSpot.getZ() > targetZ) {
+                // if j is 0, we add pi/4, 45 degrees
+                // if j is 1, we add pi/8, 22.5 degrees
+                pitch += PI / (4 << j);
+            } else {
+                // if j is 0, we subtract pi/4, 45 degrees
+                // if j is 1, we subtract pi/8, 22.5 degrees
+                pitch -= PI / (4 << j);
+            }
+        }
+        return pitch;
     }
 };

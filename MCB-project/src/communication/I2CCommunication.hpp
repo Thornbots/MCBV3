@@ -1,4 +1,16 @@
 #pragma once
+#ifdef MCB_HOSTED
+#include "hosted/sensors.hpp"
+namespace communication {
+class I2CCommunication {
+public:
+    void initialize() {}
+    void refresh() {}
+    hosted::Encoder encoder;
+    hosted::Pods odom;
+};
+}
+#else
 #include "tap/board/board.hpp"
 
 #include "modm/architecture/interface/i2c_device.hpp"
@@ -39,3 +51,4 @@ public:
 private:
 };
 };  // namespace communication
+#endif

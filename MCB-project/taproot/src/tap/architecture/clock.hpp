@@ -25,6 +25,9 @@
 #define TAPROOT_CLOCK_HPP_
 
 #include <cstdint>
+#ifdef MCB_HOSTED
+#include "hosted/clock.hpp"
+#endif
 
 #ifndef PLATFORM_HOSTED
 #include "modm/platform.hpp"
@@ -34,7 +37,10 @@
 
 namespace tap::arch::clock
 {
-#if defined(PLATFORM_HOSTED) && defined(ENV_UNIT_TESTS)
+#if defined(MCB_HOSTED)
+inline uint32_t getTimeMilliseconds() { return hosted::timeMs; }
+inline uint32_t getTimeMicroseconds() { return hosted::timeMs * 1000; }
+#elif defined(PLATFORM_HOSTED) && defined(ENV_UNIT_TESTS)
 /**
  * Object that allows you to control the global time returned by the `getTime*()` functions. Only a
  * single ClockStub may be constructed in the same scope. This is a stub designed for testing. To

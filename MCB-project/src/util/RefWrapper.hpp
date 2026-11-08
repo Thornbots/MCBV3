@@ -100,7 +100,7 @@ uint16_t getPowerBuffer(){
 }
 
 bool isInHealZone(){
-    return drivers->refSerial.getRobotData().rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESTORATION_ZONE) || drivers->refSerial.getRobotData().rfidStatus.all(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::EXCHANGE_ZONE);
+    return drivers->refSerial.getRobotData().rfidStatus.any(tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_OUTSIDE_EXCHANGE | tap::communication::serial::RefSerial::Rx::RFIDActivationStatus::RESUPPLY_ZONE_INSIDE_EXCHANGE) ;
 }
 
 bool isAtCenter(){

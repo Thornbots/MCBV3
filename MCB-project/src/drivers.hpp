@@ -22,10 +22,14 @@
 #define DRIVERS_HPP_
 
 #include "tap/drivers.hpp"
+#ifdef MCB_HOSTED
+#include "hosted/sensors.hpp"
+#endif
 
 #include "communication/I2CCommunication.hpp"
 #include "communication/UARTCommunication.hpp"
 #include "util/RefWrapper.hpp"
+#include "util/hitTracker.hpp"
 
 #define PRINT(msg_to_send ...) ({\
     char str[BUFSIZ]; \
@@ -144,6 +148,8 @@ public:
     communication::UARTCommunication uart;
     ImuRecalibration recal;
     RefWrapper refWrapper{this};
+    HitTracker hitTracker{this}; 
+
     
     void executeCalibration() {
         this->bmi088.requestCalibration();
@@ -152,6 +158,7 @@ public:
 
     
     void adc1_pa6_init() {
+#ifndef PLATFORM_HOSTED
         // 1. Enable clocks
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
         RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
@@ -196,9 +203,13 @@ public:
         ADC1->CR2 |= ADC_CR2_SWSTART;
         while (!(ADC1->SR & ADC_SR_EOC));
         (void)ADC1->DR;
+#endif
     }
 
     uint16_t adc1_pa6_read() {
+#ifdef PLATFORM_HOSTED
+        return 0;
+#else
         // Start conversion
         ADC1->CR2 |= ADC_CR2_SWSTART;
 
@@ -207,6 +218,7 @@ public:
 
         // Read result clears EOC
         return (uint16_t)ADC1->DR;
+#endif
     }
 
 };  // class Drivers
@@ -217,4 +229,3 @@ public:
 }  // namespace src
 
 #endif  // DRIVERS_HPP_
-

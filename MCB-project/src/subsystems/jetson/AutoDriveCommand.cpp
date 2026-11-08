@@ -1,3 +1,5 @@
+// TODO: ros-driven navigation is going likely going to change a lot
+
 #include "AutoDriveCommand.hpp"
 
 #include "subsystems/drivetrain/DrivetrainSubsystemConstants.hpp"
@@ -13,7 +15,7 @@ void AutoDriveCommand::initialize() {
 
     count = 0;
     
-    targetPosition = Vector2d(drivers->i2c.odom.getX(), drivers->i2c.odom.getY());
+    targetPosition = Vector2d(odo->getX(), odo->getY());
 }
 
 void AutoDriveCommand::execute() {
@@ -21,20 +23,46 @@ void AutoDriveCommand::execute() {
     Vector2d jetsonExpectedPosition = Vector2d(0, 0);
     bool allowSpinning = true;
     bool allowMoving = true;
-    bool allowRelocalize = false;
 
-    float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld();
+    if (drivers->refSerial.getRefSerialReceivingData() && 
+       (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
 
-    bool result = jetson->updateROS(&targetPosition, &targetVelocity, &jetsonExpectedPosition);
+        allowSpinning = false;
+        allowMoving = false;
+
+        if (drivers->refWrapper.inGame()) {
+            // allow both
+            allowSpinning = true;
+            allowMoving = true;
+        }
+
+        if (drivers->refWrapper.inCountdown()) {
+            // countdown, only allow spinning
+            allowSpinning = true;
+        }
+
+    }
+    // allowMoving = false;
+
+    // minus the chassis' field heading: the IMU's zero is the start's heading
+    float referenceAngle = gimbal->getYawEncoderValue() - gimbal->getYawAngleRelativeWorld() - odo->getStartYaw();
+
+    // crude autodrive implementation
+    // count++;
+
+    // if (count > 400) {
+    //     count = 0;
+    // } else if (count > 200) {
+    //     targetPosition = Pose2d(0.05, 0, 0);
+    // } else {
+    //     targetPosition = Pose2d(0, 0, 0);
+    // }
+
+    jetson->updateROS(&targetPosition, &targetVelocity, &jetsonExpectedPosition);
 
 
-    Pose2d currentPosition = Pose2d(drivers->i2c.odom.getX() + offsetX, drivers->i2c.odom.getY() + offsetY, referenceAngle);
+    Pose2d currentPosition = Pose2d(odo->getX() + offsetX, odo->getY() + offsetY, referenceAngle);
     
-    //midpoint is chaos, walls get bumped into, don't trust that jetson knows where it is 
-    if(allowRelocalize && jetsonExpectedPosition != nullptr){
-        Vector2d deviance = jetsonExpectedPosition - currentPosition;
-    }   
-
     float posX = targetPosition.getX();
     float posY = targetPosition.getY();
     float velX = targetVelocity.getX();
@@ -60,7 +88,7 @@ bool AutoDriveCommand::isFinished() const { return !drivers->remote.isConnected(
 
 bool AutoDriveCommand::getIsScheduled() { return isScheduled; }
 
-void AutoDriveCommand::end(bool cancel) { 
+void AutoDriveCommand::end(bool) {
     isScheduled = false;
 }
 

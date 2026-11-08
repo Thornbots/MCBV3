@@ -24,7 +24,6 @@ class OdometrySubsystem : public tap::control::Subsystem
 
 private:  // Private Variables
     src::Drivers* drivers;
-    // TODO: Check all motor ID's, and verify indexers and flywheels are in the correct direction
     tap::motor::DjiMotor* motorOdo;
 
     OdoController odoController;  // default constructor
@@ -33,45 +32,51 @@ private:  // Private Variables
 
     static constexpr float targetOdoAngleWorld = 0;
     
-    // changes as a result of relocalizeTo, used in getX and getY
+    // changes as a result of relocalizeTo, used in getX and getY. Field frame
     float offsetX = 0.0f;
     float offsetY = 0.0f;
 
+    // team from the referee, which picks the start; red until it says blue
+    bool isBlue = false;
+
     // for sysid
-    std::random_device rd;
-    std::mt19937 gen;
+    std::mt19937 gen{std::mt19937::default_seed};
     std::uniform_int_distribution<int> distOdo;
-    Vector2d odoOffset = Vector2d(0, 0);    
+    Vector2d odoOffset = Vector2d(0, 0);
 
 public:  // Public Methods
     OdometrySubsystem(src::Drivers* drivers, tap::motor::DjiMotor* odo);
 
     //~OdometrySubsystem() {}  // Intentionally left blank
 
-    /*
-     * Call this function once, outside of the main loop.
-     * This function will initalize all of the motors, timers, pidControllers, and any other used
-     * object. If you want to know what initializing actually does, ping Teaney in discord, or just
-     * Google it. It's pretty cool.
-     */
     void initialize();
+
+    // getX/getY include the navigation offset replaced by relocalizeTo. Raw
+    // getAimX/getAimY are the field-aligned pod coordinates sent in POSE.
+    // Team selection initializes the raw field origin and startup heading.
 
     // gives x accounting for relocalize offset
     float getX();
     
     // gives y accounting for relocalize offset
     float getY();
+
+    // Continuous field-aligned pod odometry for POSE and aim; never relocalized.
+    float getAimX();
+    float getAimY();
     
     float getXVel();
     float getYVel();
 
     // sets the offsets so that if the odo pods don't move after you call this, getX and getY return newX and newY
     void relocalizeTo(float newX, float newY);
+
+    // field yaw of the heading at power-on (the pods' and the IMU's zero): 0 red, PI blue
+    float getStartYaw();
+
+    // the field point forward and left of the start, along the heading at power-on
+    Vector2d fromStart(float forward, float left);
     
-    /*
-     * reads the right joystick values and updates the internal values of where the gimbal needs to
-     * go
-     */
     void refresh() override;
 
     /*
@@ -79,18 +84,11 @@ public:  // Public Methods
      */
     void updateMotor(float targetOdo, float odoAngleRelativeWorld, float odoVelRelativeWorld, float driveTrainAngularVelocity);
 
-    /*
-     * Call this function to set all Turret motors to stop, calculate the voltage level in
-     * which to achieve this quickly and packages this information for the motors TO BE SENT over
-     * CanBus
-     */
     void stopMotors();
 
     float getOdoEncoderValue();
 
     float getOdoVel();
-
-    // void setOffset(Vector2d offset);
 
 private:  // Private Methods
     int getOdoVoltage(float driveTrainAngularVelocity, float odoAngleRelativeWorld, float odoAngularVelocity, float desiredAngleWorld, float inputVel, float dt);
