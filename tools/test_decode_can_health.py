@@ -3,7 +3,9 @@
 import struct
 import unittest
 
-from decode_can_health import decode
+import argparse
+
+from decode_can_health import command_frames, decode
 
 
 class CanHealthDecoderTest(unittest.TestCase):
@@ -15,6 +17,21 @@ class CanHealthDecoderTest(unittest.TestCase):
                          'TEC=18 REC=52 LEC=6 EPVF=1 BOFF=1 EWGF=1',
                          'send_failures=unavailable'):
             self.assertIn(expected, text)
+
+    def test_load_estimate(self):
+        header = struct.pack('<BIII', 1, 0, 1000, 1000)
+        can1 = struct.pack('<11IB', 0, 0, *([1000] * 4), *([0] * 4), 0, 1)
+        can2 = struct.pack('<11IB', 500, 0, *([0] * 8), 0, 1)
+        text = decode(header + can1 + can2, (1, 2))
+        self.assertIn('load>=55.5-67.5% (feedback 4000/s + commands 1000/s', text)
+        self.assertIn('load>=11.1-13.5% (feedback 0/s + commands 1000/s', text)
+        self.assertNotIn('load', decode(header + can1 + can2))
+
+    def test_command_frames_argument(self):
+        self.assertEqual(command_frames('2,1'), (2, 1))
+        for text in ('2', '1,-1', 'a,b', '1,2,3'):
+            with self.assertRaises(argparse.ArgumentTypeError):
+                command_frames(text)
 
     def test_hosted_fields_are_unavailable(self):
         payload = struct.pack('<BIII', 1, 0, 1000, 0) + bytes(90)

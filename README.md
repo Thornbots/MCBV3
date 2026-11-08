@@ -177,6 +177,16 @@ and skips unrelated DEBUG layouts. Output includes not-ready percentage of
 sampled cycles, events/s, each ID's feedback rate versus 1000/s, and ESR fields.
 These are diagnostic indicators; they do not infer a precise bus-load percentage.
 
+`--command-frames CAN1,CAN2` (command frames each bus sends per 1 ms cycle,
+e.g. `2,1`; one `0x200`/`0x1FF`/`0x1FE`/`0x2FF` frame commands up to four
+motors) adds an estimated load range per bus: counted feedback plus commands on
+ready cycles, times 111–135 bits per 8-byte standard frame (unstuffed to
+worst-case stuffing) at 1 Mbit/s. It is a lower bound: other nodes, error
+frames, retransmissions and feedback IDs above 8 are not counted. Saturation
+shows as rising not-ready with the highest IDs starving first and a clean ESR;
+rising TEC/REC or a nonzero LEC indicates an electrical fault instead. A
+SocketCAN `canbusload` tap measures actual load.
+
 ## MCB Mapping Machine (sentry)
 
 The sentry's Drivers-owned `mapping` object exposes `requestStart()` and
