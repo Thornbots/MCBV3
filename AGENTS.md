@@ -1,7 +1,7 @@
 # MCBV3
 
 Follow [workspace rules](../../AGENTS.md) and [CI](../../docs/CI.md).
-This is an opt-in submodule. Read [build/test guidance](README.md#continuous-integration)
+This is a standard workspace submodule. Read [build/test guidance](README.md#continuous-integration)
 and [GCC compatibility](README.md#gcc-compatibility) before firmware changes.
 
 - Hosted builds use fake hardware, GCC 14; board builds use ARM GCC 13.
