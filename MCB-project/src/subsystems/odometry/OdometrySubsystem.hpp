@@ -95,7 +95,7 @@ public:  // Public Methods
     float getOdoVel();
 
 private:  // Private Methods
-    void updateAimPosition();
+    bool updateAimPosition();
     int getOdoVoltage(float driveTrainAngularVelocity, float odoAngleRelativeWorld, float odoAngularVelocity, float desiredAngleWorld, float inputVel, float dt);
 
     // gets the actual encoder value x. doesn't change after relocalize
