@@ -63,27 +63,13 @@ void AutoAimAndFireCommand::execute() {
     bool allowShooting = true;
     bool allowGimbal = true;
 
-    // if automatic, check if we are in a game, and if we are before it starts, don't allow aiming or shooting
-    // if (!isManualControl && drivers->refSerial.getRefSerialReceivingData() && 
-    //    (drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3)) {
+    if (!isManualControl && drivers->refSerial.getRefSerialReceivingData() &&
+        drivers->refSerial.getGameData().gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3) {
+        const auto stage = drivers->refSerial.getGameData().gameStage;
+        allowShooting = stage == RefSerialData::Rx::GameStage::IN_GAME;
+        allowGimbal = allowShooting || stage == RefSerialData::Rx::GameStage::COUNTDOWN;
+    }
 
-    //     allowShooting = false;
-    //     allowGimbal = false;
-
-    //     if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::IN_GAME) {
-    //         // allow both
-    //         allowShooting = true;
-    //         allowGimbal = true;
-    //     }
-
-    //     //don't spin before match
-    //     if (drivers->refSerial.getGameData().gameStage == RefSerialData::Rx::GameStage::COUNTDOWN) {
-    //         // countdown, only allow gimbal
-    //         allowGimbal = true;
-    //     }
-
-    // }
-    
     const uint32_t nowMs = tap::arch::clock::getTimeMilliseconds();
 
     // Idle look point: aimed at for its validity, never fired at.
