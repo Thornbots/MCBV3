@@ -370,6 +370,118 @@ execute normally; no simulator hook skips firmware initialization.
 
 ### MCBV3 aiming planner
 
+#### Target handoff redesign (proposed; review before implementation)
+
+This design targets `nightly` and its next promotion to `main`. It is not yet
+implemented. The [current implementation](#current-aiming-implementation) below
+describes the existing code. Jetson assignment/update/clear semantics belong to
+the [TARGET_STATE contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#proposed-target-assignment-update-and-clear);
+the [target manager](../../thornbots_pkg/README.md#target_manager-proposed)
+owns their implementation. The bridge remains a translator.
+
+The automatic aim command has two explicit states:
+
+| State | Gimbal behavior | Firing | Transition |
+| --- | --- | --- | --- |
+| WAITING FOR TARGET | Existing idle CV_TARGET looks, firmware patrol and permitted hit turn | Never | An assigned model enters TRACKING AND SHOOTING |
+| TRACKING AND SHOOTING | Propagate the held model and replan every control cycle | Shot window open **and** on target, with existing indexer/referee interlocks | Clear or link expiry enters WAITING FOR TARGET |
+
+Startup and command termination reset to WAITING FOR TARGET. Assignment replaces
+the held model immediately. A track-id change also resets panel selection, spin
+hysteresis and aim-rate history; a same-track refresh preserves them. Clear and
+link expiry discard the held model, cancel any unissued shot request and reset
+planner state before the next firing decision. No shot request survives a target
+change. A shot already physically committed to the indexer cannot be recalled.
+Receipt-based link expiry and flag precedence are defined only in the wire
+contract. Idle CV_TARGET messages cannot replace an assigned model.
+
+**Continuous chase and rates.** Keep the facing-panel chase behavior from
+[PR #140](https://github.com/Thornbots/MCBV3/pull/140), including its panel-switch
+shot windows; do not reimplement that change. Base firmware implementation on
+its branch while it is open, then rebase onto `nightly` after it merges. Replan
+on every 1 ms control cycle, including while a shot is pending. Remove the 25 ms
+replan timer, mid-hold timing term and frozen aim during pending requests.
+Propagate center with constant acceleration and armor with rigid spin from the
+carried model stamp; matching the tracker's Singer decay is optional. Normal
+refresh propagation is about 200 ms; link expiry bounds a stopped sender.
+
+The planner should return yaw/pitch setpoints and their rates from the same
+continuous intercept solution. Pass these rates directly into the absolute-angle
+gimbal controller as feedforward, bypassing `AngleSetpointRate` for tracking.
+Idle absolute points can retain their filtered derivative. Rates include shooter
+motion, panel rotation and ballistic pitch; they must use the same world-yaw,
+positive-down pitch convention as measured feedback. Do not differentiate across
+a panel switch or track handoff: reset the rate history and require the on-target
+gate to settle. With this interface, remove `gimbal_lag_s`: physical following
+error is measured by the gate rather than hidden in a fixed lead offset. Verify
+rate continuity and Type C cycle cost before accepting the implementation.
+
+**On target at muzzle exit.** Let `L` be the calibrated request-to-muzzle latency
+(`FIRING_LATENCY_TIME`). For each axis, evaluate on the MCB immediately before
+requesting a shot:
+
+```text
+error_exit = (setpoint - measured) + (setpoint_rate - measured_rate) * L
+on_target = abs(yaw_error_exit) <= yaw_half_width
+         && abs(pitch_error_exit) <= pitch_half_width
+         && !pitch_clamped
+```
+
+Wrap the yaw position difference to the shortest angle before adding its rate
+term. Both measured rates must be physical gimbal rates in the setpoint frame,
+not motor RPM or setpoint derivatives. A failed/nonfinite ballistic solution or
+degenerate/hidden panel is never on target. Compare requested pitch with the
+actual mechanical clamp result; a clamped solution cannot fire even if its
+clamped error would pass. There is no separate dispersion margin.
+
+Compute both angular half-widths on the Type C from the chosen panel at impact
+and the shooter at predicted muzzle exit. Use the panel's 135 mm physical width,
+its normal/tangent, range and edge depths, so oblique panels have a narrower yaw
+window. Project its edges/corners, using the same ballistic pitch solve for the
+vertical edges; use the smaller distance from the center setpoint to either
+edge on each axis. The proposed vertical geometry is the team's 125 mm physical
+panel height with 15° cant, rather than Reticle's 50 mm illuminated height;
+confirm this choice in design review. Do not approximate an oblique panel with
+the angular width of a face-on rectangle or send tolerances from the Jetson.
+
+Evaluate the chase shot window for a shot exiting at `now + L` and impacting at
+`now + L + flight_time`. Fire only when that window and the on-target gate both
+pass in the current cycle. Waiting for a future window must not latch permission
+or freeze aiming: re-evaluate against the current model and measurements until
+request time. Existing heat, referee, indexer and remote-control interlocks
+remain prerequisites. Remove the 1 s fire-lock dwell, grace window, confidence
+gate, stationary bypass, detection-age gate, `target_timeout_s` and
+`min_fire_delay_s`. The link timeout replaces target expiry; measured alignment
+replaces the minimum fire delay. Confidence belongs to Jetson assignment.
+
+**One ballistic model for pitch and flight time.** Extract a ROS/hardware-free
+ballistic helper used by Reticle and AimPlanner. A successful solve returns
+pitch and flight time together, using the same muzzle speed, bore origin,
+pitch-down bias, gravity and horizontal quadratic drag as Reticle. For downrange
+displacement `d` from the muzzle and initial horizontal speed `v_h`, its flight
+time is `expm1(k*d)/(k*v_h)` (`d/v_h` when `k == 0`). Both `d` and `v_h` depend
+on the solved pitch; center-to-center distance divided by muzzle speed is not a
+valid substitute.
+
+Solve the moving-panel intercept against that flight time, with shooter velocity
+compensation and the target evaluated at muzzle exit plus flight time. Resolve
+panel choice at impact consistently with chase. Use a bounded numerical solve
+with an explicit residual tolerance and failure result; remove the tunable fixed
+three-pass `tof_iterations`. Keep panel identity fixed within each smooth solve
+and test neighboring candidates at a chase boundary. No convergence or no
+reachable pitch means no shot. Acceptance requires flight-time/pitch agreement
+with Reticle at short and long range, moving and spinning intercepts, and a
+measured worst-case Type C control-cycle budget.
+
+Hosted tests must cover both states, clear precedence, track changes, refresh
+preservation, 0.6 s link expiry and clock rollover, continuous replanning, rate
+feedforward, window/alignment conjunction, latency/rate signs, edge-on armor,
+pitch clamping and ballistic failure. After implementation, compare stationary,
+moving and spinning chase benches to the then-current `nightly` on identical
+seeds; hosted timing alone does not establish Type C execution cost.
+
+#### Current aiming implementation
+
 The MCB owns aiming after tracking
 ([TARGET_STATE](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#target_state-id7--tracked-enemy-armor-model)):
 `src/subsystems/jetson/AimPlanner.{hpp,cpp}` is the Jetson's former `point_to_cv_target`
