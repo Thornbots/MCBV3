@@ -384,7 +384,7 @@ The automatic aim command has two explicit states:
 | State | Gimbal behavior | Firing | Transition |
 | --- | --- | --- | --- |
 | WAITING FOR TARGET | Existing idle CV_TARGET looks, firmware patrol and permitted hit turn | Never | An assigned model enters TRACKING AND SHOOTING |
-| TRACKING AND SHOOTING | Propagate the held model and replan every control cycle | Shot window open **and** on target, with existing indexer/referee interlocks | Clear or link expiry enters WAITING FOR TARGET |
+| TRACKING AND SHOOTING | Replan every 5 ms; advance the setpoint with planner rates between replans | Shot window open **and** predicted impact inside the panel, with existing indexer/referee interlocks | Clear or link expiry enters WAITING FOR TARGET |
 
 Startup and command termination reset to WAITING FOR TARGET. Assignment replaces
 the held model immediately. A track-id change also resets panel selection, spin
@@ -399,8 +399,13 @@ contract. Idle CV_TARGET messages cannot replace an assigned model.
 [PR #140](https://github.com/Thornbots/MCBV3/pull/140), including its panel-switch
 shot windows; do not reimplement that change. Base firmware implementation on
 its branch while it is open, then rebase onto `nightly` after it merges. Replan
-on every 1 ms control cycle, including while a shot is pending. Remove the 25 ms
-replan timer, mid-hold timing term and frozen aim during pending requests.
+every **5 ms**, including while a shot is pending. At 3–4 mm/ms, a target moves
+15–20 mm between replans against a 135 mm panel; rate feedforward carries its
+first-order motion between solves. This halves the unmodeled motion of a 10 ms
+period while leaving five controller ticks per expensive solve. Replace the
+25 ms hold with this cadence; remove its mid-hold timing term and frozen aim
+during pending requests. New assignments, clears and handoffs take effect
+immediately rather than waiting for the next scheduled solve.
 Propagate center with constant acceleration and armor with rigid spin from the
 carried model stamp; matching the tracker's Singer decay is optional. Normal
 refresh propagation is about 200 ms; link expiry bounds a stopped sender.
@@ -408,6 +413,8 @@ refresh propagation is about 200 ms; link expiry bounds a stopped sender.
 The planner should return yaw/pitch setpoints and their rates from the same
 continuous intercept solution. Pass these rates directly into the absolute-angle
 gimbal controller as feedforward, bypassing `AngleSetpointRate` for tracking.
+On each intervening 1 ms controller tick, use `last_solved_setpoint + planner_rate
+* elapsed_since_solve` as the requested setpoint; do not hold a staircase.
 Idle absolute points can retain their filtered derivative. Rates include shooter
 motion, panel rotation and ballistic pitch; they must use the same world-yaw,
 positive-down pitch convention as measured feedback. Do not differentiate across
@@ -416,38 +423,48 @@ gate to settle. With this interface, remove `gimbal_lag_s`: physical following
 error is measured by the gate rather than hidden in a fixed lead offset. Verify
 rate continuity and Type C cycle cost before accepting the implementation.
 
-**On target at muzzle exit.** Let `L` be the calibrated request-to-muzzle latency
-(`FIRING_LATENCY_TIME`). For each axis, evaluate on the MCB immediately before
-requesting a shot:
+**On target means impact anywhere on the whole panel.** Let `L` be the calibrated
+request-to-muzzle latency (`FIRING_LATENCY_TIME`). Immediately before requesting
+a shot, extrapolate measured yaw and pitch to muzzle exit as
+`angle_exit = measured_angle + measured_rate * L`. Use physical gimbal rates in
+the setpoint frame, not motor RPM or setpoint derivatives. Predict the bore
+origin and shooter motion to that exit time, then launch the projectile from
+these measured-angle predictions using the same drag/gravity/pitch-bias model
+as the aim solve, including the same shooter-velocity compensation.
+
+Find the projectile's forward intersection with the chosen panel's moving plane,
+propagating the target's translation and spin to that intersection time. Let
+`p`, `c`, `u` and `v` be the impact point, panel center, unit width tangent and
+unit surface-height tangent at impact. The on-target test is:
 
 ```text
-error_exit = (setpoint - measured) + (setpoint_rate - measured_rate) * L
-on_target = abs(yaw_error_exit) <= yaw_half_width
-         && abs(pitch_error_exit) <= pitch_half_width
-         && !pitch_clamped
+abs(dot(p - c, u)) <= 0.135 / 2
+abs(dot(p - c, v)) <= 0.125 / 2
 ```
 
-Wrap the yaw position difference to the shortest angle before adding its rate
-term. Both measured rates must be physical gimbal rates in the setpoint frame,
-not motor RPM or setpoint derivatives. A failed/nonfinite ballistic solution or
-degenerate/hidden panel is never on target. Compare requested pitch with the
-actual mechanical clamp result; a clamped solution cannot fire even if its
-clamped error would pass. There is no separate dispersion margin.
+This is a test in the actual panel plane, not independent yaw/pitch error bands.
+Include the complete outline, edges and corners, with no inset or dispersion
+margin. The height is **125 mm along the surface at its 15° tilt**, the Reticle
+comment's "height across the surface"; the 50 mm lit strip does not set the gate.
+Construct the plane and tangents from the chosen panel's actual modeled normal
+(yaw propagated to impact, with its 15° cant). Its angle to the shot and edge
+depths therefore produce the correct foreshortening for an oblique panel. Do not
+substitute a face-on rectangle or an inscribed angular box.
 
-Compute both angular half-widths on the Type C from the chosen panel at impact
-and the shooter at predicted muzzle exit. Use the panel's 135 mm physical width,
-its normal/tangent, range and edge depths, so oblique panels have a narrower yaw
-window. Project its edges/corners, using the same ballistic pitch solve for the
-vertical edges; use the smaller distance from the center setpoint to either
-edge on each axis. The proposed vertical geometry is the team's 125 mm physical
-panel height with 15° cant, rather than Reticle's 50 mm illuminated height;
-confirm this choice in design review. Do not approximate an oblique panel with
-the angular width of a face-on rectangle or send tolerances from the Jetson.
+Keep the requested **unclamped** ballistic pitch as the planner's aim reference;
+never replace it with the actuator's clamped command when assessing alignment.
+The final gate uses the predicted shot from measured motion: there is no
+`pitch_clamped` flag or separate veto. A travel-limited gimbal fails when its
+predicted impact misses the outline; if the shot still hits an edge or corner,
+take it. No valid forward intersection, a back-face/degenerate intersection or
+a nonfinite solution means no shot.
 
 Evaluate the chase shot window for a shot exiting at `now + L` and impacting at
 `now + L + flight_time`. Fire only when that window and the on-target gate both
-pass in the current cycle. Waiting for a future window must not latch permission
-or freeze aiming: re-evaluate against the current model and measurements until
+pass in the current 1 ms control cycle. Advance the last plan with its rates
+between 5 ms replans, but evaluate the shot/window/outline gate from current
+measurements before each request. Waiting for a future window must not latch
+permission or freeze aiming: re-evaluate against the current model and measurements until
 request time. Existing heat, referee, indexer and remote-control interlocks
 remain prerequisites. Remove the 1 s fire-lock dwell, grace window, confidence
 gate, stationary bypass, detection-age gate, `target_timeout_s` and
@@ -463,20 +480,50 @@ time is `expm1(k*d)/(k*v_h)` (`d/v_h` when `k == 0`). Both `d` and `v_h` depend
 on the solved pitch; center-to-center distance divided by muzzle speed is not a
 valid substitute.
 
+Keep this solve cheap: seed the low-arc pitch with the gravity-only closed form,
+then take at most **three Newton corrections** of the existing horizontal-drag
+height residual, with its analytic pitch derivative. Reuse sine/cosine,
+`expm1` and derivative intermediates; do not finite-difference the residual or
+nest Reticle's ten-step bisection inside each intercept iteration. Carry the
+pitch-dependent bore origin and bias through each correction. Stop early on a
+0.5 mm height residual; reject singular derivatives or failure to converge.
+Reuse the last converged solution for same-panel moving-target solves and
+derive aim rates from the solution's derivatives rather than extra full solves.
+
+Acceptance over **1–8 m** downrange, across reachable panel heights and the
+configured muzzle speed, is at most **2 mrad pitch difference and 0.5 ms flight
+time difference** from today's ten-step Reticle solve plus its own drag flight
+time. The pitch tolerance allows the old bisection's roughly 1.53 mrad final
+resolution; also require the new residual bound against a converged reference.
+Include zero-drag, bore-offset and bias cases. Flight time and pitch must come
+from the same solution, with no gravity-only time substituted after correction.
+
 Solve the moving-panel intercept against that flight time, with shooter velocity
 compensation and the target evaluated at muzzle exit plus flight time. Resolve
 panel choice at impact consistently with chase. Use a bounded numerical solve
 with an explicit residual tolerance and failure result; remove the tunable fixed
-three-pass `tof_iterations`. Keep panel identity fixed within each smooth solve
-and test neighboring candidates at a chase boundary. No convergence or no
-reachable pitch means no shot. Acceptance requires flight-time/pitch agreement
-with Reticle at short and long range, moving and spinning intercepts, and a
-measured worst-case Type C control-cycle budget.
+three-pass `tof_iterations`. Cap the outer intercept correction at three steps,
+require a flight-time residual at most 0.1 ms and fail closed on nonconvergence.
+Keep panel identity fixed within each smooth solve and test neighboring
+candidates at a chase boundary. No convergence means no shot.
+
+Estimated Type C cost (STM32F407 at 168 MHz, single-precision math, optimized
+build): **0.1–0.3 ms per normal 5 ms replan**, about 17–50 thousand cycles,
+assuming roughly 9–12 reused residual/derivative evaluations; budget **0.5 ms** for
+handoff/neighbor candidates. Budget a further **0.05–0.15 ms per 1 ms firing
+check** for the measured-shot/moving-plane intersection, reusing the plan's
+flight-time seed with at most three scalar root corrections. These are operation
+budget estimates, not board measurements; libm and solver convergence dominate.
+Acceptance requires on-board cycle measurements of both paths, worst-case panel
+switches and iteration exhaustion, with the rest of the scheduler running and
+no missed 1 ms controller deadline. Optimize or split bounded solve work across
+ticks if necessary; hosted/Renode wall time cannot establish the board budget.
 
 Hosted tests must cover both states, clear precedence, track changes, refresh
-preservation, 0.6 s link expiry and clock rollover, continuous replanning, rate
-feedforward, window/alignment conjunction, latency/rate signs, edge-on armor,
-pitch clamping and ballistic failure. After implementation, compare stationary,
+preservation, 0.6 s link expiry and clock rollover, 5 ms replanning and between-solve
+rate feedforward, window/outline conjunction, latency/rate signs, moving-plane
+intersection, oblique armor, corner/edge hits, travel-limited misses and ballistic
+failure. After implementation, compare stationary,
 moving and spinning chase benches to the then-current `nightly` on identical
 seeds; hosted timing alone does not establish Type C execution cost.
 
