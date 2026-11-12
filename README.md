@@ -375,7 +375,7 @@ The MCB owns aiming after tracking
 `src/subsystems/jetson/AimPlanner.{hpp,cpp}` is the Jetson's former `point_to_cv_target`
 planner ported to float with no hardware dependencies (hosted `AimPlannerTest`).
 Semantics are the Jetson's: `choose_panel` with held-panel hysteresis, `plan_shot`
-(panel lead; spin-mode shotgating, or chase when enabled; acceleration and shooter-velocity
+(panel lead; spin-mode chase, or shotgating when selected; acceleration and shooter-velocity
 lead on a time-of-flight fixed point), `fire_exit_s`, spin hysteresis and the fire lock.
 Rationale and measurements: [thornbots_pkg design notes](../../thornbots_pkg/README.md).
 
@@ -392,7 +392,7 @@ lead or fire. Fire needs `valid`, confidence of at least 0.5, detection age at m
 robot 2026-10-28). While a request is pending the command holds the aim it was planned for.
 Track change or timeout resets the lock and panel hold.
 
-Tuned values (`AimPlannerConstants.hpp`, moved unchanged from the Jetson defaults):
+Tuned values (`AimPlannerConstants.hpp`):
 
 | Value | Setting |
 |---|---|
@@ -400,12 +400,14 @@ Tuned values (`AimPlannerConstants.hpp`, moved unchanged from the Jetson default
 | gimbal lag | 0.05 s |
 | firmware latency / min fire delay | 20 ms (`FIRING_LATENCY_TIME`) / 0.040 s |
 | lead, ToF iterations | on, 3 |
-| spin mode | shotgating (chase off, margin 0); enter 3.0 rad/s, exit 2.0 |
+| spin mode | chase (settle 0.025 s, margin 0.025 s); enter 3.0 rad/s, exit 2.0 |
 | panel switch margin | 0.3 rad |
 | muzzle speed | `initialShotVelocity` |
 | fire confidence | 0.5 (`confidence / 255`) |
 | fire lock / grace | 1.0 s / 0.3 s; stationary bypass below 0.1 m/s outside spin |
 | max detection age to fire / target timeout | 0.15 s / 0.5 s |
+
+The chase windows come from the [hosted chase profile](../../sim/docs/aim-accuracy-2026-10-12.md#merged-nightly-no-lead-profile-three-repeats). Set `chase` false to select shotgating.
 
 The fire lock counts milliseconds on the MCB clock (wrap-safe), not the Jetson's node clock.
 The orange debug circle shows for 100 ms after a shot is scheduled.

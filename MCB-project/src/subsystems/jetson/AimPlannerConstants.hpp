@@ -15,9 +15,9 @@ struct AimTuning
     float min_fire_delay_s = 0.040f;      // exit time never modeled under this
     bool lead = true;
     int tof_iterations = 3;
-    bool chase = false;                   // false: shotgating while spinning
-    float chase_settle_s = 0.0f;          // chase only
-    float chase_margin_s = 0.0f;          // chase only
+    bool chase = true;                    // false: shotgating while spinning
+    float chase_settle_s = 0.025f;        // chase only
+    float chase_margin_s = 0.025f;        // chase only
     float panel_switch_margin_rad = 0.3f;
     float spin_enter_rad_s = 3.0f;        // |yaw_rate| above this: spin mode
     float spin_exit_rad_s = 2.0f;         // back to panel mode below this
