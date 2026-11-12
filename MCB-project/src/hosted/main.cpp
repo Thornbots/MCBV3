@@ -153,7 +153,10 @@ int main() {
                 hosted::timeMs, transitions, hosted::failedUartWrites(),
                 drivers.mapping.readyBeep(hosted::timeMs), loopUs, periodUs / in.cycles,
                 std::remainder(control.gimbal.getHostedTargetYaw() - drivers.bmi088.getYaw() +
-                    control.gimbal.getYawEncoderValue(), 2 * PI)};
+                    control.gimbal.getYawEncoderValue(), 2 * PI),
+                control.odo.getX(), control.odo.getY(),
+                control.odo.getAimX(), control.odo.getAimY(),
+                control.odo.isNavigationLocalized()};
             if (send(controlFd, &status, sizeof(status), MSG_DONTWAIT | MSG_NOSIGNAL) != sizeof(status)) return 2;
         }
         Pose2d drive = control.drivetrain.getHostedTargetVelocity();

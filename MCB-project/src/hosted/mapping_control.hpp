@@ -13,7 +13,9 @@ struct MappingInput {
 struct MappingStatus {
     uint32_t state, timeMs, transitions, failedWrites, readyBeep;
     float loopUs, periodUs, headForwardError;
+    float navigationX, navigationY, rawX, rawY;
+    uint32_t navigationLocalized;
 };
-static_assert(sizeof(MappingInput) == 16 && sizeof(MappingStatus) == 32);
+static_assert(sizeof(MappingInput) == 16 && sizeof(MappingStatus) == 52);
 }
 #endif

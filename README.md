@@ -447,6 +447,11 @@ selections, including arming after startup. The private pipe also carries
 three-axis gyro/specific force for the board adapter; the native fixture keeps
 its direct sensor interfaces. External velocity and NAV_GOAL drive remain
 explicit hosted fixture modes. E2E stages select the firmware waypoint command.
+When the MMM test opens its private control socket, `MappingStatus` additionally
+reports actual navigation x/y, raw aim x/y and the navigation-localized flag.
+These are measured after the control tick and let sim score held navigation
+against truth, including rejected or dropped fixes. This hosted-only fixture
+interface requires a matching sim checkout; it adds no UART telemetry.
 The Jetson UART format is unchanged. Hosted execution
 still bypasses board boot/calibration and cannot establish STM32 timing.
 Sim's optional [Type C board backend](../../sim/README.md#type-c-board-execution-with-renode)
