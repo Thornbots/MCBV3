@@ -77,7 +77,7 @@ float OdometrySubsystem::getStartYaw() {
 // the pods are x right, y forward of the start: forward is raw y, left is raw -x
 void OdometrySubsystem::relocalizeTo(float newX, float newY) {
     if (!std::isfinite(newX) || !std::isfinite(newY)) return;
-    updateAimPosition();
+    if (!updateAimPosition()) return;
     offsetX = newX - aimPosition.getX();
     offsetY = newY - aimPosition.getY();
     navigationLocalized = true;
@@ -89,10 +89,17 @@ float OdometrySubsystem::getY() {
     return offsetY + getAimY();
 }
 // Pods are (right, forward) at boot; rotate (forward, left) into field axes.
-void OdometrySubsystem::updateAimPosition() {
-    const Vector2d pods(getRawY(), -getRawX());
+bool OdometrySubsystem::updateAimPosition() {
+    const float rawX = getRawX();
+    const float rawY = getRawY();
+    if (!std::isfinite(rawX) || !std::isfinite(rawY)) {
+        navigationLocalized = false;
+        return false;
+    }
+    const Vector2d pods(rawY, -rawX);
     aimPosition = aimPosition + (pods - lastPodPosition).rotate(getStartYaw());
     lastPodPosition = pods;
+    return true;
 }
 float OdometrySubsystem::getAimX() {
     updateAimPosition();

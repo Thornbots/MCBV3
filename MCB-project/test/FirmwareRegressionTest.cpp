@@ -60,6 +60,28 @@ TEST(OdometryFramesTest, RelocalizationChangesNavigationButPreservesRawAim) {
     hosted::sensors = {};
 }
 
+TEST(OdometryFramesTest, InvalidPodDoesNotPoisonAccumulationOrPermitRelocalization) {
+    src::Drivers drivers;
+    hosted::sensors = {};
+    subsystems::OdometrySubsystem odometry(&drivers, nullptr);
+    odometry.relocalizeTo(1.0f, 2.0f);
+    ASSERT_TRUE(odometry.isNavigationLocalized());
+    hosted::sensors.podX = std::numeric_limits<float>::quiet_NaN();
+    odometry.getAimX();
+    EXPECT_FALSE(odometry.isNavigationLocalized());
+    odometry.relocalizeTo(3.0f, 4.0f);
+    EXPECT_FALSE(odometry.isNavigationLocalized());
+    hosted::sensors.podX = 0.3f;
+    hosted::sensors.podY = 0.5f;
+    EXPECT_NEAR(odometry.getAimX(), 0.3f, 1e-6f);
+    EXPECT_NEAR(odometry.getAimY(), 0.5f, 1e-6f);
+    odometry.relocalizeTo(3.0f, 4.0f);
+    EXPECT_TRUE(odometry.isNavigationLocalized());
+    EXPECT_FLOAT_EQ(odometry.getX(), 3.0f);
+    EXPECT_FLOAT_EQ(odometry.getY(), 4.0f);
+    hosted::sensors = {};
+}
+
 TEST(CommandMappingTest, RemovesNullCommandsAndPreservesOrder) {
     Command first, second;
     Mapping mapping({nullptr, &first, nullptr, &second, nullptr});
