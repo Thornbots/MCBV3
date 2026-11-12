@@ -370,14 +370,17 @@ execute normally; no simulator hook skips firmware initialization.
 
 ### MCBV3 aiming planner
 
-#### Target handoff redesign (proposed; review before implementation)
+<a id="target-handoff-redesign-proposed-review-before-implementation"></a>
 
-This design targets `nightly` and its next promotion to `main`. It is not yet
-implemented. The [current implementation](#current-aiming-implementation) below
-describes the existing code. Jetson assignment/update/clear semantics belong to
+#### Target handoff redesign
+
+Implemented for `nightly` coordinated integration with matching Jetson
+packages and firmware reflash. Board timing acceptance remains outstanding;
+[validation evidence](docs/managed-aim-2026-11-12.md) separates hosted results
+from Type C requirements. Jetson assignment/update/clear semantics belong to
 the [TARGET_STATE contract](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#proposed-target-assignment-update-and-clear);
-the [target manager](../../thornbots_pkg/README.md#target_manager-proposed)
-owns their implementation. The bridge remains a translator.
+the [target manager](../../thornbots_pkg/README.md#target_manager)
+owns assignment policy. The bridge remains a translator.
 
 The automatic aim command has two explicit states:
 
@@ -395,33 +398,29 @@ change. A shot already physically committed to the indexer cannot be recalled.
 Receipt-based link expiry and flag precedence are defined only in the wire
 contract. Idle CV_TARGET messages cannot replace an assigned model.
 
-**Continuous chase and rates.** Keep the facing-panel chase behavior from
-[PR #140](https://github.com/Thornbots/MCBV3/pull/140), including its panel-switch
-shot windows; do not reimplement that change. Base firmware implementation on
-its branch while it is open, then rebase onto `nightly` after it merges. Replan
-every **5 ms**, including while a shot is pending. At 3–4 mm/ms, a target moves
+**Continuous chase and rates.** The facing-panel chase behavior and panel-switch shot windows from
+[PR #140](https://github.com/Thornbots/MCBV3/pull/140) remain the default. Replan
+every **5 ms**, including while an issued shot is in flight. At 3–4 mm/ms, a target moves
 15–20 mm between replans against a 135 mm panel; rate feedforward carries its
 first-order motion between solves. This halves the unmodeled motion of a 10 ms
-period while leaving five controller ticks per expensive solve. Replace the
-25 ms hold with this cadence; remove its mid-hold timing term and frozen aim
-during pending requests. New assignments, clears and handoffs take effect
+period while leaving five controller ticks per expensive solve. This replaces the
+25 ms hold, its mid-hold timing term and frozen aim during pending requests. New assignments, clears and handoffs take effect
 immediately rather than waiting for the next scheduled solve.
-Propagate center with constant acceleration and armor with rigid spin from the
-carried model stamp; matching the tracker's Singer decay is optional. Normal
+The center propagates with constant acceleration and armor with rigid spin from
+the carried model stamp. Normal
 refresh propagation is about 200 ms; link expiry bounds a stopped sender.
 
-The planner should return yaw/pitch setpoints and their rates from the same
-continuous intercept solution. Pass these rates directly into the absolute-angle
+The planner returns yaw/pitch setpoints and their rates from the same
+continuous intercept solution. These rates enter the absolute-angle
 gimbal controller as feedforward, bypassing `AngleSetpointRate` for tracking.
-On each intervening 1 ms controller tick, use `last_solved_setpoint + planner_rate
-* elapsed_since_solve` as the requested setpoint; do not hold a staircase.
+Each intervening 1 ms controller tick uses `last_solved_setpoint + planner_rate
+* elapsed_since_solve` as the requested setpoint.
 Idle absolute points can retain their filtered derivative. Rates include shooter
-motion, panel rotation and ballistic pitch; they must use the same world-yaw,
-positive-down pitch convention as measured feedback. Do not differentiate across
-a panel switch or track handoff: reset the rate history and require the on-target
-gate to settle. With this interface, remove `gimbal_lag_s`: physical following
-error is measured by the gate rather than hidden in a fixed lead offset. Verify
-rate continuity and Type C cycle cost before accepting the implementation.
+motion, panel rotation and ballistic pitch in the same world-yaw, positive-down
+pitch convention as measured feedback. A panel switch or track handoff uses the
+new solution's rates without differentiating the jump; the measured-impact gate
+checks acquisition. This removes `gimbal_lag_s`: the gate measures physical following
+error. Hosted tests verify rate continuity; Type C timing acceptance remains pending.
 
 **On target means impact anywhere on the whole panel.** Let `L` be the calibrated
 request-to-muzzle latency (`FIRING_LATENCY_TIME`). Immediately before requesting
@@ -466,13 +465,13 @@ between 5 ms replans, but evaluate the shot/window/outline gate from current
 measurements before each request. Waiting for a future window must not latch
 permission or freeze aiming: re-evaluate against the current model and measurements until
 request time. Existing heat, referee, indexer and remote-control interlocks
-remain prerequisites. Remove the 1 s fire-lock dwell, grace window, confidence
+remain prerequisites. The 1 s fire-lock dwell, grace window, confidence
 gate, stationary bypass, detection-age gate, `target_timeout_s` and
-`min_fire_delay_s`. The link timeout replaces target expiry; measured alignment
+`min_fire_delay_s` are removed. The link timeout replaces target expiry; measured alignment
 replaces the minimum fire delay. Confidence belongs to Jetson assignment.
 
-**One ballistic model for pitch and flight time.** Extract a ROS/hardware-free
-ballistic helper used by Reticle and AimPlanner. A successful solve returns
+**One ballistic model for pitch and flight time.** `Ballistics.hpp` is a ROS/hardware-free
+helper used by Reticle and AimPlanner. A successful solve returns
 pitch and flight time together, using the same muzzle speed, bore origin,
 pitch-down bias, gravity and horizontal quadratic drag as Reticle. For downrange
 displacement `d` from the muzzle and initial horizontal speed `v_h`, its flight
@@ -480,15 +479,15 @@ time is `expm1(k*d)/(k*v_h)` (`d/v_h` when `k == 0`). Both `d` and `v_h` depend
 on the solved pitch; center-to-center distance divided by muzzle speed is not a
 valid substitute.
 
-Keep this solve cheap: seed the low-arc pitch with the gravity-only closed form,
-then take at most **three Newton corrections** of the existing horizontal-drag
+The bounded solve seeds the low-arc pitch with the gravity-only closed form,
+then takes at most **three Newton corrections** of the existing horizontal-drag
 height residual, with its analytic pitch derivative. Reuse sine/cosine,
 `expm1` and derivative intermediates; do not finite-difference the residual or
 nest Reticle's ten-step bisection inside each intercept iteration. Carry the
 pitch-dependent bore origin and bias through each correction. Stop early on a
 0.5 mm height residual; reject singular derivatives or failure to converge.
-Reuse the last converged solution for same-panel moving-target solves and
-derive aim rates from the solution's derivatives rather than extra full solves.
+Same-track solves reuse the last converged pitch/time seeds. Implicit ballistic
+and intercept derivatives provide rates without extra full solves.
 
 Acceptance over **1–8 m** downrange, across reachable panel heights and the
 configured muzzle speed, is at most **2 mrad pitch difference and 0.5 ms flight
@@ -501,15 +500,15 @@ from the same solution, with no gravity-only time substituted after correction.
 Solve the moving-panel intercept against that flight time, with shooter velocity
 compensation and the target evaluated at muzzle exit plus flight time. Resolve
 panel choice at impact consistently with chase. Use a bounded numerical solve
-with an explicit residual tolerance and failure result; remove the tunable fixed
-three-pass `tof_iterations`. Cap the outer intercept correction at three steps,
+with an explicit residual tolerance and failure result; the tunable fixed
+three-pass `tof_iterations` is removed. Cap the outer intercept correction at three steps,
 require a flight-time residual at most 0.1 ms and fail closed on nonconvergence.
 Keep panel identity fixed within each smooth solve and test neighboring
 candidates at a chase boundary. No convergence means no shot.
 
-Estimated Type C cost (STM32F407 at 168 MHz, single-precision math, optimized
-build): **0.1–0.3 ms per normal 5 ms replan**, about 17–50 thousand cycles,
-assuming roughly 9–12 reused residual/derivative evaluations; budget **0.5 ms** for
+Original Type C budget estimates (STM32F407 at 168 MHz, single-precision math,
+optimized build): **0.1–0.3 ms per normal 5 ms replan**, about 17–50 thousand cycles,
+with normal solves expected to converge before their hard limits; budget **0.5 ms** for
 handoff/neighbor candidates. Budget a further **0.05–0.15 ms per 1 ms firing
 check** for the measured-shot/moving-plane intersection, reusing the plan's
 flight-time seed with at most three scalar root corrections. These are operation
@@ -519,76 +518,62 @@ switches and iteration exhaustion, with the rest of the scheduler running and
 no missed 1 ms controller deadline. Optimize or split bounded solve work across
 ticks if necessary; hosted/Renode wall time cannot establish the board budget.
 
-Hosted tests must cover both states, clear precedence, track changes, refresh
-preservation, 0.6 s link expiry and clock rollover, 5 ms replanning and between-solve
-rate feedforward, window/outline conjunction, latency/rate signs, moving-plane
-intersection, oblique armor, corner/edge hits, travel-limited misses and ballistic
-failure. After implementation, compare stationary,
-moving and spinning chase benches to the then-current `nightly` on identical
-seeds; hosted timing alone does not establish Type C execution cost.
+`AimPlannerTest` covers both states, clear precedence, track changes, refresh
+preservation, exact receipt expiry/rollover, cadence/feedforward, window/outline
+conjunction, latency/rate signs, moving/oblique panels, edges/corners,
+travel-limited misses, and ballistic/intercept failures. Numerical sweeps compare
+the ten-step Reticle and a converged reference. Bench and timing results live in
+[the dated validation](docs/managed-aim-2026-11-12.md).
 
-#### Current aiming implementation
+`AimControl` owns the held frame and has no pending shot queue. Its replan
+solution describes muzzle exit; the controller back-projects its angles by
+`rate * FIRING_LATENCY_TIME` to request the current angles. Advancing those
+requests with the same rates then reaches the solved muzzle-exit direction,
+without counting firing latency twice. The gate still extrapolates actual
+measured motion independently. Shooter position is the current raw-odom pitch
+pivot; propagation uses the model's carried age separately.
 
-The MCB owns aiming after tracking
-([TARGET_STATE](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#target_state-id7--tracked-enemy-armor-model)):
-`src/subsystems/jetson/AimPlanner.{hpp,cpp}` is the Jetson's former `point_to_cv_target`
-planner ported to float with no hardware dependencies (hosted `AimPlannerTest`).
-Semantics are the Jetson's: `choose_panel` with held-panel hysteresis, `plan_shot`
-(panel lead; spin-mode chase, or shotgating when selected; acceleration and shooter-velocity
-lead on a time-of-flight fixed point), `fire_exit_s`, spin hysteresis and the fire lock.
-Rationale and measurements: [thornbots_pkg design notes](../../thornbots_pkg/README.md).
+Each scalar Newton solve permits at most three corrections plus a final residual
+check. A replan tests at most two fixed-panel candidates, each with four outer
+residual evaluations and four inner ballistic evaluations: at most **32 height
+samples**. A gate permits four moving-plane residual evaluations. These are
+operation bounds, not cycle bounds. No claim of Type C deadline compliance is
+made until DWT measurements with the scheduler running pass the budget.
 
-`AutoAimAndFireCommand` priority: held target state (state age under the 0.5 s timeout)
-over the idle CV_TARGET point (200 ms validity) over hit turn and firmware patrol.
-A held state makes no hit turn, and the idle point never fires. Age = wire age plus time
-since receipt. Every replan period the command propagates the state, plans from the
-shooter at the state's stamp (odometry position less velocity times state age, at the pivot
-height) and holds that aim until the next period. `valid` clear aims at `panel` without
-lead or fire. Fire needs `valid`, confidence of at least 0.5, detection age at most
-0.15 s, the fire lock, and a planned delay. A request waits
-`max(0, alignment + max(latency, min delay) - FIRING_LATENCY_TIME)` from the plan time
-(the exit time includes the indexer latency, which the sentry timed at 20 ms on the
-robot 2026-10-28). While a request is pending the command holds the aim it was planned for.
-Track change or timeout resets the lock and panel hold.
+Build with `aim-timing=true` to enable board DWT collection in
+`aim::aim_timing`: control ticks, replans, panel handoffs, failed plans and
+measured-shot gates each retain calls, maximum cycles and counts exceeding
+168,000 cycles (1 ms at 168 MHz). Inspect through a debugger; this adds no UART
+or ROS interface. Measure worst-case switches and iteration exhaustion as well
+as normal tracking, and separately check the complete scheduler's deadline.
+Hosted builds return zero DWT cycles and cannot satisfy this acceptance.
 
-Tuned values (`AimPlannerConstants.hpp`):
+#### Controller integration
 
-| Value | Setting |
-|---|---|
-| replan period | 25 ms (the Jetson's 40 Hz tick) |
-| gimbal lag | 0.05 s |
-| firmware latency / min fire delay | 20 ms (`FIRING_LATENCY_TIME`) / 0.040 s |
-| lead, ToF iterations | on, 3 |
-| spin mode | chase (settle 0.025 s, margin 0.025 s); enter 3.0 rad/s, exit 2.0 |
-| panel switch margin | 0.3 rad |
-| muzzle speed | `initialShotVelocity` |
-| fire confidence | 0.5 (`confidence / 255`) |
-| fire lock / grace | 1.0 s / 0.3 s; stationary bypass below 0.1 m/s outside spin |
-| max detection age to fire / target timeout | 0.15 s / 0.5 s |
+`AutoAimAndFireCommand` prioritizes an assigned model over idle CV_TARGET
+(200 ms validity), hit turn and patrol. Invalid/unassigned frames do not invoke
+a measured-panel fallback or extend the assignment link. Clear is accepted even
+with unusable model fields and another track id. Malformed assigned geometry is
+ignored without extending the link. A nonnegative radius is required. Dedicated
+TARGET_STATE mailboxes retain a clear before a later assignment, even when idle
+or other UART traffic arrives before the control tick. Confidence
+and detection age are diagnostic only; the Jetson must enforce assignment sanity.
 
-The chase windows come from the [hosted chase profile](../../sim/docs/aim-accuracy-2026-10-12.md#merged-nightly-no-lead-profile-three-repeats). Set `chase` false to select shotgating.
+Source declarations in `AimPlannerConstants.hpp` own tuning. `Projections.hpp`
+provides the robot's speed-independent bore/drag/bias calibration to both Reticle
+and the command; `initialShotVelocity` supplies muzzle speed. The stand-in uses
+the sentry defaults and a perfect gimbal; it is not a controller-plant test.
+Tracking sends analytic yaw/pitch rates directly to the controllers; idle
+absolute points retain `AngleSetpointRate`. The measured gate uses world-yaw
+IMU rate and pitch encoder rate divided by gearing (plus base pitch motion on
+infantry/hero), in the same frame as its angle. Requested pitch remains unclamped;
+only the actuator command clamps it.
 
-The fire lock counts milliseconds on the MCB clock (wrap-safe), not the Jetson's node clock.
-The orange debug circle shows for 100 ms after a shot is scheduled.
-
-Absolute aim points use a filtered angular-rate estimate over the 1 ms
-controller ticks: a 40 Hz point update must not become a one-tick velocity
-impulse. The estimator wraps yaw differences, treats jumps above 0.25 rad as
-target handoffs, and resets when leaving absolute aiming. Manual incremental
-commands retain their rate semantics.
-
-The gimbal controller uses the main scheduler's 1 ms interval. Its 8 ms yaw
-predictor integrates geared output torque and the configured viscous/static
-friction; the torque history starts at zero. Simulator sensor age must match
-this predictor. The sentry ballistic solver assumes 22 m/s, the shot speed the team set
-from the robot (2026-10-28); Jetson and sim use the same value. Calibration evidence lives in the
+The existing yaw predictor and its sensor-age requirements remain unchanged.
+Calibration evidence lives in the
 [sim accuracy investigation](../../sim/docs/aim-accuracy-2026-10-12.md).
-
-The sentry and infantry solver (same gimbal, shared constants) uses CAD pivot height and bore length (`Projections.hpp`), horizontal
-quadratic drag, and `SHOT_PITCH_DOWN_BIAS`, the angle shots leave below the solved pitch.
-Pitch encoder offset or ratio errors cancel because the camera rides the pitch head, so a
-miss that grows with range is boresight or flywheel lift: refit the bias from misses at two
-ranges, never by moving the pivot height (a height change only shifts where the miss is zero).
+Refit a range-dependent boresight/flywheel miss through pitch bias at two ranges,
+not by moving the pivot height.
 
 ## GCC compatibility
 

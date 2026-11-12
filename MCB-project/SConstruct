@@ -38,6 +38,11 @@ if can_bus_health not in ("true", "false"):
     raise ValueError("can-bus-health must be true or false")
 if can_bus_health == "true":
     c_flags.append("MCB_CAN_BUS_HEALTH")
+aim_timing = ARGUMENTS.get("aim-timing", "false")
+if aim_timing not in ("true", "false"):
+    raise ValueError("aim-timing must be true or false")
+if aim_timing == "true":
+    c_flags.append("MCB_AIM_TIMING")
 
 #=========================================================================================================
 # Define project settings and build paths

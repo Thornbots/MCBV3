@@ -118,6 +118,10 @@ public:  // Public Methods
     bool isYawMotorOnline();
 
     void setAngles(float yawAngle, float pitchAngle);
+    void setAnglesWithRates(float yaw, float pitch, float yawRate, float pitchRate);
+    float getWorldYawRate() const { return yawAngularVelocity; }
+    float getAimPitch();
+    float getAimPitchRate();
 
 private:  // Private Methods
     int getPitchVoltage(float targetAngle, float pitchAngleRelativeGimbal, float pitchAngularVelocity, float dt);

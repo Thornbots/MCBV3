@@ -75,8 +75,9 @@ struct CvTarget
 } modm_packed;
 static_assert(sizeof(CvTarget) == 13, "CV_TARGET payload is 13 bytes");
 
-static constexpr uint8_t TARGET_STATE_FLAG_VALID = 0x01;               // clear: unconverged, aim at panel only
+static constexpr uint8_t TARGET_STATE_FLAG_VALID = 0x01;               // assigned model
 static constexpr uint8_t TARGET_STATE_FLAG_TYPE_C_BASED_PATROL = 0x02; // as CV_TARGET's bit 1
+static constexpr uint8_t TARGET_STATE_FLAG_CLEAR = 0x04;               // release; overrides valid
 // Tracked enemy armor model in raw aim odom at the state's stamp. Ages are the
 // bridge's at write time; the MCB adds time since receipt.
 struct TargetState
@@ -93,7 +94,7 @@ struct TargetState
     uint16_t detection_age_ms;  // write time - detection_stamp
     uint16_t track_id;
     uint8_t confidence;     // round(confidence * 255)
-    uint8_t flags;          // TARGET_STATE_FLAG_*; 2-7 reserved (0)
+    uint8_t flags;          // TARGET_STATE_FLAG_*; 3-7 reserved (0)
 } modm_packed;
 static_assert(sizeof(TargetState) == 80, "TARGET_STATE payload is 80 bytes");
 static_assert(offsetof(TargetState, yaw) == 36 && offsetof(TargetState, radius) == 44 &&
@@ -173,6 +174,10 @@ private:  // Private Variables
     std::array<uint8_t, 128> debugPayload{};
     size_t debugLength = 0;
     bool debugPending = false;
+    TargetState targetMailbox{}, clearMailbox{};
+    uint32_t targetReceivedMs = 0, clearReceivedMs = 0;
+    bool targetPending = false, clearPending = false;
+    static void receiveTarget(void* context, const uint8_t* bytes, uint16_t length, uint32_t receivedMs);
 
 
 public:  // Public Methods

@@ -57,6 +57,11 @@ public:
     inline bool hasNewMessage() { return hasNewData; }
 
     using PingHandler = void (*)(void*, uint8_t, uint32_t);
+    using TargetHandler = void (*)(void*, const uint8_t*, uint16_t, uint32_t);
+    void setTargetHandler(void* context, TargetHandler handler) {
+        targetContext = context;
+        targetHandler = handler;
+    }
     void setPingHandler(void* context, PingHandler handler) {
         pingContext = context;
         pingHandler = handler;
@@ -66,17 +71,20 @@ public:
     uint32_t getCurrentTime() const;
 
     // When the newest frame (the one in the mailbox if unconsumed) arrived, same clock.
-    uint32_t getLastReceivedTime() const { return lastReceivedTime; }
+    uint32_t getLastReceivedTime() const { return mailboxReceivedTime; }
 
     tap::communication::serial::Uart::UartPort getPort() const;
 
 private:
     void* pingContext = nullptr;
     PingHandler pingHandler = nullptr;
+    void* targetContext = nullptr;
+    TargetHandler targetHandler = nullptr;
     uint32_t frameStartUs = 0;
     size_t lastFrameBytes = 0;
     bool hasNewData;
     uint32_t lastReceivedTime;
+    uint32_t mailboxReceivedTime = 0;
 
     // TODO: maybe implement cicular queue one day to prevent starving of msg
     //  static constexpr int queueLength = 5;
