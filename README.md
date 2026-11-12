@@ -338,7 +338,7 @@ finite RELOCALIZE establishes the field navigation offset. Invalid non-finite
 coordinates leave the gate and previous offset unchanged. NAV_GOALs received
 before localization are discarded; driving needs a fresh goal after the fix.
 
-POSE adds this boot heading to the IMU-relative gimbal yaw; aiming and driving
+POSE adds this boot heading to the sampled IMU-relative gimbal yaw; aiming and driving
 remove it when converting field targets into local commands. This also applies
 to robots without odometry. Firmware owns no route or team start XY: the
 Jetson's [waypoint navigation](../../nav_pkg/README.md) sends NAV_GOALs in the
@@ -439,6 +439,9 @@ returns raw motor command words. Gimbal encoders and velocities use the same
 Taproot decoder as the board; only the hosted yaw home is fixed to the sim
 joint's boot zero. Sim applies motor forces inside gz's 1 ms step; its
 [MCB emulator](../../sim/README.md#mcb-emulator) owns the plant and its limits.
+Sentry pitch selects the calibrated angle nearest zero from the encoder's
+single-turn reading. Its travel stays within half a motor revolution around
+that zero, including boots on either side of the encoder wrap.
 The hosted remote switches follow stop/simple drive and automatic aim/fire
 selections, including arming after startup. The private pipe also carries
 three-axis gyro/specific force for the board adapter; the native fixture keeps

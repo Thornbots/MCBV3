@@ -197,7 +197,13 @@ float GimbalSubsystem::getYawEncoderValue() {
 
 float GimbalSubsystem::getPitchEncoderValue() {  // more like get pitch relative to frame
     float raw = (motorPitch->getEncoder()->getPosition().getUnwrappedValue());
+#if defined(SENTRY)
+    // Sentry travel is within half a motor revolution around calibrated zero.
+    // The encoder's positive boot reading may represent a negative shaft angle.
+    pitchAngle = std::remainder(raw / PITCH_RATIO - PITCH_OFFSET, 2 * PI / PITCH_RATIO);
+#else
     pitchAngle = std::fmod(raw / PITCH_RATIO - PITCH_OFFSET, 2 * PI);
+#endif
     pitchAngleRaw = raw/PITCH_RATIO;
     return pitchAngle;
 }
