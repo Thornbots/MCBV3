@@ -181,7 +181,7 @@ public:
     commands::AutoDriveCommand autoDrive{drivers, &drivetrain, &gimbal, &jetson, &odo};
     commands::AutoAimAndFireCommand autoFire{drivers, &gimbal, &indexer, &flywheel, &jetson, &odo, &autoDrive, false};
 
-    commands::SentryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &lookMouse};
+    commands::SentryDrawCommand draw{drivers, &ui, &gimbal, &flywheel, &indexer, &drivetrain, &autoFire, &lookMouse};
 
     commands::ShooterStartCommand shooterStart{drivers, &flywheel};
     commands::ShooterStopCommand shooterStop{drivers, &flywheel};

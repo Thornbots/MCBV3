@@ -28,14 +28,15 @@ using subsystems::UISubsystem;
 
 class SentryDrawCommand : public tap::control::Command, GraphicsContainer {
 public:
-    SentryDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain, commands::AutoAimAndFireCommand* aaafc)
+    SentryDrawCommand(src::Drivers* drivers, UISubsystem* ui, GimbalSubsystem* gimbal, FlywheelSubsystem* flywheel, IndexerSubsystem* indexer, DrivetrainSubsystem* drivetrain, commands::AutoAimAndFireCommand* aaafc, commands::AutoAimAndFireCommand* manualAaafc)
         : drivers(drivers),
           ui(ui),
           gimbal(gimbal),
           flywheel(flywheel),
           indexer(indexer),
           drivetrain(drivetrain),
-          aaafc(aaafc) {
+          aaafc(aaafc),
+          manualAaafc(manualAaafc) {
         addSubsystemRequirement(ui);
 
         addGraphicsObject(&lane);
@@ -66,7 +67,7 @@ public:
         countdown.update();
         velo.update();
         recal.update();
-        aad.update();
+        aad.update(aaafc->getIsScheduled() ? aaafc : manualAaafc);
         // logo doesn't need updating
     };
 
@@ -85,6 +86,7 @@ private:
     IndexerSubsystem* indexer;
     DrivetrainSubsystem* drivetrain;
     commands::AutoAimAndFireCommand* aaafc;
+    commands::AutoAimAndFireCommand* manualAaafc;
 
     // add top level graphics objects here and in the constructor
     LaneAssistLines lane{gimbal};
@@ -98,6 +100,6 @@ private:
     Countdown countdown{drivers};
     LinearVelocityIndicator velo{drivetrain};
     ImuRecalibrationIndicator recal{drivers};
-    AutoaimDebug aad{gimbal, aaafc};
+    AutoaimDebug aad{gimbal};
 };
 }  // namespace commands
