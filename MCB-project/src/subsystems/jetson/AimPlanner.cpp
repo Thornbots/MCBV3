@@ -72,6 +72,8 @@ Plan AimPlanner::plan(uint32_t now_ms, const TargetInput& in, const Vec3& pivot_
     observe(now_ms, in);
     if (!has_track_ || !finite(pivot_now) || !finite(shooter_vel)) return {};
     spinning_ = std::abs(in.yaw_rate) > (spinning_ ? t.spin_exit_rad_s : t.spin_enter_rad_s);
+    const bool gating = std::abs(in.yaw_rate) > t.shot_gating_rad_s ||
+                        (!t.chase && std::abs(in.yaw_rate) > 1e-6f);
     BallisticModel m = t.ballistics;
     m.speed = t.v_muzzle_mps;
     const float horizon = in.state_age_s + t.firmware_latency_s;
@@ -87,7 +89,20 @@ Plan AimPlanner::plan(uint32_t now_ms, const TargetInput& in, const Vec3& pivot_
         std::optional<float> seed = pitch_seed_;
         Plan out;
         for (unsigned i = 0; i <= 3; ++i) {
-            const Panel panel = panel_at(in, k, horizon + flight);
+            Panel panel = panel_at(in, k, horizon + flight);
+            if (gating) {
+                // Hold the face-crossing line; translation still gets ballistic lead.
+                const float h = horizon + flight;
+                const Vec3 c = center_at(in, h), cv = in.velocity + in.acceleration * h;
+                const Vec3 toward = exit + shooter_vel * flight - c;
+                const float range = std::hypot(toward.x, toward.y);
+                if (!(range > 1e-6f)) return {};
+                const Vec3 n{toward.x / range, toward.y / range, 0};
+                const Vec3 relative = shooter_vel - cv;
+                const Vec3 ndot = (Vec3{relative.x, relative.y, 0} - n * dot(n, relative)) * (1 / range);
+                panel.center = c + n * in.radius[k % 2] + Vec3{0, 0, in.z_offset[k % 2]};
+                panel.velocity = cv + ndot * in.radius[k % 2];
+            }
             const Vec3 hit = panel.center - shooter_vel * flight;
             const Vec3 d = hit - exit;
             const float range = std::hypot(d.x, d.y);
@@ -142,7 +157,9 @@ Plan AimPlanner::plan(uint32_t now_ms, const TargetInput& in, const Vec3& pivot_
 }
 
 bool shot_window(const TargetInput& in, int panel, float flight_time, const Vec3& pivot_now, const Vec3& shooter_vel, bool spinning, const AimTuning& t) {
-    if (!spinning) return true;
+    const bool gating = std::abs(in.yaw_rate) > t.shot_gating_rad_s ||
+                        (!t.chase && std::abs(in.yaw_rate) > 1e-6f);
+    if (!spinning && !gating) return true;
     const float h = in.state_age_s + t.firmware_latency_s + flight_time;
     const Vec3 shooter = pivot_now + shooter_vel * (t.firmware_latency_s + flight_time);
     const float bearing = bearing_at(in, h, shooter);
@@ -153,8 +170,8 @@ bool shot_window(const TargetInput& in, int panel, float flight_time, const Vec3
     const float phase = py_mod(theta + QUARTER_TURN / 2, QUARTER_TURN);
     const float since = (in.yaw_rate > 0 ? phase : QUARTER_TURN - phase) / w;
     const float until = QUARTER_TURN / w - since;
-    if (t.chase) return since >= t.chase_settle_s && until >= t.chase_margin_s;
-    // Optional diagnostic shotgating mode: only the imminent face-on crossing.
+    if (!gating) return since >= t.chase_settle_s && until >= t.chase_margin_s;
+    // Only the imminent face-on crossing; the measured outline gate also applies.
     return std::abs(theta) <= w * 0.001f;
 }
 

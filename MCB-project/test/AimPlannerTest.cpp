@@ -201,16 +201,18 @@ TEST(ManagedAim, RatesMatchContinuousSolutionIncludingAccelerationSpinAndShooter
     }
 }
 TEST(ManagedAim, MovingShooterAndMovingPanelIntersectAtImpact) {
+    AimTuning tuning;
+    tuning.shot_gating_rad_s = std::numeric_limits<float>::infinity();
     for (float spin : {0.f, 2.f, -9.f, 9.f}) {
         auto in = target();
         in.yaw_rate = spin;
         in.velocity = {.3f, 2, 0};
         in.acceleration = {.1f, -.4f, .1f};
         const Vec3 sv{.2f, -1, 0};
-        AimPlanner planner;
+        AimPlanner planner(tuning);
         auto p = planner.plan(0, in, PIVOT, sv);
         ASSERT_TRUE(p.valid);
-        auto hit = predict_impact(in, p, PIVOT, sv, aligned(p), {});
+        auto hit = predict_impact(in, p, PIVOT, sv, aligned(p), tuning);
         ASSERT_TRUE(hit) << spin;
         EXPECT_TRUE(hit->inside) << hit->width << " " << hit->height;
         EXPECT_NEAR(hit->width, 0, .001);
@@ -230,7 +232,7 @@ TEST(ManagedAim, FireRequiresCurrentWindowAndCurrentOutline) {
     EXPECT_FALSE(c.can_fire(0, PIVOT, {}, miss));
     EXPECT_FALSE(c.can_fire(600, PIVOT, {}, aligned(p)));
     int open = 0, closed = 0;
-    for (float phase = 0; phase < 1.57f; phase += .02f) {
+    for (float phase = 0; phase < 1.57f; phase += .001f) {
         AimControl spin;
         in = target();
         in.yaw += phase;
@@ -373,4 +375,61 @@ TEST(ManagedAim, ControllerBackProjectionDoesNotDoubleLeadTheFiringLatency) {
     const auto p = c.tick(0, PIVOT, {});
     ASSERT_TRUE(p.valid);
     EXPECT_TRUE(c.can_fire(0, PIVOT, {}, {p.yaw, p.pitch, p.yaw_rate, p.pitch_rate}));
+}
+
+TEST(ManagedAim, ShotGatingCutoutIsStrictSymmetricAndRefreshesWithoutDwell) {
+    EXPECT_FLOAT_EQ(AimTuning{}.shot_gating_rad_s, PI_F / 2);
+    AimTuning chase, gated;
+    chase.shot_gating_rad_s = std::numeric_limits<float>::infinity();
+    gated.chase = false;
+    for (float sign : {-1.f, 1.f}) {
+        AimPlanner automatic;
+        for (float rate : {std::nextafter(SHOT_GATING_RAD_S, 0.f), SHOT_GATING_RAD_S,
+                           std::nextafter(SHOT_GATING_RAD_S, 3.f), 9.f,
+                           SHOT_GATING_RAD_S}) {
+            auto in = target();
+            in.yaw += .2f;
+            in.yaw_rate = sign * rate;
+            AimPlanner reference(rate > SHOT_GATING_RAD_S ? gated : chase);
+            const auto p = automatic.plan(0, in, PIVOT, {});
+            const auto q = reference.plan(0, in, PIVOT, {});
+            ASSERT_TRUE(p.valid && q.valid);
+            EXPECT_NEAR(p.aim.x, q.aim.x, 1e-5);
+            EXPECT_NEAR(p.aim.y, q.aim.y, 1e-5);
+            EXPECT_NEAR(p.yaw_rate, q.yaw_rate, 1e-5);
+            if (rate > SHOT_GATING_RAD_S) {
+                EXPECT_NEAR(p.aim.y, 0, 1e-6);
+                EXPECT_NEAR(p.yaw_rate, 0, 1e-6);
+            } else {
+                EXPECT_GT(std::abs(p.aim.y), .001);
+            }
+            EXPECT_EQ(shot_window(in, p.panel, p.flight_time, PIVOT, {}, p.spinning, {}),
+                      shot_window(in, q.panel, q.flight_time, PIVOT, {}, p.spinning,
+                                  rate > SHOT_GATING_RAD_S ? gated : chase));
+        }
+    }
+}
+
+TEST(ManagedAim, FixedAimKeepsImpactAndCrossingGatesForBothSpinDirections) {
+    for (float rate : {-9.f, -2.f, 2.f, 9.f}) {
+        auto in = target();
+        in.yaw_rate = rate;
+        AimPlanner planner;
+        auto p = planner.plan(0, in, PIVOT, {});
+        ASSERT_TRUE(p.valid);
+        in.yaw = PI_F - rate * (.020f + p.flight_time);
+        AimControl c;
+        c.observe(0, in);
+        p = c.tick(0, PIVOT, {});
+        ASSERT_TRUE(p.valid);
+        const GimbalMotion measured{p.yaw, p.pitch, p.yaw_rate, p.pitch_rate};
+        EXPECT_TRUE(c.can_fire(0, PIVOT, {}, measured));
+        auto miss = measured;
+        miss.yaw += .1f;
+        EXPECT_FALSE(c.can_fire(0, PIVOT, {}, miss));
+        in.yaw += .1f;
+        c.observe(1, in);
+        p = c.tick(1, PIVOT, {});
+        EXPECT_FALSE(c.can_fire(1, PIVOT, {}, {p.yaw, p.pitch, p.yaw_rate, p.pitch_rate}));
+    }
 }

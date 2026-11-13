@@ -398,8 +398,15 @@ change. A shot already physically committed to the indexer cannot be recalled.
 Receipt-based link expiry and flag precedence are defined only in the wire
 contract. Idle CV_TARGET messages cannot replace an assigned model.
 
-**Continuous chase and rates.** The facing-panel chase behavior and panel-switch shot windows from
-[PR #140](https://github.com/Thornbots/MCBV3/pull/140) remain the default. Replan
+**Continuous aim and rates.** At `|TargetState.yaw_rate| > π/2 rad/s` (0.25 Hz),
+hold the predicted face-crossing line and fire only at a predicted crossing.
+The named `SHOT_GATING_RAD_S` constant supplies `AimTuning.shot_gating_rad_s`.
+At or below it, retain facing-panel chase from
+[PR #140](https://github.com/Thornbots/MCBV3/pull/140). The cutout uses the carried
+model rate directly, independently of the existing spin-classification hysteresis.
+Both modes retain translation/acceleration lead and measured impact/window gates.
+Fixed aim follows the translating target's shooter-facing radius and selected
+panel height; it does not follow that panel around the target. Replan
 every **5 ms**, including while an issued shot is in flight. At 3–4 mm/ms, a target moves
 15–20 mm between replans against a 135 mm panel; rate feedforward carries its
 first-order motion between solves. This halves the unmodeled motion of a 10 ms
@@ -458,7 +465,7 @@ predicted impact misses the outline; if the shot still hits an edge or corner,
 take it. No valid forward intersection, a back-face/degenerate intersection or
 a nonfinite solution means no shot.
 
-Evaluate the chase shot window for a shot exiting at `now + L` and impacting at
+Evaluate the selected mode's shot window for a shot exiting at `now + L` and impacting at
 `now + L + flight_time`. Fire only when that window and the on-target gate both
 pass in the current 1 ms control cycle. Advance the last plan with its rates
 between 5 ms replans, but evaluate the shot/window/outline gate from current
