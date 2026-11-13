@@ -585,9 +585,11 @@ returns raw motor command words. Gimbal encoders and velocities use the same
 Taproot decoder as the board; only the hosted yaw home is fixed to the sim
 joint's boot zero. Sim applies motor forces inside gz's 1 ms step; its
 [MCB emulator](../../sim/README.md#mcb-emulator) owns the plant and its limits.
-Sentry pitch selects the calibrated angle nearest zero from the encoder's
-single-turn reading. Its travel stays within half a motor revolution around
-that zero, including boots on either side of the encoder wrap.
+Pitch selects the calibrated angle nearest zero from the encoder's single-turn
+reading, which fixes pitch only modulo one motor turn (`2π / PITCH_RATIO`). Every
+robot's physical pitch travel stays within half that turn around zero, including
+boots on either side of the encoder wrap. Hero's `MAX_PITCH_UP` is 55°, but its
+head is mechanically limited to 45°, its half turn.
 The hosted remote switches follow stop/simple drive and automatic aim/fire
 selections, including arming after startup. The private pipe also carries
 three-axis gyro/specific force for the board adapter; the native fixture keeps
