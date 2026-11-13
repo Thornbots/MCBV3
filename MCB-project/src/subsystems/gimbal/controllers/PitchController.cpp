@@ -19,9 +19,15 @@ PitchController::PitchController() {}
 
 float PitchController::calculate(float currentPos, float currentVelo, float targetPos, float deltaT)
 {
+    return calculateWithRate(currentPos, currentVelo, targetPos, (targetPos-pastTarget)/deltaT, deltaT);
+}
+
+float PitchController::calculateWithRate(float currentPos, float currentVelo, float targetPos,
+                                        float targetRate, float deltaT)
+{
     float positionError = std::fmod(targetPos - currentPos + PI, 2 * PI) - PI;  // wrap to [-PI, PI]
     
-    float targetVelo = KP * positionError + (targetPos - pastTarget) / deltaT;
+    float targetVelo = KP * positionError + targetRate;
 
     // model based motion profile
     float maxVelocity = std::min(VELO_MAX, pastTargetVelo + ACCEL_MAX * deltaT);

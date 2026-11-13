@@ -5,7 +5,26 @@
 
 namespace subsystems {
 
-JetsonSubsystem::JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal, OdometrySubsystem* odo) : tap::control::Subsystem(drivers), drivers(drivers), gimbal(gimbal), odo(odo) {}
+JetsonSubsystem::JetsonSubsystem(src::Drivers* drivers, GimbalSubsystem* gimbal, OdometrySubsystem* odo) : tap::control::Subsystem(drivers), drivers(drivers), gimbal(gimbal), odo(odo) {
+    drivers->uart.setTargetHandler(this, receiveTarget);
+}
+
+void JetsonSubsystem::receiveTarget(void* context, const uint8_t* bytes, uint16_t length, uint32_t receivedMs) {
+    if (length != sizeof(TargetState)) return;
+    auto& self = *static_cast<JetsonSubsystem*>(context);
+    TargetState in{};
+    std::memcpy(&in, bytes, sizeof(in));
+    if (in.flags & TARGET_STATE_FLAG_CLEAR) {
+        self.clearMailbox = in;
+        self.clearReceivedMs = receivedMs;
+        self.clearPending = true;
+        self.targetPending = false;
+    } else if (in.flags & TARGET_STATE_FLAG_VALID) {
+        self.targetMailbox = in;
+        self.targetReceivedMs = receivedMs;
+        self.targetPending = true;
+    }
+}
 
 void JetsonSubsystem::initialize() {
     drivers->commandScheduler.registerSubsystem(this);
@@ -152,9 +171,12 @@ bool JetsonSubsystem::getCvTarget(CvTarget* cvTarget) {
     return getMsg(cvTarget);
 }
 bool JetsonSubsystem::getTargetState(TargetState* targetState, uint32_t* receivedMs) {
-    const uint32_t received = drivers->uart.getLastReceivedTime();
-    if (!getMsg(targetState)) return false;
-    if (receivedMs != nullptr) *receivedMs = received;
+    if (!clearPending && !targetPending) return false;
+    const bool clear = clearPending;
+    *targetState = clear ? clearMailbox : targetMailbox;
+    if (receivedMs != nullptr) *receivedMs = clear ? clearReceivedMs : targetReceivedMs;
+    if (clear) clearPending = false;
+    else targetPending = false;
     return true;
 }
 };  // namespace subsystems
