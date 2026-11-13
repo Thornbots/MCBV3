@@ -88,9 +88,19 @@ Final validation uses bridge commit
 `2e9a435b709697f3fecb3f21034505daa4cf40eb`, including `bool clear` in
 `TargetState.msg`; it does not rely on the earlier local message stub.
 
-The wire contract does not define numerical radius bounds or every disposition
-of malformed assigned geometry. Firmware accepts finite nonnegative radii,
-rejects nonfinite/negative-radius assignments without refreshing receipt expiry,
-and retains the prior accepted model until clear/expiry. A clear still wins over
-all model fields and track id. This interpretation needs coordinated review;
-there is no alternate wire format or measured-panel fallback.
+The coordinated contract accepts finite nonnegative radii in firmware and
+requires positive radii in the manager. Malformed assignments retain the prior
+accepted model without refreshing receipt expiry. A clear still wins over all
+model fields and track id; same-ID reacquisition clears before reassigning.
+
+## Nightly integration follow-up
+
+Merged firmware nightly `8405b0d` without rewriting the PR history, retaining
+the nearest-zero pitch decoding for every robot alongside the redesign.
+The four-CPU task container passes all 76 pure C++ tests, 49 hosted C++ tests
+and three hosted handshake tests after a fresh hosted sentry rebuild. The strict
+sim UART fixture passes all 64 tests with sim `2fd2f940cc1fe37d593a6d0de3a0bbc876613e02`;
+that immutable revision is now pinned by firmware CI. It includes sim nightly's
+pitch-zero parity fix and removes the obsolete test-only pitch compensation.
+Package quality and actionlint pass. No board timing was measured during this
+follow-up; the execution-cost acceptance above remains open.
