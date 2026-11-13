@@ -32,7 +32,7 @@ private:  // Private Variables
 
     float pitchMotorVoltage, yawMotorVoltage;
     float pitchAngle = 0.0;
-    float pitchAngleRaw = 0.0;
+    float SetPitchOffsettoEXACTLYthisNumberWhenTheHeadisHeldFlat = 0.0;
     float driveTrainAngularVelocity, yawAngularVelocity, yawAngleRelativeWorld = 0.0;
     float gimbalPitchAngleRelativeWorld, gimbalPitchAngularVelocity;
     float yawEncoderCache = 0;
