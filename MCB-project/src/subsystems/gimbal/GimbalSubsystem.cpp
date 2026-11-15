@@ -62,6 +62,38 @@ void GimbalSubsystem::setAngles(float yawAngle, float pitchAngle) {
     applyYawSetpoint(change, pitchAngle, absoluteYawRate.update(yawAngle, dt));
 }
 
+void GimbalSubsystem::setAnglesWithRates(float yaw, float pitch, float yawRate, float pitchRate) {
+    absoluteYawRate.reset();
+    resetEncoderIfGainPower();
+    targetYawAngleWorld += std::remainder(yaw-targetYawAngleWorld, 2*PI);
+#if defined(INFANTRY) or defined(HERO)
+    pitch -= gimbalPitchAngleRelativeWorld;
+    pitchRate -= gimbalPitchAngularVelocity;
+#endif
+    prevTargetPitch = std::clamp(pitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
+    pitchMotorVoltage = 1000 * pitchController.calculateWithRate(getPitchEncoderValue(),
+        motorPitch->getEncoder()->getVelocity()/PITCH_RATIO, prevTargetPitch, pitchRate, dt);
+    yawMotorVoltage = getYawVoltage(driveTrainAngularVelocity, yawAngleRelativeWorld,
+        yawAngularVelocity, targetYawAngleWorld, yawRate, dt);
+}
+
+float GimbalSubsystem::getAimPitch() {
+#if defined(INFANTRY) or defined(HERO)
+    return getPitchEncoderValue()+gimbalPitchAngleRelativeWorld;
+#else
+    return getPitchEncoderValue();
+#endif
+}
+
+float GimbalSubsystem::getAimPitchRate() {
+    const float relative = motorPitch->getEncoder()->getVelocity()/PITCH_RATIO;
+#if defined(INFANTRY) or defined(HERO)
+    return relative+gimbalPitchAngularVelocity;
+#else
+    return relative;
+#endif
+}
+
 void GimbalSubsystem::setPrevTargetPitch(float value) { prevTargetPitch = value; }
 
 void GimbalSubsystem::updateMotors(float changeInTargetYaw, float targetPitch) {

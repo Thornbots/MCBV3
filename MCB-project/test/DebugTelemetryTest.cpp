@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <memory>
+#include <limits>
 #include <vector>
 #include "hosted/clock.hpp"
 #include "hosted/uart.hpp"
@@ -363,12 +364,52 @@ TEST_F(DebugTelemetryTest, AutoAimHoldsAPlannedTargetStateAndDropsItAtTimeout) {
     EXPECT_TRUE(cmd.holdingTargetState);
     EXPECT_NEAR(cmd.deltaX, 2.7f, 0.05f);  // the facing panel, not ts.panel
     EXPECT_NEAR(cmd.deltaY, 0.0f, 0.05f);
-    EXPECT_TRUE(cmd.everRequestedFire);  // stationary and confident: no dwell
-    // Stale before the next frame: the hold ends when state age reaches 0.5 s.
-    hosted::timeMs = 1499;
+    EXPECT_FALSE(cmd.everRequestedFire);  // measured gimbal has not acquired this panel
+    // The link deadline uses receipt time, independently of carried ages.
+    hosted::timeMs = 1599;
     cmd.execute();
     EXPECT_TRUE(cmd.holdingTargetState);
-    hosted::timeMs = 1500;
+    hosted::timeMs = 1600;
     cmd.execute();
     EXPECT_FALSE(cmd.holdingTargetState);
+}
+
+TEST_F(DebugTelemetryTest, AutoAimClearOverridesValidAndMalformedGeometryImmediately) {
+    subsystems::TargetState ts{};
+    ts.center[0]=3; ts.radius[0]=ts.radius[1]=.25f;
+    ts.flags=subsystems::TARGET_STATE_FLAG_VALID;
+    auto& cmd=control->autoFire;
+    cmd.initialize();
+    receive(subsystems::TARGET_STATE,ts); cmd.execute();
+    ASSERT_TRUE(cmd.holdingTargetState);
+    ts.flags |= subsystems::TARGET_STATE_FLAG_CLEAR;
+    ts.center[0]=std::numeric_limits<float>::quiet_NaN();
+    receive(subsystems::TARGET_STATE,ts); cmd.execute();
+    EXPECT_FALSE(cmd.holdingTargetState);
+    cmd.end(false); cmd.initialize(); cmd.execute();
+    EXPECT_FALSE(cmd.holdingTargetState);
+}
+
+TEST_F(DebugTelemetryTest, TargetMailboxSurvivesIdleTrafficAndDeliversClearBeforeReassignment) {
+    subsystems::TargetState state{};
+    state.flags=subsystems::TARGET_STATE_FLAG_CLEAR;
+    hosted::timeMs=10;
+    receive(subsystems::TARGET_STATE,state);
+    state.flags=subsystems::TARGET_STATE_FLAG_VALID;
+    state.track_id=3;
+    hosted::timeMs=11;
+    receive(subsystems::TARGET_STATE,state);
+    subsystems::CvTarget idle{};
+    hosted::timeMs=12;
+    receive(subsystems::CV_TARGET,idle);
+    subsystems::TargetState got{};
+    uint32_t receipt=0;
+    ASSERT_TRUE(control->jetson.getTargetState(&got,&receipt));
+    EXPECT_NE(got.flags & subsystems::TARGET_STATE_FLAG_CLEAR,0);
+    EXPECT_EQ(receipt,10U);
+    ASSERT_TRUE(control->jetson.getTargetState(&got,&receipt));
+    EXPECT_EQ(got.track_id,3);
+    EXPECT_EQ(receipt,11U);
+    EXPECT_FALSE(control->jetson.getTargetState(&got,&receipt));
+    EXPECT_TRUE(control->jetson.getCvTarget(&idle));
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "subsystems/jetson/Ballistics.hpp"
 #include "util/Vector3d.hpp"
 
 class Projections {
@@ -58,6 +59,12 @@ static constexpr float SHOT_DRAG_PER_METER = 0.02f;
 static constexpr float SHOT_PITCH_DOWN_BIAS = 0;
 static constexpr float SHOT_DRAG_PER_METER = 0;
 #endif
+
+    static aim::BallisticModel ballisticModel(float speed) {
+        return {speed, SHOT_DRAG_PER_METER, SHOT_PITCH_DOWN_BIAS,
+            OFFSET_Y_PITCH_PIVOT_TO_BARREL, OFFSET_Z_PITCH_PIVOT_TO_BARREL,
+            OFFSET_X_PITCH_PIVOT_TO_BARREL, 9.80665f};
+    }
 
     /** robot space is defined as: center of robot at (x, y)=(0, 0), ground at z=0, 
      * positive x is to the right, positive y is forward, positive z is above

@@ -6,6 +6,8 @@ public:
     PitchController();
     //~PitchController();
     float calculate(float currentPosition, float currentVelocity, float targetPosition, float deltaT);
+    float calculateWithRate(float currentPosition, float currentVelocity, float targetPosition,
+                            float targetVelocity, float deltaT);
 
     void clearBuildup() { buildup = 0; pastTargetVelo = 0; pastOutput = 0;};
     

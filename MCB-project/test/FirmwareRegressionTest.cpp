@@ -163,3 +163,20 @@ TEST(ModmIteratorTest, SupportsStandardAlgorithmsWithConstTraits) {
     EXPECT_EQ(std::distance(values.begin(), values.end()), 2);
     EXPECT_EQ(*std::next(values.begin()), 7);
 }
+
+TEST(UARTCommunicationTest, PingDoesNotRestampTheUnconsumedTargetMailbox) {
+    hosted::timeMs=10;
+    Drivers drivers;
+    communication::UARTCommunication uart(&drivers, tap::communication::serial::Uart::Uart1, true);
+    uart.setPingHandler(nullptr, [](void*, uint8_t, uint32_t) {});
+    communication::UARTCommunication::ReceivedSerialMessage message{};
+    message.messageType=7; message.header.dataLength=80;
+    uart.messageReceiveCallback(message);
+    hosted::timeMs=599;
+    message.messageType=5; message.header.dataLength=1;
+    uart.messageReceiveCallback(message);
+    EXPECT_TRUE(uart.hasNewMessage());
+    EXPECT_EQ(uart.getLastReceivedTime(),10U);
+    EXPECT_EQ(uart.getLastMsg().messageType,7);
+    EXPECT_TRUE(uart.isConnected());
+}

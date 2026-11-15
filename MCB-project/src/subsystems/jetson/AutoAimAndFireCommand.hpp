@@ -80,7 +80,6 @@ private:
 
     
     tap::arch::MilliTimeout cvTargetValidTimeout{};
-    tap::arch::MilliTimeout startShotTimeout{}; //ideally we don't have to queue up multiple shots
     static constexpr int TARGET_VALID_TIME = 200; //ms, idle CV_TARGET point validity
     // Indexer request to chamber exit; the sentry's 20 ms is timed on the robot (2026-10-28),
     // infantry's is assumed equal.
@@ -103,12 +102,10 @@ private:
 
     // ---- target state planning (README "MCBV3 aiming") ----
     static aim::AimTuning makeTuning();
-    aim::AimPlanner planner;
-    TargetState heldState{};
-    uint32_t heldReceivedMs = 0;
-    bool haveTargetState = false;
-    uint32_t nextReplanMs = 0;
-    aim::Vec3 heldAim{};      // aim point held for the current replan period (or pending shot)
+    aim::AimControl planner;
+#ifdef MCB_AIM_TIMING
+    int timingPanel = -1;
+#endif
     bool turnToHitPermitted = true;   // flags of the newest frame; defaults match CvTarget's
     bool patrolPermitted = true;
 

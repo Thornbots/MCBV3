@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits>
+
 #include "tap/algorithms/math_user_utils.hpp"
 
 #include "subsystems/gimbal/GimbalSubsystem.hpp"
@@ -84,12 +86,12 @@ public:
         addGraphicsObject(&rectsContainer);
         addGraphicsObject(&linesContainer);
         addGraphicsObject(&verticalLine);
-        
+
         // #if defined(HERO)
         //     addGraphicsObject(&pitchValue);
         // #endif
     }
-    
+
     void setVerticalLineColor(UISubsystem::Color color){
         if(solveMode == ReticleSolveMode::FOR_DISTANCE){
             // one set of things
@@ -127,10 +129,10 @@ public:
             prev=true;
             solveMode = solveMode == ReticleSolveMode::FOR_DISTANCE ? ReticleSolveMode::FOR_PITCH : ReticleSolveMode::FOR_DISTANCE;
         }
-        
-        
+
+
         float pitch = gimbal->getPitchEncoderValue();
-        
+
         #if defined(HERO)
             pitchValue._float = -pitch*100 + 100;
             pitchValue.calculateNumbers();
@@ -167,7 +169,7 @@ public:
             verticalLine.x1 += DIAGONAL_OFFSET;
             verticalLine.x2 -= DIAGONAL_OFFSET;
         }
-        
+
         // assume all is hidden
         for (int i = 0; i < NUM_THINGS; i++) {
             for (int j = 0; j < NUM_LINES; j++) {
@@ -260,7 +262,7 @@ private:
     tap::Drivers* drivers;
     GimbalSubsystem* gimbal;
     IndexerSubsystem* index;
-    
+
     //for detecting button press
     bool prev = false;
 
@@ -283,14 +285,13 @@ private:
     Line lines[NUM_THINGS][NUM_LINES];   // not all are used in every mode
     UnfilledRectangle rects[NUM_THINGS]; // for ReticleDrawMode::RECTANGLES
     Line verticalLine;
-    
+
     #if defined(HERO)
         FloatGraphic pitchValue{UISubsystem::Color::PURPLISH_RED, 0.0f, UISubsystem::HALF_SCREEN_WIDTH, 630, 50, 6};
     #endif
-    
+
     // for solving for pitch
-    static constexpr int MAX_NUM_ITERATIONS = 10;  // it is difficult to actually solve for pitch because initial launch positions depend on pitch
-    bool forPitchLandingSpotsSolved[NUM_THINGS];    // so we do a binary search, guessing a pitch, calculating where it lands, and trying a higher or lower pitch accordingly
+    bool forPitchLandingSpotsSolved[NUM_THINGS];
     Vector3d forPitchLandingSpots[NUM_THINGS];
     float forPitchPitches[NUM_THINGS];
     bool solvedForPitchLandingSpotThisCycle = false;  // prevent solving for multiple in one update() cycle so it doesn't take a long time
@@ -306,8 +307,8 @@ private:
         // now get to screen space
         return Projections::vtmSpaceToScreenSpace(temp2);
     }
-    
-    
+
+
     // initialPos and initialVelo are in pivot space, parallel to the ground so gravity is pulling in the -z direction only
     static void getInitials(Vector3d* initialPos, Vector3d* initialVelo, float pitch) {
         Vector3d temp{0, initialShotVelocity, 0};
@@ -340,47 +341,25 @@ private:
 
             // solve
             forPitchPitches[i] = solveForPitch(DISTANCES[i], targetZ);
+            forPitchLandingSpots[i] = calculateLandingSpotForHeightOffGround(DISTANCES[i], forPitchPitches[i]);
             forPitchLandingSpotsSolved[i] = true;
             solvedForPitchLandingSpotThisCycle = true;
             *pitch = forPitchPitches[i];
             return forPitchLandingSpots[i];
         }
     }
-    
+
     static Vector3d calculateLandingSpotForHeightOffGround(float distanceDownRange, float pitch) {
-        Vector3d initialPos;
-        Vector3d initialVelo;
-        getInitials(&initialPos, &initialVelo, pitch);
-        // Time to cover the down-range distance. Horizontal drag only: vertical drag moves the
-        // sentry's shots under 1 cm at 8 m, so the closed form stays cheap enough for every cycle.
-        const float downRange = distanceDownRange - initialPos.getY();
-        constexpr float k = Projections::SHOT_DRAG_PER_METER;
-        float t = k > 0 ? std::expm1(k * downRange) / (k * initialVelo.getY()) : downRange / initialVelo.getY();
-
-        // make sure gravity is negative, the taproot constant is positive, need to subtract
-        float zFinal = initialPos.getZ() + initialVelo.getZ() * t - tap::algorithms::ACCELERATION_GRAVITY / 2 * t * t;
-
-        return Vector3d{initialPos.getX(), distanceDownRange, zFinal};  // side to side doesn't change, we are defining the down range distance, and we calculated the height
+        const auto sample = aim::ballistic_height(distanceDownRange, pitch,
+                                                  Projections::ballisticModel(initialShotVelocity));
+        return {Projections::OFFSET_X_PITCH_PIVOT_TO_BARREL, distanceDownRange,
+                sample ? sample->height : std::numeric_limits<float>::quiet_NaN()};
     }
-    
+
 public:
     static float solveForPitch(float distanceDownRange, float targetZ) {
-        Vector3d workingLandingSpot{0, 0, 0};
-        float pitch = 0;
-        for (int j = 0; j < MAX_NUM_ITERATIONS; j++) {
-            workingLandingSpot = calculateLandingSpotForHeightOffGround(distanceDownRange, pitch);
-
-            // this seems backwards, maybe positive pitch is downward?
-            if (workingLandingSpot.getZ() > targetZ) {
-                // if j is 0, we add pi/4, 45 degrees
-                // if j is 1, we add pi/8, 22.5 degrees
-                pitch += PI / (4 << j);
-            } else {
-                // if j is 0, we subtract pi/4, 45 degrees
-                // if j is 1, we subtract pi/8, 22.5 degrees
-                pitch -= PI / (4 << j);
-            }
-        }
-        return pitch;
+        const auto solution = aim::solve_ballistic(distanceDownRange, targetZ,
+                                                   Projections::ballisticModel(initialShotVelocity));
+        return solution ? solution->pitch : std::numeric_limits<float>::quiet_NaN();
     }
 };
