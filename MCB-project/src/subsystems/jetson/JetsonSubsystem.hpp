@@ -49,8 +49,8 @@ enum OdomStatus : uint8_t{
     ODOM_I2C_DEAD_DRIVETRAIN = 3    // I2C bus dead, drivetrain odometry instead
 };
 
-// Every x/y and yaw on the wire is in the field frame: REP-105, (0, 0) at the field
-// centre, x toward blue's base (OdometrySubsystemConstants.hpp), like OdometrySubsystem.
+// Navigation fixes use the field frame; raw POSE starts at (0, 0).
+// Field x points toward blue's base (OdometrySubsystemConstants.hpp).
 
 // =================== Incoming message types =======================
 
@@ -119,7 +119,7 @@ struct Pose
     float vel_x;      //meters/second
     float vel_y;      //meters/second
     float head_pitch; //rad
-    float head_yaw;   //rad, field frame, counterclockwise, [0, 2pi)
+    float head_yaw;   //rad, field frame, counterclockwise, fmod range (-2pi, 2pi)
     OdomStatus odom_status;
 } modm_packed;
 
@@ -174,6 +174,8 @@ private:  // Private Variables
     std::array<uint8_t, 128> debugPayload{};
     size_t debugLength = 0;
     bool debugPending = false;
+    bool relocalizeAckPending = false;
+    uint32_t relocalizeAckMs = 0;
     TargetState targetMailbox{}, clearMailbox{};
     uint32_t targetReceivedMs = 0, clearReceivedMs = 0;
     bool targetPending = false, clearPending = false;
