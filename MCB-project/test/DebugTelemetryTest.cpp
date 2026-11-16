@@ -151,6 +151,10 @@ TEST_F(DebugTelemetryTest, FloodPreservesMandatorySlotsAndReceiveAcrossPhasesAnd
                     EXPECT_LE(wireFreeUs +
                         communication::UARTCommunication::wireTimeUs(sizeof(subsystems::Pose) + 9) + 2000,
                         (mandatory + 2U) * 10000ULL);
+                } else if (type == subsystems::PING) {
+                    EXPECT_EQ(length, 1U);
+                    EXPECT_EQ(bytes[offset + 7], 7);
+                    delayedByDebug = 0;
                 } else {
                     ++mandatory;
                     const uint32_t deadline = mandatory * 10;

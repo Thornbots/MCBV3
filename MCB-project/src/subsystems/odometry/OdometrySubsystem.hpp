@@ -70,7 +70,7 @@ public:  // Public Methods
     float getYVel();
 
     // sets the offsets so that if the odo pods don't move after you call this, getX and getY return newX and newY
-    void relocalizeTo(float newX, float newY);
+    bool relocalizeTo(float newX, float newY);
     bool isNavigationLocalized() const { return navigationLocalized; }
 
     // Navigation position of the power-on point (aim is zero there): the team start the

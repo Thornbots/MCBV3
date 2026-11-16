@@ -75,12 +75,13 @@ float OdometrySubsystem::getStartYaw() {
     return BOOT_YAW;
 }
 // the pods are x right, y forward of the start: forward is raw y, left is raw -x
-void OdometrySubsystem::relocalizeTo(float newX, float newY) {
-    if (!std::isfinite(newX) || !std::isfinite(newY)) return;
-    if (!updateAimPosition()) return;
+bool OdometrySubsystem::relocalizeTo(float newX, float newY) {
+    if (!std::isfinite(newX) || !std::isfinite(newY)) return false;
+    if (!updateAimPosition()) return false;
     offsetX = newX - aimPosition.getX();
     offsetY = newY - aimPosition.getY();
     navigationLocalized = true;
+    return true;
 }
 float OdometrySubsystem::getX() {
     return offsetX + getAimX();

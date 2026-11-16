@@ -81,6 +81,16 @@ void JetsonSubsystem::refresh() {
     if (getMsg(&ping)) sendMsg(&ping);
 #endif
 
+    if (relocalizeAckPending) {
+        if (now - relocalizeAckMs > 100U) {
+            relocalizeAckPending = false;
+        } else if (drivers->uart.isWireIdle()) {
+            uint8_t ack = 7;
+            drivers->uart.sendMsg(&ack, PING, 1);
+            relocalizeAckPending = false;  // A partial write must not be retried.
+        }
+    }
+
     if (static_cast<int32_t>(now - nextTelemetryMs) >= 0) {
         if (!drivers->uart.isWireIdle()) return;
         messageCount++;
@@ -150,8 +160,9 @@ void JetsonSubsystem::refresh() {
 
 void JetsonSubsystem::checkApplyRelocalize() {
     Relocalize relocalize_msg;
-    if (getMsg(&relocalize_msg)) {
-        odo->relocalizeTo(relocalize_msg.x, relocalize_msg.y);
+    if (getMsg(&relocalize_msg) && odo->relocalizeTo(relocalize_msg.x, relocalize_msg.y)) {
+        relocalizeAckPending = true;
+        relocalizeAckMs = tap::arch::clock::getTimeMilliseconds();
     }
 }
 
