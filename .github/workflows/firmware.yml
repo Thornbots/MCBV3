@@ -25,17 +25,17 @@ jobs:
         robot: [infantry, hero, sentry]
         sysid: [none, dt, yaw, odo]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
-          python3 -m pip install scons==4.11.1 pyelftools==0.32 Jinja2==3.1.6
+          python3 -m pip install scons==4.11.1 pyelftools==0.33 Jinja2==3.1.6
           git submodule update --init taproot-scripts
       - name: Compile firmware
         working-directory: MCB-project
         run: scons build robot=${{ matrix.robot }} sysid=${{ matrix.sysid }} profile=release -j2
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: firmware-${{ matrix.robot }}-${{ matrix.sysid }}
           path: MCB-project/build/hardware/scons-release/MCB-project.elf
@@ -46,12 +46,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install build and test dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-14 g++-14 libgtest-dev
-          python3 -m pip install scons==4.11.1 pyelftools==0.32 Jinja2==3.1.6
+          python3 -m pip install scons==4.11.1 pyelftools==0.33 Jinja2==3.1.6
           git submodule update --init taproot-scripts
       - name: Run package C++ tests
         env:
@@ -65,7 +65,7 @@ jobs:
           CXX: g++-14
         run: tools/test_hosted_cpp.sh --gtest_output=xml:build/unit-tests/firmware-results.xml
       - name: Check out compatible UART test fixture
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: Thornbots/sim
           ref: 2fd2f940cc1fe37d593a6d0de3a0bbc876613e02
@@ -91,7 +91,7 @@ jobs:
           assert totals['tests'] > 0, totals
           assert not any(totals[key] for key in ('skipped', 'failures', 'errors')), totals
           PY
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: firmware-test-results
