@@ -122,11 +122,8 @@ bool IndexerSubsystem::refPoweringIndex() {
 
 
 bool IndexerSubsystem::canShoot() {
-// #if defined(HERO)
-//     return isIndexOnline() && refPoweringIndex() && isProjectileAtBeam() && tap::arch::clock::getTimeMilliseconds()-lastShotTime>=MIN_SHOT_FREQ; //heatAllowsShooting() && 
-// #else// START getters and setters
-    return isIndexOnline() && heatAllowsShooting() && refPoweringIndex() && isProjectileAtBeam() && tap::arch::clock::getTimeMilliseconds()-lastShotTime>=MIN_SHOT_FREQ;
-// #endif
+    return isIndexOnline() && heatAllowsShooting() && refPoweringIndex() && isProjectileAtBeam() &&
+        tap::arch::clock::getTimeMilliseconds() - lastShotTime >= MIN_SHOT_INTERVAL_MS;
 }
 
 void IndexerSubsystem::justShot() {
@@ -165,4 +162,4 @@ void IndexerSubsystem::doAutoUnjam(tap::motor::DjiMotor* unjamMotor, tap::arch::
     }
 }
 
-} //namespace subsystems 
+} //namespace subsystems
