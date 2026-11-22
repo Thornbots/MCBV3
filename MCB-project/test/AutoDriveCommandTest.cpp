@@ -72,6 +72,24 @@ protected:
     }
 
     float spin() const { return drive.getHostedTargetVelocity().getRotation(); }
+    float translation() const { return drive.getHostedTargetVelocity().magnitude(); }
+
+    void chassisYaw(float yaw, float rate) {
+        hosted::sensors.yaw = yaw;
+        hosted::sensors.yawRate = rate;
+        gimbal.refresh();
+        gimbal.clearBuildup();
+    }
+
+    void yawMotorFeedback(uint16_t rotorTicks) {
+        modm::can::Message feedback(hardware.yawMotor.getMotorIdentifier(), 8);
+        std::fill(std::begin(feedback.data), std::end(feedback.data), 0);
+        feedback.data[0] = rotorTicks >> 8;
+        feedback.data[1] = rotorTicks & 0xff;
+        hardware.yawMotor.processMessage(feedback);
+        gimbal.refresh();
+        ++hosted::timeMs;
+    }
 };
 
 TEST_F(AutoDriveCommandTest, RawStartsAtZeroForBothTeamsAndNeverReanchors) {
@@ -147,12 +165,130 @@ TEST_F(AutoDriveCommandTest, TravelHoldsAQuarterTurnAndSpinsOnlyAtTheGoal) {
     EXPECT_GT(drive.getHostedTargetVelocity().magnitude(), 0);
     EXPECT_LT(std::abs(spin()), 1.0f) << "squared up through the doorway, not spinning";
     // Within SPIN_START_RADIUS: spin; between the radii: keep spinning (hysteresis).
-    for (const auto& [offset, spinning] : {std::pair{0.10f, true}, std::pair{0.25f, true},
-            std::pair{0.40f, false}, std::pair{0.25f, false}, std::pair{0.10f, true}}) {
+    for (const auto& [offset, spinning] : {std::pair{0.01f, true}, std::pair{0.25f, true},
+            std::pair{0.40f, false}, std::pair{0.25f, false}, std::pair{0.01f, true}}) {
         odo.relocalizeTo(-2.40f - offset, -0.635f);
+        goal(-2.40f, -0.635f);  // The publisher repeats the same goal at 10 Hz.
         command.execute();
-        if (spinning) EXPECT_GT(spin(), 1.0f) << offset;
-        else EXPECT_LT(std::abs(spin()), 1.0f) << offset;
+        if (spinning) {
+            EXPECT_GT(spin(), 1.0f) << offset;
+            EXPECT_FLOAT_EQ(translation(), 0);
+        } else {
+            EXPECT_LT(std::abs(spin()), 1.0f) << offset;
+            EXPECT_GT(translation(), 0);
+        }
+    }
+}
+
+TEST_F(AutoDriveCommandTest, TravelRequiresBothQuarterTurnHeadingAndLowChassisYawRate) {
+    subsystems::JetsonSubsystem jetson(&drivers, &gimbal, &odo);
+    AutoDriveCommand command(&drivers, &drive, &gimbal, &jetson, &odo);
+    command.initialize();
+    odo.relocalizeTo(-5.25f, -3.0f);
+    goal(-5.25f, -3.0f);
+    command.execute();
+    ASSERT_GT(spin(), 1.0f);
+
+    goal(-5.25f, -0.635f);
+    chassisYaw(0, 8.0f);
+    command.execute();
+    EXPECT_FLOAT_EQ(translation(), 0);
+    EXPECT_LT(std::abs(spin()), 1.0f);
+
+    chassisYaw(0.3f, 0);
+    command.execute();
+    EXPECT_FLOAT_EQ(translation(), 0);
+    EXPECT_LT(spin(), -1.0f);
+
+    chassisYaw(0, 0);
+    command.execute();
+    EXPECT_GT(translation(), 0);
+
+    chassisYaw(0, -2.0f);
+    command.execute();
+    EXPECT_FLOAT_EQ(translation(), 0);
+}
+
+TEST_F(AutoDriveCommandTest, SpinWaitsForPrecisionArrivalAndBraking) {
+    subsystems::JetsonSubsystem jetson(&drivers, &gimbal, &odo);
+    AutoDriveCommand command(&drivers, &drive, &gimbal, &jetson, &odo);
+    command.initialize();
+    odo.relocalizeTo(-5.25f, -0.695f);
+    goal(-5.25f, -0.635f);
+    command.execute();
+    EXPECT_GT(translation(), 0);
+    EXPECT_NEAR(spin(), 0, 1e-3f);
+
+    odo.relocalizeTo(-5.25f, -0.645f);
+    hosted::sensors.podVy = 0.4f;
+    command.execute();
+    EXPECT_GT(translation(), 0);
+    EXPECT_NEAR(spin(), 0, 1e-3f);
+
+    hosted::sensors.podVy = 0;
+    command.execute();
+    EXPECT_FLOAT_EQ(translation(), 0);
+    EXPECT_GT(spin(), 1.0f);
+
+    goal(-5.25f, -0.80f);  // A new goal inside the spin stop radius still exits spin.
+    command.execute();
+    EXPECT_GT(translation(), 0);
+    EXPECT_NEAR(spin(), 0, 1e-3f);
+}
+
+TEST_F(AutoDriveCommandTest, NewLegWaitsForTheCornerToSettle) {
+    subsystems::JetsonSubsystem jetson(&drivers, &gimbal, &odo);
+    AutoDriveCommand command(&drivers, &drive, &gimbal, &jetson, &odo);
+    command.initialize();
+    odo.relocalizeTo(-5.25f, -0.68f);
+    goal(-5.25f, -0.635f);
+    command.execute();
+    ASSERT_LT(translation(), 0.15f);
+
+    goal(-2.4f, -0.635f);
+    command.execute();
+    EXPECT_LT(translation(), 0.15f);
+    EXPECT_NEAR(spin(), 0, 1e-3f);
+
+    odo.relocalizeTo(-5.25f, -0.64f);
+    hosted::sensors.podVy = 0.4f;
+    goal(-2.4f, -0.635f);
+    command.execute();
+    EXPECT_LT(translation(), 0.15f);
+    EXPECT_NEAR(spin(), 0, 1e-3f);
+
+    hosted::sensors.podVy = 0;
+    command.execute();
+    EXPECT_GT(translation(), 1.0f);
+}
+
+TEST_F(AutoDriveCommandTest, ReversingToThePreviousGoalLeavesTheCornerImmediately) {
+    subsystems::JetsonSubsystem jetson(&drivers, &gimbal, &odo);
+    AutoDriveCommand command(&drivers, &drive, &gimbal, &jetson, &odo);
+    command.initialize();
+    odo.relocalizeTo(-5.25f, -2.5f);
+    goal(-5.25f, -3.0f);
+    command.execute();
+    goal(-5.25f, -0.635f);
+    command.execute();
+
+    odo.relocalizeTo(-5.25f, -0.68f);
+    goal(-5.25f, -3.0f);
+    command.execute();
+    EXPECT_GT(translation(), 1.0f);
+    EXPECT_NEAR(spin(), 0, 1e-3f);
+}
+
+TEST_F(AutoDriveCommandTest, HostedYawHomesAcrossTheRotorWrapAndKeepsTrackingTurns) {
+    constexpr uint16_t ticksPerTurn = 8192;
+    constexpr float radiansPerTick = 2 * PI / (ticksPerTurn * YAW_TOTAL_RATIO);
+    yawMotorFeedback(ticksPerTurn - 4);
+    yawMotorFeedback(ticksPerTurn - 4);
+    EXPECT_NEAR(gimbal.getYawEncoderValue(), -4 * radiansPerTick, 1e-5f);
+
+    for (uint16_t ticks = 1024; ticks <= 2 * ticksPerTurn; ticks += 1024) {
+        yawMotorFeedback(ticks % ticksPerTurn);
+        EXPECT_NEAR(gimbal.getYawEncoderValue(), ticks * radiansPerTick, 1e-5f);
     }
 }
 
@@ -167,8 +303,11 @@ TEST_F(AutoDriveCommandTest, CountdownSpinsInPlaceAndPreGameHolds) {
     EXPECT_GT(spin(), 1.0f);
     EXPECT_NEAR(drive.getHostedTargetVelocity().magnitude(), 0, 1e-3f);
     stage(RefSerialData::Rx::GameStage::PREMATCH);
-    goal(-5.25f, -0.635f);
     command.execute();
+    EXPECT_FLOAT_EQ(spin(), 0);
     EXPECT_NEAR(drive.getHostedTargetVelocity().magnitude(), 0, 1e-3f);
+    stage(RefSerialData::Rx::GameStage::IN_GAME);
+    command.execute();
+    EXPECT_GT(translation(), 0);
 }
 }  // namespace commands

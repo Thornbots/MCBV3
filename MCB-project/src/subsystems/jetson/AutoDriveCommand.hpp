@@ -1,6 +1,7 @@
 #pragma once
 
-#include "tap/communication/serial/remote.hpp"
+#include <optional>
+
 #include "tap/control/command.hpp"
 
 #include "subsystems/drivetrain/DrivetrainSubsystem.hpp"
@@ -14,9 +15,6 @@ namespace commands {
 using subsystems::DrivetrainSubsystem;
 using subsystems::GimbalSubsystem;
 using subsystems::JetsonSubsystem;
-
-using tap::communication::serial::Remote;
-
 
 class AutoDriveCommand : public tap::control::Command {
 public:
@@ -41,22 +39,18 @@ public:
 
     bool getIsScheduled();
 
-    // Spin only once settled on the goal; travel holds the nearest field quarter
+private:
+    // Spin only once settled on the goal. Travel holds the nearest field quarter
     // turn, because the 0.84 m spin sweep is wider than the Starting Zone's
     // 0.745 m doorway (sim world/arcc_s2_3v3/cad/NOTES.md).
-    static constexpr float SPIN_START_RADIUS = 0.15f;  // m from the goal
+    static constexpr float SPIN_START_RADIUS = 0.025f; // m, inside the 0.05 m doorway waypoint tolerance
     static constexpr float SPIN_STOP_RADIUS = 0.30f;   // m, hysteresis against chatter
-    static constexpr float SPIN_VELOCITY = 9.0f;       // rad/s, unchanged from before
-
-
-private:
-    
-    //for relocalization
-    static constexpr float Y_DISTANCE_FROM_CENTER_THRESHOLD = 2.5; //meters, if jetson position is greater than this then allow relocalization
-    static constexpr float DISTANCE_THRESHOLD = 0.5; //meters, if jetson position minus odo position is greater than this, relocalize
-
-    float offsetX = 0;
-    float offsetY = 0;
+    static constexpr float SETTLED_SPEED = 0.10f;      // m/s
+    static constexpr float SPIN_VELOCITY = 9.0f;       // rad/s
+    static constexpr float TRAVEL_HEADING_ERROR = 0.06f; // rad
+    static constexpr float TRAVEL_YAW_RATE = 0.35f;    // rad/s
+    static constexpr float WAYPOINT_HANDOFF_RADIUS = 0.25f; // m, covers the doorway exit tolerance
+    static constexpr float WAYPOINT_SETTLED_RADIUS = 0.01f; // m, settle on the next leg's centreline
 
     src::Drivers* drivers;
     JetsonSubsystem* jetson;
@@ -64,8 +58,9 @@ private:
     GimbalSubsystem* gimbal;
     OdometrySubsystem* odo;
 
-    Pose2d targetPosition;
-    Pose2d targetVelocity;
+    Vector2d targetPosition;
+    std::optional<Vector2d> previousGoal;
+    std::optional<Vector2d> arrivalTarget;
 
     bool isScheduled = false;
     bool hasNavGoal = false;
