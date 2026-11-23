@@ -1,5 +1,6 @@
 #include "AutoDriveCommand.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include "subsystems/drivetrain/DrivetrainSubsystemConstants.hpp"
@@ -11,8 +12,9 @@ void AutoDriveCommand::initialize() {
     isScheduled = true;
     hasNavGoal = false;
     spinning = false;
+    travelAligned = false;
     previousGoal.reset();
-    arrivalTarget.reset();
+    corner.reset();
     drivetrain->resetPositionIntegral();
 }
 
@@ -22,13 +24,12 @@ void AutoDriveCommand::execute() {
     if (jetson->updateROS(&goal, &goalVelocity, &expectedPosition)) {
         if (!hasNavGoal || !(goal == targetPosition)) {
             const bool reversing = previousGoal && goal == *previousGoal;
-            // The publisher can step to the next leg while the chassis is still
-            // braking outside the corner. Finish the corner before turning.
+            // Capture the outgoing leg near the corner before targeting its end.
             if (hasNavGoal && !spinning && !reversing &&
                 (targetPosition - current).magnitude() <= WAYPOINT_HANDOFF_RADIUS) {
-                arrivalTarget = targetPosition;
+                corner = targetPosition;
             } else {
-                arrivalTarget.reset();
+                corner.reset();
             }
             if (hasNavGoal) previousGoal = targetPosition;
             spinning = false;
@@ -38,6 +39,7 @@ void AutoDriveCommand::execute() {
         hasNavGoal = true;
     }
     if (!odo->isNavigationLocalized() || !hasNavGoal) {
+        travelAligned = false;
         drivetrain->stopMotors();
         return;
     }
@@ -52,6 +54,7 @@ void AutoDriveCommand::execute() {
         game.gameType == RefSerialData::Rx::GameType::ROBOMASTER_RMUL_3V3 &&
         game.gameStage != GameStage::IN_GAME) {
         spinning = false;
+        travelAligned = false;
         drivetrain->resetPositionIntegral();
         const float yaw = game.gameStage == GameStage::COUNTDOWN ? SPIN_VELOCITY : 0.0f;
         drivetrain->setTargetPosition(currentPosition.vec(), currentPosition, Pose2d(0, 0, yaw));
@@ -60,30 +63,42 @@ void AutoDriveCommand::execute() {
 
     const float headingError = std::remainder(referenceAngle, PI / 2);
     const float yawRate = drivers->bmi088.getGz() - gimbal->getYawVel();
-    const bool aligned = std::abs(headingError) <= TRAVEL_HEADING_ERROR &&
-                         std::abs(yawRate) <= TRAVEL_YAW_RATE;
-    const auto stopped = [this] {
-        return std::hypot(odo->getXVel(), odo->getYVel()) <= SETTLED_SPEED;
-    };
-    if (arrivalTarget && (*arrivalTarget - current).magnitude() <= WAYPOINT_SETTLED_RADIUS &&
-        stopped()) {
-        arrivalTarget.reset();
-        drivetrain->resetPositionIntegral();
+    const bool squaredUp = std::abs(headingError) <= TRAVEL_HEADING_ERROR;
+    const bool settled = squaredUp && std::abs(yawRate) <= SETTLED_YAW_RATE;
+    travelAligned = settled ||
+                    (travelAligned && squaredUp && std::abs(yawRate) <= TRAVEL_YAW_RATE);
+
+    Vector2d driveTarget = targetPosition;
+    if (corner) {
+        const Vector2d leg = targetPosition - *corner;
+        const float length = leg.magnitude();
+        const Vector2d direction = leg * (1.0f / length);
+        const Vector2d offset = current - *corner;
+        const float progress = offset.getX() * direction.getX() + offset.getY() * direction.getY();
+        // Start with a nearby point on the new centreline. Lead grows with
+        // progress up the leg, so the target reaches the endpoint continuously.
+        const float targetProgress = CORNER_LOOKAHEAD + 2.0f * std::max(0.0f, progress);
+        if (targetProgress < length) {
+            driveTarget = *corner + direction * targetProgress;
+        } else {
+            corner.reset();
+        }
     }
     const float distance = (targetPosition - current).magnitude();
     if (spinning) {
         spinning = distance <= SPIN_STOP_RADIUS;
     } else {
-        spinning = aligned && !arrivalTarget && distance <= SPIN_START_RADIUS && stopped();
+        spinning = settled && !corner && distance <= SPIN_START_RADIUS &&
+                   std::hypot(odo->getXVel(), odo->getYVel()) <= SETTLED_SPEED;
     }
 
     const float yaw = spinning ? SPIN_VELOCITY : drivetrain->calculateRotationPID(headingError);
-    if (spinning || !aligned) {
+    if (spinning || !travelAligned) {
+        travelAligned = false;
         drivetrain->resetPositionIntegral();
         drivetrain->setTargetPosition(currentPosition.vec(), currentPosition, Pose2d(0, 0, yaw));
     } else {
-        drivetrain->setTargetPosition(arrivalTarget.value_or(targetPosition), currentPosition,
-                                      Pose2d(0, 0, yaw));
+        drivetrain->setTargetPosition(driveTarget, currentPosition, Pose2d(0, 0, yaw));
     }
 }
 

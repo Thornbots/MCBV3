@@ -180,7 +180,7 @@ TEST_F(AutoDriveCommandTest, TravelHoldsAQuarterTurnAndSpinsOnlyAtTheGoal) {
     }
 }
 
-TEST_F(AutoDriveCommandTest, TravelRequiresBothQuarterTurnHeadingAndLowChassisYawRate) {
+TEST_F(AutoDriveCommandTest, TravelAcquiresAndMaintainsQuarterTurnHeading) {
     subsystems::JetsonSubsystem jetson(&drivers, &gimbal, &odo);
     AutoDriveCommand command(&drivers, &drive, &gimbal, &jetson, &odo);
     command.initialize();
@@ -199,6 +199,22 @@ TEST_F(AutoDriveCommandTest, TravelRequiresBothQuarterTurnHeadingAndLowChassisYa
     command.execute();
     EXPECT_FLOAT_EQ(translation(), 0);
     EXPECT_LT(spin(), -1.0f);
+
+    chassisYaw(0, 0);
+    command.execute();
+    EXPECT_GT(translation(), 0);
+
+    chassisYaw(0, 0.6f);
+    command.execute();
+    EXPECT_GT(translation(), 0);
+
+    chassisYaw(0.08f, 0.0f);
+    command.execute();
+    EXPECT_FLOAT_EQ(translation(), 0);
+
+    chassisYaw(0, 0.6f);
+    command.execute();
+    EXPECT_FLOAT_EQ(translation(), 0);
 
     chassisYaw(0, 0);
     command.execute();
@@ -236,7 +252,7 @@ TEST_F(AutoDriveCommandTest, SpinWaitsForPrecisionArrivalAndBraking) {
     EXPECT_NEAR(spin(), 0, 1e-3f);
 }
 
-TEST_F(AutoDriveCommandTest, NewLegWaitsForTheCornerToSettle) {
+TEST_F(AutoDriveCommandTest, NewLegCorrectsTowardItsCentrelineWhileAdvancing) {
     subsystems::JetsonSubsystem jetson(&drivers, &gimbal, &odo);
     AutoDriveCommand command(&drivers, &drive, &gimbal, &jetson, &odo);
     command.initialize();
@@ -247,17 +263,19 @@ TEST_F(AutoDriveCommandTest, NewLegWaitsForTheCornerToSettle) {
 
     goal(-2.4f, -0.635f);
     command.execute();
-    EXPECT_LT(translation(), 0.15f);
+    const auto entry = drive.getHostedTargetVelocity();
+    EXPECT_NEAR(entry.getX(), 0.5f, 0.01f);
+    EXPECT_NEAR(entry.getY(), 0.09f, 0.01f);
     EXPECT_NEAR(spin(), 0, 1e-3f);
 
-    odo.relocalizeTo(-5.25f, -0.64f);
-    hosted::sensors.podVy = 0.4f;
+    odo.relocalizeTo(-5.05f, -0.64f);
     goal(-2.4f, -0.635f);
     command.execute();
-    EXPECT_LT(translation(), 0.15f);
+    EXPECT_GT(translation(), entry.magnitude());
+    EXPECT_LT(translation(), 1.0f);
     EXPECT_NEAR(spin(), 0, 1e-3f);
 
-    hosted::sensors.podVy = 0;
+    odo.relocalizeTo(-4.25f, -0.635f);
     command.execute();
     EXPECT_GT(translation(), 1.0f);
 }

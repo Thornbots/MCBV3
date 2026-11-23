@@ -48,9 +48,10 @@ private:
     static constexpr float SETTLED_SPEED = 0.10f;      // m/s
     static constexpr float SPIN_VELOCITY = 9.0f;       // rad/s
     static constexpr float TRAVEL_HEADING_ERROR = 0.06f; // rad
-    static constexpr float TRAVEL_YAW_RATE = 0.35f;    // rad/s
+    static constexpr float SETTLED_YAW_RATE = 0.35f;   // rad/s, before translation or spin starts
+    static constexpr float TRAVEL_YAW_RATE = 1.5f;    // rad/s, while holding the heading in travel
     static constexpr float WAYPOINT_HANDOFF_RADIUS = 0.25f; // m, covers the doorway exit tolerance
-    static constexpr float WAYPOINT_SETTLED_RADIUS = 0.01f; // m, settle on the next leg's centreline
+    static constexpr float CORNER_LOOKAHEAD = 0.25f;   // m, initial lead along the new leg
 
     src::Drivers* drivers;
     JetsonSubsystem* jetson;
@@ -60,11 +61,12 @@ private:
 
     Vector2d targetPosition;
     std::optional<Vector2d> previousGoal;
-    std::optional<Vector2d> arrivalTarget;
+    std::optional<Vector2d> corner;
 
     bool isScheduled = false;
     bool hasNavGoal = false;
     bool spinning = false;
+    bool travelAligned = false;
 
 };
 }  // namespace commands

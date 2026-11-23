@@ -347,10 +347,12 @@ follow them. Translation requires a settled heading at the nearest field
 quarter turn, because the 0.84 m spin sweep is wider than the Starting Zone's
 0.745 m doorway. Spin starts only when the chassis slows within
 `SPIN_START_RADIUS` of the goal, inside the doorway waypoint tolerance.
-A new goal ends the spin and translation waits for heading and yaw rate to
-settle. When navigation advances near a corner, the chassis finishes that
-waypoint before following the next leg. A reversal to the previous goal can
-begin as soon as the heading settles. During the 3v3 countdown it spins in place.
+Translation waits for heading and yaw rate to settle after a spin, then holds
+the same heading tolerance with a wider yaw-rate band during travel. When
+navigation advances near a corner, the chassis follows a point on the new
+leg's centreline. The lookahead grows with progress, letting the chassis turn
+and accelerate while correcting onto the leg. Reversals target the previous
+goal directly. During the 3v3 countdown it spins in place.
 Frame conventions and payload semantics are owned by the workspace's
 [UART protocol](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#message-types).
 Deploy matching firmware and Jetson packages together: unchanged payload
