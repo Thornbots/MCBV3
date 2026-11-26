@@ -11,6 +11,7 @@
 #include "modm/container/deque.hpp"
 #include "subsystems/odometry/OdometrySubsystem.hpp"
 #include "subsystems/odometry/OdometrySubsystemConstants.hpp"
+#include "subsystems/jetson/JetsonSubsystem.hpp"
 
 namespace {
 class Drivers : public tap::Drivers {
@@ -180,3 +181,10 @@ TEST(UARTCommunicationTest, PingDoesNotRestampTheUnconsumedTargetMailbox) {
     EXPECT_EQ(uart.getLastMsg().messageType,7);
     EXPECT_TRUE(uart.isConnected());
 }
+
+TEST(UARTCommunicationTest, TargetStateAgeAddsTheWholeFrameAirtime) {
+    // 7-byte header, 80-byte payload and CRC16 at 115200 8N1: 7.73 ms.
+    EXPECT_EQ(communication::UARTCommunication::wireTimeUs(89), 7726U);
+    EXPECT_FLOAT_EQ(TARGET_STATE_AIRTIME_S, 7726e-6f);
+}
+

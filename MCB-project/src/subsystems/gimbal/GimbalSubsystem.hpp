@@ -124,6 +124,9 @@ public:  // Public Methods
     void setAngles(float yawAngle, float pitchAngle);
     void setAnglesWithRates(float yaw, float pitch, float yawRate, float pitchRate);
     float getWorldYawRate() const { return yawAngularVelocity; }
+    // IMU yaw advanced over the IMU latency the yaw controller assumes (`lat`):
+    // the head's world yaw now, not when the IMU sampled it.
+    float getCurrentImuYaw() const { return yawAngleRelativeWorld + yawAngularVelocity * lat; }
     float getAimPitch();
     float getAimPitchRate();
 
