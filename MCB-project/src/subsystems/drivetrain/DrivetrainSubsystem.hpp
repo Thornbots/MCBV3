@@ -70,6 +70,7 @@ public:  // Public Methods
     void setTargetTranslation(Pose2d drive, bool boost);
 
     void setTargetPosition(Vector2d targetPosition, Pose2d currentPosition, Pose2d inputVelocity);
+    void resetPositionIntegral() { controller.resetPositionIntegral(); }
     /*
      * Call this function to set all DriveTrain motors to 0 desired RPM.
      */
