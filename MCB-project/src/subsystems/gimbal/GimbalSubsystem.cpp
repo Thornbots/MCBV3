@@ -30,6 +30,15 @@ void GimbalSubsystem::initialize() {
     drivers->hitTracker.setGetYawEncoderFunction([this] { return this->getYawEncoderValue(); });
 }
 void GimbalSubsystem::refresh() {
+#ifdef MCB_HOSTED
+    // Taproot's first rotor angle is positive even just below zero. The
+    // fixture boots at joint zero, so choose the rotor turn nearest home.
+    if (!hostedYawHomed && isYawMotorOnline() && tap::arch::clock::getTimeMilliseconds() > 0) {
+        const float rotor = motorYaw->getEncoder()->getPosition().getUnwrappedValue();
+        hostedYawRotorBias = rotor - std::remainder(rotor, 2 * PI);
+        hostedYawHomed = true;
+    }
+#endif
     if (isYawMotorOnline() && wasYawMotorOffline) {
         targetYawAngleWorld = yawAngleRelativeWorld;
     }
@@ -152,6 +161,9 @@ void GimbalSubsystem::resetEncoderIfGainPower() {
         encoderOffset = drivers->adc1_pa6_read() * (-2 * PI / 4096) + YAW_OFFSET;  // adc read is blocking right now.
 #endif
         motorYaw->getEncoder()->resetEncoderValue();
+#ifdef MCB_HOSTED
+        hostedYawRotorBias = 0;
+#endif
     }
 }
 
@@ -221,7 +233,8 @@ int GimbalSubsystem::getPitchVoltage([[maybe_unused]] float targetAngle, [[maybe
 
 float GimbalSubsystem::getYawEncoderValue() {
 #ifdef MCB_HOSTED
-    return std::fmod(motorYaw->getEncoder()->getPosition().getUnwrappedValue() / YAW_TOTAL_RATIO + encoderOffset - hostedYawHome, 2 * PI);
+    const float rotor = motorYaw->getEncoder()->getPosition().getUnwrappedValue() - hostedYawRotorBias;
+    return std::fmod(rotor / YAW_TOTAL_RATIO + encoderOffset - hostedYawHome, 2 * PI);
 #else
     return std::fmod(motorYaw->getEncoder()->getPosition().getUnwrappedValue() / YAW_TOTAL_RATIO + encoderOffset, 2 * PI);
 #endif

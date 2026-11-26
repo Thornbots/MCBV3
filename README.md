@@ -343,10 +343,16 @@ remove it when converting field targets into local commands. This also applies
 to robots without odometry. Firmware owns no route or team start XY: the
 Jetson's [waypoint navigation](../../nav_pkg/README.md) sends NAV_GOALs in the
 field frame, and the right switch's up position schedules `AutoDriveCommand` to
-follow them. It holds the nearest field quarter turn while travelling, because
-the 0.84 m spin sweep is wider than the Starting Zone's 0.745 m doorway, and
-spins only within `SPIN_START_RADIUS` of the goal (with hysteresis); during
-the 3v3 countdown it spins in place.
+follow them. Translation requires a settled heading at the nearest field
+quarter turn, because the 0.84 m spin sweep is wider than the Starting Zone's
+0.745 m doorway. Spin starts only when the chassis slows within
+`SPIN_START_RADIUS` of the goal, inside the doorway waypoint tolerance.
+Translation waits for heading and yaw rate to settle after a spin, then holds
+the same heading tolerance with a wider yaw-rate band during travel. When
+navigation advances near a corner, the chassis follows a point on the new
+leg's centreline. The lookahead grows with progress, letting the chassis turn
+and accelerate while correcting onto the leg. Reversals target the previous
+goal directly. During the 3v3 countdown it spins in place.
 Frame conventions and payload semantics are owned by the workspace's
 [UART protocol](../../ros2_dji_serial_bridge/UART_PROTOCOL.md#message-types).
 Deploy matching firmware and Jetson packages together: unchanged payload
@@ -589,8 +595,9 @@ not by moving the pivot height.
 The hosted hardware pipe emits only the four-byte `MCB3` header before the
 first tick output; it supplies no start XY. It carries ten DJI CAN feedback packets and
 returns raw motor command words. Gimbal encoders and velocities use the same
-Taproot decoder as the board; only the hosted yaw home is fixed to the sim
-joint's boot zero. Sim applies motor forces inside gz's 1 ms step; its
+Taproot decoder as the board. Hosted yaw selects the rotor turn nearest the
+simulated joint's boot zero at startup, then unwraps CAN feedback through
+subsequent turns. Sim applies motor forces inside gz's 1 ms step; its
 [MCB emulator](../../sim/README.md#mcb-emulator) owns the plant and its limits.
 Pitch selects the calibrated angle nearest zero from the encoder's single-turn
 reading, which fixes pitch only modulo one motor turn (`2π / PITCH_RATIO`). Every
