@@ -1,8 +1,7 @@
 #pragma once
-#include "IndexerSubsystemConstants.hpp"
+#include "LauncherHeat.hpp"
 
 #include "tap/communication/serial/ref_serial_data.hpp"
-#include "tap/architecture/periodic_timer.hpp"
 #include "tap/board/board.hpp"
 #include "tap/motor/dji_motor.hpp"
 
@@ -32,7 +31,8 @@ public:
     }
 
     bool canShootAgain() {
-        return ((float)estHeat+getHeatPerBall()*HEAT_PER_BALL_MULT) <= ((float) drivers->refSerial.getRobotData().turret.heatLimit);
+        return heat.canCharge(drivers->refSerial.getRobotData().turret.heatLimit,
+                              getHeatPerBall() * HEAT_PER_BALL_MULT);
     }
 
     uint32_t getTimesIncremented() {
@@ -43,31 +43,30 @@ public:
         //in case index doesn't start at 0
         timesIncremented=0;
 
-        prevMillis = tap::arch::clock::getTimeMilliseconds();
-        
-        coolingTimer.restart(); //not sure if it starts started or not
+        heat.reset(tap::arch::clock::getTimeMilliseconds());
     }
 
     int32_t getEstHeat(){
-        return estHeat;
+        return heat.value();
     }
     
     float getEstHeatRatio() {
-        if(drivers->refSerial.getRefSerialReceivingData())
-            return ((float) estHeat)/drivers->refSerial.getRobotData().turret.heatLimit;
+        const auto limit = drivers->refSerial.getRobotData().turret.heatLimit;
+        if (limit && drivers->refSerial.getRefSerialReceivingData())
+            return static_cast<float>(heat.value()) / limit;
         return 0;
     }
     
     
     void update() {
-        if(coolingTimer.execute())
-            applyCooling();
+        heat.cool(tap::arch::clock::getTimeMilliseconds(),
+                  drivers->refSerial.getRobotData().turret.coolingRate);
     }
     
     // applies the heat from this projectile instantly
     void incrementTargetNumBalls(){
         timesIncremented++;
-        estHeat+=getHeatPerBall();
+        heat.charge(getHeatPerBall());
     }
     
 
@@ -76,38 +75,18 @@ private:
     BarrelType barrel;
     tap::motor::DjiMotor* index;
     
-    tap::arch::PeriodicMilliTimer coolingTimer{100}; //10hz, ref system cools at this rate
-
-    uint32_t prevMillis = 0; //for decrementing heat
-    int32_t estHeat = 0;
-    
+    LauncherHeat heat;
     uint32_t timesIncremented = 0;
 
-    float getHeatPerBall() {
-        return barrel==BarrelType::TURRET_42MM ? HEAT_PER_42 : HEAT_PER_17;
+    uint32_t getHeatPerBall() const {
+        return barrel == BarrelType::TURRET_42MM ? kHeatPer42mm : kHeatPer17mm;
     }
-
-    void applyCooling() {
-        // delta time[ms] * cooling[heat/s] / 1000[ms to s]
-        int32_t heatDiff = (tap::arch::clock::getTimeMilliseconds()-prevMillis)*(drivers->refSerial.getRobotData().turret.coolingRate)/1000;
-        if(heatDiff>0){ //could be 0 if not enough time has passed
-            estHeat-=heatDiff;
-            if(estHeat<0) estHeat=0; //can't be negative heat
-
-            // change the time by the amount of cooling you applied
-            prevMillis += heatDiff*1000/(drivers->refSerial.getRobotData().turret.coolingRate);
-        }
-    }
-
-    static constexpr float HEAT_PER_17 = 10.0f;
-    static constexpr float HEAT_PER_42 = 100.0f;
-    
     
     // heat limiting isn't perfect, this tunes how careful heat limiting is. Tunes 'shoot if there is enough room for exactly HEAT_PER_BALL_MULT projectiles'
 #if defined(HERO)
-    static constexpr float HEAT_PER_BALL_MULT = 1;
-#else// START getters and setters
-    static constexpr float HEAT_PER_BALL_MULT = 2;
+    static constexpr uint32_t HEAT_PER_BALL_MULT = 1;
+#else
+    static constexpr uint32_t HEAT_PER_BALL_MULT = kSentryEstimatedRounds;
 #endif
 };
 

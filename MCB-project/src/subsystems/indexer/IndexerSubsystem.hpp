@@ -6,6 +6,7 @@
 
 // #include "IndexerController.hpp"
 #include "drivers.hpp"
+#include "LauncherHeat.hpp"
 
 namespace subsystems
 {
@@ -21,8 +22,12 @@ class IndexerSubsystem : public tap::control::Subsystem
 {
     
 private:
-uint32_t lastShotTime = 0; //ms, for the 20Hz cooldown
-static constexpr uint32_t MIN_SHOT_FREQ = 50; //ms, for the 20Hz cooldown
+uint32_t lastShotTime = 0;
+#if defined(SENTRY)
+static constexpr uint32_t MIN_SHOT_INTERVAL_MS = kSentryShotIntervalMs;
+#else
+static constexpr uint32_t MIN_SHOT_INTERVAL_MS = 50;
+#endif
 
 int numShotsRemaining = 0; //for indexNShotsAtRate. Decrements each time tryShootOnce gets called. Is -1 for indexAtRate.
 float shotsPerSecond = 0; //is 0 if not continuously firing, is positive if indexAtRate or indexNShotsAtRate is working.
@@ -69,7 +74,7 @@ virtual void refresh();
 // This can be stopped by calling tryShootOnce() or forceShootOnce(), or indexAtRate(0), or stopIndex().
 // Avoids overheating.
 // If inputShotsPerSecond is negative or 0, then this behaves like stopIndexingAtRate().
-// If inputShotsPerSecond is above 20, then this behaves like it was 20 because of canShoot()'s 20Hz cooldown between shots.
+// canShoot() enforces the launcher cooldown between shots.
 // Returns true if it shot immediately, false if it didn't (because the index was already indexing at a rate)
 bool indexAtRate(float inputShotsPerSecond);
 
@@ -135,7 +140,7 @@ virtual float getTotalNumBallsShot() = 0;
 virtual bool heatAllowsShooting() = 0;
 
 // If isIndexOnline(), refPoweringIndex(), heatAllowsShooting(), and isProjectileAtBeam() all return true.
-// Also has a 20Hz cooldown to prevent tryShootOnce() called too quickly from shooting too quickly.
+// Also enforces the minimum time between shots.
 virtual bool canShoot();
 
 
@@ -151,7 +156,7 @@ protected:
 // bool isHoming; //set by IndexerSubsystem, used by Single and Hero in their finishRefresh()
 
 // Single and Hero would call this when they shoot.
-// This is for the 20Hz cooldown in canShoot().
+// Records the start of the cooldown in canShoot().
 void justShot();
 
 };
