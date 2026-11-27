@@ -92,7 +92,7 @@ void AutoAimAndFireCommand::execute() {
     TargetState newState{};
     uint32_t receivedMs = 0;
     while (jetson->getTargetState(&newState, &receivedMs)) {
-        if (!planner.observe(receivedMs, toInput(newState, 0))) continue;
+        if (!planner.observe(receivedMs, toInput(newState, TARGET_STATE_AIRTIME_S))) continue;
         receivedCvTargetEver = true;
         turnToHitPermitted = false;
         patrolPermitted = (newState.flags & TARGET_STATE_FLAG_TYPE_C_BASED_PATROL) != 0;

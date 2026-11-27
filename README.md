@@ -338,8 +338,11 @@ finite RELOCALIZE establishes the field navigation offset. Invalid non-finite
 coordinates leave the gate and previous offset unchanged. NAV_GOALs received
 before localization are discarded; driving needs a fresh goal after the fix.
 
-POSE adds this boot heading to the sampled IMU-relative gimbal yaw; aiming and driving
-remove it when converting field targets into local commands. This also applies
+POSE adds this boot heading to the IMU-relative gimbal yaw, advanced by the
+yaw controller's 8 ms IMU latency (`GimbalSubsystem::getCurrentImuYaw`) so it
+matches the frame's stamp. The raw IMU yaw left the Jetson's camera TF 8-10 ms
+behind the head in sim. Aiming and driving
+remove the boot heading when converting field targets into local commands. This also applies
 to robots without odometry. Firmware owns no route or team start XY: the
 Jetson's [waypoint navigation](../../nav_pkg/README.md) sends NAV_GOALs in the
 field frame, and the right switch's up position schedules `AutoDriveCommand` to

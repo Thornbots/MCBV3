@@ -101,6 +101,9 @@ static_assert(offsetof(TargetState, yaw) == 36 && offsetof(TargetState, radius) 
               offsetof(TargetState, z_offset) == 52 && offsetof(TargetState, panel) == 60 &&
               offsetof(TargetState, state_age_ms) == 72 && offsetof(TargetState, track_id) == 76 &&
               offsetof(TargetState, flags) == 79, "TARGET_STATE offsets");
+// The bridge stamps ages as it starts writing; the frame (7-byte DJI header,
+// payload, CRC16) completes one airtime later, when the MCB stamps receipt.
+static constexpr float TARGET_STATE_AIRTIME_S = UARTCommunication::wireTimeUs(7 + sizeof(TargetState) + 2) * 1e-6f;
 
 //where lidar thinks the robot is
 struct Relocalize

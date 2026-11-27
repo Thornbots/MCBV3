@@ -104,7 +104,7 @@ void JetsonSubsystem::refresh() {
                 odo->getXVel(),
                 odo->getYVel(),
                 gimbal->getPitchEncoderValue(),
-                std::fmod(drivers->bmi088.getYaw() + odo->getStartYaw(), 2 * PI),  // field yaw
+                std::fmod(gimbal->getCurrentImuYaw() + odo->getStartYaw(), 2 * PI),  // field yaw
 #if defined(SENTRY)
                 drivers->i2c.odom.isFresh(tap::arch::clock::getTimeMilliseconds(), POD_STALE_MS)
                     ? OdomStatus::ODOM_PODS : OdomStatus::ODOM_I2C_DEAD
@@ -122,7 +122,7 @@ void JetsonSubsystem::refresh() {
                 0.0f,
                 0.0f,
                 gimbal->getPitchEncoderValue(),
-                std::fmod(drivers->bmi088.getYaw() + odo::BOOT_YAW, 2 * PI),
+                std::fmod(gimbal->getCurrentImuYaw() + odo::BOOT_YAW, 2 * PI),
                 OdomStatus::ODOM_I2C_DEAD};  // protocol code 2: x/y/vel have no source
             sent = sendMsg(&p);
         } else {  // if(drivers->refSerial.getRefSerialReceivingData()) {
