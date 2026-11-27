@@ -51,6 +51,10 @@ void GimbalSubsystem::refresh() {
     // this happens to work because the X axis is alined with the pitch axis
     gimbalPitchAngleRelativeWorld = drivers->bmi088.getRoll();
 
+#elif defined(SENTRY)
+    baseTilt.update(drivers->bmi088.getGx(), drivers->bmi088.getGy(), drivers->bmi088.getGz(), dt);
+    gimbalPitchAngleRelativeWorld = baseTilt.angle;
+    gimbalPitchAngularVelocity = baseTilt.rate;
 #endif
 
     driveTrainAngularVelocity = yawAngularVelocity - getYawVel();
@@ -75,7 +79,7 @@ void GimbalSubsystem::setAnglesWithRates(float yaw, float pitch, float yawRate, 
     absoluteYawRate.reset();
     resetEncoderIfGainPower();
     targetYawAngleWorld += std::remainder(yaw-targetYawAngleWorld, 2*PI);
-#if defined(INFANTRY) or defined(HERO)
+#if defined(INFANTRY) or defined(HERO) or defined(SENTRY)
     pitch -= gimbalPitchAngleRelativeWorld;
     pitchRate -= gimbalPitchAngularVelocity;
 #endif
@@ -87,7 +91,7 @@ void GimbalSubsystem::setAnglesWithRates(float yaw, float pitch, float yawRate, 
 }
 
 float GimbalSubsystem::getAimPitch() {
-#if defined(INFANTRY) or defined(HERO)
+#if defined(INFANTRY) or defined(HERO) or defined(SENTRY)
     return getPitchEncoderValue()+gimbalPitchAngleRelativeWorld;
 #else
     return getPitchEncoderValue();
@@ -96,7 +100,7 @@ float GimbalSubsystem::getAimPitch() {
 
 float GimbalSubsystem::getAimPitchRate() {
     const float relative = motorPitch->getEncoder()->getVelocity()/PITCH_RATIO;
-#if defined(INFANTRY) or defined(HERO)
+#if defined(INFANTRY) or defined(HERO) or defined(SENTRY)
     return relative+gimbalPitchAngularVelocity;
 #else
     return relative;
@@ -116,7 +120,7 @@ void GimbalSubsystem::applyYawSetpoint(float changeInTargetYaw, float targetPitc
     float pitch = getPitchEncoderValue();
     prevTargetPitch = std::clamp(targetPitch, -MAX_PITCH_DOWN, MAX_PITCH_UP);
 
-#if defined(INFANTRY) or defined(HERO)  // chicken mode, gets bad when imu drifts
+#if defined(INFANTRY) or defined(HERO) or defined(SENTRY)  // world pitch; see README.md#base-tilt
     targetPitch -= gimbalPitchAngleRelativeWorld;
     pitchVel += gimbalPitchAngularVelocity;
 #endif

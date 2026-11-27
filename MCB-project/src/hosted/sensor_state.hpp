@@ -5,6 +5,7 @@ struct Sensors {
     float podX = 0, podY = 0, podVx = 0, podVy = 0;
     float yaw = 0, yawRate = 0, encoder = 0;
     float jointYaw = 0, jointYawRate = 0, jointPitch = 0, jointPitchRate = 0;
+    float gyroX = 0, gyroY = 0;  // yaw-link IMU axes, rad/s
 };
 inline Sensors sensors;
 }

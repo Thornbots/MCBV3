@@ -377,6 +377,27 @@ DWT busy wait spent the whole guard repeatedly reading a peripheral register
 in Renode. The following remote-disconnected guard and IMU calibration still
 execute normally; no simulator hook skips firmware initialization.
 
+### Base tilt
+
+The sentry's yaw link pitches with the chassis on its suspension: up to 4°
+while braking or accelerating in sim `mcb_match`. The pitch encoder measures
+only head pitch relative to that link, so the encoder alone put the Jetson's
+camera TF and the planner's barrel off by the tilt. The tracker then read the
+tilt rate times range as a target velocity of 1–3 m/s (mostly vertical) on a
+target moving at 0–0.5 m/s, and drive shots went 10–20 cm low.
+
+`BaseTilt` (`src/util/BaseTilt.hpp`) propagates world up through the yaw-link
+gyro and projects it on the zero-pitch barrel direction
+(`IMU_BARREL_FORWARD`, `PITCH_UP_SIGN`). It high-passes the result over
+`BASE_TILT_TAU_S` (2 s), so a held tilt and gyro bias settle into the encoder
+frame instead of drifting; the accelerometer is not used, since chassis
+acceleration is what causes the tilt. `getAimPitch()` adds it, as infantry and
+hero already add IMU roll. The pitch controller, the planner's measured gate
+and sentry POSE `head_pitch` all use this aim pitch, which is world pitch
+relative to the heading-fixed `root`. The hosted fixture feeds gyro x/y from
+sim's yaw-link IMU. The robot board's IMU axes are not verified
+([ROBOT_TESTS](../../docs/ROBOT_TESTS.md#consolidated-hardware-checks)).
+
 ### MCBV3 aiming planner
 
 <a id="target-handoff-redesign-proposed-review-before-implementation"></a>

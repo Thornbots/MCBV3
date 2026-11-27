@@ -72,7 +72,8 @@ public:
         return yaw < 0 ? yaw + 2 * M_PI : yaw;
     }
     float getGz() const override { return hosted::sensors.yawRate; }
-    float getGx() const override { return 0; }
+    float getGx() const override { return hosted::sensors.gyroX; }
+    float getGy() const override { return hosted::sensors.gyroY; }
     float getRoll() const override { return 0; }
     void requestCalibration() override {}
     ImuState getImuState() const override { return ImuState::IMU_CALIBRATED; }

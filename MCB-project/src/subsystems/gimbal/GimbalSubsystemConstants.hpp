@@ -60,6 +60,14 @@ static constexpr int YAW_DIST_RANGE = 18000;
 
 static constexpr float PITCH_RATIO = 3.0f;
 
+// Barrel forward at zero pitch, in BMI088 axes. The sim models the IMU in the
+// yaw-link frame; the robot's board mount is unverified (ROBOT_TESTS base tilt).
+static constexpr float IMU_BARREL_FORWARD[3] = {1.0f, 0.0f, 0.0f};
+// Pitch encoder sense: -1 when positive pitch points the barrel down (ROS +y).
+static constexpr float PITCH_UP_SIGN = -1.0f;
+// High-pass time constant of the base tilt; longer tilts join the encoder frame.
+static constexpr float BASE_TILT_TAU_S = 2.0f;
+
 #elif defined(INFANTRY)
 constexpr static int YAW_MOTOR_MAX_SPEED = 1000;  // TODO: Make this value relevent
                                                   // //TODO: Check the datasheets
