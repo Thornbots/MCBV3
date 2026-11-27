@@ -22,7 +22,7 @@ struct Input {
     uint32_t refereeBytes, mode; // 0 stop, 1 simple, 2 auto; bit 2 disables auto fire
     uint8_t motors[10][8]; // yaw, pitch, index, odo, flywheel 1/2, drive 1..4
     float externalRight, externalForward, externalSpin;
-    float imu[6]; // board adapter: local gyro rad/s, specific force in g
+    float imu[6]; // local yaw-link gyro rad/s, specific force in g (hosted reads gyro x/y)
 };
 struct Output {
     float yaw, pitch, right, forward, spin;
@@ -91,6 +91,7 @@ int main() {
         hosted::sensors.yaw = in.yaw; hosted::sensors.yawRate = in.yawRate;
         hosted::sensors.jointYaw = in.jointYaw; hosted::sensors.jointYawRate = in.jointYawRate;
         hosted::sensors.jointPitch = in.jointPitch; hosted::sensors.jointPitchRate = in.jointPitchRate;
+        hosted::sensors.gyroX = in.imu[0]; hosted::sensors.gyroY = in.imu[1];
         std::vector<uint32_t> shots;
         float periodUs = 0;
         for (uint32_t i = 0; i < in.cycles; ++i) {

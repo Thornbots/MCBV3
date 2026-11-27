@@ -14,6 +14,7 @@
 #include "controllers/YawController.hpp"
 
 #include "GimbalSubsystemConstants.hpp"
+#include "util/BaseTilt.hpp"
 #include "drivers.hpp"
 
 namespace subsystems {
@@ -34,7 +35,10 @@ private:  // Private Variables
     float pitchAngle = 0.0;
     float SetPitchOffsettoEXACTLYthisNumberWhenTheHeadisHeldFlat = 0.0;
     float driveTrainAngularVelocity, yawAngularVelocity, yawAngleRelativeWorld = 0.0;
-    float gimbalPitchAngleRelativeWorld, gimbalPitchAngularVelocity;
+    float gimbalPitchAngleRelativeWorld = 0, gimbalPitchAngularVelocity = 0;
+#if defined(SENTRY)
+    BaseTilt baseTilt{IMU_BARREL_FORWARD, PITCH_UP_SIGN, BASE_TILT_TAU_S};
+#endif
     float yawEncoderCache = 0;
     float driveTrainEncoder = 0.0;
     float stickAccumulator = 0, targetYawAngleWorld = 0, targetDTVelocityWorld = 0;

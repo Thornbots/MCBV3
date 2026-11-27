@@ -103,7 +103,7 @@ void JetsonSubsystem::refresh() {
                 odo->getAimY(),
                 odo->getXVel(),
                 odo->getYVel(),
-                gimbal->getPitchEncoderValue(),
+                gimbal->getAimPitch(),  // aim frame, base tilt included
                 std::fmod(gimbal->getCurrentImuYaw() + odo->getStartYaw(), 2 * PI),  // field yaw
 #if defined(SENTRY)
                 drivers->i2c.odom.isFresh(tap::arch::clock::getTimeMilliseconds(), POD_STALE_MS)
